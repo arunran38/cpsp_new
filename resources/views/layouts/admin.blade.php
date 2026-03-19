@@ -1,221 +1,250 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-slate-50">
 <head>
     <meta charset="UTF-8">
-    <title>Modern Admin Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <title>{{ config('app.name', 'Admin Dashboard') }}</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/@lucide/icons"></script>
 
-    <style>
-        :root {
-            --sidebar-width: 260px;
-            --primary-color: #4361ee;
-            --bg-light: #f8f9fa;
-            --dark-sidebar: #1e1e2d;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-light);
-            overflow-x: hidden;
-        }
-
-        /* Sidebar Styling */
-        .sidebar {
-            width: var(--sidebar-width);
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            background-color: var(--dark-sidebar);
-            transition: all 0.3s;
-            z-index: 1000;
-            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
-        }
-
-        .sidebar-header {
-            padding: 20px;
-            background: rgba(255,255,255,0.05);
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-
-        .nav-link {
-            color: #a2a3b7 !important;
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            border-radius: 8px;
-            margin: 4px 15px;
-            transition: 0.2s;
-        }
-
-        .nav-link:hover, .nav-link[aria-expanded="true"] {
-            background: rgba(255,255,255,0.08);
-            color: #fff !important;
-        }
-
-        .nav-link.active-link {
-            background: var(--primary-color);
-            color: #fff !important;
-        }
-
-        .nav-link i {
-            margin-right: 12px;
-            font-size: 20px;
-        }
-
-        .submenu {
-            background: rgba(0,0,0,0.2);
-            list-style: none;
-            padding: 5px 0;
-        }
-
-        .submenu .nav-link {
-            padding-left: 52px;
-            font-size: 0.9rem;
-        }
-
-        /* Main Content Layout */
-        .main-wrapper {
-            margin-left: var(--sidebar-width);
-            transition: all 0.3s;
-        }
-
-        .top-nav {
-            background: #fff;
-            padding: 15px 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .content-area {
-            padding: 30px;
-        }
-
-        .stat-card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            transition: transform 0.2s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        /* Mobile Adjustments */
-        @media (max-width: 991.98px) {
-            .sidebar {
-                left: calc(-1 * var(--sidebar-width));
-            }
-            .main-wrapper {
-                margin-left: 0;
-            }
-            .sidebar.show {
-                left: 0;
-            }
-        }
-    </style>
+    <!-- Scripts & Styles -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
+<body class="h-full font-sans antialiased text-slate-900" x-data="{ sidebarOpen: false }">
 
-<div class="offcanvas-backdrop fade" id="backdrop" onclick="toggleSidebar()"></div>
+    <div class="min-h-full">
+        <!-- Mobile Sidebar Overlay -->
+        <div x-show="sidebarOpen" 
+             x-transition:enter="transition-opacity ease-linear duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm lg:hidden"
+             @click="sidebarOpen = false"></div>
 
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header text-white d-flex align-items-center">
-        <i class="material-icons-round me-2 text-primary">dashboard_customize</i>
-        <span>ADMIN PRO</span>
-    </div>
-    
-    <div class="mt-4">
-        <a href="#" class="nav-link active-link">
-            <i class="material-icons-round">home</i> Dashboard
-        </a>
-
-        <a class="nav-link" data-bs-toggle="collapse" href="#unitsSub">
-            <i class="material-icons-round">apartment</i> Units
-            <i class="material-icons-round ms-auto fs-6">expand_more</i>
-        </a>
-        <ul class="collapse submenu" id="unitsSub">
-            <li><a href="#" class="nav-link">Add Unit</a></li>
-            <li><a href="#" class="nav-link">View/Edit Units</a></li>
-        </ul>
-
-        <a class="nav-link" data-bs-toggle="collapse" href="#usersSub">
-            <i class="material-icons-round">people</i> Users
-            <i class="material-icons-round ms-auto fs-6">expand_more</i>
-        </a>
-        <ul class="collapse submenu" id="usersSub">
-            <li><a href="{{ route('users.create') }}" class="nav-link">Add User</a></li>
-            <li><a href="#" class="nav-link">Assign Seats</a></li>
-        </ul>
-
-        <a class="nav-link" data-bs-toggle="collapse" href="#petSub">
-            <i class="material-icons-round">description</i> Petitions
-            <i class="material-icons-round ms-auto fs-6">expand_more</i>
-        </a>
-        <ul class="collapse submenu" id="petSub">
-            <li><a href="#" class="nav-link">Pending</a></li>
-            <li><a href="#" class="nav-link">Verification</a></li>
-        </ul>
-
-        <div class="border-top border-secondary my-3 mx-3 opacity-25"></div>
-
-        <a href="#" class="nav-link">
-            <i class="material-icons-round">settings</i> Settings
-        </a>
-    </div>
-</div>
-
-<div class="main-wrapper">
-    
-    <nav class="top-nav d-flex align-items-center justify-content-between">
-        <button class="btn btn-light d-lg-none" onclick="toggleSidebar()">
-            <i class="material-icons-round">menu</i>
-        </button>
-        
-        <div class="search-bar d-none d-md-block">
-            <div class="input-group">
-                <span class="input-group-text bg-light border-0"><i class="material-icons-round fs-6">search</i></span>
-                <input type="text" class="form-control bg-light border-0" placeholder="Search report...">
+        <!-- Sidebar -->
+        <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+               class="fixed inset-y-0 left-0 z-50 flex flex-col w-72 transition-transform duration-300 ease-in-out bg-slate-900 lg:translate-x-0">
+            
+            <!-- Sidebar Header -->
+            <div class="flex items-center h-20 px-8 bg-slate-950/50">
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-primary shadow-lg shadow-primary/20">
+                        <i data-lucide="layout-dashboard" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight text-white uppercase">CPSP<span class="text-primary">Admin</span></span>
+                </div>
             </div>
-        </div>
 
-        <div class="dropdown">
-            <a href="#" class="text-decoration-none text-dark d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown">
-                <img src="https://ui-avatars.com/api/?name=John+Doe&background=4361ee&color=fff" class="rounded-circle me-2" width="35">
-                <span class="fw-medium d-none d-sm-inline">John Doe</span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3">
-                <li><a class="dropdown-item py-2" href="#"><i class="material-icons-round align-middle me-2 fs-6">person</i> Profile</a></li>
-                <li><a class="dropdown-item py-2 text-danger" href="#"><i class="material-icons-round align-middle me-2 fs-6">logout</i> Logout</a></li>
-            </ul>
-        </div>
-    </nav>
+            <!-- Navigation -->
+            <nav class="flex-1 px-4 py-6 overflow-y-auto custom-scrollbar space-y-1">
+                <!-- Dashboard -->
+                <a href="{{ route('admin.dashboard') }}" 
+                   class="flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors rounded-xl {{ request()->routeIs('admin.dashboard') ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'text-slate-400 hover:text-white hover:bg-white/5' }}">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    Dashboard
+                </a>
 
-    <div class="content-area">
-        @yield('content')
+                <div class="pt-4 pb-2">
+                    <p class="px-4 text-xs font-semibold tracking-wider text-slate-500 uppercase">Management</p>
+                </div>
+
+                <!-- Units -->
+                <div x-data="{ open: false }">
+                    <button @click="open = !open" 
+                            class="flex items-center justify-between w-full px-4 py-3 text-sm font-medium transition-colors text-slate-400 rounded-xl hover:text-white hover:bg-white/5 group">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="building-2" class="w-5 h-5 transition-colors group-hover:text-primary"></i>
+                            Units
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <div x-show="open" x-cloak x-collapse class="pl-12 pr-4 mt-1 space-y-1">
+                        <a href="#" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">Add Unit</a>
+                        <a href="#" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">View Units</a>
+                    </div>
+                </div>
+
+                <!-- Users -->
+                <div x-data="{ open: {{ request()->is('admin/users*') ? 'true' : 'false' }} }">
+                    <button @click="open = !open" 
+                            class="flex items-center justify-between w-full px-4 py-3 text-sm font-medium transition-colors text-slate-400 rounded-xl hover:text-white hover:bg-white/5 group">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="users" class="w-5 h-5 transition-colors group-hover:text-primary"></i>
+                            Users
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <div x-show="open" x-cloak x-collapse class="pl-12 pr-4 mt-1 space-y-1">
+                        <a href="{{ route('users.create') }}" class="block py-2 text-sm {{ request()->routeIs('users.create') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">Add User</a>
+                        <a href="{{ route('users.index') }}" class="block py-2 text-sm {{ request()->routeIs('users.index') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">View/Edit Users</a>
+                    </div>
+                </div>
+
+                         <!--Seats-->
+                <div x-data="{ open: {{ request()->is('admin/seats*') ? 'true' : 'false' }} }">
+                    <button @click="open = !open" 
+                            class="flex items-center justify-between w-full px-4 py-3 text-sm font-medium transition-colors text-slate-400 rounded-xl hover:text-white hover:bg-white/5 group">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="seat" class="w-5 h-5 transition-colors group-hover:text-primary"></i>
+                            Seats
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <div x-show="open" x-cloak x-collapse class="pl-12 pr-4 mt-1 space-y-1">
+                        <a href="" class="block py-2 text-sm {{ request()->routeIs('users.create') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">Add Seat</a>
+                        <a href="" class="block py-2 text-sm {{ request()->routeIs('users.index') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">View/Edit Seats</a>
+                        <a href="" class="block py-2 text-sm {{ request()->routeIs('users.index') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">Assign Seats</a>
+                    </div>
+                </div>
+
+                <!-- Petitions -->
+                <div x-data="{ open: false }">
+                    <button @click="open = !open" 
+                            class="flex items-center justify-between w-full px-4 py-3 text-sm font-medium transition-colors text-slate-400 rounded-xl hover:text-white hover:bg-white/5 group">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="file-text" class="w-5 h-5 transition-colors group-hover:text-primary"></i>
+                            Petitions
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <div x-show="open" x-cloak x-collapse class="pl-12 pr-4 mt-1 space-y-1">
+                        <a href="#" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">Pending</a>
+                        <a href="#" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">Verification</a>
+                    </div>
+                </div>
+
+                <div class="pt-6 mt-6 border-t border-slate-800">
+                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 transition-colors rounded-xl hover:text-white hover:bg-white/5">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                        Settings
+                    </a>
+                </div>
+            </nav>
+
+            <!-- Sidebar Footer -->
+            <div class="p-6 mt-auto">
+                <div class="px-4 py-4 rounded-2xl bg-slate-800/50 border border-slate-700/50">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span class="text-xs font-medium text-slate-400">System Online</span>
+                    </div>
+                    <p class="text-[11px] leading-relaxed text-slate-500">Last backup: 2 mins ago</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="lg:pl-72 flex flex-col min-h-screen">
+            <!-- Top Navigation -->
+            <header class="sticky top-0 z-30 flex items-center h-20 px-4 bg-white/80 backdrop-blur-md border-b border-slate-200 sm:px-6 lg:px-8">
+                <!-- Mobile Mobile Toggle -->
+                <button type="button" 
+                        class="p-2 -ml-2 text-slate-500 lg:hidden hover:text-slate-600 focus:outline-none"
+                        @click="sidebarOpen = true">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+
+                <div class="flex items-center justify-between flex-1 gap-x-4 lg:gap-x-6">
+                    <!-- Search -->
+                    <div class="relative flex-1 max-w-md">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                        </div>
+                        <input type="text" 
+                               class="block w-full py-2 pl-10 pr-3 text-sm border-0 rounded-xl bg-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all outline-none" 
+                               placeholder="Search anything...">
+                    </div>
+
+                    <div class="flex items-center gap-x-4 lg:gap-x-6">
+                        <!-- Notifications -->
+                        <button type="button" class="p-2 text-slate-400 transition-colors hover:text-slate-600 focus:outline-none relative">
+                            <i data-lucide="bell" class="w-6 h-6"></i>
+                            <span class="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+                        </button>
+
+                        <div class="w-px h-6 bg-slate-200"></div>
+
+                        <!-- User Profile Dropdown -->
+                        <div x-data="{ open: false }" class="relative">
+                            <button @click="open = !open" 
+                                    @click.away="open = false"
+                                    type="button" 
+                                    class="flex items-center gap-3 p-1 transition-all rounded-full hover:bg-slate-100 group">
+                                <img class="w-9 h-9 rounded-full ring-2 ring-white shadow-sm" 
+                                     src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'John Doe') }}&background=4361ee&color=fff" 
+                                     alt="Profile">
+                                <span class="hidden lg:flex lg:items-center">
+                                    <span class="text-sm font-semibold text-slate-700">{{ Auth::user()->name ?? 'Administrator' }}</span>
+                                    <i data-lucide="chevron-down" class="ml-2 w-4 h-4 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+                                </span>
+                            </button>
+
+                            <div x-show="open" 
+                                 x-cloak
+                                 x-transition:enter="transition ease-out duration-100"
+                                 x-transition:enter-start="transform opacity-0 scale-95"
+                                 x-transition:enter-end="transform opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-75"
+                                 x-transition:leave-start="transform opacity-100 scale-100"
+                                 x-transition:leave-end="transform opacity-0 scale-95"
+                                 class="absolute right-0 z-50 w-56 mt-2 origin-top-right bg-white border border-slate-200 divide-y divide-slate-100 rounded-2xl shadow-xl focus:outline-none">
+                                <div class="px-4 py-3">
+                                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Signed in as</p>
+                                    <p class="text-sm font-semibold text-slate-900 truncate">{{ Auth::user()->email ?? 'admin@example.com' }}</p>
+                                </div>
+                                <div class="py-1">
+                                    <a href="#" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                        <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+                                        My Profile
+                                    </a>
+                                    <a href="#" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                                        <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>
+                                        Account Settings
+                                    </a>
+                                </div>
+                                <div class="py-1">
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <button type="submit" class="flex items-center w-full gap-3 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-colors">
+                                            <i data-lucide="log-out" class="w-4 h-4 text-rose-500"></i>
+                                            Sign out
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Page Content -->
+            <main class="flex-1 overflow-x-hidden p-6 lg:p-10">
+                <div class="mx-auto max-w-7xl">
+                    @yield('content')
+                </div>
+            </main>
+            
+            <!-- Footer -->
+            <footer class="p-6 text-center border-t border-slate-200 text-slate-500 text-xs">
+                &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved. Created with <span class="text-rose-500">♥</span> for better management.
+            </footer>
+        </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const backdrop = document.getElementById('backdrop');
-        sidebar.classList.toggle('show');
-        backdrop.classList.toggle('show');
-        if(backdrop.style.display === 'block') {
-            backdrop.style.display = 'none';
-        } else {
-            backdrop.style.display = 'block';
-        }
-    }
-</script>
-
+    <!-- Lucide Initialization -->
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 </html>

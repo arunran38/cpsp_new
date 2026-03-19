@@ -2,220 +2,241 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Modern Admin Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | CPSP</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        :root {
-            --sidebar-width: 260px;
-            --primary-color: #4361ee;
-            --bg-light: #f8f9fa;
-            --dark-sidebar: #1e1e2d;
-        }
-
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-light);
-            overflow-x: hidden;
+            background: url('/images/login-bg.jpg') no-repeat center center fixed;
+            background-color: #0b0717; /* Fallback dark background */
+            background-size: cover;
+            color: #ffffff;
+        }
+        
+        .login-card {
+            background: rgba(26, 31, 39, 0.85); /* Dark solid-ish glass */
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+            width: 100%;
+            max-width: 360px;
+            padding: 2.5rem 2.5rem;
+            position: relative;
         }
 
-        /* Sidebar Styling */
-        .sidebar {
-            width: var(--sidebar-width);
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            background-color: var(--dark-sidebar);
-            transition: all 0.3s;
-            z-index: 1000;
-            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
-        }
-
-        .sidebar-header {
-            padding: 20px;
-            background: rgba(255,255,255,0.05);
-            font-weight: 600;
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
             letter-spacing: 1px;
+            color: #ffffff;
         }
 
-        .nav-link {
-            color: #a2a3b7 !important;
-            padding: 12px 20px;
+        .avatar-container {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
             display: flex;
             align-items: center;
-            border-radius: 8px;
-            margin: 4px 15px;
-            transition: 0.2s;
+            justify-content: center;
+            margin: 0 auto 30px auto;
+            background: transparent;
+            overflow: hidden;
         }
 
-        .nav-link:hover, .nav-link[aria-expanded="true"] {
-            background: rgba(255,255,255,0.08);
-            color: #fff !important;
+        .avatar-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
-        .nav-link.active-link {
-            background: var(--primary-color);
-            color: #fff !important;
+        .form-label {
+            font-size: 10px;
+            color: #ffffff;
+            margin-bottom: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .nav-link i {
-            margin-right: 12px;
-            font-size: 20px;
+        .input-group {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            height: 40px;
         }
 
-        .submenu {
-            background: rgba(0,0,0,0.2);
-            list-style: none;
-            padding: 5px 0;
+        .input-group:focus-within {
+            border: 1px solid rgba(255, 255, 255, 0.6);
         }
 
-        .submenu .nav-link {
-            padding-left: 52px;
-            font-size: 0.9rem;
-        }
-
-        /* Main Content Layout */
-        .main-wrapper {
-            margin-left: var(--sidebar-width);
-            transition: all 0.3s;
-        }
-
-        .top-nav {
-            background: #fff;
-            padding: 15px 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .content-area {
-            padding: 30px;
-        }
-
-        .stat-card {
+        .form-control {
+            background: #eef1f5; /* Light bluish-white input area */
             border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-            transition: transform 0.2s;
+            color: #000000;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: none !important;
+            flex: 1;
         }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
+        .form-control::placeholder {
+            color: #888888;
         }
 
-        /* Mobile Adjustments */
-        @media (max-width: 991.98px) {
-            .sidebar {
-                left: calc(-1 * var(--sidebar-width));
-            }
-            .main-wrapper {
-                margin-left: 0;
-            }
-            .sidebar.show {
-                left: 0;
-            }
+        .input-group-text {
+            background: transparent;
+            border: none;
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .input-group-text i {
+            font-size: 14px;
+        }
+
+        .mb-custom {
+            margin-bottom: 20px;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0;
+        }
+
+        .form-check-input {
+            background-color: transparent;
+            border-color: rgba(255, 255, 255, 0.4);
+            border-radius: 3px;
+            margin-top: 2px;
+            margin-right: 8px;
+            width: 14px;
+            height: 14px;
+        }
+
+        .form-check-input:checked {
+            background-color: #9061f9;
+            border-color: #9061f9;
+        }
+
+        .form-check-label {
+            font-size: 11px;
+            color: #ffffff;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .mb-4-spacer {
+            margin-bottom: 25px;
+            margin-top: 15px;
+        }
+
+        .btn-login {
+            background: #9b72e6; /* Solid bright purple matching the image */
+            border: none;
+            border-radius: 20px; /* Pill layout */
+            color: #ffffff;
+            padding: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(155, 114, 230, 0.3);
+        }
+
+        .btn-login:hover {
+            background: #8757db;
+            color: #ffffff;
+        }
+
+        .invalid-feedback {
+            font-size: 11px;
+            margin-top: 6px;
+            padding-left: 4px;
+            display: block;
+            color: #ff6b6b !important;
         }
     </style>
 </head>
 <body>
 
-<div class="offcanvas-backdrop fade" id="backdrop" onclick="toggleSidebar()"></div>
-
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header text-white d-flex align-items-center">
-        <i class="material-icons-round me-2 text-primary">dashboard_customize</i>
-        <span>ADMIN PRO</span>
-    </div>
-    
-    <div class="mt-4">
-        <a href="#" class="nav-link active-link">
-            <i class="material-icons-round">home</i> Dashboard
-        </a>
-
-        <a class="nav-link" data-bs-toggle="collapse" href="#unitsSub">
-            <i class="material-icons-round">apartment</i> Units
-            <i class="material-icons-round ms-auto fs-6">expand_more</i>
-        </a>
-        <ul class="collapse submenu" id="unitsSub">
-            <li><a href="#" class="nav-link">Add Unit</a></li>
-            <li><a href="#" class="nav-link">View/Edit Units</a></li>
-        </ul>
-
-        <a class="nav-link" data-bs-toggle="collapse" href="#usersSub">
-            <i class="material-icons-round">people</i> Users
-            <i class="material-icons-round ms-auto fs-6">expand_more</i>
-        </a>
-        <ul class="collapse submenu" id="usersSub">
-            <li><a href="{{ route('users.create') }}" class="nav-link">Add User</a></li>
-            <li><a href="#" class="nav-link">Assign Seats</a></li>
-        </ul>
-
-        <a class="nav-link" data-bs-toggle="collapse" href="#petSub">
-            <i class="material-icons-round">description</i> Petitions
-            <i class="material-icons-round ms-auto fs-6">expand_more</i>
-        </a>
-        <ul class="collapse submenu" id="petSub">
-            <li><a href="#" class="nav-link">Pending</a></li>
-            <li><a href="#" class="nav-link">Verification</a></li>
-        </ul>
-
-        <div class="border-top border-secondary my-3 mx-3 opacity-25"></div>
-
-        <a href="#" class="nav-link">
-            <i class="material-icons-round">settings</i> Settings
-        </a>
-    </div>
-</div>
-
-<div class="main-wrapper">
-    
-    <nav class="top-nav d-flex align-items-center justify-content-between">
-        <button class="btn btn-light d-lg-none" onclick="toggleSidebar()">
-            <i class="material-icons-round">menu</i>
-        </button>
+<div class="container d-flex align-items-center justify-content-center min-vh-100">
+    <div class="login-card">
+        <div class="logo-text">CPSP</div>
         
-        <div class="search-bar d-none d-md-block">
-            <div class="input-group">
-                <span class="input-group-text bg-light border-0"><i class="material-icons-round fs-6">search</i></span>
-                <input type="text" class="form-control bg-light border-0" placeholder="Search report...">
+        <div class="avatar-container">
+            <img src="{{ asset('images/logo.png') }}" alt="Kerala VACB Logo">
+        </div>
+
+        <form method="POST" action="">
+            @csrf
+
+            <div class="mb-custom">
+                <label class="form-label">PEN</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" name="pen" placeholder="963950" value="{{ old('pen') }}" autofocus>
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                </div>
+                @if($errors->has('pen'))
+                    <div class="invalid-feedback">{{ $errors->first('pen') }}</div>
+                @endif
             </div>
-        </div>
 
-        <div class="dropdown">
-            <a href="#" class="text-decoration-none text-dark d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown">
-                <img src="https://ui-avatars.com/api/?name=John+Doe&background=4361ee&color=fff" class="rounded-circle me-2" width="35">
-                <span class="fw-medium d-none d-sm-inline">John Doe</span>
+            <div class="mb-custom">
+                <label class="form-label">Password</label>
+                <div class="input-group">
+                    <input type="password" class="form-control" name="password" placeholder="••••••">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                </div>
+                @if($errors->has('password'))
+                    <div class="invalid-feedback">{{ $errors->first('password') }}</div>
+                @endif
+            </div>
+
+            <div class="form-check mb-4-spacer">
+                <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                <div>
+                    <label class="form-check-label" for="remember">
+                        Remember Me
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-login">
+                Login
+            </button>
+            <a href="{{ route('admin.dashboard') }}" class="btn btn-login mt-2">
+            Dashboard
             </a>
-            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3">
-                <li><a class="dropdown-item py-2" href="#"><i class="material-icons-round align-middle me-2 fs-6">person</i> Profile</a></li>
-                <li><a class="dropdown-item py-2 text-danger" href="#"><i class="material-icons-round align-middle me-2 fs-6">logout</i> Logout</a></li>
-            </ul>
-        </div>
-    </nav>
-
-    <div class="content-area">
-        @yield('content')
+        </form>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const backdrop = document.getElementById('backdrop');
-        sidebar.classList.toggle('show');
-        backdrop.classList.toggle('show');
-        if(backdrop.style.display === 'block') {
-            backdrop.style.display = 'none';
-        } else {
-            backdrop.style.display = 'block';
-        }
-    }
-</script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>
