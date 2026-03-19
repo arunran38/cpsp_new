@@ -15,9 +15,20 @@ use Illuminate\Notifications\Notifiable;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
+    protected $primaryKey = 'user_id';
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'mobile_number',
+        'role',
+        'designation',
+        'other_designation',
+    ];
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
     
+
 
     /**
      * Get the attributes that should be cast.
