@@ -229,7 +229,10 @@
                 Login
             </button>
             <a href="{{ route('admin.dashboard') }}" class="btn btn-login mt-2">
-            Dashboard
+            Admin Dashboard
+            </a>
+            <a href="{{ route('user.dashboard') }}" class="btn btn-login mt-2">
+            User Dashboard
             </a>
         </form>
     </div>

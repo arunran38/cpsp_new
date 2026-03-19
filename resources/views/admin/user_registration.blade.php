@@ -31,6 +31,11 @@
                     <x-input label="Temporary Password" name="password" type="password" placeholder="Create a secure password" required icon="lock" />
                 </div>
 
+                <!--Upload Photo-->
+                <div class="sm:col-span-2">
+                    <x-input label="Upload Photo" name="photo" type="file" required icon="image" />
+                </div> 
+
                 <!-- Role -->
                 <x-select 
                     label="Access Role" 
