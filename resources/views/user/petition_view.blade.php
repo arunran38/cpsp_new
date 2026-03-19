@@ -76,13 +76,13 @@
                                         <i data-lucide="eye" class="w-4 h-4"></i>
                                     </a>
                                     <a href="{{ route('petitions.edit', $petition->petition_id) }}" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit Record">
-                                        <i data-lucide="edit-2" class="w-4 h-4"></i>
+                                        <i data-lucide="pencil" class="w-4 h-4"></i>
                                     </a>
                                     <form action="{{ route('petitions.destroy', $petition->petition_id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete Record">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            <i data-lucide="trash" class="w-4 h-4"></i>
                                         </button>
                                     </form>
                                 </div>

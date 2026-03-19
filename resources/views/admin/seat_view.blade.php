@@ -67,7 +67,7 @@
                                     <a href="{{ route('admin.seats.edit', $seat->seat_id) }}" 
                                        class="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
                                        title="Edit Seat">
-                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                        <i data-lucide="pencil" class="w-4 h-4"></i>
                                     </a>
                                     <form method="POST" action="{{ route('admin.seats.destroy', $seat->seat_id) }}" class="inline-block">
                                         @csrf
@@ -76,7 +76,7 @@
                                                 class="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-all duration-200"
                                                 onclick="return confirm('Are you sure you want to delete this seat?')"
                                                 title="Delete Seat">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            <i data-lucide="trash" class="w-4 h-4"></i>
                                         </button>
                                     </form>
                                 </div>
