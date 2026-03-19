@@ -26,12 +26,18 @@ class User extends Authenticatable
         'role',
         'designation',
         'other_designation',
+        'pen',
         'photo',
     ];
 
-    public function photo()
+    public function profilePhoto()
     {
-        return $this->hasOne(Upload::class, 'upload_id', 'photo');
+        return $this->belongsTo(Upload::class, 'photo', 'upload_id');
+    }
+
+    public function seatUsers()
+    {
+        return $this->hasMany(SeatUser::class, 'user_id', 'user_id');
     }
 
     /** @use HasFactory<UserFactory> */

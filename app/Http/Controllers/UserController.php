@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 
 use App\Models\User;
+use App\Models\Upload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+
+
  
     public function index()
     {
@@ -29,7 +32,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'mobile_number' => 'required|string|max:255',
             'role' => 'required|string|max:255',
-            'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'designation' => 'required|string|max:255',
             'other_designation' => 'nullable|string|max:255',
             'password' => 'required|string|min:3',
@@ -41,14 +44,27 @@ class UserController extends Controller
         $user->email = $request->email;
         $user->mobile_number = $request->mobile_number;
         $user->role = $request->role;
-        if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('photos', 'public');
-            $user->photo = $photoPath;
-        }
         $user->designation = $request->designation;
         $user->other_designation = $request->other_designation;
         $user->password = Hash::make($request->password);
         $user->save();
+
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            $originalName = $file->getClientOriginalName();
+            $path = $file->store('profile_photos', 'public');
+            
+            $upload = Upload::create([
+                'petition_id' => null,
+                'category' => 'Profile Photo',
+                'original_filename' => $originalName,
+                'file_path' => $path,
+                'uploaded_by' => $user->user_id,
+            ]);
+            
+            $user->photo = $upload->upload_id;
+            $user->save();
+        }
         
         return redirect()->route("users.index")->with('success', 'User registered successfully.');
     }
@@ -76,6 +92,19 @@ class UserController extends Controller
         try {
             $userId = decrypt($id);
             $user = User::findOrFail($userId);
+
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'pen' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users,email,' . $user->user_id . ',user_id',
+                'mobile_number' => 'nullable|string|max:255',
+                'role' => 'required|string|max:255',
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'designation' => 'required|string|max:255',
+                'other_designation' => 'nullable|string|max:255',
+                'password' => 'nullable|string|min:3',
+            ]);
+
             $user->name = $request->name;
             $user->pen = $request->pen;
             $user->email = $request->email;
@@ -84,6 +113,23 @@ class UserController extends Controller
             $user->designation = $request->designation;
             $user->other_designation = $request->other_designation;
             
+            if ($request->hasFile('photo')) {
+                // Store new photo
+                $file = $request->file('photo');
+                $originalName = $file->getClientOriginalName();
+                $path = $file->store('profile_photos', 'public');
+                
+                $upload = Upload::create([
+                    'petition_id' => null,
+                    'category' => 'Profile Photo',
+                    'original_filename' => $originalName,
+                    'file_path' => $path,
+                    'uploaded_by' => $user->user_id,
+                ]);
+                
+                $user->photo = $upload->upload_id;
+            }
+
             if ($request->filled('password')) {
                 $user->password = Hash::make($request->password);
             }
@@ -92,7 +138,8 @@ class UserController extends Controller
             
             return redirect()->route("users.index")->with('success', 'User updated successfully.');
         } catch (\Exception $e) {
-            return redirect()->route("users.index")->with('error', 'Failed to update user.');
+            Log::error('User update failed: ' . $e->getMessage());
+            return redirect()->route("users.index")->with('error', 'Failed to update user: ' . $e->getMessage());
         }
     }
 

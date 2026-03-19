@@ -70,8 +70,8 @@
                         <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
                     </button>
                     <div x-show="open" x-cloak x-collapse class="pl-12 pr-4 mt-1 space-y-1">
-                        <a href="#" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">Add Unit</a>
-                        <a href="#" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">View Units</a>
+                        <a href="{{ route('admin.units.create') }}" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">Add Unit</a>
+                        <a href="{{ route('admin.units.index') }}" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">View Units</a>
                     </div>
                 </div>
 
@@ -102,9 +102,9 @@
                         <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
                     </button>
                     <div x-show="open" x-cloak x-collapse class="pl-12 pr-4 mt-1 space-y-1">
-                        <a href="" class="block py-2 text-sm {{ request()->routeIs('users.create') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">Add Seat</a>
-                        <a href="" class="block py-2 text-sm {{ request()->routeIs('users.index') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">View/Edit Seats</a>
-                        <a href="" class="block py-2 text-sm {{ request()->routeIs('users.index') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">Assign Seats</a>
+                        <a href="{{ route('admin.seats.create') }}" class="block py-2 text-sm {{ request()->routeIs('admin.seats.create') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">Add Seat</a>
+                        <a href="{{ route('admin.seats.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.seats.index') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">View/Edit Seats</a>
+                        <a href="{{ route('admin.seatuser.index') }}" class="block py-2 text-sm {{ request()->routeIs('admin.seatuser.index') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">Assign Seats</a>
                     </div>
                 </div>
 

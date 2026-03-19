@@ -10,6 +10,8 @@ use App\Models\Address;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class PetitionController extends Controller
 {
@@ -20,14 +22,20 @@ class PetitionController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        Log::info('Petition Store Request:', $request->all());
+        
+        $validator = Validator::make($request->all(), [
             'petition_no' => 'required|unique:petitions,petition_no',
             'date_of_petition_received' => 'required|date',
             'nature_of_petition' => 'required',
             'mode_of_petition_received' => 'required',
             'description' => 'required',
-            // Validate arrays if necessary
         ]);
+
+        if ($validator->fails()) {
+            Log::warning('Petition Validation Failed:', $validator->errors()->toArray());
+            return back()->withErrors($validator)->withInput();
+        }
 
         DB::beginTransaction();
 
@@ -62,8 +70,6 @@ class PetitionController extends Controller
 
                     Upload::create([
                         'petition_id' => $petition->petition_id,
-                        'uploadable_id' => $petition->petition_id,
-                        'uploadable_type' => Petition::class,
                         'category' => 'Petition Document',
                         'original_filename' => $file->getClientOriginalName(),
                         'file_path' => $path,
