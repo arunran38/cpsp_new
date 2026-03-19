@@ -82,7 +82,7 @@
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
-                                                class="p-2 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all duration-200"
+                                                class="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-all duration-200"
                                                 onclick="return confirm('Are you sure you want to revoke this seat assignment?')"
                                                 title="Revoke Assignment">
                                             <i data-lucide="x-circle" class="w-4 h-4"></i>
