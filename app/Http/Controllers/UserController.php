@@ -29,6 +29,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'mobile_number' => 'required|string|max:255',
             'role' => 'required|string|max:255',
+            'photo' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'designation' => 'required|string|max:255',
             'other_designation' => 'nullable|string|max:255',
             'password' => 'required|string|min:3',
@@ -40,6 +41,10 @@ class UserController extends Controller
         $user->email = $request->email;
         $user->mobile_number = $request->mobile_number;
         $user->role = $request->role;
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('photos', 'public');
+            $user->photo = $photoPath;
+        }
         $user->designation = $request->designation;
         $user->other_designation = $request->other_designation;
         $user->password = Hash::make($request->password);

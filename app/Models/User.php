@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Upload;
 
 
 #[Fillable(['name', 'email', 'password'])]
@@ -16,6 +17,7 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     protected $primaryKey = 'user_id';
+
     protected $fillable = [
         'name',
         'email',
@@ -24,7 +26,14 @@ class User extends Authenticatable
         'role',
         'designation',
         'other_designation',
+        'photo',
     ];
+
+    public function photo()
+    {
+        return $this->hasOne(Upload::class, 'upload_id', 'photo');
+    }
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
     
