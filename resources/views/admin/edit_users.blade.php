@@ -13,11 +13,29 @@
     </div>
 
     <div class="p-8 bg-white border border-slate-200 rounded-3xl shadow-sm" x-data="{ designation: '{{ $user->designation }}' }">
-        <form method="POST" action="{{ route('users.update', $user->user_id) }}" class="space-y-8">
+        <form method="POST" action="{{ route('users.update', encrypt($user->user_id)) }}" enctype="multipart/form-data" class="space-y-8">
             @csrf
             @method('PUT')
 
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <!-- Current Photo -->
+                @if($user->profilePhoto)
+                <div class="sm:col-span-2 flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <img src="{{ asset('storage/' . $user->profilePhoto->file_path) }}" 
+                         alt="Current Profile" 
+                         class="w-16 h-16 rounded-xl object-cover border-2 border-white shadow-sm">
+                    <div>
+                        <p class="text-sm font-semibold text-slate-700">Current Photo</p>
+                        <p class="text-xs text-slate-500">Keep as is or upload a new one below.</p>
+                    </div>
+                </div>
+                @endif
+
+                <!-- Upload New Photo -->
+                <div class="sm:col-span-2">
+                    <x-input label="Update Photo" name="photo" type="file" icon="image" />
+                </div>
+
                 <!-- Name -->
                 <div class="sm:col-span-2">
                     <x-input label="Full Name" name="name" :value="$user->name" required icon="user" />
@@ -25,7 +43,7 @@
 
                 <!-- PEN & Mobile -->
                 <x-input label="PEN" name="pen" :value="$user->pen" required icon="hash" />
-                <x-input label="Mobile Number" name="mobile_number" :value="$user->mobile_number" icon="smartphone" />
+                <x-input label="Mobile Number" name="mobile_number" :value="$user->mobile_number" required icon="smartphone" />
 
                 <!-- Email -->
                 <div class="sm:col-span-2">
@@ -35,6 +53,11 @@
                 <!-- Password -->
                 <div class="sm:col-span-2">
                     <x-input label="Change Password" name="password" type="password" placeholder="Leave blank to keep current" icon="lock" />
+                </div>
+
+                <!-- Upload New Photo -->
+                <div class="sm:col-span-2">
+                    <x-input label="Update Photo" name="photo" type="file" icon="image" />
                 </div>
 
                 <!-- Role -->

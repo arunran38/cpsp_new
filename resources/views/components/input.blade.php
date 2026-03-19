@@ -12,7 +12,7 @@
             type="{{ $type }}" 
             id="{{ $name }}" 
             name="{{ $name }}" 
-            value="{{ old($name, $value) }}"
+            @if($type !== 'file') value="{{ old($name, $value) }}" @endif
             placeholder="{{ $placeholder }}"
             x-ref="input"
             @input="count = $event.target.value.length"

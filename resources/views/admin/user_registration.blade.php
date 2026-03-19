@@ -8,7 +8,7 @@
     </div>
 
     <div class="p-8 bg-white border border-slate-200 rounded-3xl shadow-sm">
-        <form method="POST" action="{{ route('users.store') }}" class="space-y-8">
+        <form method="POST" action="{{ route('users.store') }}" class="space-y-8" enctype="multipart/form-data" >
             @csrf
 
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">

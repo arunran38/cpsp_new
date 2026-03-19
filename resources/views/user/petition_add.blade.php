@@ -193,10 +193,10 @@
                             <!-- Fields -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                 <div>
-                                    <x-input label="Full Name" name="comp_name" ::name="`complainants[${index}][name]`" x-model="comp.name" required placeholder="Legal Name" />
+                                    <x-input label="Full Name" name="comp_name" ::name="`complainants[${index}][name]`" x-model="comp.name" ::required="step === 2" placeholder="Legal Name" />
                                 </div>
                                 <div>
-                                    <x-input label="Phone Number" name="comp_phone" ::name="`complainants[${index}][phone]`" x-model="comp.phone" required placeholder="10-digit Mobile" />
+                                    <x-input label="Phone Number" name="comp_phone" ::name="`complainants[${index}][phone]`" x-model="comp.phone" ::required="step === 2" placeholder="10-digit Mobile" />
                                 </div>
                                 <div>
                                     <x-input label="Aadhar Number" name="comp_aadhar" ::name="`complainants[${index}][aadhar]`" x-model="comp.aadhar" placeholder="12-digit Aadhar" />
@@ -225,14 +225,14 @@
                                                     </select>
                                                 </div>
                                                 <div class="lg:col-span-2">
-                                                    <x-input label="Street Address *" name="comp_address" ::name="`complainants[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" required placeholder="House No, Street, Locality" />
+                                                    <x-input label="Street Address *" name="comp_address" ::name="`complainants[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" ::required="step === 2" placeholder="House No, Street, Locality" />
                                                 </div>
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <x-input label="District *" name="comp_district" ::name="`complainants[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" required placeholder="District" />
+                                                        <x-input label="District *" name="comp_district" ::name="`complainants[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" ::required="step === 2" placeholder="District" />
                                                     </div>
                                                     <div>
-                                                        <x-input label="Pincode *" name="comp_pincode" ::name="`complainants[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" required placeholder="Code" />
+                                                        <x-input label="Pincode *" name="comp_pincode" ::name="`complainants[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" ::required="step === 2" placeholder="Code" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -295,7 +295,7 @@
                             <!-- Fields -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                 <div>
-                                    <x-input label="Full Name *" name="acc_name" ::name="`accused[${index}][name]`" x-model="acc.name" placeholder="Legal Name" />
+                                    <x-input label="Full Name *" name="acc_name" ::name="`accused[${index}][name]`" x-model="acc.name" ::required="step === 3" placeholder="Legal Name" />
                                 </div>
                                 <div>
                                     <x-input label="Phone Number" name="acc_phone" ::name="`accused[${index}][phone]`" x-model="acc.phone" placeholder="Optional Mobile" />
@@ -327,14 +327,14 @@
                                                     </select>
                                                 </div>
                                                 <div class="lg:col-span-2">
-                                                    <x-input label="Street Address" name="acc_address" ::name="`accused[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" placeholder="House No, Street, Locality" />
+                                                    <x-input label="Street Address" name="acc_address" ::name="`accused[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" ::required="step === 3" placeholder="House No, Street, Locality" />
                                                 </div>
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <x-input label="District" name="acc_district" ::name="`accused[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" placeholder="District" />
+                                                        <x-input label="District" name="acc_district" ::name="`accused[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" ::required="step === 3" placeholder="District" />
                                                     </div>
                                                     <div>
-                                                        <x-input label="Pincode" name="acc_pincode" ::name="`accused[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" placeholder="Code" />
+                                                        <x-input label="Pincode" name="acc_pincode" ::name="`accused[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" ::required="step === 3" placeholder="Code" />
                                                     </div>
                                                 </div>
                                             </div>
