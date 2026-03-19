@@ -72,16 +72,16 @@
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-2">
-                                    <a href="{{ route('petitions.show', $petition->petition_id) }}" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors" title="View Details">
+                                    <a href="{{ route('petitions.show', $petition->petition_id) }}" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors" title="View Details">
                                         <i data-lucide="eye" class="w-4 h-4"></i>
                                     </a>
-                                    <a href="{{ route('petitions.edit', $petition->petition_id) }}" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors" title="Edit Record">
+                                    <a href="{{ route('petitions.edit', $petition->petition_id) }}" class="p-2 text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors" title="Edit Record">
                                         <i data-lucide="edit-2" class="w-4 h-4"></i>
                                     </a>
                                     <form action="{{ route('petitions.destroy', $petition->petition_id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition-colors" title="Delete Record">
+                                        <button type="submit" class="p-2 text-slate-600 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition-colors" title="Delete Record">
                                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                                         </button>
                                     </form>
