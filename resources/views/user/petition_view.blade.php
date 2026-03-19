@@ -72,17 +72,17 @@
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-2">
-                                    <a href="{{ route('petitions.show', $petition->petition_id) }}" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="View Details">
-                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                    <a href="{{ route('petitions.show', $petition->petition_id) }}" class="text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-colors" title="View Details">
+                                        View
                                     </a>
-                                    <a href="{{ route('petitions.edit', $petition->petition_id) }}" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit Record">
-                                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                                    <a href="{{ route('petitions.edit', $petition->petition_id) }}" class="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors" title="Edit Record">
+                                        Edit
                                     </a>
                                     <form action="{{ route('petitions.destroy', $petition->petition_id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete Record">
-                                            <i data-lucide="trash" class="w-4 h-4"></i>
+                                        <button type="submit" class="text-sm font-bold text-rose-600 hover:text-rose-700 transition-colors" title="Delete Record">
+                                            Delete
                                         </button>
                                     </form>
                                 </div>

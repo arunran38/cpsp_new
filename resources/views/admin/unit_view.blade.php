@@ -46,18 +46,18 @@
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <a href="{{ route('admin.units.edit', $unit->unit_id) }}" 
-                                       class="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                                       class="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors"
                                        title="Edit Unit">
-                                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                                        Edit
                                     </a>
                                     <form method="POST" action="{{ route('admin.units.destroy', $unit->unit_id) }}" class="inline-block">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
-                                                class="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-all duration-200"
+                                                class="text-sm font-bold text-rose-600 hover:text-rose-700 transition-colors"
                                                 onclick="return confirm('Are you sure you want to delete this unit?')"
                                                 title="Delete Unit">
-                                            <i data-lucide="trash" class="w-4 h-4"></i>
+                                            Delete
                                         </button>
                                     </form>
                                 </div>
