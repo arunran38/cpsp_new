@@ -19,7 +19,7 @@
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <!-- Stat Card 1 -->
-        <div class="p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
+        <a href="{{ route('petitions.index') }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
             <div class="flex items-center justify-between">
                 <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                     <i data-lucide="file-text" class="w-6 h-6"></i>
@@ -33,13 +33,13 @@
                 <h3 class="text-sm font-medium text-slate-500">Total Petitions</h3>
                 <p class="text-2xl font-bold text-slate-900 mt-1">124</p>
             </div>
-        </div>
+        </a>
 
         <!-- Stat Card 2 -->
-        <div class="p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
+        <a href="{{ route('admin.petitions.forwarded') }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
             <div class="flex items-center justify-between">
                 <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                    <i data-lucide="clock" class="w-6 h-6"></i>
+                    <i data-lucide="send" class="w-6 h-6"></i>
                 </div>
                 <span class="flex items-center gap-1 text-sm font-medium text-rose-600 bg-rose-50 px-2 py-1 rounded-lg">
                     <i data-lucide="trending-down" class="w-3 h-3"></i>
@@ -47,16 +47,16 @@
                 </span>
             </div>
             <div class="mt-4">
-                <h3 class="text-sm font-medium text-slate-500">Pending Review</h3>
+                <h3 class="text-sm font-medium text-slate-500">Forwarded</h3>
                 <p class="text-2xl font-bold text-slate-900 mt-1">18</p>
             </div>
-        </div>
+        </a>
 
         <!-- Stat Card 3 -->
-        <div class="p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
+        <a href="{{ route('admin.petitions.vrs') }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
             <div class="flex items-center justify-between">
-                <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                    <i data-lucide="check-circle" class="w-6 h-6"></i>
+                <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                    <i data-lucide="file-check" class="w-6 h-6"></i>
                 </div>
                 <span class="flex items-center gap-1 text-sm font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
                     <i data-lucide="trending-up" class="w-3 h-3"></i>
@@ -64,16 +64,16 @@
                 </span>
             </div>
             <div class="mt-4">
-                <h3 class="text-sm font-medium text-slate-500">Approved</h3>
+                <h3 class="text-sm font-medium text-slate-500">VRs Received</h3>
                 <p class="text-2xl font-bold text-slate-900 mt-1">92</p>
             </div>
-        </div>
+        </a>
 
         <!-- Stat Card 4 -->
-        <div class="p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
+        <a href="{{ route('admin.petitions.decisions') }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
             <div class="flex items-center justify-between">
-                <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-purple-50 text-purple-600">
-                    <i data-lucide="message-square" class="w-6 h-6"></i>
+                <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                    <i data-lucide="check-square" class="w-6 h-6"></i>
                 </div>
                 <span class="flex items-center gap-1 text-sm font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
                     <i data-lucide="trending-up" class="w-3 h-3"></i>
@@ -81,10 +81,10 @@
                 </span>
             </div>
             <div class="mt-4">
-                <h3 class="text-sm font-medium text-slate-500">New Messages</h3>
+                <h3 class="text-sm font-medium text-slate-500">Final Decisions</h3>
                 <p class="text-2xl font-bold text-slate-900 mt-1">14</p>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- Main Content Grid -->

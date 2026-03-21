@@ -106,7 +106,7 @@ class PetitionController extends Controller
                         'petition_id' => $petitionId,
                         'person_name' => $personName,
                         'person_type' => $personType,
-                        'address_type' => $addr['type'] ?? 'Temporary',
+                        'address_type' => $addr['address_type'] ?? 'Temporary',
                         'is_primary' => ($index === 0), // First address is primary
                         'phone' => $phone,
                         'Aadhar_number' => $aadhar,
@@ -121,8 +121,26 @@ class PetitionController extends Controller
 
     public function index()
     {
-        $petitions = Petition::with('addresses')->orderBy('created_at', 'desc')->get();
+        $petitions = Petition::with(['addresses', 'latestForwarding', 'decision'])->orderBy('created_at', 'desc')->get();
         return view('user.petition_view', compact('petitions')); // Assuming index view name
+    }
+
+    public function forwardedPetitions()
+    {
+        $petitions = Petition::with(['addresses', 'latestForwarding.toUnit'])->where('status', 'Forwarded')->orderBy('updated_at', 'desc')->get();
+        return view('user.forwardings_view', compact('petitions'));
+    }
+
+    public function verificationReports()
+    {
+        $petitions = Petition::with(['addresses', 'latestForwarding.toUnit'])->whereIn('status', ['VR_Received'])->orderBy('updated_at', 'desc')->get();
+        return view('user.vr_view', compact('petitions'));
+    }
+
+    public function decisions()
+    {
+        $petitions = Petition::with(['addresses', 'decision'])->whereIn('status', ['Sent_to_Govt', 'Closed'])->orderBy('updated_at', 'desc')->get();
+        return view('user.decisions_view', compact('petitions'));
     }
 
     public function show($id)
@@ -134,32 +152,98 @@ class PetitionController extends Controller
     public function edit($id)
     {
         $petition = Petition::with(['addresses', 'uploads'])->findOrFail($id);
-        return view('user.petition_edit', compact('petition')); // Assuming edit view name
+        
+        // Format addresses for Alpine.js
+        $complainants = $petition->addresses->where('person_type', 'Complainant')->groupBy('person_name')
+            ->map(function ($addresses, $name) {
+                $first = $addresses->first();
+                return [
+                    'id' => rand(1000, 9999),
+                    'name' => $name,
+                    'phone' => $first->phone,
+                    'aadhar' => $first->Aadhar_number,
+                    'addresses' => $addresses->map(function ($addr) {
+                        return [
+                            'address_type' => $addr->address_type,
+                            'address' => $addr->full_address,
+                            'district' => $addr->district,
+                            'pincode' => $addr->pincode,
+                        ];
+                    })->values()->toArray()
+                ];
+            })->values()->toArray();
+
+        $accused = $petition->addresses->where('person_type', 'Accused')->groupBy('person_name')
+            ->map(function ($addresses, $name) {
+                $first = $addresses->first();
+                return [
+                    'id' => rand(1000, 9999),
+                    'name' => $name,
+                    'phone' => $first->phone,
+                    'aadhar' => $first->Aadhar_number,
+                    'addresses' => $addresses->map(function ($addr) {
+                        return [
+                            'address_type' => $addr->address_type,
+                            'address' => $addr->full_address,
+                            'district' => $addr->district,
+                            'pincode' => $addr->pincode,
+                        ];
+                    })->values()->toArray()
+                ];
+            })->values()->toArray();
+
+        return view('user.petition_edit', compact('petition', 'complainants', 'accused'));
     }
 
     public function update(Request $request, $id)
     {
         $petition = Petition::findOrFail($id);
 
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'petition_no' => 'required|unique:petitions,petition_no,' . $id . ',petition_id',
             'date_of_petition_received' => 'required|date',
+            'nature_of_petition' => 'required',
             'mode_of_petition_received' => 'required',
-
+            'description' => 'required',
         ]);
 
-        // Basic update for petition data. Handling full nested data update requires similar logic to store.
-        $petition->update([
-            'petition_no' => $request->petition_no,
-            'date_of_petition_received' => $request->date_of_petition_received,
-            'nature_of_petition' => $request->nature_of_petition,
-            'mode_of_petition_received' => $request->mode_of_petition_received,
-            'mode_of_petition_received_others' => $request->mode_others ?? null,
-            'description' => $request->description,
-            'proposed_action' => $request->proposed_action ?? $petition->proposed_action,
-        ]);
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
 
-        return redirect()->route('petitions.index')->with('success', 'Petition updated successfully.');
+        DB::beginTransaction();
+
+        try {
+            // 1. Update Petition
+            $petition->update([
+                'petition_no' => $request->petition_no,
+                'date_of_petition_received' => $request->date_of_petition_received,
+                'nature_of_petition' => $request->nature_of_petition,
+                'mode_of_petition_received' => $request->mode_of_petition_received,
+                'mode_of_petition_received_others' => $request->mode_others ?? null,
+                'description' => $request->description,
+                'proposed_action' => $request->proposed_action ?? $petition->proposed_action,
+            ]);
+
+            // 2. Clear existing addresses to rebuild them
+            Address::where('petition_id', $petition->petition_id)->delete();
+
+            // 3. Re-process Complainants & Accused
+            if ($request->has('complainants') && is_array($request->complainants)) {
+                $this->processPersons($request->complainants, 'Complainant', $petition->petition_id);
+            }
+
+            if ($request->has('accused') && is_array($request->accused)) {
+                $this->processPersons($request->accused, 'Accused', $petition->petition_id);
+            }
+
+            DB::commit();
+            return redirect()->route('petitions.index')->with('success', 'Petition updated successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Update Failed: ' . $e->getMessage())->withInput();
+        }
     }
 
     public function destroy($id)

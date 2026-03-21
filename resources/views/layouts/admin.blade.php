@@ -21,6 +21,7 @@
 <body class="h-full font-sans antialiased text-slate-900" x-data="{ sidebarOpen: false }">
 
     <div class="min-h-full">
+        @auth
         <!-- Mobile Sidebar Overlay -->
         <div x-show="sidebarOpen" 
              x-transition:enter="transition-opacity ease-linear duration-300"
@@ -109,7 +110,7 @@
                 </div>
 
                 <!-- Petitions -->
-                <div x-data="{ open: false }">
+                <div x-data="{ open: {{ request()->is('petitions*') || request()->is('admin/petitions*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" 
                             class="flex items-center justify-between w-full px-4 py-3 text-sm font-medium transition-colors text-slate-400 rounded-xl hover:text-white hover:bg-white/5 group">
                         <div class="flex items-center gap-3">
@@ -119,8 +120,10 @@
                         <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
                     </button>
                     <div x-show="open" x-cloak x-collapse class="pl-12 pr-4 mt-1 space-y-1">
-                        <a href="#" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">Pending</a>
-                        <a href="#" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">Verification</a>
+                        <a href="{{ route('petitions.index') }}" class="block py-2 text-sm {{ request()->routeIs('petitions.index') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">All Petitions</a>
+                        <a href="{{ route('admin.petitions.forwarded') }}" class="block py-2 text-sm {{ request()->routeIs('admin.petitions.forwarded') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">Forwarded to Units</a>
+                        <a href="{{ route('admin.petitions.vrs') }}" class="block py-2 text-sm {{ request()->routeIs('admin.petitions.vrs') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">Verification Reports</a>
+                        <a href="{{ route('admin.petitions.decisions') }}" class="block py-2 text-sm {{ request()->routeIs('admin.petitions.decisions') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">Final Decisions</a>
                     </div>
                 </div>
 
@@ -143,9 +146,11 @@
                 </div>
             </div>
         </aside>
+        @endauth
 
         <!-- Main Content Area -->
-        <div class="lg:pl-72 flex flex-col min-h-screen">
+        <div class="{{ Auth::check() ? 'lg:pl-72' : '' }} flex flex-col min-h-screen">
+            @auth
             <!-- Top Navigation -->
             <header class="sticky top-0 z-30 flex items-center h-20 px-4 bg-white/80 backdrop-blur-md border-b border-slate-200 sm:px-6 lg:px-8">
                 <!-- Mobile Mobile Toggle -->
@@ -227,6 +232,7 @@
                     </div>
                 </div>
             </header>
+            @endauth
 
             <!-- Main Page Content -->
             <main class="flex-1 overflow-x-hidden p-6 lg:p-10">

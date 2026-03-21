@@ -30,4 +30,19 @@ class Petition extends Model
     {
         return $this->hasMany(Upload::class, 'petition_id');
     }
+
+    public function forwardings()
+    {
+        return $this->hasMany(PetitionForwarding::class, 'petition_id', 'petition_id')->orderBy('created_at', 'desc');
+    }
+
+    public function latestForwarding()
+    {
+        return $this->hasOne(PetitionForwarding::class, 'petition_id', 'petition_id')->latestOfMany('petition_forwarding_id');
+    }
+
+    public function decision()
+    {
+        return $this->hasOne(Decision::class, 'petition_id', 'petition_id');
+    }
 }
