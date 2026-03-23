@@ -34,4 +34,8 @@ class PetitionForwarding extends Model
     {
         return $this->belongsTo(Unit::class, 'to_unit_id', 'unit_id');
     }
+    public static function countOfVr()
+    {
+       return self::whereNotNull('vr_ref_no')->count();
+    }
 }

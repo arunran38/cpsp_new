@@ -5,10 +5,9 @@
     <!-- Page Header -->
     <div class="flex flex-col gap-1">
         <h1 class="text-2xl font-bold tracking-tight text-slate-900">Edit Seat</h1>
-        <p class="text-sm text-slate-500">Update seat details and manage unit assignments.</p>
-    </div>
+     </div>
 
-    <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+    <div class="bg-white border border-slate-200 rounded-3xl shadow-sm">
         <form method="POST" action="{{ route('admin.seats.update', $seat->seat_id) }}" class="p-8 space-y-6">
             @csrf
             @method('PUT')
@@ -36,25 +35,15 @@
                 </div>
             </div>
 
-            <!-- Unit Assignment (Checkboxes) -->
+            <!-- Unit Assignment (Searchable Multiselect) -->
             <div class="space-y-4">
-                <label class="text-sm font-bold text-slate-700">Assign to Units</label>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @php
-                        $assignedUnits = $seat->units->pluck('unit_id')->toArray();
-                    @endphp
-                    @foreach($units as $unit)
-                        <label class="relative flex items-center p-4 border border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors group">
-                            <input type="checkbox" name="unit_ids[]" value="{{ $unit->unit_id }}" 
-                                   {{ (is_array(old('unit_ids')) && in_array($unit->unit_id, old('unit_ids'))) || in_array($unit->unit_id, $assignedUnits) ? 'checked' : '' }}
-                                   class="w-5 h-5 text-primary border-slate-300 rounded focus:ring-primary/20">
-                            <div class="ml-3">
-                                <span class="block text-sm font-bold text-slate-900 group-hover:text-primary transition-colors">{{ $unit->unit_name }}</span>
-                                <span class="block text-[10px] text-slate-500 uppercase font-bold tracking-wider">{{ $unit->unit_code }}</span>
-                            </div>
-                        </label>
-                    @endforeach
-                </div>
+                <x-searchable-multiselect 
+                    label="Assign to Units" 
+                    name="unit_ids" 
+                    :options="$units->mapWithKeys(fn($unit) => [$unit->unit_id => $unit->unit_name . ' (' . $unit->unit_code . ')'])->toArray()"
+                    :selected="old('unit_ids', $seat->units->pluck('unit_id')->toArray())"
+                    placeholder="Search and select units..."
+                />
                 @error('unit_ids')
                     <p class="text-xs text-rose-500 mt-1">{{ $message }}</p>
                 @enderror
@@ -66,7 +55,7 @@
                     Cancel
                 </a>
                 <button type="submit" 
-                        class="px-6 py-2.5 text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-lg shadow-primary/20 transition-all">
+                        class="px-6 py-2.5 text-sm font-bold text-slate-600 bg-primary hover:bg-primary-hover rounded-xl shadow-lg shadow-primary/20 transition-all">
                     Update Seat
                 </button>
             </div>

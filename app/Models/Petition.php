@@ -31,6 +31,13 @@ class Petition extends Model
         return $this->hasMany(Upload::class, 'petition_id');
     }
 
+    /**
+     * The number of models to return for pagination.
+     *
+     * @var int
+     */
+    protected $perPage = 5;
+
     public function forwardings()
     {
         return $this->hasMany(PetitionForwarding::class, 'petition_id', 'petition_id')->orderBy('created_at', 'desc');
@@ -45,4 +52,24 @@ class Petition extends Model
     {
         return $this->hasOne(Decision::class, 'petition_id', 'petition_id');
     }
+   public static function countForwardedPetitions()
+   {
+    return self::where('status','=','Forwarded')->count();
+   }
+   public static function countPendingPetitions()
+   {
+    return self::where('status','=','Received')->count();
+   }
+   public static function countVrPetitions()
+   {
+    return self::where('status','=','VR_Received')->count();
+   }
+   public static function countDecisionPetitions()
+   {
+    return self::where('status','=','Sent_to_Govt')->count();
+   }
+   public static function countClosedPetitions()
+   {
+    return self::where('status','=','Closed_by_Govt')->count();
+   }
 }

@@ -119,27 +119,68 @@ class PetitionController extends Controller
         }
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $petitions = Petition::with(['addresses', 'latestForwarding', 'decision'])->orderBy('created_at', 'desc')->get();
-        return view('user.petition_view', compact('petitions')); // Assuming index view name
+        $query = Petition::with(['addresses', 'latestForwarding', 'decision']);
+
+        if ($request->filled('petition_no')) {
+            $query->where('petition_no', 'like', '%' . $request->petition_no . '%');
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('date_of_petition_received', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('date_of_petition_received', '<=', $request->date_to);
+        }
+        if ($request->filled('complainant_name')) {
+            $query->whereHas('addresses', function ($q) use ($request) {
+                $q->where('person_type', 'Complainant')
+                  ->where('person_name', 'like', '%' . $request->complainant_name . '%');
+            });
+        }
+        if ($request->filled('respondent_name')) {
+            $query->whereHas('addresses', function ($q) use ($request) {
+                $q->where('person_type', 'Accused')
+                  ->where('person_name', 'like', '%' . $request->respondent_name . '%');
+            });
+        }
+        if ($request->filled('nature_of_petition')) {
+            $query->where('nature_of_petition', 'like', '%' . $request->nature_of_petition . '%');
+        }
+        if ($request->filled('mode_of_petition')) {
+            $query->where('mode_of_petition_received', $request->mode_of_petition);
+        }
+        
+        // Handle generic search from top navbar
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('petition_no', 'like', "%{$search}%")
+                  ->orWhere('nature_of_petition', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        $petitions = $query->orderBy('created_at', 'desc')->paginate()->appends($request->query());
+
+        return view('user.petition_view', compact('petitions'));
     }
 
     public function forwardedPetitions()
     {
-        $petitions = Petition::with(['addresses', 'latestForwarding.toUnit'])->where('status', 'Forwarded')->orderBy('updated_at', 'desc')->get();
+        $petitions = Petition::with(['addresses', 'latestForwarding.toUnit'])->where('status', 'Forwarded')->orderBy('updated_at', 'desc')->paginate();
         return view('user.forwardings_view', compact('petitions'));
     }
 
     public function verificationReports()
     {
-        $petitions = Petition::with(['addresses', 'latestForwarding.toUnit'])->whereIn('status', ['VR_Received'])->orderBy('updated_at', 'desc')->get();
+        $petitions = Petition::with(['addresses', 'latestForwarding.toUnit'])->whereIn('status', ['VR_Received'])->orderBy('updated_at', 'desc')->paginate();
         return view('user.vr_view', compact('petitions'));
     }
 
     public function decisions()
     {
-        $petitions = Petition::with(['addresses', 'decision'])->whereIn('status', ['Sent_to_Govt', 'Closed'])->orderBy('updated_at', 'desc')->get();
+        $petitions = Petition::with(['addresses', 'decision'])->whereIn('status', ['Sent_to_Govt', 'Closed'])->orderBy('updated_at', 'desc')->paginate();
         return view('user.decisions_view', compact('petitions'));
     }
 
@@ -235,6 +276,22 @@ class PetitionController extends Controller
 
             if ($request->has('accused') && is_array($request->accused)) {
                 $this->processPersons($request->accused, 'Accused', $petition->petition_id);
+            }
+
+            // 4. Process Uploads (Evidence Files)
+            if ($request->hasFile('evidence_files')) {
+                foreach ($request->file('evidence_files') as $file) {
+                    $filename = time() . '_' . $file->getClientOriginalName();
+                    $path = $file->storeAs("petitions/{$petition->petition_id}", $filename, 'public');
+
+                    Upload::create([
+                        'petition_id' => $petition->petition_id,
+                        'category' => 'Petition Document',
+                        'original_filename' => $file->getClientOriginalName(),
+                        'file_path' => $path,
+                        'uploaded_by' => Auth::id() ?? 1, // Fallback if no auth 
+                    ]);
+                }
             }
 
             DB::commit();

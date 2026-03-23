@@ -135,6 +135,37 @@
                 <div>
                     <x-textarea label="Detailed Description *" name="description" x-model="petitionDetails.description" rows="5" required />
                 </div>
+
+                <div class="pt-4 mt-6 border-t border-slate-100">
+                    <label class="block text-sm font-semibold text-slate-700 mb-4">Supporting Evidence (Attachments)</label>
+
+                    @if($petition->uploads->count() > 0)
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                            @foreach($petition->uploads as $upload)
+                                <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                                    <div class="flex items-center gap-3 truncate pr-4">
+                                        <div class="p-2 bg-indigo-100 text-indigo-600 rounded-lg shrink-0">
+                                            <i data-lucide="file" class="w-4 h-4"></i>
+                                        </div>
+                                        <div class="truncate">
+                                            <p class="text-sm font-medium text-slate-900 truncate">{{ $upload->original_filename }}</p>
+                                            <p class="text-xs text-slate-500">Uploaded on {{ $upload->created_at->format('M d, Y') }}</p>
+                                        </div>
+                                    </div>
+                                    <a href="{{ Storage::url($upload->file_path) }}" target="_blank" class="shrink-0 p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="View Document">
+                                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <x-file-upload 
+                        name="evidence_files[]" 
+                        label="Add Additional Evidence (Attachments)" 
+                        :multiple="true" 
+                    />
+                </div>
             </div>
 
             <div class="mt-10 pt-6 border-t border-slate-200 flex justify-end">
@@ -289,11 +320,7 @@
         <!-- STEP 4: Review -->
         <div x-show="step === 4" x-transition class="p-8 sm:p-10" style="display: none;">
             <div class="text-center py-6">
-                <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-100">
-                    <i data-lucide="file-check-2" class="w-8 h-8"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-slate-900 mb-2">Ready to Save Updates</h2>
-                <p class="text-slate-500 mb-8">Review the primary assessment and finalize your changes to the records.</p>
+
                 
                 <div class="max-w-xl mx-auto text-left">
                     <x-textarea label="Updated Assessment / Action" name="proposed_action" x-model="petitionDetails.proposed_action" rows="4" />

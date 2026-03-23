@@ -5,8 +5,8 @@
     <!-- Page Header -->
     <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Dashboard Overview</h1>
-            <p class="text-sm text-slate-500">Welcome back to your administration panel.</p>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Dashboard </h1>
+           
         </div>
         <div class="flex items-center gap-3">
             <button class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium transition-all bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 text-slate-700">
@@ -30,7 +30,7 @@
             </div>
             <div>
                 <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Users</p>
-                <h3 class="text-2xl font-bold text-slate-900 mt-1">1,245</h3>
+                <h3 class="text-2xl font-bold text-slate-900 mt-1">{{ \App\Models\User::countUser() }}</h3>
             </div>
         </div>
 
@@ -46,7 +46,7 @@
             </div>
             <div>
                 <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">VR Reports</p>
-                <h3 class="text-2xl font-bold text-slate-900 mt-1">320</h3>
+                <h3 class="text-2xl font-bold text-slate-900 mt-1">{{ \App\Models\PetitionForwarding::countOfVr() }}</h3>
             </div>
         </a>
 
@@ -62,7 +62,7 @@
             </div>
             <div>
                 <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Forwarded</p>
-                <h3 class="text-2xl font-bold text-slate-900 mt-1">58</h3>
+                <h3 class="text-2xl font-bold text-slate-900 mt-1">{{ \App\Models\Petition::countForwardedPetitions() }}</h3>
             </div>
         </a>
 
@@ -78,7 +78,7 @@
             </div>
             <div>
                 <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Decisions</p>
-                <h3 class="text-2xl font-bold text-slate-900 mt-1">75</h3>
+                <h3 class="text-2xl font-bold text-slate-900 mt-1">{{ \App\Models\Petition::countDecisionPetitions() }}</h3>
             </div>
         </a>
     </div>

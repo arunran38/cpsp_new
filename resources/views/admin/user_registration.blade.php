@@ -3,8 +3,8 @@
 @section('content')
 <div class="max-w-4xl mx-auto" x-data="{ designation: '' }">
     <div class="mb-8">
-        <h1 class="text-2xl font-bold tracking-tight text-slate-900">New User Registration</h1>
-        <p class="text-sm text-slate-500">Fill in the details to create a new system account with specific access roles.</p>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900"> User Registration</h1>
+       
     </div>
 
     <div class="p-8 bg-white border border-slate-200 rounded-3xl shadow-sm">
@@ -14,21 +14,21 @@
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <!-- Name -->
                 <div class="sm:col-span-2">
-                    <x-input label="Full Name" name="name" placeholder="Enter officer name" required icon="user" />
+                    <x-input label="Full Name" name="name" placeholder="Enter Full Name" required icon="user" />
                 </div>
 
                 <!-- PEN & Mobile -->
-                <x-input label="PEN" name="pen" placeholder="6-digit PEN" required icon="hash" />
-                <x-input label="Mobile Number" name="mobile_number" placeholder="10-digit mobile" required icon="smartphone" />
+                <x-input label="PEN" name="pen" placeholder="Enter PEN" required icon="hash" />
+                <x-input label="Mobile Number" name="mobile_number" placeholder="Enter Mobile Number" required icon="smartphone" />
 
                 <!-- Email -->
                 <div class="sm:col-span-2">
-                    <x-input label="Email Address" name="email" type="email" placeholder="official@email.com" required icon="mail" />
+                    <x-input label="Email Address" name="email" type="email" placeholder="Enter Email Address" required icon="mail" />
                 </div>
 
                 <!-- Password -->
                 <div class="sm:col-span-2">
-                    <x-input label="Temporary Password" name="password" type="password" placeholder="Create a secure password" required icon="lock" />
+                    <x-input label="Temporary Password" name="password" type="password" placeholder="Enter Password" required icon="lock" />
                 </div>
 
                 <!--Upload Photo-->
@@ -38,9 +38,9 @@
 
                 <!-- Role -->
                 <x-select 
-                    label="Access Role" 
+                    label="Role" 
                     name="role" 
-                    :options="['user' => 'Standard User', 'admin' => 'Administrator']" 
+                    :options="['user' => 'User', 'admin' => 'Admin']" 
                     selected="user" 
                     required
                 />
@@ -72,9 +72,9 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-4 pt-6 border-t border-slate-100">
+            <div class="flex items-center justify-end gap-4 pt-6 border-t border-slate-100">
                 <x-button variant="primary" icon="user-plus" size="lg">
-                    Register Officer
+                    Register
                 </x-button>
                 <a href="{{ route('users.index') }}" 
                    class="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold transition-all bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 text-slate-600">

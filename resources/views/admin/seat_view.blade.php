@@ -6,10 +6,10 @@
     <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h1 class="text-2xl font-bold tracking-tight text-slate-900">Seats Management</h1>
-            <p class="text-sm text-slate-500">Manage seating arrangements across different units.</p>
+           
         </div>
         <a href="{{ route('admin.seats.create') }}" 
-           class="inline-flex items-center justify-center px-4 py-2 text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-lg shadow-primary/20 transition-all">
+           class="inline-flex items-center justify-center px-4 py-2 text-sm font-bold text-slate-600 bg-primary hover:bg-primary-hover rounded-xl shadow-lg shadow-primary/20 transition-all">
             <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
             Add New Seat
         </a>
@@ -65,18 +65,18 @@
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <a href="{{ route('admin.seats.edit', $seat->seat_id) }}" 
-                                       class="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors"
+                                       class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                        title="Edit Seat">
-                                        Edit
+                                        <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
                                     <form method="POST" action="{{ route('admin.seats.destroy', $seat->seat_id) }}" class="inline-block">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
-                                                class="text-sm font-bold text-rose-600 hover:text-rose-700 transition-colors"
+                                                class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                                                 onclick="return confirm('Are you sure you want to delete this seat?')"
                                                 title="Delete Seat">
-                                            Delete
+                                            <i class="fa-solid fa-trash-can"></i>
                                         </button>
                                     </form>
                                 </div>

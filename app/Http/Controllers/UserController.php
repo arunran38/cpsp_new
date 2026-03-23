@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Upload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -15,7 +16,7 @@ class UserController extends Controller
  
     public function index()
     {
-        $users = User::all();
+        $users = User::with('profilePhoto')->get();
         return view("admin.users_view", compact("users"));
     }
 
@@ -128,6 +129,7 @@ class UserController extends Controller
                 ]);
                 
                 $user->photo = $upload->upload_id;
+                $user->save(); // Save immediately after updating photo reference
             }
 
             if ($request->filled('password')) {

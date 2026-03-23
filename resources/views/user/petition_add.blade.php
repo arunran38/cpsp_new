@@ -13,16 +13,7 @@
             </div>
             <div>
                 <h1 class="text-2xl font-bold tracking-tight text-slate-900">New Complaint</h1>
-                <p class="text-sm font-medium text-slate-500 mt-0.5">Register a formal petition or complaint into the system</p>
             </div>
-        </div>
-        <div class="flex items-center gap-3">
-            <a href="#" class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 flex items-center gap-2 transition-all">
-                <i data-lucide="save" class="w-4 h-4"></i> Save Draft
-            </a>
-            <a href="{{ route('petitions.index') }}" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
-                <i data-lucide="list" class="w-4 h-4"></i> View All
-            </a>
         </div>
     </div>
 
@@ -113,10 +104,10 @@
         <div x-show="step === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="p-8 sm:p-10">
             
             <div class="mb-8 border-b border-slate-100 pb-5">
-                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                {{-- <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
                     <i data-lucide="file-text" class="w-5 h-5 text-indigo-600"></i> Section 1: Petition Overview
                 </h2>
-                <p class="text-sm text-slate-500 mt-1">Provide the fundamental details of the petition received.</p>
+                <p class="text-sm text-slate-500 mt-1">Provide the fundamental details of the petition received.</p> --}}
             </div>
             
             <div class="space-y-8">
@@ -143,19 +134,11 @@
                     <x-textarea label="Detailed Description *" name="description" x-model="petitionDetails.description" rows="5" required placeholder="Type the complete factual description of the incident..." />
                 </div>
 
-                <div class="pt-2">
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">Supporting Evidence (Attachments)</label>
-                    <label for="evidence_files" class="flex flex-col items-center justify-center w-full py-8 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 hover:border-slate-400 transition-all group relative">
-                        <div class="flex flex-col items-center justify-center relative z-10 text-center px-4">
-                            <div class="bg-white text-slate-600 p-3 rounded-xl mb-3 border border-slate-200 shadow-sm group-hover:scale-105 transition-transform">
-                                <i data-lucide="upload-cloud" class="w-6 h-6"></i>
-                            </div>
-                            <p class="text-sm text-slate-700 mb-1"><span class="font-semibold text-indigo-600">Browse files</span> or drag and drop</p>
-                            <p class="text-xs text-slate-500">Supports PDF, JPG, PNG up to 10MB</p>
-                        </div>
-                        <input id="evidence_files" name="evidence_files[]" type="file" multiple class="hidden" />
-                    </label>
-                </div>
+                <x-file-upload 
+                    name="evidence_files[]" 
+                    label="Supporting Evidence (Attachments)" 
+                    :multiple="true" 
+                />
             </div>
 
             <div class="mt-10 pt-6 border-t border-slate-200 flex justify-end">
@@ -169,10 +152,10 @@
         <div x-show="step === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="p-8 sm:p-10" style="display: none;">
             
             <div class="mb-8 border-b border-slate-100 pb-5">
-                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                {{-- <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
                     <i data-lucide="user" class="w-5 h-5 text-indigo-600"></i> Section 2: Complainant Details
                 </h2>
-                <p class="text-sm text-slate-500 mt-1">Add one or more primary applicants filing this petition.</p>
+                <p class="text-sm text-slate-500 mt-1">Add one or more primary applicants filing this petition.</p> --}}
             </div>
             
             <div class="space-y-8">
@@ -271,10 +254,10 @@
         <div x-show="step === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="p-8 sm:p-10" style="display: none;">
             
             <div class="mb-8 border-b border-slate-100 pb-5">
-                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                {{-- <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
                     <i data-lucide="users" class="w-5 h-5 text-indigo-600"></i> Section 3: Respondent Details
                 </h2>
-                <p class="text-sm text-slate-500 mt-1">Add one or more accused individuals regarding this petition.</p>
+                <p class="text-sm text-slate-500 mt-1">Add one or more accused individuals regarding this petition.</p> --}}
             </div>
             
             <div class="space-y-8">
@@ -374,29 +357,24 @@
             
             <div x-show="!showPreview" class="relative">
                 <div class="max-w-2xl mx-auto py-8">
-                    <div class="w-16 h-16 bg-slate-100 text-slate-700 rounded-2xl flex items-center justify-center mb-6 ring-4 ring-slate-50">
-                        <i data-lucide="file-check-2" class="w-8 h-8"></i>
-                    </div>
-                    
-                    <h2 class="text-3xl font-bold text-slate-900 mb-3 tracking-tight">Ready for Assessment</h2>
-                    <p class="text-slate-500 mb-8 text-base">You have successfully provided all foundational data. Please utilize the section below to input official notes or immediate actions required before formal submission.</p>
+
                     
                     <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-8">
-                        <x-textarea label="Initial Assessment / Action Note" name="proposed_action" rows="4" placeholder="Draft departmental or internal assessment framework..." />
+                        <x-textarea label="Initial Assessment/Action Note" name="proposed_action" rows="4" placeholder="Enter the remarks/notes here..." />
                     </div>
 
                     <div class="flex gap-4 mb-4">
                         <button type="button" @click="togglePreview()" class="w-full px-6 py-3 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2 transition-all">
-                            <i data-lucide="eye" class="w-4 h-4"></i> Validate Entry Full-Preview
+                            <i data-lucide="eye" class="w-4 h-4"></i> Full-Preview
                         </button>
                     </div>
                     
                     <div class="flex justify-between items-center py-6 border-t border-slate-200 mt-6">
                         <button type="button" @click="prevStep()" class="px-6 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2">
-                            <i data-lucide="arrow-left" class="w-4 h-4"></i> Modify Records
+                            <i data-lucide="arrow-left" class="w-4 h-4"></i> Edit Petition
                         </button>
                         <button type="submit" class="px-8 py-2.5 text-sm font-semibold text-white bg-slate-900 rounded-lg shadow-md hover:bg-slate-800 focus:ring-4 focus:ring-slate-900/20 transition-all flex items-center gap-2">
-                            <i data-lucide="shield-check" class="w-4 h-4"></i> Authorize & Submit Form
+                            <i data-lucide="shield-check" class="w-4 h-4"></i> Submit Petition
                         </button>
                     </div>
                 </div>

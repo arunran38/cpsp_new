@@ -12,7 +12,7 @@
             </div>
             <div>
                 <h1 class="text-2xl font-bold tracking-tight text-slate-900">Submitted Petitions</h1>
-                <p class="text-sm font-medium text-slate-500 mt-0.5">Manage and track all official complaints in the system</p>
+            
             </div>
         </div>
         <div class="flex items-center gap-3">
@@ -51,18 +51,65 @@
 
     <!-- Data Table -->
     <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-        <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Petition Directory</h3>
-            <div class="relative w-64">
-                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" placeholder="Search records..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none">
+        <div class="p-6 border-b border-slate-200 bg-slate-50">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Advanced Search</h3>
             </div>
+            
+            <form id="searchForm" method="GET" action="{{ route('petitions.index') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Petition No</label>
+                    <input type="text" name="petition_no" value="{{ request('petition_no') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Search...">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Date From</label>
+                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Date To</label>
+                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Complainant Name</label>
+                    <input type="text" name="complainant_name" value="{{ request('complainant_name') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Search name...">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Respondent Name</label>
+                    <input type="text" name="respondent_name" value="{{ request('respondent_name') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Search name...">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Nature of Petition</label>
+                    <input type="text" name="nature_of_petition" value="{{ request('nature_of_petition') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Nature...">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">Mode of Receipt</label>
+                    <select name="mode_of_petition" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        <option value="">All Modes</option>
+                        <option value="Direct" {{ request('mode_of_petition') == 'Direct' ? 'selected' : '' }}>Direct</option>
+                        <option value="Post" {{ request('mode_of_petition') == 'Post' ? 'selected' : '' }}>Post</option>
+                        <option value="Email" {{ request('mode_of_petition') == 'Email' ? 'selected' : '' }}>Email</option>
+                        <option value="Whatsapp" {{ request('mode_of_petition') == 'Whatsapp' ? 'selected' : '' }}>Whatsapp</option>
+                        <option value="Tollfree" {{ request('mode_of_petition') == 'Tollfree' ? 'selected' : '' }}>Tollfree</option>
+                        <option value="others" {{ request('mode_of_petition') == 'others' ? 'selected' : '' }}>Others</option>
+                    </select>
+                </div>
+                <div class="flex items-end gap-2">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-[9px] rounded-lg text-sm shadow-sm transition-colors flex justify-center items-center gap-1">
+                        <i data-lucide="search" class="w-4 h-4"></i> Search
+                    </button>
+                    <a href="{{ route('petitions.index') }}" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-[9px] rounded-lg text-sm text-center shadow-sm transition-colors block">
+                        Reset
+                    </a>
+                </div>
+            </form>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                      
+                        <th class="px-6 py-4 font-bold w-12 text-center">#</th>
                         <th class="px-6 py-4 font-bold">Record No</th>
                         <th class="px-6 py-4 font-bold">Date</th>
                         <th class="px-6 py-4 font-bold">Nature / Action</th>
@@ -74,6 +121,9 @@
                 <tbody class="divide-y divide-slate-100 text-sm">
                     @forelse($petitions as $petition)
                         <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-6 py-4 text-center text-sm font-semibold text-slate-500">
+                                {{ ($petitions->currentPage() - 1) * $petitions->perPage() + $loop->iteration }}
+                            </td>
                             <td class="px-6 py-4">
                                 <span class="font-bold text-slate-800">{{ $petition->petition_no }}</span>
                                 <span class="block text-xs text-slate-500 mt-1">{{ count($petition->addresses) }} Parties Linked</span>
@@ -127,18 +177,18 @@
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-3">
-                                    <a href="{{ route('petitions.show', $petition->petition_id) }}" class="text-slate-500 hover:text-indigo-600 transition-colors" title="View Details">
-                                        <i data-lucide="eye" class="w-4 h-4"></i>
+                                    <a href="{{ route('petitions.show', $petition->petition_id) }}" class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="View Details">
+                                        <i class="fa-solid fa-eye"></i>
                                     </a>
                                     @if(auth()->user()->role === 'user')
-                                        <a href="{{ route('petitions.edit', $petition->petition_id) }}" class="text-slate-500 hover:text-emerald-600 transition-colors" title="Edit Record">
-                                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                        <a href="{{ route('petitions.edit', $petition->petition_id) }}" class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit Record">
+                                            <i class="fa-solid fa-pen-to-square"></i>
                                         </a>
                                         <form action="{{ route('petitions.destroy', $petition->petition_id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-slate-500 hover:text-rose-600 transition-colors" title="Delete Record">
-                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            <button type="submit" class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete Record">
+                                                <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </form>
                                     @endif
@@ -147,7 +197,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
+                            <td colspan="7" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center justify-center text-slate-400">
                                     <i data-lucide="inbox" class="w-12 h-12 mb-3 text-slate-300"></i>
                                     <p class="text-lg font-medium text-slate-500">No petitions found</p>
@@ -163,6 +213,9 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <div class="px-6 py-4 border-t border-slate-200">
+            {{ $petitions->links() }}
         </div>
     </div>
 

@@ -34,19 +34,29 @@ class SeatUserController extends Controller
         $seatId = $request->seat_id;
         $isAdditional = $request->boolean('is_additional');
 
-        // If NOT an additional charge, revoke existing active assignments for this user AND the current occupant of this seat
+        // Check if THIS user already has THIS seat active
+        $existingUserSeat = SeatUser::where('user_id', $userId)
+            ->where('seat_id', $seatId)
+            ->where('is_active', true)
+            ->exists();
+
+        if ($existingUserSeat) {
+            return back()->withErrors(['seat_id' => 'This user is already assigned to this seat.'])->withInput();
+        }
+
+        // A seat can only have ONE active user. Revoke current occupant regardless of additional/primary.
+        SeatUser::where('seat_id', $seatId)
+            ->where('is_active', true)
+            ->update([
+                'is_active' => false,
+                'revoked_at' => now(),
+            ]);
+
+        // If NOT an additional charge, revoke existing active primary assignments for this user
         if (!$isAdditional) {
-            // Revoke current user's other active seats
             SeatUser::where('user_id', $userId)
                 ->where('is_active', true)
-                ->update([
-                    'is_active' => false,
-                    'revoked_at' => now(),
-                ]);
-
-            // Revoke previous occupant of this seat
-            SeatUser::where('seat_id', $seatId)
-                ->where('is_active', true)
+                ->where('is_additional', false)
                 ->update([
                     'is_active' => false,
                     'revoked_at' => now(),
@@ -68,10 +78,30 @@ class SeatUserController extends Controller
     public function destroy($id)
     {
         $assignment = SeatUser::findOrFail($id);
+        
+        $wasAdditional = $assignment->is_additional;
+        $seatId = $assignment->seat_id;
+
         $assignment->update([
             'is_active' => false,
             'revoked_at' => now(),
         ]);
+
+        if ($wasAdditional) {
+            // Find the most recent primary assignment for this seat that was revoked
+            $previousPrimary = SeatUser::where('seat_id', $seatId)
+                ->where('is_additional', false)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($previousPrimary) {
+                // Reactivate the original user's assignment
+                $previousPrimary->update([
+                    'is_active' => true,
+                    'revoked_at' => null,
+                ]);
+            }
+        }
 
         return redirect()->route('admin.seatuser.index')->with('success', 'Seat assignment revoked successfully.');
     }
