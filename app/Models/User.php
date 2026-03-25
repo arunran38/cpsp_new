@@ -14,6 +14,7 @@ use App\Models\Upload;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
+  
 class User extends Authenticatable
 {
     protected $primaryKey = 'user_id';
@@ -57,4 +58,7 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    public static function countUser(){
+        return self::where('role', 'user')->count();
+    }   
 }

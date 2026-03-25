@@ -1,4 +1,4 @@
-@props(['label', 'name', 'type' => 'text', 'value' => '', 'placeholder' => ''])
+@props(['label', 'name', 'type' => 'text', 'value' => '', 'placeholder' => '', 'icon' => null])
 
 <div class="space-y-1.5" x-data="{ count: 0 }" x-init="count = $refs.input.value.length">
     @if($label)
@@ -7,8 +7,13 @@
         </label>
     @endif
     <div class="relative flex items-center group">
+        @if($icon)
+            <div class="absolute left-4 pointer-events-none text-slate-400 group-hover:text-slate-600 transition-colors">
+                <i data-lucide="{{ $icon }}" class="w-4 h-4"></i>
+            </div>
+        @endif
         <input 
-            {{ $attributes->merge(['class' => 'block w-full px-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 transition-all duration-200 placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none group-hover:border-slate-300']) }}
+            {{ $attributes->merge(['class' => 'block w-full ' . ($icon ? 'pl-11' : 'px-4') . ' py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 transition-all duration-200 placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none group-hover:border-slate-300']) }}
             type="{{ $type }}" 
             id="{{ $name }}" 
             name="{{ $name }}" 

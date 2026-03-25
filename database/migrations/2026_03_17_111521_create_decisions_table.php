@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('decision_id');
             $table->foreignId('petition_id')->constrained('petitions', 'petition_id')->cascadeOnDelete();
             $table->foreignId('decided_by_seat_id')->constrained('seats', 'seat_id');
-            $table->enum('decision_remarks', ['PE', 'SC', 'QV', 'KDIS', 'Govt', 'ICell']);
+            $table->enum('decision_remarks', ['PE', 'SC', 'QV', 'Closed', 'Sent to Govt', 'ICell']);
             $table->text('final_remarks')->nullable();
             $table->date('decision_date');
             $table->timestamps();

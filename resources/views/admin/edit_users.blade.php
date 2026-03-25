@@ -5,7 +5,7 @@
     <div class="flex items-center justify-between mb-8">
         <div>
             <h1 class="text-2xl font-bold tracking-tight text-slate-900">Edit User Profile</h1>
-            <p class="text-sm text-slate-500">Update the account details and access permissions for this officer.</p>
+
         </div>
         <x-button variant="light" size="sm" icon="arrow-left" onclick="window.location='{{ route('users.index') }}'">
             Back to List
@@ -18,23 +18,7 @@
             @method('PUT')
 
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <!-- Current Photo -->
-                @if($user->profilePhoto)
-                <div class="sm:col-span-2 flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                    <img src="{{ asset('storage/' . $user->profilePhoto->file_path) }}" 
-                         alt="Current Profile" 
-                         class="w-16 h-16 rounded-xl object-cover border-2 border-white shadow-sm">
-                    <div>
-                        <p class="text-sm font-semibold text-slate-700">Current Photo</p>
-                        <p class="text-xs text-slate-500">Keep as is or upload a new one below.</p>
-                    </div>
-                </div>
-                @endif
-
-                <!-- Upload New Photo -->
-                <div class="sm:col-span-2">
-                    <x-input label="Update Photo" name="photo" type="file" icon="image" />
-                </div>
+                
 
                 <!-- Name -->
                 <div class="sm:col-span-2">
@@ -54,6 +38,19 @@
                 <div class="sm:col-span-2">
                     <x-input label="Change Password" name="password" type="password" placeholder="Leave blank to keep current" icon="lock" />
                 </div>
+
+                <!-- Current Photo -->
+                @if($user->profilePhoto)
+                <div class="sm:col-span-2 flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <img src="{{ asset('storage/' . $user->profilePhoto->file_path) }}" 
+                         alt="Current Profile" 
+                         class="w-16 h-16 rounded-xl object-cover border-2 border-white shadow-sm">
+                    <div>
+                        <p class="text-sm font-semibold text-slate-700">Current Photo</p>
+                        <p class="text-xs text-slate-500">Keep as is or upload a new one below.</p>
+                    </div>
+                </div>
+                @endif
 
                 <!-- Upload New Photo -->
                 <div class="sm:col-span-2">
@@ -95,7 +92,7 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-4 pt-6 border-t border-slate-100">
+            <div class="flex items-center justify-end gap-4 pt-6 border-t border-slate-100">
                 <x-button variant="primary" icon="refresh-cw" size="lg">
                     Update Profile
                 </x-button>

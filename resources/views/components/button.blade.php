@@ -10,7 +10,7 @@
     $baseClasses = 'inline-flex items-center justify-center font-semibold transition-all duration-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
     
     $variants = [
-        'primary' => 'bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/25 focus:ring-primary/50',
+        'primary' => 'bg-primary text- black hover:bg-primary-hover shadow-lg shadow-primary/25 focus:ring-primary/50',
         'secondary' => 'bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-500',
         'success' => 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/25 focus:ring-emerald-500',
         'danger' => 'bg-rose-500 text-white hover:bg-rose-600 shadow-lg shadow-rose-500/25 focus:ring-rose-500',
@@ -31,8 +31,8 @@
 
 <button 
     {{ $attributes->merge(['class' => $classes, 'type' => $type]) }}
+    x-data="{ isLoading: false }" 
     @if($loading) 
-        x-data="{ isLoading: false }" 
         @click="isLoading = true" 
         :disabled="isLoading"
     @endif

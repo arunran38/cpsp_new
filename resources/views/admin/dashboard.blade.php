@@ -5,8 +5,8 @@
     <!-- Page Header -->
     <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Dashboard Overview</h1>
-            <p class="text-sm text-slate-500">Welcome back to your administration panel.</p>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Dashboard </h1>
+           
         </div>
         <div class="flex items-center gap-3">
             <button class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium transition-all bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 text-slate-700">
@@ -30,12 +30,12 @@
             </div>
             <div>
                 <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Users</p>
-                <h3 class="text-2xl font-bold text-slate-900 mt-1">1,245</h3>
+                <h3 class="text-2xl font-bold text-slate-900 mt-1">{{ \App\Models\User::countUser() }}</h3>
             </div>
         </div>
 
         <!-- Reports Card -->
-        <div class="p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
+        <a href="{{ route('petitions.reports', ['tab' => 'vrs']) }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-50 group-hover:bg-amber-500 transition-colors">
                     <i data-lucide="file-text" class="w-6 h-6 text-amber-600 group-hover:text-white transition-colors"></i>
@@ -45,42 +45,42 @@
                 </span>
             </div>
             <div>
-                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Reports</p>
-                <h3 class="text-2xl font-bold text-slate-900 mt-1">320</h3>
+                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">VR Reports</p>
+                <h3 class="text-2xl font-bold text-slate-900 mt-1">{{ \App\Models\PetitionForwarding::countOfVr() }}</h3>
             </div>
-        </div>
+        </a>
 
         <!-- Pending Card -->
-        <div class="p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
+        <a href="{{ route('petitions.reports', ['tab' => 'forwarded']) }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-rose-50 group-hover:bg-rose-500 transition-colors">
-                    <i data-lucide="clock" class="w-6 h-6 text-rose-600 group-hover:text-white transition-colors"></i>
+                    <i data-lucide="send" class="w-6 h-6 text-rose-600 group-hover:text-white transition-colors"></i>
                 </div>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
                     -2%
                 </span>
             </div>
             <div>
-                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Pending Petitions</p>
-                <h3 class="text-2xl font-bold text-slate-900 mt-1">58</h3>
+                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Forwarded</p>
+                <h3 class="text-2xl font-bold text-slate-900 mt-1">{{ \App\Models\Petition::countForwardedPetitions() }}</h3>
             </div>
-        </div>
+        </a>
 
-        <!-- Revenue Card -->
-        <div class="p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
+        <!-- Decisions Card -->
+        <a href="{{ route('petitions.reports', ['tab' => 'decisions']) }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-50 group-hover:bg-emerald-500 transition-colors">
-                    <i data-lucide="indian-rupee" class="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors"></i>
+                    <i data-lucide="check-square" class="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors"></i>
                 </div>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
                     +18%
                 </span>
             </div>
             <div>
-                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Revenue</p>
-                <h3 class="text-2xl font-bold text-slate-900 mt-1">₹75,000</h3>
+                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Decisions</p>
+                <h3 class="text-2xl font-bold text-slate-900 mt-1">{{ \App\Models\Petition::countDecisionPetitions() }}</h3>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- Charts + Activity -->

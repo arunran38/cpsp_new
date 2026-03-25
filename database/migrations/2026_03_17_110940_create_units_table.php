@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id('unit_id');
             $table->string('unit_name');
             $table->string('unit_code')->unique();
+            $table->string('district');
             $table->timestamps();
         });
 

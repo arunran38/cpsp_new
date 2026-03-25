@@ -191,7 +191,7 @@
             <img src="{{ asset('images/logo.png') }}" alt="Kerala VACB Logo">
         </div>
 
-        <form method="POST" action="">
+        <form method="POST" action="{{ route('login') }}">
             @csrf
 
             <div class="mb-custom">
@@ -228,12 +228,6 @@
             <button type="submit" class="btn btn-login">
                 Login
             </button>
-            <a href="{{ route('admin.dashboard') }}" class="btn btn-login mt-2">
-            Admin Dashboard
-            </a>
-            <a href="{{ route('user.dashboard') }}" class="btn btn-login mt-2">
-            User Dashboard
-            </a>
         </form>
     </div>
 </div>

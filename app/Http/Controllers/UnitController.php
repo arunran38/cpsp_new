@@ -23,6 +23,8 @@ class UnitController extends Controller
         $request->validate([
             'unit_name' => 'required|string|max:255',
             'unit_code' => 'required|string|max:255|unique:units,unit_code',
+            'district' => 'required|array',
+            'district.*' => 'string',
         ]);
 
         Unit::create($request->all());
@@ -43,6 +45,8 @@ class UnitController extends Controller
         $request->validate([
             'unit_name' => 'required|string|max:255',
             'unit_code' => 'required|string|max:255|unique:units,unit_code,' . $unit->unit_id . ',unit_id',
+            'district' => 'required|array',
+            'district.*' => 'string',
         ]);
 
         $unit->update($request->all());

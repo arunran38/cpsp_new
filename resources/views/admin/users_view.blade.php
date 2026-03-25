@@ -5,8 +5,8 @@
     <!-- Page Header -->
     <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900">System Users</h1>
-            <p class="text-sm text-slate-500">Manage officer accounts, designations, and system access permissions.</p>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Users List</h1>
+
         </div>
         <x-button variant="primary" size="md" icon="user-plus" onclick="window.location='{{ route('users.create') }}'">
             Add New User
@@ -38,57 +38,61 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-slate-50">
-                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Officer</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Information</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Status</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                        <th class="px-6 py-4 font-bold">Sl No</th>
+                        <th class="px-6 py-4 font-bold">Name</th>
+                        <th class="px-6 py-4 font-bold">Designation</th>
+                        <th class="px-6 py-4 font-bold">PEN No</th>
+                        <th class="px-6 py-4 font-bold">Email</th>
+                        <th class="px-6 py-4 font-bold text-center">Mobile No</th>
+                        <th class="px-6 py-4 font-bold text-center">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100 text-sm">
                     @forelse($users as $user)
                         <tr class="hover:bg-slate-50/50 transition-colors">
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-4">
-                                    <img class="flex-shrink-0 w-10 h-10 rounded-full ring-2 ring-slate-100" 
-                                         src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=f8fafc&color=4361ee" alt="">
-                                    <div>
-                                        <p class="text-sm font-bold text-slate-900">{{ $user->name }}</p>
-                                        <p class="text-xs text-slate-500">{{ $user->email }}</p>
-                                    </div>
-                                </div>
+                            <td class="px-6 py-4 font-medium text-slate-500">
+                                {{ $loop->iteration }}
                             </td>
                             <td class="px-6 py-4">
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-semibold text-slate-700">
-                                        {{ $user->designation === 'Others' ? $user->other_designation : $user->designation }}
-                                    </span>
-                                    <span class="mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 uppercase w-fit">
-                                        {{ $user->pen }} • {{ $user->role }}
-                                    </span>
+                                <div class="flex items-center gap-3">
+                                    @if($user->profilePhoto)
+                                        <img class="flex-shrink-0 w-8 h-8 rounded-full ring-2 ring-slate-100 object-cover" 
+                                             src="{{ asset('storage/' . $user->profilePhoto->file_path) }}" alt="{{ $user->name }}">
+                                    @else
+                                        <img class="flex-shrink-0 w-8 h-8 rounded-full ring-2 ring-slate-100" 
+                                             src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=f8fafc&color=4361ee" alt="{{ $user->name }}">
+                                    @endif
+                                    <span class="font-bold text-slate-900">{{ $user->name }}</span>
                                 </div>
+                            </td>
+                            <td class="px-6 py-4 text-slate-700">
+                                {{ $user->designation === 'Others' ? $user->other_designation : $user->designation }}
+                            </td>
+                            <td class="px-6 py-4 font-medium text-slate-600">
+                                {{ $user->pen }}
+                            </td>
+                            <td class="px-6 py-4 text-slate-600">
+                                {{ $user->email }}
+                            </td>
+                            <td class="px-6 py-4 text-center text-slate-600">
+                                {{ $user->mobile_number }}
                             </td>
                             <td class="px-6 py-4 text-center">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                    Active
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex items-center justify-end gap-2">
+                                <div class="flex items-center justify-center gap-2">
                                     <a href="{{ route('users.edit', encrypt($user->user_id)) }}" 
-                                       class="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl transition-all duration-200"
+                                       class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                        title="Edit Profile">
-                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                        <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
                                     <form method="POST" action="{{ route('users.destroy', encrypt($user->user_id)) }}" class="inline-block">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
-                                                class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all duration-200"
+                                                class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                                                 onclick="return confirm('Are you sure you want to remove this user?')"
                                                 title="Remove User">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                            <i class="fa-solid fa-trash-can"></i>
                                         </button>
                                     </form>
                                 </div>
@@ -96,7 +100,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-12 text-center text-slate-500">
+                            <td colspan="7" class="px-6 py-12 text-center text-slate-500">
                                 <div class="flex flex-col items-center">
                                     <i data-lucide="users-2" class="w-12 h-12 text-slate-200 mb-4"></i>
                                     <p class="text-base font-semibold text-slate-900">No users found</p>

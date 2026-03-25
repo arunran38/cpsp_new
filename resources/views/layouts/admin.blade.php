@@ -14,6 +14,7 @@
     
     <!-- Icons -->
     <script src="https://unpkg.com/@lucide/icons"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
     <!-- Scripts & Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -21,6 +22,7 @@
 <body class="h-full font-sans antialiased text-slate-900" x-data="{ sidebarOpen: false }">
 
     <div class="min-h-full">
+        @auth
         <!-- Mobile Sidebar Overlay -->
         <div x-show="sidebarOpen" 
              x-transition:enter="transition-opacity ease-linear duration-300"
@@ -108,21 +110,14 @@
                     </div>
                 </div>
 
-                <!-- Petitions -->
-                <div x-data="{ open: false }">
-                    <button @click="open = !open" 
-                            class="flex items-center justify-between w-full px-4 py-3 text-sm font-medium transition-colors text-slate-400 rounded-xl hover:text-white hover:bg-white/5 group">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="file-text" class="w-5 h-5 transition-colors group-hover:text-primary"></i>
-                            Petitions
-                        </div>
-                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
-                    </button>
-                    <div x-show="open" x-cloak x-collapse class="pl-12 pr-4 mt-1 space-y-1">
-                        <a href="#" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">Pending</a>
-                        <a href="#" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">Verification</a>
+                <!-- Reports -->
+                <a href="{{ route('petitions.reports') }}" 
+                   class="flex items-center justify-between w-full px-4 py-3 text-sm font-medium transition-colors {{ request()->routeIs('petitions.reports') ? 'text-white bg-primary' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl group">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5 transition-colors group-hover:text-primary"></i>
+                        Reports
                     </div>
-                </div>
+                </a>
 
                 <div class="pt-6 mt-6 border-t border-slate-800">
                     <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 transition-colors rounded-xl hover:text-white hover:bg-white/5">
@@ -143,9 +138,11 @@
                 </div>
             </div>
         </aside>
+        @endauth
 
         <!-- Main Content Area -->
-        <div class="lg:pl-72 flex flex-col min-h-screen">
+        <div class="{{ Auth::check() ? 'lg:pl-72' : '' }} flex flex-col min-h-screen">
+            @auth
             <!-- Top Navigation -->
             <header class="sticky top-0 z-30 flex items-center h-20 px-4 bg-white/80 backdrop-blur-md border-b border-slate-200 sm:px-6 lg:px-8">
                 <!-- Mobile Mobile Toggle -->
@@ -227,6 +224,7 @@
                     </div>
                 </div>
             </header>
+            @endauth
 
             <!-- Main Page Content -->
             <main class="flex-1 overflow-x-hidden p-6 lg:p-10">
@@ -246,5 +244,6 @@
     <script>
         lucide.createIcons();
     </script>
+    @yield('scripts')
 </body>
 </html>
