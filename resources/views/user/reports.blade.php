@@ -57,13 +57,14 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Current Status</label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Petition Status</label>
                     <select name="status" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2.5 transition-all bg-white">
-                        <option value="">All Statuses</option>
+                        <option value="">All Petitions</option>
                         <optgroup label="Workflow Progress">
                             <option value="Received" {{ request('status') == 'Received' ? 'selected' : '' }}>Received</option>
                             <option value="Forwarded" {{ request('status') == 'Forwarded' ? 'selected' : '' }}>Forwarded</option>
-                            <option value="VR_Received" {{ request('status') == 'VR_Received' ? 'selected' : '' }}>VR Received</option>
+                            <option value="VR_Received" {{ request('status') == 'VR_Received' ? 'selected' : '' }}>Verification Report Received</option>
+                            <option value="VR_Received_at_cpsp_date" {{ request('status') == 'VR_Received_at_cpsp_date' ? 'selected' : '' }}>Verification Report Received at CPSP</option>    
                         </optgroup>
                         <optgroup label="Final Decisions">
                             <option value="PE" {{ request('status') == 'PE' ? 'selected' : '' }}>PE (Preliminary Enquiry)</option>

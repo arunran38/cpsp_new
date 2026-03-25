@@ -21,7 +21,6 @@ return new class extends Migration
             $table->string('password');
             $table->enum('designation', ['CPO', 'SCPO', 'ASI', 'SI', 'IP', 'Others']);
             $table->string('other_designation')->nullable(); // for custom designation
-            $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

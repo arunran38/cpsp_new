@@ -257,11 +257,43 @@ class PetitionController extends Controller
         if ($request->filled('petition_no')) {
             $query->where('petition_no', 'like', '%' . $request->petition_no . '%');
         }
-        if ($request->filled('date_from')) {
-            $query->whereDate('date_of_petition_received', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('date_of_petition_received', '<=', $request->date_to);
+        // Status-based date filtering logic
+        if ($request->filled('date_from') || $request->filled('date_to')) {
+            $dateFrom = $request->date_from;
+            $dateTo = $request->date_to;
+            $status = $request->status;
+            $tab = $request->get('tab', 'all');
+
+            $finalDecisionStatuses = ['PE', 'SC', 'QV', 'Closed', 'Sent to Govt', 'ICell'];
+
+            if ($status === 'Received' || $tab === 'received') {
+                if ($dateFrom) $query->whereDate('created_at', '>=', $dateFrom);
+                if ($dateTo) $query->whereDate('created_at', '<=', $dateTo);
+            } elseif ($status === 'Forwarded' || $tab === 'forwarded') {
+                $query->whereHas('forwardings', function($q) use ($dateFrom, $dateTo) {
+                    if ($dateFrom) $q->whereDate('forwarded_date', '>=', $dateFrom);
+                    if ($dateTo) $q->whereDate('forwarded_date', '<=', $dateTo);
+                });
+            } elseif ($status === 'VR_Received' || $tab === 'vrs') {
+                $query->whereHas('forwardings', function($q) use ($dateFrom, $dateTo) {
+                    if ($dateFrom) $q->whereDate('vr_date', '>=', $dateFrom);
+                    if ($dateTo) $q->whereDate('vr_date', '<=', $dateTo);
+                });
+            } elseif ($status === 'VR_Received_at_cpsp_date') {
+                $query->whereHas('forwardings', function($q) use ($dateFrom, $dateTo) {
+                    if ($dateFrom) $q->whereDate('vr_received_at_cpsp_date', '>=', $dateFrom);
+                    if ($dateTo) $q->whereDate('vr_received_at_cpsp_date', '<=', $dateTo);
+                });
+            } elseif (in_array($status, $finalDecisionStatuses) || $tab === 'decisions') {
+                $query->whereHas('decision', function($q) use ($dateFrom, $dateTo) {
+                    if ($dateFrom) $q->whereDate('decision_date', '>=', $dateFrom);
+                    if ($dateTo) $q->whereDate('decision_date', '<=', $dateTo);
+                });
+            } else {
+                // Default behavior: filter by received date
+                if ($dateFrom) $query->whereDate('date_of_petition_received', '>=', $dateFrom);
+                if ($dateTo) $query->whereDate('date_of_petition_received', '<=', $dateTo);
+            }
         }
         if ($request->filled('complainant_name')) {
             $query->whereHas('addresses', function ($q) use ($request) {
@@ -284,7 +316,10 @@ class PetitionController extends Controller
 
         if ($request->filled('status')) {
             $status = $request->status;
-            if (in_array($status, ['PE', 'SC', 'QV', 'ICell'])) {
+            if ($status === 'VR_Received_at_cpsp_date') {
+                $query->where('status', 'VR_Received');
+            } elseif (in_array($status, ['PE', 'SC', 'QV', 'ICell', 'Closed', 'Sent to Govt'])) {
+                // These are decision-based statuses
                 $query->whereHas('decision', function($q) use ($status) {
                     $q->where('decision_remarks', $status);
                 });
