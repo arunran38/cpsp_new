@@ -56,11 +56,11 @@
                     <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2.5 transition-all bg-white">
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Petition Status</label>
+                <div class="lg:col-span-1">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Status / Timeline</label>
                     <select name="status" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2.5 transition-all bg-white">
                         <option value="">All Petitions</option>
-                        <optgroup label="Workflow Progress">
+                        <optgroup label="Petition Timeline">
                             <option value="Received" {{ request('status') == 'Received' ? 'selected' : '' }}>Received</option>
                             <option value="Forwarded" {{ request('status') == 'Forwarded' ? 'selected' : '' }}>Forwarded</option>
                             <option value="VR_Received" {{ request('status') == 'VR_Received' ? 'selected' : '' }}>Verification Report Received</option>

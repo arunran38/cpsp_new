@@ -257,6 +257,7 @@ class PetitionController extends Controller
         if ($request->filled('petition_no')) {
             $query->where('petition_no', 'like', '%' . $request->petition_no . '%');
         }
+
         // Status-based date filtering logic
         if ($request->filled('date_from') || $request->filled('date_to')) {
             $dateFrom = $request->date_from;
@@ -289,12 +290,9 @@ class PetitionController extends Controller
                     if ($dateFrom) $q->whereDate('decision_date', '>=', $dateFrom);
                     if ($dateTo) $q->whereDate('decision_date', '<=', $dateTo);
                 });
-            } else {
-                // Default behavior: filter by received date
-                if ($dateFrom) $query->whereDate('date_of_petition_received', '>=', $dateFrom);
-                if ($dateTo) $query->whereDate('date_of_petition_received', '<=', $dateTo);
             }
         }
+
         if ($request->filled('complainant_name')) {
             $query->whereHas('addresses', function ($q) use ($request) {
                 $q->where('person_type', 'Complainant')
@@ -316,8 +314,23 @@ class PetitionController extends Controller
 
         if ($request->filled('status')) {
             $status = $request->status;
-            if ($status === 'VR_Received_at_cpsp_date') {
-                $query->where('status', 'VR_Received');
+            
+            if ($status === 'Forwarded') {
+                $query->whereHas('forwardings');
+            } elseif ($status === 'VR_Received') {
+                $query->whereHas('forwardings', function($q) {
+                    $q->whereNotNull('vr_date');
+                });
+            } elseif ($status === 'VR_Received_at_cpsp_date') {
+                $query->whereHas('forwardings', function($q) {
+                    $q->whereNotNull('vr_received_at_cpsp_date');
+                });
+            } elseif ($status === 'Received') {
+                // All petitions were received at some point, so we don't restrict by status
+                // unless explicitly on the 'received' tab.
+                if ($request->get('tab', 'all') === 'received') {
+                    $query->where('status', 'Received');
+                }
             } elseif (in_array($status, ['PE', 'SC', 'QV', 'ICell', 'Closed', 'Sent to Govt'])) {
                 // These are decision-based statuses
                 $query->whereHas('decision', function($q) use ($status) {
