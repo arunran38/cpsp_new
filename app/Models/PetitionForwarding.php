@@ -38,4 +38,5 @@ class PetitionForwarding extends Model
     {
        return self::whereNotNull('vr_ref_no')->count();
     }
+    
 }

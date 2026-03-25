@@ -19,7 +19,7 @@
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <!-- Stat Card 1 -->
-        <a href="{{ route('petitions.index') }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
+        <a href="{{ route('petitions.reports', ['tab' => 'all']) }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
             <div class="flex items-center justify-between">
                 <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                     <i data-lucide="file-text" class="w-6 h-6"></i>
@@ -36,7 +36,7 @@
         </a>
 
         <!-- Stat Card 2 -->
-        <a href="{{ route('admin.petitions.forwarded') }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
+        <a href="{{ route('petitions.reports', ['tab' => 'forwarded']) }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
             <div class="flex items-center justify-between">
                 <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-amber-50 text-amber-600">
                     <i data-lucide="send" class="w-6 h-6"></i>
@@ -53,7 +53,7 @@
         </a>
 
         <!-- Stat Card 3 -->
-        <a href="{{ route('admin.petitions.vrs') }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
+        <a href="{{ route('petitions.reports', ['tab' => 'vrs']) }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
             <div class="flex items-center justify-between">
                 <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-purple-50 text-purple-600">
                     <i data-lucide="file-check" class="w-6 h-6"></i>
@@ -70,7 +70,7 @@
         </a>
 
         <!-- Stat Card 4 -->
-        <a href="{{ route('admin.petitions.decisions') }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
+        <a href="{{ route('petitions.reports', ['tab' => 'decisions']) }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-2xl hover:shadow-lg hover:shadow-slate-200/50">
             <div class="flex items-center justify-between">
                 <div class="w-12 h-12 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                     <i data-lucide="check-square" class="w-6 h-6"></i>

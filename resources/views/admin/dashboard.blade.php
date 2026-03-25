@@ -35,7 +35,7 @@
         </div>
 
         <!-- Reports Card -->
-        <a href="{{ route('admin.petitions.vrs') }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
+        <a href="{{ route('petitions.reports', ['tab' => 'vrs']) }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-50 group-hover:bg-amber-500 transition-colors">
                     <i data-lucide="file-text" class="w-6 h-6 text-amber-600 group-hover:text-white transition-colors"></i>
@@ -51,7 +51,7 @@
         </a>
 
         <!-- Pending Card -->
-        <a href="{{ route('admin.petitions.forwarded') }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
+        <a href="{{ route('petitions.reports', ['tab' => 'forwarded']) }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-rose-50 group-hover:bg-rose-500 transition-colors">
                     <i data-lucide="send" class="w-6 h-6 text-rose-600 group-hover:text-white transition-colors"></i>
@@ -67,7 +67,7 @@
         </a>
 
         <!-- Decisions Card -->
-        <a href="{{ route('admin.petitions.decisions') }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
+        <a href="{{ route('petitions.reports', ['tab' => 'decisions']) }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-50 group-hover:bg-emerald-500 transition-colors">
                     <i data-lucide="check-square" class="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors"></i>

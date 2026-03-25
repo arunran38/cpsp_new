@@ -110,23 +110,14 @@
                     </div>
                 </div>
 
-                <!-- Petitions -->
-                <div x-data="{ open: {{ request()->is('petitions*') || request()->is('admin/petitions*') ? 'true' : 'false' }} }">
-                    <button @click="open = !open" 
-                            class="flex items-center justify-between w-full px-4 py-3 text-sm font-medium transition-colors text-slate-400 rounded-xl hover:text-white hover:bg-white/5 group">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="file-text" class="w-5 h-5 transition-colors group-hover:text-primary"></i>
-                            Petitions
-                        </div>
-                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
-                    </button>
-                    <div x-show="open" x-cloak x-collapse class="pl-12 pr-4 mt-1 space-y-1">
-                        <a href="{{ route('petitions.index') }}" class="block py-2 text-sm {{ request()->routeIs('petitions.index') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">All Petitions</a>
-                        <a href="{{ route('admin.petitions.forwarded') }}" class="block py-2 text-sm {{ request()->routeIs('admin.petitions.forwarded') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">Forwarded to Units</a>
-                        <a href="{{ route('admin.petitions.vrs') }}" class="block py-2 text-sm {{ request()->routeIs('admin.petitions.vrs') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">Verification Reports</a>
-                        <a href="{{ route('admin.petitions.decisions') }}" class="block py-2 text-sm {{ request()->routeIs('admin.petitions.decisions') ? 'text-primary' : 'text-slate-400' }} transition-colors hover:text-white">Final Decisions</a>
+                <!-- Reports -->
+                <a href="{{ route('petitions.reports') }}" 
+                   class="flex items-center justify-between w-full px-4 py-3 text-sm font-medium transition-colors {{ request()->routeIs('petitions.reports') ? 'text-white bg-primary' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl group">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5 transition-colors group-hover:text-primary"></i>
+                        Reports
                     </div>
-                </div>
+                </a>
 
                 <div class="pt-6 mt-6 border-t border-slate-800">
                     <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 transition-colors rounded-xl hover:text-white hover:bg-white/5">
@@ -253,5 +244,6 @@
     <script>
         lucide.createIcons();
     </script>
+    @yield('scripts')
 </body>
 </html>

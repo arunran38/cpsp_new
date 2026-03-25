@@ -121,7 +121,138 @@ class PetitionController extends Controller
 
     public function index(Request $request)
     {
-        $query = Petition::with(['addresses', 'latestForwarding', 'decision']);
+        $tab = $request->get('tab', 'all');
+        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'decision']);
+        
+        $this->applyFilters($query, $request);
+        
+        $petitions = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
+        
+        if ($request->ajax()) {
+            return view('user.partials.reports_table', compact('petitions', 'tab'))->render();
+        }
+
+        return view('user.petition_view', compact('petitions', 'tab'));
+    }
+
+    public function reports(Request $request)
+    {
+        $tab = $request->get('tab', 'all'); // Keep tab for compatibility if needed
+        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'decision']);
+
+        $this->applyFilters($query, $request);
+
+        $petitions = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
+
+        if ($request->ajax()) {
+            return view('user.partials.reports_table', compact('petitions', 'tab'))->render();
+        }
+
+        return view('user.reports', compact('petitions', 'tab'));
+    }
+
+    public function export(Request $request)
+    {
+        $tab = $request->get('tab', 'all');
+        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'decision']);
+
+        switch ($tab) {
+            case 'all':
+                // No status filter
+                break;
+            case 'received':
+                $query->where('status', 'Received');
+                break;
+            case 'forwarded':
+                $query->where('status', 'Forwarded');
+                break;
+            case 'vrs':
+                $query->where('status', 'VR_Received');
+                break;
+            case 'decisions':
+                $query->whereIn('status', ['Sent_to_Govt', 'Closed']);
+                if ($request->filled('status')) {
+                    $query->whereHas('decision', function($q) use ($request) {
+                        $q->where('decision_remarks', $request->status);
+                    });
+                }
+                break;
+        }
+
+        $this->applyFilters($query, $request);
+        $petitions = $query->orderBy('created_at', 'desc')->get();
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=petitions_report_" . ($tab ?? 'all') . "_" . date('Y-m-d') . ".csv",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = ['#', 'Petition No', 'Received Date', 'Petitioner', 'Respondent', 'Nature', 'Mode', 'Status'];
+        if ($tab === 'forwarded') $columns[] = 'Unit';
+        if ($tab === 'vrs') { $columns[] = 'VR Ref No'; $columns[] = 'VR Date'; }
+        if ($tab === 'decisions') $columns[] = 'Decision';
+
+        $callback = function() use($petitions, $columns, $tab) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+
+            foreach ($petitions as $index => $petition) {
+                $complainants = $petition->addresses->where('person_type', 'Complainant')->pluck('person_name')->implode(', ');
+                $accused = $petition->addresses->where('person_type', 'Accused')->pluck('person_name')->implode(', ');
+
+                $row = [
+                    $index + 1,
+                    $petition->petition_no,
+                    $petition->date_of_petition_received,
+                    $complainants,
+                    $accused,
+                    $petition->nature_of_petition,
+                    $petition->mode_of_petition_received,
+                    $petition->status,
+                ];
+
+                if ($tab === 'forwarded') {
+                    $row[] = $petition->latestForwarding->toUnit->unit_name ?? 'N/A';
+                }
+                if ($tab === 'vrs') {
+                    $row[] = $petition->latestForwarding->vr_ref_no ?? 'N/A';
+                    $row[] = $petition->latestForwarding->vr_date ?? 'N/A';
+                }
+                if ($tab === 'decisions') {
+                    $row[] = $petition->decision->decision_remarks ?? 'N/A';
+                }
+
+                fputcsv($file, $row);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+
+    private function applyFilters($query, Request $request)
+    {
+        $tab = $request->get('tab', 'all');
+        
+        switch ($tab) {
+            case 'received':
+                $query->where('status', 'Received');
+                break;
+            case 'forwarded':
+                $query->where('status', 'Forwarded');
+                break;
+            case 'vrs':
+                $query->where('status', 'VR_Received');
+                break;
+            case 'decisions':
+                $query->whereIn('status', ['Sent_to_Govt', 'Closed']);
+                break;
+        }
 
         if ($request->filled('petition_no')) {
             $query->where('petition_no', 'like', '%' . $request->petition_no . '%');
@@ -150,38 +281,28 @@ class PetitionController extends Controller
         if ($request->filled('mode_of_petition')) {
             $query->where('mode_of_petition_received', $request->mode_of_petition);
         }
+
+        if ($request->filled('status')) {
+            $status = $request->status;
+            if (in_array($status, ['PE', 'SC', 'QV', 'ICell'])) {
+                $query->whereHas('decision', function($q) use ($status) {
+                    $q->where('decision_remarks', $status);
+                });
+            } else {
+                $query->where('status', $status);
+            }
+        }
         
-        // Handle generic search from top navbar
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('petition_no', 'like', "%{$search}%")
-                  ->orWhere('nature_of_petition', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                  ->orWhereHas('addresses', function ($q2) use ($search) {
+                      $q2->whereIn('person_type', ['Complainant', 'Accused'])
+                         ->where('person_name', 'like', "%{$search}%");
+                  });
             });
         }
-
-        $petitions = $query->orderBy('created_at', 'desc')->paginate()->appends($request->query());
-
-        return view('user.petition_view', compact('petitions'));
-    }
-
-    public function forwardedPetitions()
-    {
-        $petitions = Petition::with(['addresses', 'latestForwarding.toUnit'])->where('status', 'Forwarded')->orderBy('updated_at', 'desc')->paginate();
-        return view('user.forwardings_view', compact('petitions'));
-    }
-
-    public function verificationReports()
-    {
-        $petitions = Petition::with(['addresses', 'latestForwarding.toUnit'])->whereIn('status', ['VR_Received'])->orderBy('updated_at', 'desc')->paginate();
-        return view('user.vr_view', compact('petitions'));
-    }
-
-    public function decisions()
-    {
-        $petitions = Petition::with(['addresses', 'decision'])->whereIn('status', ['Sent_to_Govt', 'Closed'])->orderBy('updated_at', 'desc')->paginate();
-        return view('user.decisions_view', compact('petitions'));
     }
 
     public function show($id)
@@ -194,6 +315,11 @@ class PetitionController extends Controller
     {
         $petition = Petition::with(['addresses', 'uploads'])->findOrFail($id);
         
+        // Prevent editing if final decision is taken
+        if (in_array($petition->status, ['Closed', 'Sent_to_Govt'])) {
+            return redirect()->route('petitions.index')->with('error', 'Cannot edit a petition once a final decision has been taken.');
+        }
+
         // Format addresses for Alpine.js
         $complainants = $petition->addresses->where('person_type', 'Complainant')->groupBy('person_name')
             ->map(function ($addresses, $name) {
@@ -239,6 +365,11 @@ class PetitionController extends Controller
     public function update(Request $request, $id)
     {
         $petition = Petition::findOrFail($id);
+
+        // Prevent update if final decision is taken
+        if (in_array($petition->status, ['Closed', 'Sent_to_Govt'])) {
+            return redirect()->route('petitions.index')->with('error', 'Cannot update a petition once a final decision has been taken.');
+        }
 
         $validator = Validator::make($request->all(), [
             'petition_no' => 'required|unique:petitions,petition_no,' . $id . ',petition_id',

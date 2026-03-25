@@ -82,17 +82,18 @@
                     <div x-show="open" x-cloak x-collapse class="pl-12 pr-4 mt-1 space-y-1">
                         <a href="{{ route('petitions.create') }}" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">Add Petition</a>
                         <a href="{{ route('petitions.index') }}" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">View Petitions</a>
-                        <a href="#" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">Verification Reports</a>
-                        <a href="#" class="block py-2 text-sm text-slate-400 transition-colors hover:text-white">Petition Status</a>
                     </div>
                 </div>
 
-                <div class="pt-6 mt-6 border-t border-slate-800">
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 transition-colors rounded-xl hover:text-white hover:bg-white/5">
-                        <i data-lucide="settings" class="w-5 h-5"></i>
-                        Settings
-                    </a>
-                </div>
+                <!-- Reports -->
+                <a href="{{ route('petitions.reports') }}" 
+                   class="flex items-center justify-between w-full px-4 py-3 text-sm font-medium transition-colors {{ request()->routeIs('petitions.reports') ? 'text-white bg-primary' : 'text-slate-400 hover:text-white hover:bg-white/5' }} rounded-xl group">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5 transition-colors group-hover:text-primary"></i>
+                        Reports
+                    </div>
+                </a>
+
             </nav>
 
             <!-- Sidebar Footer -->
@@ -209,5 +210,6 @@
     <script>
         lucide.createIcons();
     </script>
+    @yield('scripts')
 </body>
 </html>

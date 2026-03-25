@@ -8,11 +8,11 @@
         
         <div class="flex items-center gap-4">
             <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
-                <i data-lucide="list" class="w-6 h-6"></i>
+                <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-slate-900">Submitted Petitions</h1>
-                <p class="text-sm text-slate-500 mt-1">Unified view of all petitions and workflow stages.</p>
+                <h1 class="text-2xl font-bold tracking-tight text-slate-900">Advanced Reports</h1>
+                <p class="text-sm text-slate-500 mt-1">Filter and analyze petition data with advanced parameters.</p>
             </div>
         </div>
         <div class="flex items-center gap-3">
@@ -28,98 +28,80 @@
         </div>
     </div>
 
-    <!-- Unified Tabs -->
-    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl mb-6 w-fit border border-slate-200 shadow-sm">
-        <a href="{{ route('petitions.index', ['tab' => 'all']) }}" 
-           class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'all' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
-            All Petitions
-        </a>
-        <a href="{{ route('petitions.index', ['tab' => 'received']) }}" 
-           class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'received' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
-            Received
-        </a>
-        <a href="{{ route('petitions.index', ['tab' => 'forwarded']) }}" 
-           class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'forwarded' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
-            Forwarded
-        </a>
-        <a href="{{ route('petitions.index', ['tab' => 'vrs']) }}" 
-           class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'vrs' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
-            VR Received
-        </a>
-        <a href="{{ route('petitions.index', ['tab' => 'decisions']) }}" 
-           class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'decisions' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
-            Final Decisions
-        </a>
-    </div>
-
-    @if($tab === 'decisions')
-    <!-- Sub-Tabs for Final Decisions -->
-    <div class="flex flex-wrap items-center gap-2 mb-6 p-1 bg-slate-50/50 rounded-2xl border border-slate-200 animate-in fade-in slide-in-from-top-2 duration-300">
-        @php
-            $statuses = ['All' => null, 'PE' => 'PE', 'SC' => 'SC', 'QV' => 'QV', 'Closed' => 'Closed', 'Sent to Govt' => 'Sent to Govt', 'ICell' => 'ICell'];
-        @endphp
-        @foreach($statuses as $label => $value)
-            <a href="{{ route('petitions.index', ['tab' => 'decisions', 'status' => $value]) }}" 
-               class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all border {{ request('status') == $value ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50' }}">
-                {{ $label }}
-            </a>
-        @endforeach
-    </div>
-    @endif
-
-    @if(session('success'))
-    <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl flex items-center gap-3">
-        <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i>
-        {{ session('success') }}
-    </div>
-    @endif
-
-    @if(session('error'))
-    <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl flex items-center gap-3">
-        <i data-lucide="alert-circle" class="w-5 h-5 text-rose-600"></i>
-        {{ session('error') }}
-    </div>
-    @endif
-
-    @if ($errors->any())
-    <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl space-y-1">
-        @foreach ($errors->all() as $error)
-            <div class="flex items-center gap-3 text-sm">
-                <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600"></i>
-                {{ $error }}
-            </div>
-        @endforeach
-    </div>
-    @endif
-
-    <!-- Data Table -->
+    <!-- Advanced Filters -->
     <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-        <div class="p-6 border-b border-slate-200 bg-slate-50">
-            <form id="searchForm" method="GET" action="{{ route('petitions.index') }}" class="flex flex-wrap gap-4 items-end">
+        <div class="p-6 border-b border-slate-200 bg-slate-50/50">
+            <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <i data-lucide="filter" class="w-4 h-4 text-indigo-500"></i>
+                Filter Petitions
+            </h3>
+            <form id="searchForm" method="GET" action="{{ route('petitions.reports') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                 <input type="hidden" name="tab" value="{{ $tab }}">
-                @if(request('status'))
-                    <input type="hidden" name="status" value="{{ request('status') }}">
-                @endif
-                <div class="flex-1 min-w-[200px]">
-                    <label class="block text-xs font-medium text-slate-700 mb-1">Search Petitions</label>
+                
+                <div class="lg:col-span-2">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Search Text</label>
                     <div class="relative flex items-center">
                         <i data-lucide="search" class="w-4 h-4 absolute left-3 text-slate-400"></i>
-                        <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-9 pr-3 py-[9px] rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Petition No, Petitioner Name, or Accused Name...">
+                        <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-9 pr-3 py-2.5 rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm transition-all bg-white" placeholder="Petition No, Petitioner, or Accused...">
                     </div>
                 </div>
-                <div class="flex-1 min-w-[150px]">
-                    <label class="block text-xs font-medium text-slate-700 mb-1">Date From</label>
-                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px]">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Date From</label>
+                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2.5 transition-all bg-white">
                 </div>
-                <div class="flex-1 min-w-[150px]">
-                    <label class="block text-xs font-medium text-slate-700 mb-1">Date To</label>
-                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px]">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Date To</label>
+                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2.5 transition-all bg-white">
                 </div>
-                <div class="flex-none">
-                    <label class="block text-xs font-medium text-transparent mb-1">&nbsp;</label>
-                    <a href="{{ route('petitions.index', ['tab' => $tab, 'status' => request('status')]) }}" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold px-4 py-[9px] rounded-lg text-sm flex items-center gap-2 shadow-sm transition-all whitespace-nowrap" title="Clear all filters">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                        Reset
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Current Status</label>
+                    <select name="status" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2.5 transition-all bg-white">
+                        <option value="">All Statuses</option>
+                        <optgroup label="Workflow Progress">
+                            <option value="Received" {{ request('status') == 'Received' ? 'selected' : '' }}>Received</option>
+                            <option value="Forwarded" {{ request('status') == 'Forwarded' ? 'selected' : '' }}>Forwarded</option>
+                            <option value="VR_Received" {{ request('status') == 'VR_Received' ? 'selected' : '' }}>VR Received</option>
+                        </optgroup>
+                        <optgroup label="Final Decisions">
+                            <option value="PE" {{ request('status') == 'PE' ? 'selected' : '' }}>PE (Preliminary Enquiry)</option>
+                            <option value="SC" {{ request('status') == 'SC' ? 'selected' : '' }}>SC (Show Cause)</option>
+                            <option value="QV" {{ request('status') == 'QV' ? 'selected' : '' }}>QV (Quick Verification)</option>
+                            <option value="ICell" {{ request('status') == 'ICell' ? 'selected' : '' }}>ICell</option>
+                            <option value="Closed" {{ request('status') == 'Closed' ? 'selected' : '' }}>Closed</option>
+                            <option value="Sent to Govt" {{ request('status') == 'Sent to Govt' ? 'selected' : '' }}>Sent to Govt</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Nature of Petition</label>
+                    <select name="nature_of_petition" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2.5 transition-all bg-white">
+                        <option value="">All Natures</option>
+                        @foreach(['Bribery', 'Misuse of authority', 'Fraud / financial irregularities', 'Serious negligence', 'others'] as $nature)
+                            <option value="{{ $nature }}" {{ request('nature_of_petition') == $nature ? 'selected' : '' }}>{{ $nature }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Mode of Receipt</label>
+                    <select name="mode_of_petition" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2.5 transition-all bg-white">
+                        <option value="">All Modes</option>
+                        @foreach(['Direct', 'Email', 'Whatsapp', 'Tollfree', 'others'] as $mode)
+                            <option value="{{ $mode }}" {{ request('mode_of_petition') == $mode ? 'selected' : '' }}>{{ $mode }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2 h-[42px]">
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm shadow-sm transition-all flex items-center justify-center gap-2">
+                        <i data-lucide="search" class="w-4 h-4"></i> Search
+                    </button>
+                    <a href="{{ route('petitions.reports') }}" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl text-sm transition-all flex items-center gap-2 shadow-sm whitespace-nowrap" title="Clear all filters">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset
                     </a>
                 </div>
             </form>
@@ -131,9 +113,10 @@
         </div>
     </div>
 
-    <!-- Forward Modal (Alpine.js) -->
+    <!-- Modals (Copied from petition_view for full functionality) -->
+    <!-- Forward Modal -->
     <div x-show="showForwardModal" x-cloak 
-         class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-slate-900/50 backdrop-blur-sm" style="display: none;">
+         class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/50 backdrop-blur-sm">
         <div @click.away="showForwardModal = false" class="relative w-full max-w-md p-6 bg-white rounded-2xl shadow-xl">
             <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-3">
                 <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2"><i data-lucide="send" class="w-5 h-5 text-indigo-600"></i> Petition Decision</h3>
@@ -145,7 +128,6 @@
             <form action="{{ route('forwardings.store') }}" method="POST">
                 @csrf
                 <input type="hidden" name="petition_id" :value="activePetitionId">
-                
                 <div x-data="{ action: '' }" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Action</label>
@@ -156,7 +138,6 @@
                             <option value="Close">Close Petition (Decision)</option>
                         </select>
                     </div>
-
                     <div x-show="action === 'Forward_To_Unit'" x-cloak class="pt-2">
                         <label class="block text-sm font-medium text-slate-700 mb-1">Select Unit</label>
                         <select name="to_unit_id" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" :required="action === 'Forward_To_Unit'">
@@ -166,12 +147,10 @@
                             @endforeach
                         </select>
                     </div>
-
                     <div class="pt-2 border-t border-slate-100 mt-2">
                         <label class="block text-sm font-medium text-slate-700 mb-1">Director Remarks</label>
                         <textarea name="director_remarks" rows="3" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Enter instructions or remarks..." required></textarea>
                     </div>
-
                     <div class="flex justify-end gap-3 pt-6">
                         <button type="button" @click="showForwardModal = false" class="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-transparent rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>
                         <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 shadow-sm transition-colors flex items-center gap-2">
@@ -183,9 +162,9 @@
         </div>
     </div>
 
-    <!-- VR Modal (Alpine.js) -->
+    <!-- VR Modal -->
     <div x-show="showVrModal" x-cloak 
-         class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-slate-900/50 backdrop-blur-sm" style="display: none;">
+         class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/50 backdrop-blur-sm">
         <div @click.away="showVrModal = false" class="relative w-full max-w-md p-6 bg-white rounded-2xl shadow-xl">
             <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-3">
                 <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2"><i data-lucide="file-check" class="w-5 h-5 text-blue-600"></i> Update Verification Report</h3>
@@ -193,11 +172,9 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            
             <form :action="'{{ url('forwardings') }}/' + activeForwardingId + '/vr'" method="POST" enctype="multipart/form-data" class="space-y-4">
                 @csrf
                 @method('PUT')
-                
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">VR Ref No</label>
@@ -214,12 +191,12 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Upload verification report</label>
-                        <input type="file" name="vr_file" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Upload Report</label>
+                        <input type="file" name="vr_file" class="w-full text-sm text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1 text-blue-600 font-bold">VR received in CPSP date</label>
-                        <input type="date" name="vr_received_at_cpsp_date" class="w-full rounded-lg border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                        <label class="block text-sm font-medium text-blue-600 mb-1 uppercase text-[10px] font-bold">Received in CPSP Date</label>
+                        <input type="date" name="vr_received_at_cpsp_date" class="w-full rounded-lg border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-1.5 bg-blue-50/30">
                     </div>
                 </div>
                 <div class="flex justify-end gap-3 pt-6">
@@ -232,9 +209,9 @@
         </div>
     </div>
 
-    <!-- Final Decision Modal (Alpine.js) -->
+    <!-- Final Decision Modal -->
     <div x-show="showDecisionModal" x-cloak 
-         class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-slate-900/50 backdrop-blur-sm" style="display: none;">
+         class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/50 backdrop-blur-sm">
         <div @click.away="showDecisionModal = false" class="relative w-full max-w-md p-6 bg-white rounded-2xl shadow-xl">
             <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-3">
                 <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2"><i data-lucide="check-square" class="w-5 h-5 text-rose-600"></i> Final Decision</h3>
@@ -242,22 +219,20 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            
             <form action="{{ route('decisions.store') }}" method="POST" class="space-y-4">
                 @csrf
                 <input type="hidden" name="petition_id" :value="activePetitionId">
-                
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Decision Code</label>
-                        <select name="decision_remarks" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm" required>
-                            <option value="">Select...</option>
-                            <option value="PE">PE</option>
-                            <option value="SC">SC</option>
-                            <option value="QV">QV</option>
-                            <option value="Closed">Closed</option>
-                            <option value="Sent to Govt">Sent to Govt</option>
-                            <option value="ICell">ICell</option>
-                        </select>
+                    <select name="decision_remarks" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm" required>
+                        <option value="">Select...</option>
+                        <option value="PE">PE</option>
+                        <option value="SC">SC</option>
+                        <option value="QV">QV</option>
+                        <option value="ICell">ICell</option>
+                        <option value="Closed">Closed</option>
+                        <option value="Sent to Govt">Sent to Govt</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Final Remarks</label>
@@ -273,7 +248,6 @@
         </div>
     </div>
 </div>
-
 @endsection
 
 @section('scripts')
@@ -293,10 +267,8 @@
             // Update URL without reloading
             window.history.pushState({}, '', url);
 
-            // Abort previous request if still pending
-            if (abortController) {
-                abortController.abort();
-            }
+            // Abort previous request
+            if (abortController) abortController.abort();
             abortController = new AbortController();
 
             fetch(url, {
@@ -308,37 +280,31 @@
             })
             .then(response => response.text())
             .then(html => {
+                // Replace table container content directly with the returned partial
                 const currentTable = document.getElementById('tableContainer');
                 if (currentTable) {
                     currentTable.innerHTML = html;
-                    if (window.lucide) {
-                        window.lucide.createIcons();
-                    }
+                    if (window.lucide) window.lucide.createIcons();
                 }
             })
             .catch(error => {
-                if (error.name !== 'AbortError') {
-                    console.error('Error fetching search results:', error);
-                }
+                if (error.name !== 'AbortError') console.error('Error:', error);
             });
         };
 
-        // Attach keyup event with debounce for text inputs
-        const textInputs = searchForm.querySelectorAll('input[type="text"]');
-        textInputs.forEach(input => {
-            input.addEventListener('keyup', (e) => {
+        // Debounce text inputs
+        searchForm.querySelectorAll('input[type="text"]').forEach(input => {
+            input.addEventListener('keyup', () => {
                 clearTimeout(timer);
                 timer = setTimeout(performSearch, 500);
             });
         });
 
-        // Attach change event for date, select inputs
-        const changeInputs = searchForm.querySelectorAll('input[type="date"], select');
-        changeInputs.forEach(input => {
+        // Instant filter for select and date
+        searchForm.querySelectorAll('select, input[type="date"]').forEach(input => {
             input.addEventListener('change', performSearch);
         });
         
-        // Prevent default form submission via enter key
         searchForm.addEventListener('submit', (e) => {
             e.preventDefault();
             performSearch();

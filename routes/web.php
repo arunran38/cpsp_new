@@ -32,10 +32,9 @@ Route::middleware(['auth'])->group(function () {
     })->name('user.dashboard');
 
     Route::resource("users", UserController::class);
-    // Petition Workflow Listings
-    Route::get('/admin/petitions/forwarded', [PetitionController::class, 'forwardedPetitions'])->name('admin.petitions.forwarded');
-    Route::get('/admin/petitions/vrs', [PetitionController::class, 'verificationReports'])->name('admin.petitions.vrs');
-    Route::get('/admin/petitions/decisions', [PetitionController::class, 'decisions'])->name('admin.petitions.decisions');
+    // Unified Reports and Export
+    Route::get('/petitions/reports', [PetitionController::class, 'reports'])->name('petitions.reports');
+    Route::get('/petitions/export', [PetitionController::class, 'export'])->name('petitions.export');
 
     Route::resource("petitions", PetitionController::class);
 
