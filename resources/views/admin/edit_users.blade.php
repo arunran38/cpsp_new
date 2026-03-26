@@ -54,7 +54,7 @@
 
                 <!-- Upload New Photo -->
                 <div class="sm:col-span-2">
-                    <x-input label="Update Photo" name="photo" type="file" icon="image" />
+                    <x-input label="Update Photo" name="user_photo" type="file" icon="image" />
                 </div>
 
                 <!-- Role -->

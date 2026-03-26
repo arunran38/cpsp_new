@@ -197,9 +197,9 @@
                         </div>
                         <div class="p-6">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                                <div><x-input label="Full Name" ::name="`complainants[${index}][name]`" x-model="comp.name" required /></div>
-                                <div><x-input label="Phone" ::name="`complainants[${index}][phone]`" x-model="comp.phone" /></div>
-                                <div><x-input label="Aadhar" ::name="`complainants[${index}][aadhar]`" x-model="comp.aadhar" /></div>
+                                <div><x-input label="Full Name" \:name="`complainants[${index}][name]`" x-model="comp.name" required /></div>
+                                <div><x-input label="Phone" \:name="`complainants[${index}][phone]`" x-model="comp.phone" /></div>
+                                <div><x-input label="Aadhar" \:name="`complainants[${index}][aadhar]`" x-model="comp.aadhar" /></div>
                             </div>
                             
                             <div class="space-y-4">
@@ -210,16 +210,16 @@
                                         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
                                             <div>
                                                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Type</label>
-                                                <select ::name="`complainants[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="w-full text-sm border-slate-300 rounded-lg">
+                                                <select \:name="`complainants[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="w-full text-sm border-slate-300 rounded-lg">
                                                     <option value="Permanent">Permanent</option>
                                                     <option value="Temporary">Temporary</option>
                                                     <option value="Office">Office</option>
                                                 </select>
                                             </div>
-                                            <div class="lg:col-span-2"><x-input label="Address" ::name="`complainants[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" required /></div>
+                                            <div class="lg:col-span-2"><x-input label="Address" \:name="`complainants[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" required /></div>
                                             <div class="grid grid-cols-2 gap-2">
-                                                <div><x-input label="District" ::name="`complainants[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" required /></div>
-                                                <div><x-input label="Pin" ::name="`complainants[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" required /></div>
+                                                <div><x-input label="District" \:name="`complainants[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" required /></div>
+                                                <div><x-input label="Pin" \:name="`complainants[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" required /></div>
                                             </div>
                                         </div>
                                     </div>
@@ -268,9 +268,9 @@
                         </div>
                         <div class="p-6">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                                <div><x-input label="Full Name" ::name="`accused[${index}][name]`" x-model="acc.name" required /></div>
-                                <div><x-input label="Phone" ::name="`accused[${index}][phone]`" x-model="acc.phone" /></div>
-                                <div><x-input label="Aadhar" ::name="`accused[${index}][aadhar]`" x-model="acc.aadhar" /></div>
+                                <div><x-input label="Full Name" \:name="`accused[${index}][name]`" x-model="acc.name" required /></div>
+                                <div><x-input label="Phone" \:name="`accused[${index}][phone]`" x-model="acc.phone" /></div>
+                                <div><x-input label="Aadhar" \:name="`accused[${index}][aadhar]`" x-model="acc.aadhar" /></div>
                             </div>
                             
                             <div class="space-y-4">
@@ -281,16 +281,16 @@
                                         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
                                             <div>
                                                 <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Type</label>
-                                                <select ::name="`accused[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="w-full text-sm border-slate-300 rounded-lg">
+                                                <select \:name="`accused[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="w-full text-sm border-slate-300 rounded-lg">
                                                     <option value="Permanent">Permanent</option>
                                                     <option value="Temporary">Temporary</option>
                                                     <option value="Office">Office</option>
                                                 </select>
                                             </div>
-                                            <div class="lg:col-span-2"><x-input label="Address" ::name="`accused[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" required /></div>
+                                            <div class="lg:col-span-2"><x-input label="Address" \:name="`accused[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" required /></div>
                                             <div class="grid grid-cols-2 gap-2">
-                                                <div><x-input label="District" ::name="`accused[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" required /></div>
-                                                <div><x-input label="Pin" ::name="`accused[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" required /></div>
+                                                <div><x-input label="District" \:name="`accused[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" required /></div>
+                                                <div><x-input label="Pin" \:name="`accused[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" required /></div>
                                             </div>
                                         </div>
                                     </div>

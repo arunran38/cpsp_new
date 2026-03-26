@@ -91,7 +91,7 @@ class PetitionForwardingController extends Controller
 
                 Upload::create([
                     'petition_id' => $forwarding->petition_id,
-                    'category' => 'Verification Report',
+                    'category' => Upload::CATEGORY_VERIFICATION_REPORT,
                     'original_filename' => $file->getClientOriginalName(),
                     'file_path' => $path,
                     'uploaded_by' => Auth::id(),

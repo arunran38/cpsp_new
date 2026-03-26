@@ -18,7 +18,12 @@ class Petition extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    public function seat()
+    {
+        return $this->belongsTo(Seat::class, 'seat_id', 'seat_id');
     }
 
     public function addresses()

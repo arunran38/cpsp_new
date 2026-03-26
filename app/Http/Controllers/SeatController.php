@@ -28,10 +28,13 @@ class SeatController extends Controller
             'seat_name' => 'required|string|max:255',
         ]);
 
-        $seat = Seat::create($request->only('seat_name', 'is_active'));
-        $seat->units()->sync($request->unit_ids);
-
-        return redirect()->route('admin.seats.index')->with('success', 'Seat created and units assigned successfully.');
+        try {
+            $seat = Seat::create($request->only('seat_name', 'is_active'));
+            $seat->units()->sync($request->unit_ids);
+            return redirect()->route('admin.seats.index')->with('success', 'Seat created and units assigned successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to create seat: ' . $e->getMessage())->withInput();
+        }
     }
 
     public function edit($id)
@@ -51,17 +54,23 @@ class SeatController extends Controller
             'seat_name' => 'required|string|max:255',
         ]);
 
-        $seat->update($request->only('seat_name', 'is_active'));
-        $seat->units()->sync($request->unit_ids);
-
-        return redirect()->route('admin.seats.index')->with('success', 'Seat and unit assignments updated successfully.');
+        try {
+            $seat->update($request->only('seat_name', 'is_active'));
+            $seat->units()->sync($request->unit_ids);
+            return redirect()->route('admin.seats.index')->with('success', 'Seat and unit assignments updated successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to update seat: ' . $e->getMessage())->withInput();
+        }
     }
 
     public function destroy($id)
     {
-        $seat = Seat::findOrFail($id);
-        $seat->delete();
-
-        return redirect()->route('admin.seats.index')->with('success', 'Seat deleted successfully.');
+        try {
+            $seat = Seat::findOrFail($id);
+            $seat->delete();
+            return redirect()->route('admin.seats.index')->with('success', 'Seat deleted successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to delete seat: ' . $e->getMessage());
+        }
     }
 }

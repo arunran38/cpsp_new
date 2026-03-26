@@ -176,13 +176,13 @@
                             <!-- Fields -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                 <div>
-                                    <x-input label="Full Name" name="comp_name" ::name="`complainants[${index}][name]`" x-model="comp.name" ::required="step === 2" placeholder="Legal Name" />
+                                    <x-input label="Full Name" name="comp_name" \:name="`complainants[${index}][name]`" x-model="comp.name" ::required="step === 2" placeholder="Legal Name" />
                                 </div>
                                 <div>
-                                    <x-input label="Phone Number" name="comp_phone" ::name="`complainants[${index}][phone]`" x-model="comp.phone" ::required="step === 2" placeholder="10-digit Mobile" />
+                                    <x-input label="Phone Number" name="comp_phone" \:name="`complainants[${index}][phone]`" x-model="comp.phone" ::required="step === 2" placeholder="10-digit Mobile" />
                                 </div>
                                 <div>
-                                    <x-input label="Aadhar Number" name="comp_aadhar" ::name="`complainants[${index}][aadhar]`" x-model="comp.aadhar" placeholder="12-digit Aadhar" />
+                                    <x-input label="Aadhar Number" name="comp_aadhar" \:name="`complainants[${index}][aadhar]`" x-model="comp.aadhar" placeholder="12-digit Aadhar" />
                                 </div>
                             </div>
 
@@ -201,21 +201,21 @@
                                             <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
                                                 <div>
                                                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Address Type</label>
-                                                    <select ::name="`complainants[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all">
+                                                    <select \:name="`complainants[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all">
                                                         <option value="Permanent" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')">Permanent</option>
                                                         <option value="Temporary" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')">Temporary</option>
                                                         <option value="Office" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')">Office</option>
                                                     </select>
                                                 </div>
                                                 <div class="lg:col-span-2">
-                                                    <x-input label="Street Address *" name="comp_address" ::name="`complainants[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" ::required="step === 2" placeholder="House No, Street, Locality" />
+                                                    <x-input label="Street Address *" name="comp_address" \:name="`complainants[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" ::required="step === 2" placeholder="House No, Street, Locality" />
                                                 </div>
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <x-input label="District *" name="comp_district" ::name="`complainants[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" ::required="step === 2" placeholder="District" />
+                                                        <x-input label="District *" name="comp_district" \:name="`complainants[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" ::required="step === 2" placeholder="District" />
                                                     </div>
                                                     <div>
-                                                        <x-input label="Pincode *" name="comp_pincode" ::name="`complainants[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" ::required="step === 2" placeholder="Code" />
+                                                        <x-input label="Pincode *" name="comp_pincode" \:name="`complainants[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" ::required="step === 2" placeholder="Code" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -278,13 +278,13 @@
                             <!-- Fields -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                 <div>
-                                    <x-input label="Full Name *" name="acc_name" ::name="`accused[${index}][name]`" x-model="acc.name" ::required="step === 3" placeholder="Legal Name" />
+                                    <x-input label="Full Name *" name="acc_name" \:name="`accused[${index}][name]`" x-model="acc.name" ::required="step === 3" placeholder="Legal Name" />
                                 </div>
                                 <div>
-                                    <x-input label="Phone Number" name="acc_phone" ::name="`accused[${index}][phone]`" x-model="acc.phone" placeholder="Optional Mobile" />
+                                    <x-input label="Phone Number" name="acc_phone" \:name="`accused[${index}][phone]`" x-model="acc.phone" placeholder="Optional Mobile" />
                                 </div>
                                 <div>
-                                    <x-input label="Aadhar Number" name="acc_aadhar" ::name="`accused[${index}][aadhar]`" x-model="acc.aadhar" placeholder="Optional 12-digit" />
+                                    <x-input label="Aadhar Number" name="acc_aadhar" \:name="`accused[${index}][aadhar]`" x-model="acc.aadhar" placeholder="Optional 12-digit" />
                                 </div>
                             </div>
 
@@ -303,21 +303,21 @@
                                             <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
                                                 <div>
                                                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Address Type</label>
-                                                    <select ::name="`accused[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all">
+                                                    <select \:name="`accused[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all">
                                                         <option value="Permanent" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')">Permanent</option>
                                                         <option value="Temporary" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')">Temporary</option>
                                                         <option value="Office" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')">Office</option>
                                                     </select>
                                                 </div>
                                                 <div class="lg:col-span-2">
-                                                    <x-input label="Street Address" name="acc_address" ::name="`accused[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" ::required="step === 3" placeholder="House No, Street, Locality" />
+                                                    <x-input label="Street Address" name="acc_address" \:name="`accused[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" ::required="step === 3" placeholder="House No, Street, Locality" />
                                                 </div>
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <x-input label="District" name="acc_district" ::name="`accused[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" ::required="step === 3" placeholder="District" />
+                                                        <x-input label="District" name="acc_district" \:name="`accused[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" ::required="step === 3" placeholder="District" />
                                                     </div>
                                                     <div>
-                                                        <x-input label="Pincode" name="acc_pincode" ::name="`accused[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" ::required="step === 3" placeholder="Code" />
+                                                        <x-input label="Pincode" name="acc_pincode" \:name="`accused[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" ::required="step === 3" placeholder="Code" />
                                                     </div>
                                                 </div>
                                             </div>

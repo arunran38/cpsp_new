@@ -14,11 +14,6 @@ class Unit extends Model
     protected $fillable = [
         'unit_name',
         'unit_code',
-        'district',
-    ];
-
-    protected $casts = [
-        'district' => 'array',
     ];
 
     public function seats()
