@@ -257,12 +257,42 @@ class PetitionController extends Controller
         if ($request->filled('petition_no')) {
             $query->where('petition_no', 'like', '%' . $request->petition_no . '%');
         }
-        if ($request->filled('date_from')) {
-            $query->whereDate('date_of_petition_received', '>=', $request->date_from);
+
+        // Status-based date filtering logic
+        if ($request->filled('date_from') || $request->filled('date_to')) {
+            $dateFrom = $request->date_from;
+            $dateTo = $request->date_to;
+            $status = $request->status;
+            $tab = $request->get('tab', 'all');
+
+            $finalDecisionStatuses = ['PE', 'SC', 'QV', 'Closed', 'Sent to Govt', 'ICell'];
+
+            if ($status === 'Received' || $tab === 'received') {
+                if ($dateFrom) $query->whereDate('created_at', '>=', $dateFrom);
+                if ($dateTo) $query->whereDate('created_at', '<=', $dateTo);
+            } elseif ($status === 'Forwarded' || $tab === 'forwarded') {
+                $query->whereHas('forwardings', function($q) use ($dateFrom, $dateTo) {
+                    if ($dateFrom) $q->whereDate('forwarded_date', '>=', $dateFrom);
+                    if ($dateTo) $q->whereDate('forwarded_date', '<=', $dateTo);
+                });
+            } elseif ($status === 'VR_Received' || $tab === 'vrs') {
+                $query->whereHas('forwardings', function($q) use ($dateFrom, $dateTo) {
+                    if ($dateFrom) $q->whereDate('vr_date', '>=', $dateFrom);
+                    if ($dateTo) $q->whereDate('vr_date', '<=', $dateTo);
+                });
+            } elseif ($status === 'VR_Received_at_cpsp_date') {
+                $query->whereHas('forwardings', function($q) use ($dateFrom, $dateTo) {
+                    if ($dateFrom) $q->whereDate('vr_received_at_cpsp_date', '>=', $dateFrom);
+                    if ($dateTo) $q->whereDate('vr_received_at_cpsp_date', '<=', $dateTo);
+                });
+            } elseif (in_array($status, $finalDecisionStatuses) || $tab === 'decisions') {
+                $query->whereHas('decision', function($q) use ($dateFrom, $dateTo) {
+                    if ($dateFrom) $q->whereDate('decision_date', '>=', $dateFrom);
+                    if ($dateTo) $q->whereDate('decision_date', '<=', $dateTo);
+                });
+            }
         }
-        if ($request->filled('date_to')) {
-            $query->whereDate('date_of_petition_received', '<=', $request->date_to);
-        }
+
         if ($request->filled('complainant_name')) {
             $query->whereHas('addresses', function ($q) use ($request) {
                 $q->where('person_type', 'Complainant')
@@ -284,7 +314,25 @@ class PetitionController extends Controller
 
         if ($request->filled('status')) {
             $status = $request->status;
-            if (in_array($status, ['PE', 'SC', 'QV', 'ICell'])) {
+            
+            if ($status === 'Forwarded') {
+                $query->whereHas('forwardings');
+            } elseif ($status === 'VR_Received') {
+                $query->whereHas('forwardings', function($q) {
+                    $q->whereNotNull('vr_date');
+                });
+            } elseif ($status === 'VR_Received_at_cpsp_date') {
+                $query->whereHas('forwardings', function($q) {
+                    $q->whereNotNull('vr_received_at_cpsp_date');
+                });
+            } elseif ($status === 'Received') {
+                // All petitions were received at some point, so we don't restrict by status
+                // unless explicitly on the 'received' tab.
+                if ($request->get('tab', 'all') === 'received') {
+                    $query->where('status', 'Received');
+                }
+            } elseif (in_array($status, ['PE', 'SC', 'QV', 'ICell', 'Closed', 'Sent to Govt'])) {
+                // These are decision-based statuses
                 $query->whereHas('decision', function($q) use ($status) {
                     $q->where('decision_remarks', $status);
                 });
@@ -398,7 +446,7 @@ class PetitionController extends Controller
             ]);
 
             // 2. Clear existing addresses to rebuild them
-            Address::where('petition_id', $petition->petition_id)->delete();
+            Address::where('petition_id', '=', $petition->petition_id, 'and')->delete();
 
             // 3. Re-process Complainants & Accused
             if ($request->has('complainants') && is_array($request->complainants)) {

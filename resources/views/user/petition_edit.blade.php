@@ -1,4 +1,4 @@
-@extends('layouts.user')
+@extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.user')
 
 @section('content')
 <div class="space-y-6 max-w-5xl mx-auto" x-data="petitionForm()">
@@ -56,44 +56,44 @@
 
     <!-- Stepper Navigation -->
     <div class="py-4">
-        <div class="relative max-w-3xl mx-auto">
-            <div class="absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 -translate-y-1/2 z-0"></div>
-            <div class="absolute top-1/2 left-0 h-0.5 bg-indigo-600 -translate-y-1/2 transition-all duration-500 ease-out z-0" :style="`width: ${((step - 1) / 3) * 100}%`"></div>
+        <div class="relative max-w-3xl mx-auto px-4 md:px-0">
+            <div class="absolute top-4 left-0 w-full h-0.5 bg-indigo-300/20 -translate-y-1/2 z-0"></div>
+            <div class="absolute top-4 left-0 h-0.5 bg-teal-500 -translate-y-1/2 transition-all duration-500 ease-out z-0" :style="`width: ${((step - 1) / 3) * 100}%`"></div>
 
             <div class="relative z-10 flex justify-between">
-                <button type="button" @click="setStep(1)" class="flex flex-col items-center gap-2 focus:outline-none group bg-slate-50 px-2">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ring-4 ring-slate-50"
-                        :class="step >= 1 ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400 border border-slate-300'">
+                <button type="button" @click="setStep(1)" class="flex flex-col items-center gap-2 focus:outline-none group bg-transparent">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-sm"
+                        :class="step >= 1 ? 'bg-teal-500 text-white' : 'bg-white text-blue-500 border border-blue-200'">
                         <span x-show="step > 1"><i data-lucide="check" class="w-4 h-4"></i></span>
                         <span x-show="step === 1">1</span>
                     </div>
-                    <span class="text-xs font-semibold whitespace-nowrap tracking-tight" :class="step >= 1 ? 'text-slate-900' : 'text-slate-400'">Details</span>
+                    <span class="text-xs font-semibold whitespace-nowrap tracking-tight transition-colors" :class="step >= 1 ? 'text-white' : 'text-blue-200'">Details</span>
                 </button>
 
-                <button type="button" @click="setStep(2)" class="flex flex-col items-center gap-2 focus:outline-none group bg-slate-50 px-2">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ring-4 ring-slate-50"
-                        :class="step >= 2 ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400 border border-slate-300'">
+                <button type="button" @click="setStep(2)" class="flex flex-col items-center gap-2 focus:outline-none group bg-transparent">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-sm"
+                        :class="step >= 2 ? 'bg-teal-500 text-white' : 'bg-white text-blue-500 border border-blue-200'">
                         <span x-show="step > 2"><i data-lucide="check" class="w-4 h-4"></i></span>
                         <span x-show="step <= 2">2</span>
                     </div>
-                    <span class="text-xs font-semibold whitespace-nowrap tracking-tight" :class="step >= 2 ? 'text-slate-900' : 'text-slate-400'">Complainants</span>
+                    <span class="text-xs font-semibold whitespace-nowrap tracking-tight transition-colors" :class="step >= 2 ? 'text-white' : 'text-blue-200'">Complainants</span>
                 </button>
 
-                <button type="button" @click="setStep(3)" class="flex flex-col items-center gap-2 focus:outline-none group bg-slate-50 px-2">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ring-4 ring-slate-50"
-                        :class="step >= 3 ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400 border border-slate-300'">
+                <button type="button" @click="setStep(3)" class="flex flex-col items-center gap-2 focus:outline-none group bg-transparent">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-sm"
+                        :class="step >= 3 ? 'bg-teal-500 text-white' : 'bg-white text-blue-500 border border-blue-200'">
                         <span x-show="step > 3"><i data-lucide="check" class="w-4 h-4"></i></span>
                         <span x-show="step <= 3">3</span>
                     </div>
-                    <span class="text-xs font-semibold whitespace-nowrap tracking-tight" :class="step >= 3 ? 'text-slate-900' : 'text-slate-400'">Respondents</span>
+                    <span class="text-xs font-semibold whitespace-nowrap tracking-tight transition-colors" :class="step >= 3 ? 'text-white' : 'text-blue-200'">Respondents</span>
                 </button>
 
-                <button type="button" @click="setStep(4)" class="flex flex-col items-center gap-2 focus:outline-none group bg-slate-50 px-2">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ring-4 ring-slate-50"
-                        :class="step >= 4 ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400 border border-slate-300'">
+                <button type="button" @click="setStep(4)" class="flex flex-col items-center gap-2 focus:outline-none group bg-transparent">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-sm"
+                        :class="step >= 4 ? 'bg-teal-500 text-white' : 'bg-white text-blue-500 border border-blue-200'">
                         <span>4</span>
                     </div>
-                    <span class="text-xs font-semibold whitespace-nowrap tracking-tight" :class="step >= 4 ? 'text-slate-900' : 'text-slate-400'">Review</span>
+                    <span class="text-xs font-semibold whitespace-nowrap tracking-tight transition-colors" :class="step >= 4 ? 'text-white' : 'text-blue-200'">Review</span>
                 </button>
             </div>
         </div>

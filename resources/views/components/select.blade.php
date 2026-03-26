@@ -8,12 +8,12 @@
     @endif
     <div class="relative flex items-center group">
         <select 
-            {{ $attributes->merge(['class' => 'block w-full px-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 transition-all duration-200 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none appearance-none group-hover:border-slate-300 cursor-pointer']) }}
+            {{ $attributes->merge(['class' => 'block w-full px-4 py-2.5 text-sm font-medium bg-white border border-slate-200 rounded-xl text-gray-800 transition-all duration-200 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none appearance-none group-hover:border-slate-300 cursor-pointer shadow-sm']) }}
             id="{{ $name }}" 
             name="{{ $name }}"
         >
             @foreach($options as $value => $label)
-                <option value="{{ $value }}" {{ $value == old($name, $selected) ? 'selected' : '' }}>
+                <option value="{{ $value }}" {{ $value == old($name, $selected) ? 'selected' : '' }} class="py-2 text-base font-medium text-gray-800 bg-white">
                     {{ $label }}
                 </option>
             @endforeach
