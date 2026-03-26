@@ -11,7 +11,10 @@ class SeatUserController extends Controller
 {
     public function index()
     {
-        $assignments = SeatUser::with(['user', 'seat'])->orderBy('created_at', 'desc')->get();
+        $assignments = SeatUser::with(['user', 'seat'])
+            ->where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->get();
         return view('admin.seatuser_view', compact('assignments'));
     }
 

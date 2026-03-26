@@ -1,4 +1,4 @@
-@extends('layouts.user')
+@extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.user')
 
 @section('content')
 <div class="space-y-6">

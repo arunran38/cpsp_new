@@ -1,4 +1,4 @@
-@extends('layouts.user')
+@extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.user')
 
 @section('content')
 <div x-data="{ showForwardModal: false, showVrModal: false, showDecisionModal: false, activePetitionId: null, activeForwardingId: null }" class="space-y-6">
@@ -11,8 +11,8 @@
                 <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
             </div>
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-slate-900">Advanced Reports</h1>
-                <p class="text-sm text-slate-500 mt-1">Filter and analyze petition data with advanced parameters.</p>
+                <h1 class="text-2xl font-bold tracking-tight text-slate-900"> Reports</h1>
+                <p class="text-sm text-slate-500 mt-1">Filter and analyze petition data</p>
             </div>
         </div>
         <div class="flex items-center gap-3">
@@ -58,41 +58,41 @@
 
                 <div class="lg:col-span-1">
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Status / Timeline</label>
-                    <select name="status" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2.5 transition-all bg-white">
-                        <option value="">All Petitions</option>
-                        <optgroup label="Petition Timeline">
-                            <option value="Received" {{ request('status') == 'Received' ? 'selected' : '' }}>Received</option>
-                            <option value="Forwarded" {{ request('status') == 'Forwarded' ? 'selected' : '' }}>Forwarded</option>
-                            <option value="VR_Received" {{ request('status') == 'VR_Received' ? 'selected' : '' }}>Verification Report Received</option>
-                            <option value="VR_Received_at_cpsp_date" {{ request('status') == 'VR_Received_at_cpsp_date' ? 'selected' : '' }}>Verification Report Received at CPSP</option>    
+                    <select name="status" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2.5 transition-all bg-white">
+                        <option value="" class="font-medium text-slate-800 bg-white py-1">All Petitions</option>
+                        <optgroup label="Petition Timeline" class="font-bold text-slate-900 bg-slate-50">
+                            <option value="Received" {{ request('status') == 'Received' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Received</option>
+                            <option value="Forwarded" {{ request('status') == 'Forwarded' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Forwarded</option>
+                            <option value="VR_Received" {{ request('status') == 'VR_Received' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Verification Report Received</option>
+                            <option value="VR_Received_at_cpsp_date" {{ request('status') == 'VR_Received_at_cpsp_date' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Verification Report Received at CPSP</option>    
                         </optgroup>
-                        <optgroup label="Final Decisions">
-                            <option value="PE" {{ request('status') == 'PE' ? 'selected' : '' }}>PE (Preliminary Enquiry)</option>
-                            <option value="SC" {{ request('status') == 'SC' ? 'selected' : '' }}>SC (Show Cause)</option>
-                            <option value="QV" {{ request('status') == 'QV' ? 'selected' : '' }}>QV (Quick Verification)</option>
-                            <option value="ICell" {{ request('status') == 'ICell' ? 'selected' : '' }}>ICell</option>
-                            <option value="Closed" {{ request('status') == 'Closed' ? 'selected' : '' }}>Closed</option>
-                            <option value="Sent to Govt" {{ request('status') == 'Sent to Govt' ? 'selected' : '' }}>Sent to Govt</option>
+                        <optgroup label="Final Decisions" class="font-bold text-slate-900 bg-slate-50">
+                            <option value="PE" {{ request('status') == 'PE' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">PE (Preliminary Enquiry)</option>
+                            <option value="SC" {{ request('status') == 'SC' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">SC (Show Cause)</option>
+                            <option value="QV" {{ request('status') == 'QV' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">QV (Quick Verification)</option>
+                            <option value="ICell" {{ request('status') == 'ICell' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">ICell</option>
+                            <option value="Closed" {{ request('status') == 'Closed' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Closed</option>
+                            <option value="Sent to Govt" {{ request('status') == 'Sent to Govt' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Sent to Govt</option>
                         </optgroup>
                     </select>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Nature of Petition</label>
-                    <select name="nature_of_petition" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2.5 transition-all bg-white">
-                        <option value="">All Natures</option>
+                    <select name="nature_of_petition" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2.5 transition-all bg-white">
+                        <option value="" class="font-medium text-slate-800 bg-white py-1">All Natures</option>
                         @foreach(['Bribery', 'Misuse of authority', 'Fraud / financial irregularities', 'Serious negligence', 'others'] as $nature)
-                            <option value="{{ $nature }}" {{ request('nature_of_petition') == $nature ? 'selected' : '' }}>{{ $nature }}</option>
+                            <option value="{{ $nature }}" {{ request('nature_of_petition') == $nature ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">{{ $nature }}</option>
                         @endforeach
                     </select>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Mode of Receipt</label>
-                    <select name="mode_of_petition" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2.5 transition-all bg-white">
-                        <option value="">All Modes</option>
+                    <select name="mode_of_petition" class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2.5 transition-all bg-white">
+                        <option value="" class="font-medium text-slate-800 bg-white py-1">All Modes</option>
                         @foreach(['Direct', 'Email', 'Whatsapp', 'Tollfree', 'others'] as $mode)
-                            <option value="{{ $mode }}" {{ request('mode_of_petition') == $mode ? 'selected' : '' }}>{{ $mode }}</option>
+                            <option value="{{ $mode }}" {{ request('mode_of_petition') == $mode ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">{{ $mode }}</option>
                         @endforeach
                     </select>
                 </div>

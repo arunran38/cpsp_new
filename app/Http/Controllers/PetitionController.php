@@ -446,7 +446,7 @@ class PetitionController extends Controller
             ]);
 
             // 2. Clear existing addresses to rebuild them
-            Address::where('petition_id', $petition->petition_id)->delete();
+            Address::where('petition_id', '=', $petition->petition_id, 'and')->delete();
 
             // 3. Re-process Complainants & Accused
             if ($request->has('complainants') && is_array($request->complainants)) {

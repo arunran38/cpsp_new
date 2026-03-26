@@ -1,4 +1,4 @@
-@extends('layouts.user')
+@extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.user')
 
 @section('content')
 <div class="space-y-6 max-w-5xl mx-auto">
@@ -41,7 +41,7 @@
                         <span class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Status</span> 
                         <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">
                             @if($petition->decision)
-                                Final Recommendation: {{ $petition->decision->decision_remarks }}
+                                Final : {{ $petition->decision->decision_remarks }}
                             @else
                                 {{ $petition->status }}
                             @endif

@@ -1,5 +1,6 @@
 import defaultTheme from 'tailwindcss/defaultTheme';
 import forms from '@tailwindcss/forms';
+import colors from 'tailwindcss/colors';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -17,6 +18,9 @@ export default {
             colors: {
                 primary: '#4361ee',
                 'primary-hover': '#3a56e4',
+                slate: colors.blue,
+                indigo: colors.teal,
+                purple: colors.emerald,
             },
         },
     },
