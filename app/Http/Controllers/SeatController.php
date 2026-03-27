@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Seat;
+use App\Models\SeatUser;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 
@@ -10,7 +11,7 @@ class SeatController extends Controller
 {
     public function index()
     {
-        $seats = Seat::with('units')->paginate(10);
+        $seats = Seat::with(['units', 'activeAssignment.user.profilePhoto'])->paginate(10);
         return view('admin.seat_view', compact('seats'));
     }
 
@@ -67,10 +68,48 @@ class SeatController extends Controller
     {
         try {
             $seat = Seat::findOrFail($id);
+
+            // Check if seat has active assignment
+            $activeAssignment = SeatUser::where('seat_id', '=', $id)
+                                        ->where('is_active', '=', true)
+                                        ->first();
+            
+            if ($activeAssignment) {
+                return back()->with('error', 'Cannot delete seat: An officer is currently assigned to this seat.');
+            }
+
             $seat->delete();
             return redirect()->route('admin.seats.index')->with('success', 'Seat deleted successfully.');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to delete seat: ' . $e->getMessage());
+        }
+    }
+
+    public function history($id)
+    {
+        $seat = Seat::findOrFail($id);
+        $assignments = SeatUser::with(['user' => function($q) {
+            $q->withTrashed()->with('profilePhoto');
+        }])
+        ->where('seat_id', $id)
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+        return view('admin.seat_history', compact('seat', 'assignments'));
+    }
+
+    public function revokeAssignment($id)
+    {
+        try {
+            SeatUser::where('seat_id', $id)
+                ->where('is_active', true)
+                ->update([
+                    'is_active' => false,
+                    'revoked_at' => now(),
+                ]);
+            return redirect()->route('admin.seats.index')->with('success', 'Assignment revoked successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to revoke assignment: ' . $e->getMessage());
         }
     }
 }

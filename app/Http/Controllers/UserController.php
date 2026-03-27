@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Upload;
+use App\Models\SeatUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -158,6 +159,16 @@ class UserController extends Controller
             }
             
             $user->save();
+
+            // Auto-revoke seats if status changed to Transferred
+            if ($request->status === 'Transferred') {
+                SeatUser::where('user_id', $user->user_id)
+                    ->where('is_active', true)
+                    ->update([
+                        'is_active' => false,
+                        'revoked_at' => now(),
+                    ]);
+            }
             
             return redirect()->route("users.index")->with('success', 'User updated successfully.');
         } catch (\Exception $e) {
@@ -176,6 +187,16 @@ class UserController extends Controller
             
             $user->status = $request->status;
             $user->save();
+
+            // Auto-revoke seats if status changed to Transferred
+            if ($request->status === 'Transferred') {
+                SeatUser::where('user_id', $user->user_id)
+                    ->where('is_active', true)
+                    ->update([
+                        'is_active' => false,
+                        'revoked_at' => now(),
+                    ]);
+            }
             
             return redirect()->route("users.index")->with('success', 'User status updated successfully.');
         } catch (\Exception $e) {
@@ -189,6 +210,14 @@ class UserController extends Controller
             $userId = decrypt($id);
             $user = User::findOrFail($userId);
             $user->delete(); // Automatically soft deletes due to SoftDeletes trait
+            
+            // Auto-revoke seats when user is deleted
+            SeatUser::where('user_id', $user->user_id)
+                ->where('is_active', true)
+                ->update([
+                    'is_active' => false,
+                    'revoked_at' => now(),
+                ]);
             
             return redirect()->route("users.index")->with('success', 'User deleted successfully.');
         } catch (\Exception $e) {

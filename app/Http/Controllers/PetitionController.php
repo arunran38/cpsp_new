@@ -511,6 +511,19 @@ class PetitionController extends Controller
                 }
             }
 
+            // 5. Delete marked uploads
+            if ($request->has('deleted_attachments') && is_array($request->deleted_attachments)) {
+                foreach ($request->deleted_attachments as $uploadId) {
+                    $upload = Upload::where('petition_id', $petition->petition_id)->find($uploadId);
+                    if ($upload) {
+                        if (Storage::disk('public')->exists($upload->file_path)) {
+                            Storage::disk('public')->delete($upload->file_path);
+                        }
+                        $upload->delete();
+                    }
+                }
+            }
+
             DB::commit();
             return redirect()->route('petitions.index')->with('success', 'Petition updated successfully.');
 

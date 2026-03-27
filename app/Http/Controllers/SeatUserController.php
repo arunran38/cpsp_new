@@ -11,18 +11,15 @@ class SeatUserController extends Controller
 {
     public function index()
     {
-        $assignments = SeatUser::with(['user', 'seat'])
-            ->where('is_active', true)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-        return view('admin.seatuser_view', compact('assignments'));
+        return redirect()->route('admin.seats.index');
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $users = User::all();
         $seats = Seat::where('is_active', true)->get();
-        return view('admin.seatuser_add', compact('users', 'seats'));
+        $selectedSeatId = $request->get('seat_id');
+        return view('admin.seatuser_add', compact('users', 'seats', 'selectedSeatId'));
     }
 
     public function store(Request $request)
@@ -56,15 +53,18 @@ class SeatUserController extends Controller
                     'revoked_at' => now(),
                 ]);
 
-            // If NOT an additional charge, revoke existing active primary assignments for this user
+            // If NOT an additional charge, check if the user already has a primary seat
             if (!$isAdditional) {
-                SeatUser::where('user_id', $userId)
+                $hasPrimary = SeatUser::with('seat')
+                    ->where('user_id', $userId)
                     ->where('is_active', true)
                     ->where('is_additional', false)
-                    ->update([
-                        'is_active' => false,
-                        'revoked_at' => now(),
-                    ]);
+                    ->first();
+
+                if ($hasPrimary) {
+                    $seatName = $hasPrimary->seat->seat_name ?? 'CPSP I or CPSP II or CPSP III';
+                    return back()->with('error', "User already has a $seatName seat assigned. Please select \"Additional Charge\".")->withInput();
+                }
             }
 
             SeatUser::create([

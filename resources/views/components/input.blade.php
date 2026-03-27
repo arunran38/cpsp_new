@@ -24,9 +24,9 @@
                 'class' => 'block w-full ' . ($icon ? 'pl-11' : 'px-4') . ' py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 transition-all duration-200 placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none group-hover:border-slate-300',
                 'type' => $type,
                 'id' => $name,
-                'name' => $name,
                 'placeholder' => $placeholder
             ]) }}
+            @if(!($attributes->has(':name') || $attributes->has('::name') || $attributes->has('x-bind:name'))) name="{{ $name }}" @endif
             @if($name && $type !== 'file') value="{{ old($name, $value) }}" @elseif($value) value="{{ $value }}" @endif
             x-ref="input"
             @input="count = $event.target.value.length"

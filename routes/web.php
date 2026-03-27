@@ -63,6 +63,8 @@ Route::middleware(['auth'])->group(function () {
         'update' => 'admin.seats.update',
         'destroy' => 'admin.seats.destroy',
     ]);
+    Route::get('/seats/{id}/history', [SeatController::class, 'history'])->name('admin.seats.history');
+    Route::post('/seats/{id}/revoke', [SeatController::class, 'revokeAssignment'])->name('admin.seats.revoke');
 
     Route::resource("seatuser", SeatUserController::class)->names([
         'index' => 'admin.seatuser.index',

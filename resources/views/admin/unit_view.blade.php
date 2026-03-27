@@ -27,6 +27,7 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50">
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-20">Sl No</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Unit Name</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Unit Code</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
@@ -35,6 +36,9 @@
                 <tbody class="divide-y divide-slate-100">
                     @forelse($units as $unit)
                         <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-medium text-slate-400">{{ $units->firstItem() + $loop->index }}</span>
+                            </td>
                             <td class="px-6 py-4">
                                 <span class="text-sm font-bold text-slate-900">{{ $unit->unit_name }}</span>
                             </td>

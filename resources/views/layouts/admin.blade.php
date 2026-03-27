@@ -237,7 +237,6 @@
                          class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
                         <a href="{{ route('admin.seats.create') }}" class="nav-item-transition block py-2 px-3 text-sm rounded-lg {{ request()->routeIs('admin.seats.create') ? 'active-submenu' : 'submenu-link' }}">Add Seat</a>
                         <a href="{{ route('admin.seats.index') }}" class="nav-item-transition block py-2 px-3 text-sm rounded-lg {{ request()->routeIs('admin.seats.index') ? 'active-submenu' : 'submenu-link' }}">View/Edit Seats</a>
-                        <a href="{{ route('admin.seatuser.index') }}" class="nav-item-transition block py-2 px-3 text-sm rounded-lg {{ request()->routeIs('admin.seatuser.index') ? 'active-submenu' : 'submenu-link' }}">Assign Seats</a>
                     </div>
                 </div>
 
