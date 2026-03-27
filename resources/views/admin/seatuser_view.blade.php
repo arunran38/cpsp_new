@@ -44,10 +44,10 @@
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <img class="w-8 h-8 rounded-full ring-2 ring-slate-100" 
-                                         src="https://ui-avatars.com/api/?name={{ urlencode($assignment->user->name) }}&background=f8fafc&color=4361ee" alt="">
+                                         src="https://ui-avatars.com/api/?name={{ urlencode($assignment->user->name ?? 'Deleted User') }}&background=f8fafc&color=4361ee" alt="">
                                     <div>
-                                        <p class="text-sm font-bold text-slate-900">{{ $assignment->user->name }}</p>
-                                        <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{{ $assignment->user->pen }}</p>
+                                        <p class="text-sm font-bold text-slate-900">{{ $assignment->user->name ?? 'Deleted User' }}</p>
+                                        <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{{ $assignment->user->pen ?? 'N/A' }}</p>
                                     </div>
                                 </div>
                             </td>
@@ -105,6 +105,11 @@
                 </tbody>
             </table>
         </div>
+        @if($assignments->hasPages())
+            <div class="px-6 py-4 border-t border-slate-200">
+                {{ $assignments->links() }}
+            </div>
+        @endif
     </div>
 </div>
 @endsection

@@ -14,7 +14,7 @@ class SeatUserController extends Controller
         $assignments = SeatUser::with(['user', 'seat'])
             ->where('is_active', true)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10);
         return view('admin.seatuser_view', compact('assignments'));
     }
 

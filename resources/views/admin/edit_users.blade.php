@@ -66,6 +66,15 @@
                     required
                 />
 
+                <!-- Status -->
+                <x-select 
+                    label="Account Status" 
+                    name="status" 
+                    :options="['Active' => 'Active', 'Transferred' => 'Transferred']" 
+                    :selected="$user->status" 
+                    required
+                />
+
                 <!-- Designation -->
                 <div class="space-y-1.5">
                     <label class="block text-sm font-semibold text-slate-700">Designation</label>

@@ -52,6 +52,7 @@
                         <th class="px-6 py-4 font-bold">PEN No</th>
                         <th class="px-6 py-4 font-bold">Email</th>
                         <th class="px-6 py-4 font-bold text-center">Mobile No</th>
+                        <th class="px-6 py-4 font-bold">Status</th>
                         <th class="px-6 py-4 font-bold text-center">Actions</th>
                     </tr>
                 </thead>
@@ -84,6 +85,18 @@
                             </td>
                             <td class="px-6 py-4 text-center text-slate-600">
                                 {{ $user->mobile_number }}
+                            </td>
+                            <td class="px-6 py-4">
+                                <form method="POST" action="{{ route('users.updateStatus', encrypt($user->user_id)) }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <select name="status" onchange="this.form.submit()" 
+                                            class="px-2 py-1 text-xs font-semibold rounded-lg border-slate-200 outline-none transition-colors cursor-pointer
+                                            {{ $user->status === 'Active' ? 'bg-emerald-50 text-emerald-800 focus:ring-emerald-200' : 'bg-amber-50 text-amber-800 focus:ring-amber-200' }}">
+                                        <option value="Active" {{ $user->status === 'Active' ? 'selected' : '' }} class="bg-white text-slate-900">Active</option>
+                                        <option value="Transferred" {{ $user->status === 'Transferred' ? 'selected' : '' }} class="bg-white text-slate-900">Transferred</option>
+                                    </select>
+                                </form>
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center gap-2">
@@ -119,6 +132,11 @@
                 </tbody>
             </table>
         </div>
+        @if($users->hasPages())
+            <div class="px-6 py-4 border-t border-slate-200">
+                {{ $users->links() }}
+            </div>
+        @endif
     </div>
 </div>
 @endsection

@@ -10,7 +10,7 @@ class SeatController extends Controller
 {
     public function index()
     {
-        $seats = Seat::with('units')->get();
+        $seats = Seat::with('units')->paginate(10);
         return view('admin.seat_view', compact('seats'));
     }
 

@@ -32,6 +32,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('user.dashboard');
 
     Route::resource("users", UserController::class);
+    Route::patch('/users/{id}/status', [UserController::class, 'updateStatus'])->name('users.updateStatus');
     // Unified Reports and Export
     Route::get('/petitions/reports', [PetitionController::class, 'reports'])->name('petitions.reports');
     Route::get('/petitions/export', [PetitionController::class, 'export'])->name('petitions.export');
