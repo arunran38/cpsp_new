@@ -23,8 +23,7 @@
                 </div>
                 <div class="flex-1">
                     <h4 class="text-lg font-bold text-amber-900">Vacant Seats Detected</h4>
-                    <p class="text-sm text-amber-800 mt-1">There are <strong>{{ \App\Models\Seat::countVacant() }}</strong> active seats with no officer assigned. Consider assigning officers to ensure smooth petition processing.</p>
-                    <div class="mt-4 flex flex-wrap gap-2">
+                     <div class="mt-4 flex flex-wrap gap-2">
                         @foreach(\App\Models\Seat::getVacant() as $vSeat)
                             <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-amber-700 border border-amber-200 shadow-sm">
                                 {{ $vSeat->seat_name }}

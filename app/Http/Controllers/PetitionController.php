@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\UploadedFile;
+use App\Models\Seat;
 
 class PetitionController extends Controller
 {
@@ -145,12 +146,17 @@ class PetitionController extends Controller
     {
         $petitions = $this->getPetitions($request);
         $tab = $request->get('tab', 'all');
+        
+        $seats = [];
+        if (Auth::user()->role === 'admin') {
+            $seats = Seat::where('is_active', true)->orderBy('seat_name')->get();
+        }
 
         if ($request->ajax()) {
             return view('user.partials.reports_table', compact('petitions', 'tab'))->render();
         }
 
-        return view('user.reports', compact('petitions', 'tab'));
+        return view('user.reports', compact('petitions', 'tab', 'seats'));
     }
 
     private function getPetitions(Request $request)
@@ -210,6 +216,7 @@ class PetitionController extends Controller
         ];
 
         $columns = ['#', 'Petition No', 'Received Date', 'Petitioner', 'Respondent', 'Nature', 'Mode', 'Status'];
+        if (Auth::user()->role === 'admin') $columns[] = 'Seat';
         if ($tab === 'forwarded') $columns[] = 'Unit';
         if ($tab === 'vrs') { $columns[] = 'VR Ref No'; $columns[] = 'VR Date'; }
         if ($tab === 'decisions') $columns[] = 'Decision';
@@ -232,6 +239,10 @@ class PetitionController extends Controller
                     $petition->mode_of_petition_received,
                     $petition->status,
                 ];
+                
+                if (Auth::user()->role === 'admin') {
+                    $row[] = $petition->seat->seat_name ?? 'N/A';
+                }
 
                 if ($tab === 'forwarded') {
                     $row[] = $petition->latestForwarding->toUnit->unit_name ?? 'N/A';
@@ -317,6 +328,10 @@ class PetitionController extends Controller
 
         if ($request->filled('mode_of_petition')) {
             $query->where('mode_of_petition_received', $request->mode_of_petition);
+        }
+
+        if ($request->filled('seat_id')) {
+            $query->where('seat_id', $request->seat_id);
         }
 
         // 5. Date filters (Status-aware)
