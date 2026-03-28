@@ -554,6 +554,11 @@ class PetitionController extends Controller
         $petition = Petition::findOrFail($id);
         $this->authorizePetition($petition);
         
+        // Prevent deletion if final decision is taken
+        if (in_array($petition->status, ['Closed', 'Sent_to_Govt'])) {
+            return redirect()->route('petitions.index')->with('error', 'Cannot delete a petition after a final decision has been issued.');
+        }
+
         // Delete uploads from storage
         foreach ($petition->uploads as $upload) {
             Storage::disk('public')->delete($upload->file_path);

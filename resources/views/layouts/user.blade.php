@@ -135,7 +135,7 @@
             
             <!-- Sidebar Header -->
             <div class="flex items-center h-20 px-6 border-b border-slate-800/80 bg-slate-900/80">
-                <div class="flex items-center gap-3">
+                <a href="{{ route('user.dashboard') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
                     <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg shadow-indigo-500/20">
                         <i data-lucide="scroll-text" class="w-5 h-5 text-white"></i>
                     </div>
@@ -143,7 +143,7 @@
                         <span class="text-xl font-bold tracking-tight text-white uppercase">User<span class="text-indigo-400"> Dashboard</span></span>
                         <p class="text-[10px] text-slate-500 leading-tight uppercase font-semibold">Petition Management</p>
                     </div>
-                </div>
+                </a>
             </div>
 
             <!-- Navigation Container -->
