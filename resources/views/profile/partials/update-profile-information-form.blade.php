@@ -17,6 +17,7 @@
                     </div>
                 </div>
                 <input type="file" id="photo" name="photo" class="hidden" accept="image/*" onchange="previewImage(this)">
+                <x-input-error :messages="$errors->get('photo')" class="mt-2" />
             </div>
             <div class="space-y-1">
                 <h2 class="text-2xl font-bold text-white tracking-tight">{{ $user->name }}</h2>

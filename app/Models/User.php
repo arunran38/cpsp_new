@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Upload;
 
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'mobile_number', 'role', 'designation', 'other_designation', 'pen', 'photo', 'status'])]
 #[Hidden(['password', 'remember_token'])]
   
 class User extends Authenticatable

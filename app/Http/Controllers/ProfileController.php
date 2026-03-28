@@ -39,7 +39,8 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $user = $request->user();
-        $user->fill($request->validated());
+        // Update profile information (excluding photo for separate handling)
+        $user->fill($request->safe()->except(['photo']));
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
@@ -48,24 +49,27 @@ class ProfileController extends Controller
         // Handle Profile Photo Upload
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
-            $filename = time() . '_profile_' . $user->user_id . '.' . $file->getClientOriginalExtension();
-            $path = $file->storeAs('profile_photos', $filename, 'public');
+            
+            if ($file->isValid() && !empty($file->getRealPath())) {
+                $filename = time() . '_profile_' . $user->user_id . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('profile_photos', $filename, 'public');
 
-            // Create entry in uploads table
-            $upload = Upload::create([
-                'category' => Upload::CATEGORY_PROFILE_PHOTO,
-                'original_filename' => $file->getClientOriginalName(),
-                'file_path' => $path,
-                'uploaded_by' => $user->user_id,
-            ]);
+                // Create entry in uploads table
+                $upload = Upload::create([
+                    'category' => Upload::CATEGORY_PROFILE_PHOTO,
+                    'original_filename' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                    'uploaded_by' => $user->user_id,
+                ]);
 
-            // Delete old photo if exists
-            if ($user->profilePhoto) {
-                Storage::disk('public')->delete($user->profilePhoto->file_path);
-                $user->profilePhoto->delete();
+                // Delete old photo if exists
+                if ($user->profilePhoto) {
+                    Storage::disk('public')->delete($user->profilePhoto->file_path);
+                    $user->profilePhoto->delete();
+                }
+
+                $user->photo = $upload->upload_id;
             }
-
-            $user->photo = $upload->upload_id;
         }
 
         $user->save();
