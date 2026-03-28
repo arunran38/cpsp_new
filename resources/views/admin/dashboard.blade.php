@@ -6,7 +6,6 @@
     <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h1 class="text-2xl font-bold tracking-tight text-slate-900">Dashboard </h1>
-           
         </div>
         <div class="flex items-center gap-3">
             <button class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium transition-all bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 text-slate-700">
@@ -15,6 +14,29 @@
             </button>
         </div>
     </div>
+
+    @if(\App\Models\Seat::countVacant() > 0)
+        <div class="p-6 bg-amber-50 border border-amber-200 rounded-3xl shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 flex-shrink-0">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-lg font-bold text-amber-900">Vacant Seats Detected</h4>
+                     <div class="mt-4 flex flex-wrap gap-2">
+                        @foreach(\App\Models\Seat::getVacant() as $vSeat)
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-amber-700 border border-amber-200 shadow-sm">
+                                {{ $vSeat->seat_name }}
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+                <a href="{{ route('admin.seatuser.create') }}" class="px-4 py-2 bg-amber-600 text-white text-sm font-bold rounded-xl hover:bg-amber-700 transition-colors shadow-lg shadow-amber-200/50 whitespace-nowrap">
+                    Assign Now
+                </a>
+            </div>
+        </div>
+    @endif
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">

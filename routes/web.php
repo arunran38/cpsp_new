@@ -32,6 +32,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('user.dashboard');
 
     Route::resource("users", UserController::class);
+    Route::patch('/users/{id}/status', [UserController::class, 'updateStatus'])->name('users.updateStatus');
     // Unified Reports and Export
     Route::get('/petitions/reports', [PetitionController::class, 'reports'])->name('petitions.reports');
     Route::get('/petitions/export', [PetitionController::class, 'export'])->name('petitions.export');
@@ -62,6 +63,8 @@ Route::middleware(['auth'])->group(function () {
         'update' => 'admin.seats.update',
         'destroy' => 'admin.seats.destroy',
     ]);
+    Route::get('/seats/{id}/history', [SeatController::class, 'history'])->name('admin.seats.history');
+    Route::post('/seats/{id}/revoke', [SeatController::class, 'revokeAssignment'])->name('admin.seats.revoke');
 
     Route::resource("seatuser", SeatUserController::class)->names([
         'index' => 'admin.seatuser.index',
@@ -75,6 +78,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('admin.components-showcase');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile/password', [ProfileController::class, 'passwordEdit'])->name('profile.password.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });

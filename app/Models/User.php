@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Upload;
 
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'mobile_number', 'role', 'designation', 'other_designation', 'pen', 'photo', 'status'])]
 #[Hidden(['password', 'remember_token'])]
   
 class User extends Authenticatable
@@ -29,6 +30,7 @@ class User extends Authenticatable
         'other_designation',
         'pen',
         'photo',
+        'status',
     ];
 
     public function profilePhoto()
@@ -42,7 +44,7 @@ class User extends Authenticatable
     }
 
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
     
 
 

@@ -8,7 +8,7 @@
                 <th class="px-6 py-4 font-bold">Name of the Respondent & nature of petition</th>
                 <th class="px-6 py-4 font-bold">Mode of Receipt</th>
                 <th class="px-6 py-4 font-bold text-center">Status</th>
-                <th class="px-6 py-4 font-bold text-center">Processing</th>
+                <th class="px-6 py-4 font-bold text-center">{{ auth()->user()->role === 'admin' ? 'Seat & User' : 'Processing' }}</th>
                 <th class="px-6 py-4 font-bold text-center">Actions</th>
             </tr>
         </thead>
@@ -65,7 +65,12 @@
                     </td>
                     <td class="px-6 py-4 text-center">
                         <div class="flex items-center justify-center gap-2">
-                            @if(auth()->user()->role === 'user')
+                            @if(auth()->user()->role === 'admin')
+                                <div class="flex flex-col items-center gap-1">
+                                    <span class="font-bold text-slate-800">{{ $petition->seat->seat_name ?? 'N/A' }}</span>
+                                    <span class="text-xs text-slate-500">{{ $petition->user->name ?? 'N/A' }}</span>
+                                </div>
+                            @elseif(auth()->user()->role === 'user')
                                 @if($petition->status === 'Received')
                                     <button @click="showForwardModal = true; activePetitionId = {{ $petition->petition_id }}" class="px-3 py-1 text-xs font-bold text-white bg-amber-500 rounded hover:bg-amber-600 transition-colors">
                                         Forward
@@ -101,14 +106,14 @@
                                     <a href="{{ route('petitions.edit', $petition->petition_id) }}" class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit Record">
                                         <i class="fa-solid fa-pen-to-square text-emerald-500"></i>
                                     </a>
+                                    <form action="{{ route('petitions.destroy', $petition->petition_id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete Record">
+                                            <i class="fa-solid fa-trash-can text-rose-500"></i>
+                                        </button>
+                                    </form>
                                 @endif
-                                <form action="{{ route('petitions.destroy', $petition->petition_id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Delete Record">
-                                        <i class="fa-solid fa-trash-can text-rose-500"></i>
-                                    </button>
-                                </form>
                             @endif
                         </div>
                     </td>

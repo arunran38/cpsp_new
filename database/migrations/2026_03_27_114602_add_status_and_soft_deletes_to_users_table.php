@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('units', function (Blueprint $table) {
-            $table->text('district')->nullable()->change();
+        Schema::table('users', function (Blueprint $table) {
+            $table->enum('status', ['Active', 'Transferred'])->default('Active')->after('role');
+            $table->softDeletes();
         });
     }
 
@@ -21,8 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('units', function (Blueprint $table) {
-            $table->string('district')->nullable(false)->change();
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn(['status', 'deleted_at']);
         });
     }
 };

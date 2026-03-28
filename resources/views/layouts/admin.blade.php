@@ -237,7 +237,6 @@
                          class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
                         <a href="{{ route('admin.seats.create') }}" class="nav-item-transition block py-2 px-3 text-sm rounded-lg {{ request()->routeIs('admin.seats.create') ? 'active-submenu' : 'submenu-link' }}">Add Seat</a>
                         <a href="{{ route('admin.seats.index') }}" class="nav-item-transition block py-2 px-3 text-sm rounded-lg {{ request()->routeIs('admin.seats.index') ? 'active-submenu' : 'submenu-link' }}">View/Edit Seats</a>
-                        <a href="{{ route('admin.seatuser.index') }}" class="nav-item-transition block py-2 px-3 text-sm rounded-lg {{ request()->routeIs('admin.seatuser.index') ? 'active-submenu' : 'submenu-link' }}">Assign Seats</a>
                     </div>
                 </div>
 
@@ -297,17 +296,11 @@
 
                 <div class="flex items-center justify-between flex-1 gap-x-4 lg:gap-x-6">
                     <div class="hidden lg:flex items-center gap-2 text-sm">
-                        <span class="text-slate-500">Admin Panel</span>
-                        <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-600"></i>
-                        <span class="text-slate-300 font-medium">@yield('page-title', 'Overview')</span>
+                        <!-- Breadcrumb removed -->
                     </div>
 
                     <div class="flex items-center gap-x-4 ml-auto">
-                        <!-- Notifications -->
-                        <button type="button" class="relative p-2 text-slate-400 rounded-lg hover:bg-slate-800 transition-colors">
-                            <i data-lucide="bell" class="w-5 h-5"></i>
-                            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-slate-900"></span>
-                        </button>
+                        <!-- Notifications removed -->
 
                         <!-- Profile Dropdown -->
                         <div x-data="{ open: false }" class="relative">
@@ -315,20 +308,38 @@
                                     @click.away="open = false"
                                     type="button" 
                                     class="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-indigo-500/40 transition-all">
-                                <img class="w-8 h-8 rounded-full border border-slate-700 shadow-sm" 
-                                     src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'Admin User') }}&background=4f46e5&color=fff&bold=true" 
-                                     alt="Profile">
-                                <span class="hidden lg:flex items-center gap-1 text-sm font-medium text-slate-200">
-                                    {{ Auth::user()->name ?? 'Administrator' }}
-                                    <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
-                                </span>
+                                @if(Auth::user()->profilePhoto)
+                                    <img class="w-10 h-10 rounded-full border border-slate-700 shadow-sm object-cover" 
+                                         src="{{ asset('storage/' . Auth::user()->profilePhoto->file_path) }}" 
+                                         alt="Profile">
+                                @else
+                                    <img class="w-10 h-10 rounded-full border border-slate-700 shadow-sm" 
+                                         src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'Admin User') }}&background=4f46e5&color=fff&bold=true" 
+                                         alt="Profile">
+                                @endif
+                                <div class="hidden lg:flex flex-col items-start gap-0.5 text-left">
+                                    <span class="text-sm font-bold text-slate-200 leading-none">
+                                        {{ Auth::user()->name }}
+                                    </span>
+                                    <span class="text-[10px] font-medium text-indigo-400 uppercase tracking-wider leading-none">
+                                        {{ Auth::user()->seatUsers()->where('is_active', true)->first()?->seat?->seat_name ?? 'No Seat' }}
+                                    </span>
+                                </div>
+                                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
                             </button>
 
                             <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95"
                                  class="absolute right-0 z-50 w-56 mt-2 origin-top-right bg-slate-800 border border-slate-700 rounded-2xl shadow-xl focus:outline-none">
-                                <div class="px-4 py-3 border-b border-slate-700">
-                                    <p class="text-xs font-medium text-slate-400">Signed in as</p>
-                                    <p class="text-sm font-semibold text-white truncate">{{ Auth::user()->email ?? 'admin@cpsp.com' }}</p>
+                                <!-- Email section removed -->
+                                <div class="py-1">
+                                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors">
+                                        <i data-lucide="user" class="w-4 h-4 text-indigo-400"></i>
+                                        My Profile
+                                    </a>
+                                    <a href="{{ route('profile.password.edit') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors">
+                                        <i data-lucide="key-round" class="w-4 h-4 text-amber-400"></i>
+                                        Change Password
+                                    </a>
                                 </div>
                                 <div class="py-1 border-t border-slate-700">
                                     <form method="POST" action="{{ route('logout') }}">

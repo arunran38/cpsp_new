@@ -188,18 +188,23 @@
                         <!-- Director Forwarding Form -->
                         <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-6">
                             <h4 class="font-bold text-indigo-900 mb-4">Initial Decision / Forwarding</h4>
-                            <form action="{{ route('forwardings.store') }}" method="POST" class="space-y-4">
+                            <form action="{{ route('forwardings.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                                 @csrf
                                 <input type="hidden" name="petition_id" value="{{ $petition->petition_id }}">
                                 
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-1">Action</label>
-                                    <select name="action" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required onchange="document.getElementById('unit-select-div').style.display = this.value === 'Forward_To_Unit' ? 'block' : 'none';">
+                                    <select name="action" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required onchange="document.getElementById('unit-select-div').style.display = this.value === 'Forward_To_Unit' ? 'block' : 'none'; document.getElementById('final-doc-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt') ? 'block' : 'none';">
                                         <option value="">Select Action...</option>
                                         <option value="Forward_To_Unit">Forward to Unit</option>
                                         <option value="Sent_to_Govt">Send to Govt</option>
                                         <option value="Close">Close Petition</option>
                                     </select>
+                                </div>
+
+                                <div id="final-doc-div-fwd" style="display: none;">
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order Document</label>
+                                    <input type="file" name="final_order_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                                 </div>
 
                                 <div id="unit-select-div" style="display: none;">
@@ -323,7 +328,7 @@
                         @if($petition->status === 'VR_Received' && $petition->latestForwarding->vr_received_at_cpsp_date)
                             <div class="bg-rose-50 border border-rose-100 rounded-xl p-6 mb-6">
                                 <h4 class="font-bold text-rose-900 mb-4">Final Decision</h4>
-                                <form action="{{ route('decisions.store') }}" method="POST" class="space-y-4">
+                                <form action="{{ route('decisions.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                                     @csrf
                                     <input type="hidden" name="petition_id" value="{{ $petition->petition_id }}">
                                     
@@ -345,6 +350,11 @@
                                         <textarea name="final_remarks" rows="3" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500"></textarea>
                                     </div>
 
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order Document</label>
+                                        <input type="file" name="final_order_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100">
+                                    </div>
+
                                     <button type="submit" class="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 font-semibold shadow-sm">Submit Final Decision</button>
                                 </form>
                             </div>
@@ -359,6 +369,19 @@
                                     <div><span class="text-slate-500 font-semibold">Decision Code:</span> {{ $petition->decision->decision_remarks }}</div>
                                     <div><span class="text-slate-500 font-semibold">Decided On:</span> {{ \Carbon\Carbon::parse($petition->decision->decision_date)->format('d M, Y') }}</div>
                                     <div class="col-span-2"><span class="text-slate-500 font-semibold">Final Remarks:</span> {{ $petition->decision->final_remarks ?? 'N/A' }}</div>
+                                    
+                                    @php
+                                        $finalOrderFile = $petition->uploads->where('category', \App\Models\Upload::CATEGORY_FINAL_ORDER)->last();
+                                    @endphp
+                                    @if($finalOrderFile)
+                                        <div class="col-span-2 pt-2">
+                                            <span class="text-slate-500 font-semibold block mb-2">Attached Final Order:</span>
+                                            <a href="{{ asset('storage/' . $finalOrderFile->file_path) }}" target="_blank" class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                                                <i data-lucide="file-check" class="w-4 h-4 text-emerald-600"></i>
+                                                <span class="font-medium italic text-xs">{{ $finalOrderFile->original_filename }}</span>
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         @endif

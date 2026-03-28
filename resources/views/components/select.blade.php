@@ -1,20 +1,27 @@
-@props(['label', 'name', 'options' => [], 'selected' => ''])
+@props([
+    'label' => null,
+    'name' => null,
+    'options' => [],
+    'selected' => ''
+])
 
 <div class="space-y-1.5">
     @if($label)
-        <label for="{{ $name }}" class="block text-sm font-semibold text-slate-700">
+        <label @if($name) for="{{ $name }}" @endif class="block text-sm font-semibold text-slate-700">
             {{ $label }}
         </label>
     @endif
     <div class="relative flex items-center group">
         <select 
-            {{ $attributes->merge(['class' => 'block w-full px-4 py-2.5 text-sm font-medium bg-white border border-slate-200 rounded-xl text-gray-800 transition-all duration-200 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none appearance-none group-hover:border-slate-300 cursor-pointer shadow-sm']) }}
-            id="{{ $name }}" 
-            name="{{ $name }}"
+            {{ $attributes->merge([
+                'class' => 'block w-full px-4 py-2.5 text-sm font-medium bg-white border border-slate-200 rounded-xl text-gray-800 transition-all duration-200 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none appearance-none group-hover:border-slate-300 cursor-pointer shadow-sm',
+                'id' => $name,
+            ]) }}
+            @if(!($attributes->has(':name') || $attributes->has('::name') || $attributes->has('x-bind:name'))) name="{{ $name }}" @endif
         >
-            @foreach($options as $value => $label)
-                <option value="{{ $value }}" {{ $value == old($name, $selected) ? 'selected' : '' }} class="py-2 text-base font-medium text-gray-800 bg-white">
-                    {{ $label }}
+            @foreach($options as $value => $optionLabel)
+                <option value="{{ $value }}" {{ $name && $value == old($name, $selected) ? 'selected' : '' }} class="py-2 text-base font-medium text-gray-800 bg-white">
+                    {{ $optionLabel }}
                 </option>
             @endforeach
         </select>
@@ -22,7 +29,9 @@
             <i data-lucide="chevron-down" class="w-4 h-4"></i>
         </div>
     </div>
-    @error($name)
-        <p class="text-xs font-medium text-rose-500 mt-1">{{ $message }}</p>
-    @enderror
+    @if($name)
+        @error($name)
+            <p class="text-xs font-medium text-rose-500 mt-1">{{ $message }}</p>
+        @enderror
+    @endif
 </div>

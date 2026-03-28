@@ -33,7 +33,7 @@
 
                 <!--Upload Photo-->
                 <div class="sm:col-span-2">
-                    <x-input label="Upload Photo" name="photo" type="file" required icon="image" />
+                    <x-input label="Upload Photo" name="user_photo" type="file" required icon="image" />
                 </div> 
 
                 <!-- Role -->

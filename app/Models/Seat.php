@@ -25,4 +25,31 @@ class Seat extends Model
     {
         return $this->hasMany(SeatUser::class, 'seat_id', 'seat_id');
     }
+
+    public function activeAssignment()
+    {
+        return $this->hasOne(SeatUser::class, 'seat_id', 'seat_id')
+            ->where('is_active', true);
+    }
+
+    public function occupant()
+    {
+        return $this->activeAssignment()->withDefault();
+    }
+
+    public static function countVacant()
+    {
+        return self::where('is_active', true)
+            ->whereDoesntHave('seatUsers', function ($query) {
+                $query->where('is_active', true);
+            })->count();
+    }
+
+    public static function getVacant()
+    {
+        return self::where('is_active', true)
+            ->whereDoesntHave('seatUsers', function ($query) {
+                $query->where('is_active', true);
+            })->get();
+    }
 }

@@ -27,9 +27,9 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50">
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-20">Sl No</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Unit Name</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Unit Code</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Districts</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                     </tr>
                 </thead>
@@ -37,16 +37,14 @@
                     @forelse($units as $unit)
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="px-6 py-4">
+                                <span class="text-sm font-medium text-slate-400">{{ $units->firstItem() + $loop->index }}</span>
+                            </td>
+                            <td class="px-6 py-4">
                                 <span class="text-sm font-bold text-slate-900">{{ $unit->unit_name }}</span>
                             </td>
                             <td class="px-6 py-4">
                                 <span class="px-2 py-1 rounded bg-slate-100 text-[10px] font-bold text-slate-600 uppercase">
                                     {{ $unit->unit_code }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="text-xs font-medium text-slate-600 truncate max-w-xs block" title="{{ is_array($unit->district) ? implode(', ', $unit->district) : ($unit->district ?? '') }}">
-                                    {{ is_array($unit->district) ? implode(', ', $unit->district) : ($unit->district ?? '-') }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-right">
@@ -71,7 +69,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-12 text-center text-slate-500">
+                            <td colspan="3" class="px-6 py-12 text-center text-slate-500">
                                 <div class="flex flex-col items-center">
                                     <i data-lucide="building" class="w-12 h-12 text-slate-200 mb-4"></i>
                                     <p class="text-base font-semibold text-slate-900">No units found</p>
@@ -83,6 +81,11 @@
                 </tbody>
             </table>
         </div>
+        @if($units->hasPages())
+            <div class="px-6 py-4 border-t border-slate-200">
+                {{ $units->links() }}
+            </div>
+        @endif
     </div>
 </div>
 @endsection

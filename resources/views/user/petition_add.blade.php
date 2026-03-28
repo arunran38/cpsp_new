@@ -127,7 +127,7 @@
                 </div>
 
                 <div x-show="petitionDetails.mode === 'others'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                    <x-input label="Specify Mode of Petition *" name="mode_others" x-model="petitionDetails.mode_others" ::required="petitionDetails.mode === 'others'" placeholder="Type the custom mode of receipt..." />
+                    <x-input label="Specify Mode of Petition *" name="mode_others" x-model="petitionDetails.mode_others" x-bind:required="petitionDetails.mode === 'others'" placeholder="Type the custom mode of receipt..." />
                 </div>
 
                 <div>
@@ -176,13 +176,14 @@
                             <!-- Fields -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                 <div>
-                                    <x-input label="Full Name" name="comp_name" ::name="`complainants[${index}][name]`" x-model="comp.name" ::required="step === 2" placeholder="Legal Name" />
+                                    <x-input label="Full Name" name="comp_name" x-bind:name="`complainants[${index}][name]`" x-model="comp.name" x-bind:required="step === 2" placeholder="Legal Name" />
                                 </div>
                                 <div>
-                                    <x-input label="Phone Number" name="comp_phone" ::name="`complainants[${index}][phone]`" x-model="comp.phone" ::required="step === 2" placeholder="10-digit Mobile" />
+                                    <x-input label="Phone Number" name="comp_phone" x-bind:name="`complainants[${index}][phone]`" x-model="comp.phone" x-bind:required="step === 2" placeholder="10-digit Mobile" />
                                 </div>
                                 <div>
-                                    <x-input label="Aadhar Number" name="comp_aadhar" ::name="`complainants[${index}][aadhar]`" x-model="comp.aadhar" placeholder="12-digit Aadhar" />
+                                    <x-input label="Aadhar Number" name="comp_aadhar" x-bind:name="`complainants[${index}][aadhar]`" x-model="comp.aadhar" placeholder="12-digit Aadhar" />
+                                </div>
                                 </div>
                             </div>
 
@@ -201,21 +202,21 @@
                                             <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
                                                 <div>
                                                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Address Type</label>
-                                                    <select ::name="`complainants[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all">
+                                                    <select :name="`complainants[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all">
                                                         <option value="Permanent" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')">Permanent</option>
                                                         <option value="Temporary" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')">Temporary</option>
                                                         <option value="Office" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')">Office</option>
                                                     </select>
                                                 </div>
                                                 <div class="lg:col-span-2">
-                                                    <x-input label="Street Address *" name="comp_address" ::name="`complainants[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" ::required="step === 2" placeholder="House No, Street, Locality" />
+                                                    <x-input label="Street Address *" name="comp_address" x-bind:name="`complainants[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" x-bind:required="step === 2" placeholder="House No, Street, Locality" />
                                                 </div>
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <x-input label="District *" name="comp_district" ::name="`complainants[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" ::required="step === 2" placeholder="District" />
+                                                        <x-input label="District *" name="comp_district" x-bind:name="`complainants[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" x-bind:required="step === 2" placeholder="District" />
                                                     </div>
                                                     <div>
-                                                        <x-input label="Pincode *" name="comp_pincode" ::name="`complainants[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" ::required="step === 2" placeholder="Code" />
+                                                        <x-input label="Pincode *" name="comp_pincode" x-bind:name="`complainants[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" x-bind:required="step === 2" placeholder="Code" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -278,14 +279,14 @@
                             <!-- Fields -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                 <div>
-                                    <x-input label="Full Name *" name="acc_name" ::name="`accused[${index}][name]`" x-model="acc.name" ::required="step === 3" placeholder="Legal Name" />
-                                </div>
-                                <div>
-                                    <x-input label="Phone Number" name="acc_phone" ::name="`accused[${index}][phone]`" x-model="acc.phone" placeholder="Optional Mobile" />
-                                </div>
-                                <div>
-                                    <x-input label="Aadhar Number" name="acc_aadhar" ::name="`accused[${index}][aadhar]`" x-model="acc.aadhar" placeholder="Optional 12-digit" />
-                                </div>
+                                                    <x-input label="Full Name *" name="acc_name" x-bind:name="`accused[${index}][name]`" x-model="acc.name" x-bind:required="step === 3" placeholder="Legal Name" />
+                                                </div>
+                                                <div>
+                                                    <x-input label="Phone Number" name="acc_phone" x-bind:name="`accused[${index}][phone]`" x-model="acc.phone" placeholder="Optional Mobile" />
+                                                </div>
+                                                <div>
+                                                    <x-input label="Aadhar Number" name="acc_aadhar" x-bind:name="`accused[${index}][aadhar]`" x-model="acc.aadhar" placeholder="Optional 12-digit" />
+                                                </div>
                             </div>
 
                             <!-- Nested Addresses -->
@@ -303,21 +304,21 @@
                                             <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
                                                 <div>
                                                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Address Type</label>
-                                                    <select ::name="`accused[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all">
+                                                    <select :name="`accused[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all">
                                                         <option value="Permanent" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')">Permanent</option>
                                                         <option value="Temporary" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')">Temporary</option>
                                                         <option value="Office" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')">Office</option>
                                                     </select>
                                                 </div>
                                                 <div class="lg:col-span-2">
-                                                    <x-input label="Street Address" name="acc_address" ::name="`accused[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" ::required="step === 3" placeholder="House No, Street, Locality" />
+                                                    <x-input label="Street Address" name="acc_address" x-bind:name="`accused[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" x-bind:required="step === 3" placeholder="House No, Street, Locality" />
                                                 </div>
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <x-input label="District" name="acc_district" ::name="`accused[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" ::required="step === 3" placeholder="District" />
+                                                        <x-input label="District" name="acc_district" x-bind:name="`accused[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" x-bind:required="step === 3" placeholder="District" />
                                                     </div>
                                                     <div>
-                                                        <x-input label="Pincode" name="acc_pincode" ::name="`accused[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" ::required="step === 3" placeholder="Code" />
+                                                        <x-input label="Pincode" name="acc_pincode" x-bind:name="`accused[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" x-bind:required="step === 3" placeholder="Code" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -588,9 +589,11 @@
             }],
             
             nextStep() {
-                if (this.step < 4) {
-                    this.step++;
-                    this.scrollToTop();
+                if (this.validateStep(this.step)) {
+                    if (this.step < 4) {
+                        this.step++;
+                        this.scrollToTop();
+                    }
                 }
             },
             prevStep() {
@@ -599,15 +602,42 @@
                     this.scrollToTop();
                 }
             },
+            validateStep(step) {
+                // Return true if valid, else prompt or show error
+                if (step === 1) {
+                    if (!this.petitionDetails.petition_no || !this.petitionDetails.date || !this.petitionDetails.nature || !this.petitionDetails.mode || !this.petitionDetails.description) {
+                        alert("Please fill all required petition details.");
+                        return false;
+                    }
+                } else if (step === 2) {
+                    const validComp = this.complainants.every(c => c.name.trim() !== '' && c.phone.trim() !== '');
+                    if (!validComp) {
+                        alert("Please provide at least Name and Phone for all complainants.");
+                        return false;
+                    }
+                } else if (step === 3) {
+                    const validAcc = this.accused.every(a => a.name.trim() !== '');
+                    if (!validAcc) {
+                        alert("Please provide the name of the respondent.");
+                        return false;
+                    }
+                }
+                return true;
+            },
             setStep(target) {
-                if (target >= 1 && target <= 4) {
-                    this.step = target;
-                    this.scrollToTop();
+                // Allow navigating back and forth if already visited or current
+                if (target < this.step || this.validateStep(this.step)) {
+                    if (target >= 1 && target <= 4) {
+                        this.step = target;
+                        this.scrollToTop();
+                    }
                 }
             },
             togglePreview() {
-                this.showPreview = !this.showPreview;
-                this.scrollToTop();
+                if (this.validateStep(3)) {
+                    this.showPreview = !this.showPreview;
+                    this.scrollToTop();
+                }
             },
             scrollToTop() {
                 window.scrollTo({ top: 0, behavior: 'smooth' });

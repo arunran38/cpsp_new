@@ -142,7 +142,7 @@
                 </button>
             </div>
             
-            <form action="{{ route('forwardings.store') }}" method="POST">
+            <form action="{{ route('forwardings.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="petition_id" :value="activePetitionId">
                 
@@ -165,6 +165,11 @@
                                 <option value="{{ $unit->unit_id }}">{{ $unit->unit_name }}</option>
                             @endforeach
                         </select>
+                    </div>
+
+                    <div x-show="action === 'Close' || action === 'Sent_to_Govt'" x-cloak class="pt-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order</label>
+                        <input type="file" name="final_order_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                     </div>
 
                     <div class="pt-2 border-t border-slate-100 mt-2">
@@ -243,7 +248,7 @@
                 </button>
             </div>
             
-            <form action="{{ route('decisions.store') }}" method="POST" class="space-y-4">
+            <form action="{{ route('decisions.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                 @csrf
                 <input type="hidden" name="petition_id" :value="activePetitionId">
                 
@@ -262,6 +267,10 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">Final Remarks</label>
                     <textarea name="final_remarks" rows="3" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm" placeholder="Director's final remarks..." required></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order Document</label>
+                    <input type="file" name="final_order_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100">
                 </div>
                 <div class="flex justify-end gap-3 pt-6">
                     <button type="button" @click="showDecisionModal = false" class="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-transparent rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>

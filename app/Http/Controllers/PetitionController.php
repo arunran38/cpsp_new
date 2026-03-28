@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\UploadedFile;
+use App\Models\Seat;
 
 class PetitionController extends Controller
 {
@@ -22,9 +24,7 @@ class PetitionController extends Controller
 
     public function store(Request $request)
     {
-        Log::info('Petition Store Request:', $request->all());
-        
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'petition_no' => 'required|unique:petitions,petition_no',
             'date_of_petition_received' => 'required|date',
             'nature_of_petition' => 'required',
@@ -32,14 +32,16 @@ class PetitionController extends Controller
             'description' => 'required',
         ]);
 
-        if ($validator->fails()) {
-            Log::warning('Petition Validation Failed:', $validator->errors()->toArray());
-            return back()->withErrors($validator)->withInput();
-        }
-
         DB::beginTransaction();
 
         try {
+            $user = Auth::user();
+            if (!$user) {
+                throw new \Exception("User not authenticated.");
+            }
+            $activeSeat = $user->seatUsers()->where('is_active', true)->first();
+            $seatId = $activeSeat ? $activeSeat->seat_id : null;
+
             // 1. Create Petition
             $petition = Petition::create([
                 'petition_no' => $request->petition_no,
@@ -50,6 +52,8 @@ class PetitionController extends Controller
                 'description' => $request->description,
                 'proposed_action' => $request->proposed_action ?? null,
                 'status' => 'Received',
+                'user_id' => Auth::id(),
+                'seat_id' => $seatId,
             ]);
 
             // 2. Process Complainants & their Addresses
@@ -65,15 +69,21 @@ class PetitionController extends Controller
             // 4. Process Uploads (Evidence Files)
             if ($request->hasFile('evidence_files')) {
                 foreach ($request->file('evidence_files') as $file) {
+                    if (!$file || !$file->isValid()) {
+                        continue;
+                    }
+
+                    $id = $petition->petition_id;
                     $filename = time() . '_' . $file->getClientOriginalName();
-                    $path = $file->storeAs("petitions/{$petition->petition_id}", $filename, 'public');
+                    
+                    $path = Storage::disk('public')->putFileAs("petitions/{$id}", $file, $filename);
 
                     Upload::create([
                         'petition_id' => $petition->petition_id,
-                        'category' => 'Petition Document',
+                        'category' => Upload::CATEGORY_PETITION_DOCUMENT,
                         'original_filename' => $file->getClientOriginalName(),
                         'file_path' => $path,
-                        'uploaded_by' => Auth::id() ?? 1, // Fallback if no auth 
+                        'uploaded_by' => Auth::id() ?? 1,
                     ]);
                 }
             }
@@ -84,6 +94,7 @@ class PetitionController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Petition Store Exception: ' . $e->getMessage());
             return back()->with('error', 'Failed to save petition: ' . $e->getMessage())->withInput();
         }
     }
@@ -121,12 +132,8 @@ class PetitionController extends Controller
 
     public function index(Request $request)
     {
+        $petitions = $this->getPetitions($request);
         $tab = $request->get('tab', 'all');
-        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'decision']);
-        
-        $this->applyFilters($query, $request);
-        
-        $petitions = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
         
         if ($request->ajax()) {
             return view('user.partials.reports_table', compact('petitions', 'tab'))->render();
@@ -137,24 +144,42 @@ class PetitionController extends Controller
 
     public function reports(Request $request)
     {
-        $tab = $request->get('tab', 'all'); // Keep tab for compatibility if needed
-        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'decision']);
-
-        $this->applyFilters($query, $request);
-
-        $petitions = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
+        $petitions = $this->getPetitions($request);
+        $tab = $request->get('tab', 'all');
+        
+        $seats = [];
+        if (Auth::user()->role === 'admin') {
+            $seats = Seat::where('is_active', true)->orderBy('seat_name')->get();
+        }
 
         if ($request->ajax()) {
             return view('user.partials.reports_table', compact('petitions', 'tab'))->render();
         }
 
-        return view('user.reports', compact('petitions', 'tab'));
+        return view('user.reports', compact('petitions', 'tab', 'seats'));
+    }
+
+    private function getPetitions(Request $request)
+    {
+        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'decision', 'user', 'seat']);
+        
+        if (Auth::user()->role !== 'admin') {
+            $query->where('user_id', Auth::id());
+        }
+        
+        $this->applyFilters($query, $request);
+        
+        return $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
     }
 
     public function export(Request $request)
     {
         $tab = $request->get('tab', 'all');
         $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'decision']);
+
+        if (Auth::user()->role !== 'admin') {
+            $query->where('user_id', Auth::id());
+        }
 
         switch ($tab) {
             case 'all':
@@ -191,6 +216,7 @@ class PetitionController extends Controller
         ];
 
         $columns = ['#', 'Petition No', 'Received Date', 'Petitioner', 'Respondent', 'Nature', 'Mode', 'Status'];
+        if (Auth::user()->role === 'admin') $columns[] = 'Seat';
         if ($tab === 'forwarded') $columns[] = 'Unit';
         if ($tab === 'vrs') { $columns[] = 'VR Ref No'; $columns[] = 'VR Date'; }
         if ($tab === 'decisions') $columns[] = 'Decision';
@@ -213,6 +239,10 @@ class PetitionController extends Controller
                     $petition->mode_of_petition_received,
                     $petition->status,
                 ];
+                
+                if (Auth::user()->role === 'admin') {
+                    $row[] = $petition->seat->seat_name ?? 'N/A';
+                }
 
                 if ($tab === 'forwarded') {
                     $row[] = $petition->latestForwarding->toUnit->unit_name ?? 'N/A';
@@ -238,7 +268,9 @@ class PetitionController extends Controller
     private function applyFilters($query, Request $request)
     {
         $tab = $request->get('tab', 'all');
-        
+        $status = $request->status;
+
+        // 1. Tab-based status filtering
         switch ($tab) {
             case 'received':
                 $query->where('status', 'Received');
@@ -254,93 +286,12 @@ class PetitionController extends Controller
                 break;
         }
 
-        if ($request->filled('petition_no')) {
-            $query->where('petition_no', 'like', '%' . $request->petition_no . '%');
-        }
-
-        // Status-based date filtering logic
-        if ($request->filled('date_from') || $request->filled('date_to')) {
-            $dateFrom = $request->date_from;
-            $dateTo = $request->date_to;
-            $status = $request->status;
-            $tab = $request->get('tab', 'all');
-
-            $finalDecisionStatuses = ['PE', 'SC', 'QV', 'Closed', 'Sent to Govt', 'ICell'];
-
-            if ($status === 'Received' || $tab === 'received') {
-                if ($dateFrom) $query->whereDate('created_at', '>=', $dateFrom);
-                if ($dateTo) $query->whereDate('created_at', '<=', $dateTo);
-            } elseif ($status === 'Forwarded' || $tab === 'forwarded') {
-                $query->whereHas('forwardings', function($q) use ($dateFrom, $dateTo) {
-                    if ($dateFrom) $q->whereDate('forwarded_date', '>=', $dateFrom);
-                    if ($dateTo) $q->whereDate('forwarded_date', '<=', $dateTo);
-                });
-            } elseif ($status === 'VR_Received' || $tab === 'vrs') {
-                $query->whereHas('forwardings', function($q) use ($dateFrom, $dateTo) {
-                    if ($dateFrom) $q->whereDate('vr_date', '>=', $dateFrom);
-                    if ($dateTo) $q->whereDate('vr_date', '<=', $dateTo);
-                });
-            } elseif ($status === 'VR_Received_at_cpsp_date') {
-                $query->whereHas('forwardings', function($q) use ($dateFrom, $dateTo) {
-                    if ($dateFrom) $q->whereDate('vr_received_at_cpsp_date', '>=', $dateFrom);
-                    if ($dateTo) $q->whereDate('vr_received_at_cpsp_date', '<=', $dateTo);
-                });
-            } elseif (in_array($status, $finalDecisionStatuses) || $tab === 'decisions') {
-                $query->whereHas('decision', function($q) use ($dateFrom, $dateTo) {
-                    if ($dateFrom) $q->whereDate('decision_date', '>=', $dateFrom);
-                    if ($dateTo) $q->whereDate('decision_date', '<=', $dateTo);
-                });
-            }
-        }
-
-        if ($request->filled('complainant_name')) {
-            $query->whereHas('addresses', function ($q) use ($request) {
-                $q->where('person_type', 'Complainant')
-                  ->where('person_name', 'like', '%' . $request->complainant_name . '%');
-            });
-        }
-        if ($request->filled('respondent_name')) {
-            $query->whereHas('addresses', function ($q) use ($request) {
-                $q->where('person_type', 'Accused')
-                  ->where('person_name', 'like', '%' . $request->respondent_name . '%');
-            });
-        }
-        if ($request->filled('nature_of_petition')) {
-            $query->where('nature_of_petition', 'like', '%' . $request->nature_of_petition . '%');
-        }
-        if ($request->filled('mode_of_petition')) {
-            $query->where('mode_of_petition_received', $request->mode_of_petition);
-        }
-
+        // 2. Explicit status filter (if provided)
         if ($request->filled('status')) {
-            $status = $request->status;
-            
-            if ($status === 'Forwarded') {
-                $query->whereHas('forwardings');
-            } elseif ($status === 'VR_Received') {
-                $query->whereHas('forwardings', function($q) {
-                    $q->whereNotNull('vr_date');
-                });
-            } elseif ($status === 'VR_Received_at_cpsp_date') {
-                $query->whereHas('forwardings', function($q) {
-                    $q->whereNotNull('vr_received_at_cpsp_date');
-                });
-            } elseif ($status === 'Received') {
-                // All petitions were received at some point, so we don't restrict by status
-                // unless explicitly on the 'received' tab.
-                if ($request->get('tab', 'all') === 'received') {
-                    $query->where('status', 'Received');
-                }
-            } elseif (in_array($status, ['PE', 'SC', 'QV', 'ICell', 'Closed', 'Sent to Govt'])) {
-                // These are decision-based statuses
-                $query->whereHas('decision', function($q) use ($status) {
-                    $q->where('decision_remarks', $status);
-                });
-            } else {
-                $query->where('status', $status);
-            }
+            $this->applyStatusFilter($query, $status, $tab);
         }
-        
+
+        // 3. Search filter
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -351,17 +302,120 @@ class PetitionController extends Controller
                   });
             });
         }
+
+        // 4. Specific field filters
+        if ($request->filled('petition_no')) {
+            $query->where('petition_no', 'like', '%' . $request->petition_no . '%');
+        }
+
+        if ($request->filled('complainant_name')) {
+            $query->whereHas('addresses', function ($q) use ($request) {
+                $q->where('person_type', 'Complainant')
+                  ->where('person_name', 'like', '%' . $request->complainant_name . '%');
+            });
+        }
+
+        if ($request->filled('respondent_name')) {
+            $query->whereHas('addresses', function ($q) use ($request) {
+                $q->where('person_type', 'Accused')
+                  ->where('person_name', 'like', '%' . $request->respondent_name . '%');
+            });
+        }
+
+        if ($request->filled('nature_of_petition')) {
+            $query->where('nature_of_petition', 'like', '%' . $request->nature_of_petition . '%');
+        }
+
+        if ($request->filled('mode_of_petition')) {
+            $query->where('mode_of_petition_received', $request->mode_of_petition);
+        }
+
+        if ($request->filled('seat_id')) {
+            $query->where('seat_id', $request->seat_id);
+        }
+
+        // 5. Date filters (Status-aware)
+        if ($request->filled('date_from') || $request->filled('date_to')) {
+            $this->applyDateFilters($query, $request);
+        }
+    }
+
+    private function applyStatusFilter($query, $status, $tab)
+    {
+        $finalDecisionStatuses = ['PE', 'SC', 'QV', 'ICell', 'Closed', 'Sent to Govt'];
+
+        if ($status === 'Forwarded') {
+            $query->whereHas('forwardings');
+        } elseif ($status === 'VR_Received') {
+            $query->whereHas('forwardings', function($q) {
+                $q->whereNotNull('vr_date');
+            });
+        } elseif ($status === 'VR_Received_at_cpsp_date') {
+            $query->whereHas('forwardings', function($q) {
+                $q->whereNotNull('vr_received_at_cpsp_date');
+            });
+        } elseif ($status === 'Received') {
+            if ($tab === 'received') {
+                $query->where('status', 'Received');
+            }
+        } elseif (in_array($status, $finalDecisionStatuses)) {
+            $query->whereHas('decision', function($q) use ($status) {
+                $q->where('decision_remarks', $status);
+            });
+        } else {
+            $query->where('status', $status);
+        }
+    }
+
+    private function applyDateFilters($query, Request $request)
+    {
+        $dateFrom = $request->date_from;
+        $dateTo = $request->date_to;
+        $status = $request->status;
+        $tab = $request->get('tab', 'all');
+        $finalDecisionStatuses = ['PE', 'SC', 'QV', 'Closed', 'Sent to Govt', 'ICell'];
+
+        if ($status === 'Received' || $tab === 'received') {
+            if ($dateFrom) $query->whereDate('created_at', '>=', $dateFrom);
+            if ($dateTo) $query->whereDate('created_at', '<=', $dateTo);
+        } elseif ($status === 'Forwarded' || $tab === 'forwarded') {
+            $query->whereHas('forwardings', function($q) use ($dateFrom, $dateTo) {
+                if ($dateFrom) $q->whereDate('forwarded_date', '>=', $dateFrom);
+                if ($dateTo) $q->whereDate('forwarded_date', '<=', $dateTo);
+            });
+        } elseif ($status === 'VR_Received' || $tab === 'vrs') {
+            $query->whereHas('forwardings', function($q) use ($dateFrom, $dateTo) {
+                if ($dateFrom) $q->whereDate('vr_date', '>=', $dateFrom);
+                if ($dateTo) $q->whereDate('vr_date', '<=', $dateTo);
+            });
+        } elseif ($status === 'VR_Received_at_cpsp_date') {
+            $query->whereHas('forwardings', function($q) use ($dateFrom, $dateTo) {
+                if ($dateFrom) $q->whereDate('vr_received_at_cpsp_date', '>=', $dateFrom);
+                if ($dateTo) $q->whereDate('vr_received_at_cpsp_date', '<=', $dateTo);
+            });
+        } elseif (in_array($status, $finalDecisionStatuses) || $tab === 'decisions') {
+            $query->whereHas('decision', function($q) use ($dateFrom, $dateTo) {
+                if ($dateFrom) $q->whereDate('decision_date', '>=', $dateFrom);
+                if ($dateTo) $q->whereDate('decision_date', '<=', $dateTo);
+            });
+        } else {
+            // Default to created_at if no specific status mapping matches
+            if ($dateFrom) $query->whereDate('created_at', '>=', $dateFrom);
+            if ($dateTo) $query->whereDate('created_at', '<=', $dateTo);
+        }
     }
 
     public function show($id)
     {
         $petition = Petition::with(['addresses', 'uploads'])->findOrFail($id);
+        $this->authorizePetition($petition);
         return view('user.petition_show', compact('petition')); // Assuming show view name
     }
 
     public function edit($id)
     {
         $petition = Petition::with(['addresses', 'uploads'])->findOrFail($id);
+        $this->authorizePetition($petition);
         
         // Prevent editing if final decision is taken
         if (in_array($petition->status, ['Closed', 'Sent_to_Govt'])) {
@@ -374,38 +428,38 @@ class PetitionController extends Controller
                 $first = $addresses->first();
                 return [
                     'id' => rand(1000, 9999),
-                    'name' => $name,
-                    'phone' => $first->phone,
-                    'aadhar' => $first->Aadhar_number,
+                    'name' => (string)$name,
+                    'phone' => (string)$first->phone,
+                    'aadhar' => (string)$first->Aadhar_number,
                     'addresses' => $addresses->map(function ($addr) {
                         return [
-                            'address_type' => $addr->address_type,
-                            'address' => $addr->full_address,
-                            'district' => $addr->district,
-                            'pincode' => $addr->pincode,
+                            'address_type' => (string)$addr->address_type,
+                            'address' => (string)$addr->full_address,
+                            'district' => (string)$addr->district,
+                            'pincode' => (string)$addr->pincode,
                         ];
-                    })->values()->toArray()
+                    })->values()->all()
                 ];
-            })->values()->toArray();
+            })->values()->all();
 
         $accused = $petition->addresses->where('person_type', 'Accused')->groupBy('person_name')
             ->map(function ($addresses, $name) {
                 $first = $addresses->first();
                 return [
                     'id' => rand(1000, 9999),
-                    'name' => $name,
-                    'phone' => $first->phone,
-                    'aadhar' => $first->Aadhar_number,
+                    'name' => (string)$name,
+                    'phone' => (string)$first->phone,
+                    'aadhar' => (string)$first->Aadhar_number,
                     'addresses' => $addresses->map(function ($addr) {
                         return [
-                            'address_type' => $addr->address_type,
-                            'address' => $addr->full_address,
-                            'district' => $addr->district,
-                            'pincode' => $addr->pincode,
+                            'address_type' => (string)$addr->address_type,
+                            'address' => (string)$addr->full_address,
+                            'district' => (string)$addr->district,
+                            'pincode' => (string)$addr->pincode,
                         ];
-                    })->values()->toArray()
+                    })->values()->all()
                 ];
-            })->values()->toArray();
+            })->values()->all();
 
         return view('user.petition_edit', compact('petition', 'complainants', 'accused'));
     }
@@ -413,23 +467,20 @@ class PetitionController extends Controller
     public function update(Request $request, $id)
     {
         $petition = Petition::findOrFail($id);
+        $this->authorizePetition($petition);
 
         // Prevent update if final decision is taken
         if (in_array($petition->status, ['Closed', 'Sent_to_Govt'])) {
             return redirect()->route('petitions.index')->with('error', 'Cannot update a petition once a final decision has been taken.');
         }
 
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'petition_no' => 'required|unique:petitions,petition_no,' . $id . ',petition_id',
             'date_of_petition_received' => 'required|date',
             'nature_of_petition' => 'required',
             'mode_of_petition_received' => 'required',
             'description' => 'required',
         ]);
-
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
 
         DB::beginTransaction();
 
@@ -446,7 +497,7 @@ class PetitionController extends Controller
             ]);
 
             // 2. Clear existing addresses to rebuild them
-            Address::where('petition_id', '=', $petition->petition_id, 'and')->delete();
+            Address::where('petition_id', $petition->petition_id)->delete();
 
             // 3. Re-process Complainants & Accused
             if ($request->has('complainants') && is_array($request->complainants)) {
@@ -460,16 +511,31 @@ class PetitionController extends Controller
             // 4. Process Uploads (Evidence Files)
             if ($request->hasFile('evidence_files')) {
                 foreach ($request->file('evidence_files') as $file) {
+                    if (!$file || !$file->isValid()) continue;
+
                     $filename = time() . '_' . $file->getClientOriginalName();
-                    $path = $file->storeAs("petitions/{$petition->petition_id}", $filename, 'public');
+                    $path = Storage::disk('public')->putFileAs("petitions/{$petition->petition_id}", $file, $filename);
 
                     Upload::create([
                         'petition_id' => $petition->petition_id,
-                        'category' => 'Petition Document',
+                        'category' => Upload::CATEGORY_PETITION_DOCUMENT,
                         'original_filename' => $file->getClientOriginalName(),
                         'file_path' => $path,
-                        'uploaded_by' => Auth::id() ?? 1, // Fallback if no auth 
+                        'uploaded_by' => Auth::id() ?? 1,
                     ]);
+                }
+            }
+
+            // 5. Delete marked uploads
+            if ($request->has('deleted_attachments') && is_array($request->deleted_attachments)) {
+                foreach ($request->deleted_attachments as $uploadId) {
+                    $upload = Upload::where('petition_id', $petition->petition_id)->find($uploadId);
+                    if ($upload) {
+                        if (Storage::disk('public')->exists($upload->file_path)) {
+                            Storage::disk('public')->delete($upload->file_path);
+                        }
+                        $upload->delete();
+                    }
                 }
             }
 
@@ -478,6 +544,7 @@ class PetitionController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Petition Update Error: ' . $e->getMessage());
             return back()->with('error', 'Update Failed: ' . $e->getMessage())->withInput();
         }
     }
@@ -485,7 +552,13 @@ class PetitionController extends Controller
     public function destroy($id)
     {
         $petition = Petition::findOrFail($id);
+        $this->authorizePetition($petition);
         
+        // Prevent deletion if final decision is taken
+        if (in_array($petition->status, ['Closed', 'Sent_to_Govt'])) {
+            return redirect()->route('petitions.index')->with('error', 'Cannot delete a petition after a final decision has been issued.');
+        }
+
         // Delete uploads from storage
         foreach ($petition->uploads as $upload) {
             Storage::disk('public')->delete($upload->file_path);
@@ -494,5 +567,12 @@ class PetitionController extends Controller
         $petition->delete(); // Addresses and Uploads should cascade delete if set up in DB or can trigger manually.
 
         return redirect()->route('petitions.index')->with('success', 'Petition deleted successfully.');
+    }
+
+    private function authorizePetition(Petition $petition)
+    {
+        if (Auth::user()->role !== 'admin' && $petition->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized access to this petition.');
+        }
     }
 }

@@ -19,6 +19,7 @@ class PetitionForwardingController extends Controller
             'action' => 'required|in:Forward_To_Unit,Sent_to_Govt,Close',
             'director_remarks' => 'required|string',
             'to_unit_id' => 'required_if:action,Forward_To_Unit|nullable|exists:units,unit_id',
+            'final_order_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:10240',
         ]);
 
         DB::beginTransaction();
@@ -50,6 +51,19 @@ class PetitionForwardingController extends Controller
                     'decision_date' => now(),
                 ]);
                 $petition->update(['status' => $status]);
+
+                if ($request->hasFile('final_order_file')) {
+                    $file = $request->file('final_order_file');
+                    $path = $file->store('Uploads', 'public');
+
+                    Upload::create([
+                        'petition_id' => $petition->petition_id,
+                        'category' => Upload::CATEGORY_FINAL_ORDER,
+                        'original_filename' => $file->getClientOriginalName(),
+                        'file_path' => $path,
+                        'uploaded_by' => $user ? $user->user_id : null,
+                    ]);
+                }
             }
 
             DB::commit();
@@ -91,7 +105,7 @@ class PetitionForwardingController extends Controller
 
                 Upload::create([
                     'petition_id' => $forwarding->petition_id,
-                    'category' => 'Verification Report',
+                    'category' => Upload::CATEGORY_VERIFICATION_REPORT,
                     'original_filename' => $file->getClientOriginalName(),
                     'file_path' => $path,
                     'uploaded_by' => Auth::id(),

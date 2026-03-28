@@ -1,8 +1,15 @@
-@props(['label', 'name', 'type' => 'text', 'value' => '', 'placeholder' => '', 'icon' => null])
+@props([
+    'label' => null,
+    'name' => null,
+    'type' => 'text',
+    'value' => '',
+    'placeholder' => '',
+    'icon' => null
+])
 
 <div class="space-y-1.5" x-data="{ count: 0 }" x-init="count = $refs.input.value.length">
     @if($label)
-        <label for="{{ $name }}" class="block text-sm font-semibold text-slate-700">
+        <label @if($name) for="{{ $name }}" @endif class="block text-sm font-semibold text-slate-700">
             {{ $label }}
         </label>
     @endif
@@ -13,12 +20,14 @@
             </div>
         @endif
         <input 
-            {{ $attributes->merge(['class' => 'block w-full ' . ($icon ? 'pl-11' : 'px-4') . ' py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 transition-all duration-200 placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none group-hover:border-slate-300']) }}
-            type="{{ $type }}" 
-            id="{{ $name }}" 
-            name="{{ $name }}" 
-            @if($type !== 'file') value="{{ old($name, $value) }}" @endif
-            placeholder="{{ $placeholder }}"
+            {{ $attributes->merge([
+                'class' => 'block w-full ' . ($icon ? 'pl-11' : 'px-4') . ' py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 transition-all duration-200 placeholder:text-slate-400 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none group-hover:border-slate-300',
+                'type' => $type,
+                'id' => $name,
+                'placeholder' => $placeholder
+            ]) }}
+            @if(!($attributes->has(':name') || $attributes->has('::name') || $attributes->has('x-bind:name'))) name="{{ $name }}" @endif
+            @if($name && $type !== 'file') value="{{ old($name, $value) }}" @elseif($value) value="{{ $value }}" @endif
             x-ref="input"
             @input="count = $event.target.value.length"
         >
@@ -30,7 +39,9 @@
             <i data-lucide="x" class="w-4 h-4"></i>
         </button>
     </div>
-    @error($name)
-        <p class="text-xs font-medium text-rose-500 mt-1">{{ $message }}</p>
-    @enderror
+    @if($name)
+        @error($name)
+            <p class="text-xs font-medium text-rose-500 mt-1">{{ $message }}</p>
+        @enderror
+    @endif
 </div>

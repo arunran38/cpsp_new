@@ -13,14 +13,14 @@
             </div>
             <div>
                 <h1 class="text-2xl font-bold tracking-tight text-slate-900">Edit Petition</h1>
-                <p class="text-sm font-medium text-slate-500 mt-0.5">Update records for petition: {{ $petition->petition_no }}</p>
+                <p class="text-sm font-medium text-slate-500 mt-0.5">Ref No: {{ $petition->petition_no }}</p>
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <a href="{{ route('petitions.index') }}" class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 flex items-center gap-2 transition-all">
+            <a href="{{ route('petitions.index') }}" class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 focus:outline-none transition-all">
                 Cancel
             </a>
-            <a href="{{ route('petitions.show', $petition->petition_id) }}" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
+            <a href="{{ route('petitions.show', $petition->petition_id) }}" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none transition-all flex items-center gap-2">
                 <i data-lucide="eye" class="w-4 h-4"></i> View Current
             </a>
         </div>
@@ -54,68 +54,69 @@
         </div>
     @endif
 
-    <!-- Stepper Navigation -->
+    <!-- Stepper Navigation (Elegant Line-based) -->
     <div class="py-4">
         <div class="relative max-w-3xl mx-auto px-4 md:px-0">
+            <!-- Background Line -->
             <div class="absolute top-4 left-0 w-full h-0.5 bg-indigo-300/20 -translate-y-1/2 z-0"></div>
+            <!-- Progress Line -->
             <div class="absolute top-4 left-0 h-0.5 bg-teal-500 -translate-y-1/2 transition-all duration-500 ease-out z-0" :style="`width: ${((step - 1) / 3) * 100}%`"></div>
 
             <div class="relative z-10 flex justify-between">
+                <!-- Step 1 -->
                 <button type="button" @click="setStep(1)" class="flex flex-col items-center gap-2 focus:outline-none group bg-transparent">
                     <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-sm"
                         :class="step >= 1 ? 'bg-teal-500 text-white' : 'bg-white text-blue-500 border border-blue-200'">
                         <span x-show="step > 1"><i data-lucide="check" class="w-4 h-4"></i></span>
                         <span x-show="step === 1">1</span>
                     </div>
-                    <span class="text-xs font-semibold whitespace-nowrap tracking-tight transition-colors" :class="step >= 1 ? 'text-white' : 'text-blue-200'">Details</span>
+                    <span class="text-xs font-semibold whitespace-nowrap transition-colors" :class="step >= 1 ? 'text-white' : 'text-blue-200'">Petition Details</span>
                 </button>
 
+                <!-- Step 2 -->
                 <button type="button" @click="setStep(2)" class="flex flex-col items-center gap-2 focus:outline-none group bg-transparent">
                     <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-sm"
                         :class="step >= 2 ? 'bg-teal-500 text-white' : 'bg-white text-blue-500 border border-blue-200'">
                         <span x-show="step > 2"><i data-lucide="check" class="w-4 h-4"></i></span>
                         <span x-show="step <= 2">2</span>
                     </div>
-                    <span class="text-xs font-semibold whitespace-nowrap tracking-tight transition-colors" :class="step >= 2 ? 'text-white' : 'text-blue-200'">Complainants</span>
+                    <span class="text-xs font-semibold whitespace-nowrap transition-colors" :class="step >= 2 ? 'text-white' : 'text-blue-200'">Complainant</span>
                 </button>
 
+                <!-- Step 3 -->
                 <button type="button" @click="setStep(3)" class="flex flex-col items-center gap-2 focus:outline-none group bg-transparent">
                     <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-sm"
                         :class="step >= 3 ? 'bg-teal-500 text-white' : 'bg-white text-blue-500 border border-blue-200'">
                         <span x-show="step > 3"><i data-lucide="check" class="w-4 h-4"></i></span>
                         <span x-show="step <= 3">3</span>
                     </div>
-                    <span class="text-xs font-semibold whitespace-nowrap tracking-tight transition-colors" :class="step >= 3 ? 'text-white' : 'text-blue-200'">Respondents</span>
+                    <span class="text-xs font-semibold whitespace-nowrap transition-colors" :class="step >= 3 ? 'text-white' : 'text-blue-200'">Respondent</span>
                 </button>
 
+                <!-- Step 4 -->
                 <button type="button" @click="setStep(4)" class="flex flex-col items-center gap-2 focus:outline-none group bg-transparent">
                     <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-sm"
                         :class="step >= 4 ? 'bg-teal-500 text-white' : 'bg-white text-blue-500 border border-blue-200'">
                         <span>4</span>
                     </div>
-                    <span class="text-xs font-semibold whitespace-nowrap tracking-tight transition-colors" :class="step >= 4 ? 'text-white' : 'text-blue-200'">Review</span>
+                    <span class="text-xs font-semibold whitespace-nowrap transition-colors" :class="step >= 4 ? 'text-white' : 'text-blue-200'">Complete</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Form Sections -->
+    <!-- Form Sections (Minimalist Cards) -->
     <form method="POST" action="{{ route('petitions.update', $petition->petition_id) }}" enctype="multipart/form-data" class="bg-white rounded-2xl shadow-sm border border-slate-200" id="petitionFormElement">
         @csrf
         @method('PUT')
 
-        <!-- STEP 1: Details -->
-        <div x-show="step === 1" x-transition class="p-8 sm:p-10">
-            <div class="mb-8 border-b border-slate-100 pb-5">
-                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <i data-lucide="file-text" class="w-5 h-5 text-indigo-600"></i> Petition Overview
-                </h2>
-            </div>
+        <!-- STEP 1: Petition Details -->
+        <div x-show="step === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="p-8 sm:p-10">
             
             <div class="space-y-8">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="lg:col-span-1">
-                        <x-input label="Petition No *" name="petition_no" x-model="petitionDetails.petition_no" required />
+                        <x-input label="Petition No *" name="petition_no" x-model="petitionDetails.petition_no" required placeholder="Ex. PT-2026-001" />
                     </div>
                     <div class="lg:col-span-1">
                         <x-input type="date" label="Date of Receipt *" name="date_of_petition_received" x-model="petitionDetails.date" required />
@@ -128,36 +129,46 @@
                     </div>
                 </div>
 
-                <div x-show="petitionDetails.mode === 'others'" class="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                    <x-input label="Specify Mode *" name="mode_others" x-model="petitionDetails.mode_others" />
+                <div x-show="petitionDetails.mode === 'others'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;" class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                    <x-input label="Specify Mode of Petition *" name="mode_others" x-model="petitionDetails.mode_others" x-bind:required="petitionDetails.mode === 'others'" placeholder="Type the custom mode of receipt..." />
                 </div>
 
                 <div>
-                    <x-textarea label="Detailed Description *" name="description" x-model="petitionDetails.description" rows="5" required />
+                    <x-textarea label="Detailed Description *" name="description" x-model="petitionDetails.description" rows="5" required placeholder="Type the complete factual description of the incident..." />
                 </div>
 
                 <div class="pt-4 mt-6 border-t border-slate-100">
                     <label class="block text-sm font-semibold text-slate-700 mb-4">Supporting Evidence (Attachments)</label>
 
                     @if($petition->uploads->count() > 0)
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
                             @foreach($petition->uploads as $upload)
-                                <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                                <div x-show="!deleted_uploads.includes({{ $upload->upload_id }})" class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-xl group transition-all hover:bg-white hover:shadow-sm">
                                     <div class="flex items-center gap-3 truncate pr-4">
                                         <div class="p-2 bg-indigo-100 text-indigo-600 rounded-lg shrink-0">
                                             <i data-lucide="file" class="w-4 h-4"></i>
                                         </div>
                                         <div class="truncate">
-                                            <p class="text-sm font-medium text-slate-900 truncate">{{ $upload->original_filename }}</p>
-                                            <p class="text-xs text-slate-500">Uploaded on {{ $upload->created_at->format('M d, Y') }}</p>
+                                            <p class="text-xs font-semibold text-slate-900 truncate">{{ $upload->original_filename }}</p>
+                                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-tight">{{ $upload->created_at->format('M d, Y') }}</p>
                                         </div>
                                     </div>
-                                    <a href="{{ Storage::url($upload->file_path) }}" target="_blank" class="shrink-0 p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="View Document">
-                                        <i data-lucide="external-link" class="w-4 h-4"></i>
-                                    </a>
+                                    <div class="flex items-center gap-1">
+                                        <a href="{{ Storage::url($upload->file_path) }}" target="_blank" class="shrink-0 p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="View Document">
+                                            <i data-lucide="external-link" class="w-4 h-4"></i>
+                                        </a>
+                                        <button type="button" @click="removeExistingUpload({{ $upload->upload_id }})" class="shrink-0 p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" title="Remove Document">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
+                        
+                        <!-- Hidden fields for deleted uploads -->
+                        <template x-for="id in deleted_uploads" :key="id">
+                            <input type="hidden" name="deleted_attachments[]" :value="id">
+                        </template>
                     @endif
 
                     <x-file-upload 
@@ -169,146 +180,188 @@
             </div>
 
             <div class="mt-10 pt-6 border-t border-slate-200 flex justify-end">
-                <button type="button" @click="nextStep()" class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
-                    Next: Complainants <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                <button type="button" @click="nextStep()" class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all flex items-center gap-2">
+                    Continue to Complainant <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
             </div>
         </div>
 
-        <!-- STEP 2: Complainants -->
-        <div x-show="step === 2" x-transition class="p-8 sm:p-10" style="display: none;">
-            <div class="mb-8 border-b border-slate-100 pb-5 text-left">
-                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wide">
-                    <i data-lucide="user" class="w-5 h-5 text-indigo-600"></i> Complainant Details
-                </h2>
-            </div>
+        <!-- STEP 2: Complainant Details -->
+        <div x-show="step === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="p-8 sm:p-10" style="display: none;">
             
             <div class="space-y-8">
-                <template x-for="(comp, index) in complainants" :key="index">
-                    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden mb-6">
+                <template x-for="(comp, index) in complainants" :key="comp.id">
+                    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                        <!-- Header for the section -->
                         <div class="flex justify-between items-center px-6 py-4 bg-slate-50 border-b border-slate-200">
                             <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
                                 <span class="bg-indigo-100 text-indigo-700 w-5 h-5 rounded-md flex items-center justify-center text-xs" x-text="index + 1"></span>
-                                Complainant
+                                Complainant Information
                             </h3>
                             <button type="button" @click="removeComplainant(index)" x-show="complainants.length > 1" class="text-rose-600 hover:text-rose-700 text-xs font-semibold flex items-center gap-1">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove
                             </button>
                         </div>
+
                         <div class="p-6">
+                            <!-- Fields -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                                <div><x-input label="Full Name" ::name="`complainants[${index}][name]`" x-model="comp.name" required /></div>
-                                <div><x-input label="Phone" ::name="`complainants[${index}][phone]`" x-model="comp.phone" /></div>
-                                <div><x-input label="Aadhar" ::name="`complainants[${index}][aadhar]`" x-model="comp.aadhar" /></div>
+                                <div>
+                                    <x-input label="Full Name" name="comp_name" x-bind:name="`complainants[${index}][name]`" x-model="comp.name" x-bind:required="step === 2" placeholder="Legal Name" />
+                                </div>
+                                <div>
+                                    <x-input label="Phone Number" name="comp_phone" x-bind:name="`complainants[${index}][phone]`" x-model="comp.phone" x-bind:required="step === 2" placeholder="10-digit Mobile" />
+                                </div>
+                                <div>
+                                    <x-input label="Aadhar Number" name="comp_aadhar" x-bind:name="`complainants[${index}][aadhar]`" x-model="comp.aadhar" placeholder="12-digit Aadhar" />
+                                </div>
                             </div>
-                            
-                            <div class="space-y-4">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-50 pb-1">Addresses</p>
-                                <template x-for="(addr, addrIndex) in comp.addresses" :key="addrIndex">
-                                    <div class="bg-slate-50 p-4 rounded-lg relative border border-slate-200 mb-4">
-                                        <button type="button" @click="removeComplainantAddress(index, addrIndex)" x-show="comp.addresses.length > 1" class="absolute top-2 right-2 text-slate-400 hover:text-rose-600"><i data-lucide="x" class="w-4 h-4"></i></button>
-                                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                                            <div>
-                                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Type</label>
-                                                <select ::name="`complainants[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="w-full text-sm border-slate-300 rounded-lg">
-                                                    <option value="Permanent">Permanent</option>
-                                                    <option value="Temporary">Temporary</option>
-                                                    <option value="Office">Office</option>
-                                                </select>
-                                            </div>
-                                            <div class="lg:col-span-2"><x-input label="Address" ::name="`complainants[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" required /></div>
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <div><x-input label="District" ::name="`complainants[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" required /></div>
-                                                <div><x-input label="Pin" ::name="`complainants[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" required /></div>
+
+                            <!-- Nested Addresses -->
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i> Address Book
+                                </h4>
+                                
+                                <div class="space-y-4">
+                                    <template x-for="(addr, addrIndex) in comp.addresses" :key="addrIndex">
+                                        <div class="bg-slate-50 p-5 border border-slate-200 rounded-lg relative">
+                                            <button type="button" @click="removeComplainantAddress(index, addrIndex)" x-show="comp.addresses.length > 1" class="absolute top-4 right-4 z-10 text-slate-400 hover:text-rose-600 transition-colors">
+                                                <i data-lucide="x" class="w-4 h-4"></i>
+                                            </button>
+                                            <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
+                                                <div>
+                                                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Address Type</label>
+                                                    <select :name="`complainants[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all">
+                                                        <option value="Permanent" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')">Permanent</option>
+                                                        <option value="Temporary" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')">Temporary</option>
+                                                        <option value="Office" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')">Office</option>
+                                                    </select>
+                                                </div>
+                                                <div class="lg:col-span-2">
+                                                    <x-input label="Street Address *" name="comp_address" x-bind:name="`complainants[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" x-bind:required="step === 2" placeholder="House No, Street, Locality" />
+                                                </div>
+                                                <div class="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <x-input label="District *" name="comp_district" x-bind:name="`complainants[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" x-bind:required="step === 2" placeholder="District" />
+                                                    </div>
+                                                    <div>
+                                                        <x-input label="Pincode *" name="comp_pincode" x-bind:name="`complainants[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" x-bind:required="step === 2" placeholder="Code" />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </template>
-                                <button type="button" @click="addComplainantAddress(index)" x-show="comp.addresses.length < 3" class="text-xs font-bold text-indigo-600 flex items-center gap-1 hover:underline">
-                                    <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add Another Address
-                                </button>
+                                    </template>
+                                </div>
+                                
+                                <div class="mt-4" x-show="comp.addresses.length < 3">
+                                    <button type="button" @click="addComplainantAddress(index)" class="text-sm font-semibold text-indigo-600 bg-white hover:bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2 transition-all shadow-sm">
+                                        <i data-lucide="plus" class="w-4 h-4"></i> Add Additional Address
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </template>
-                <button type="button" @click="addComplainant()" class="w-full py-4 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 hover:border-indigo-300 hover:text-indigo-600 transition-all font-bold text-sm uppercase tracking-widest flex justify-center items-center gap-2">
-                    <i data-lucide="user-plus" class="w-5 h-5"></i> Add Complainant
-                </button>
+                
+                <div class="pt-2 text-center">
+                    <button type="button" @click="addComplainant()" class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 transition-all flex items-center justify-center gap-2 w-full">
+                        <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Complainant
+                    </button>
+                </div>
             </div>
 
-            <div class="mt-10 pt-6 border-t border-slate-200 flex justify-between">
-                <button type="button" @click="prevStep()" class="px-6 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2">
+            <div class="mt-10 pt-6 border-t border-slate-200 flex justify-between items-center">
+                <button type="button" @click="prevStep()" class="px-6 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
                 </button>
                 <button type="button" @click="nextStep()" class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
-                    Continue to Respondents <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    Continue to Respondent <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
             </div>
         </div>
 
-        <!-- STEP 3: Respondents -->
-        <div x-show="step === 3" x-transition class="p-8 sm:p-10" style="display: none;">
-            <div class="mb-8 border-b border-slate-100 pb-5 text-left">
-                <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wide">
-                    <i data-lucide="users" class="w-5 h-5 text-indigo-600"></i> Respondent Details
-                </h2>
-            </div>
+        <!-- STEP 3: Respondent Details -->
+        <div x-show="step === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="p-8 sm:p-10" style="display: none;">
             
             <div class="space-y-8">
-                <template x-for="(acc, index) in accused" :key="index">
-                    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden mb-6">
+                <template x-for="(acc, index) in accused" :key="acc.id">
+                    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                        <!-- Header for the section -->
                         <div class="flex justify-between items-center px-6 py-4 bg-slate-50 border-b border-slate-200">
                             <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                <span class="bg-rose-100 text-rose-700 w-5 h-5 rounded-md flex items-center justify-center text-xs" x-text="index + 1"></span>
-                                Respondent
+                                <span class="bg-indigo-100 text-indigo-700 w-5 h-5 rounded-md flex items-center justify-center text-xs" x-text="index + 1"></span>
+                                Respondent Information
                             </h3>
                             <button type="button" @click="removeAccused(index)" x-show="accused.length > 1" class="text-rose-600 hover:text-rose-700 text-xs font-semibold flex items-center gap-1">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove
                             </button>
                         </div>
+
                         <div class="p-6">
+                            <!-- Fields -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                                <div><x-input label="Full Name" ::name="`accused[${index}][name]`" x-model="acc.name" required /></div>
-                                <div><x-input label="Phone" ::name="`accused[${index}][phone]`" x-model="acc.phone" /></div>
-                                <div><x-input label="Aadhar" ::name="`accused[${index}][aadhar]`" x-model="acc.aadhar" /></div>
+                                <div><x-input label="Full Name *" name="acc_name" x-bind:name="`accused[${index}][name]`" x-model="acc.name" x-bind:required="step === 3" placeholder="Legal Name" /></div>
+                                <div><x-input label="Phone" name="acc_phone" x-bind:name="`accused[${index}][phone]`" x-model="acc.phone" /></div>
+                                <div><x-input label="Aadhar" name="acc_aadhar" x-bind:name="`accused[${index}][aadhar]`" x-model="acc.aadhar" /></div>
                             </div>
-                            
-                            <div class="space-y-4">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-50 pb-1">Known Addresses</p>
-                                <template x-for="(addr, addrIndex) in acc.addresses" :key="addrIndex">
-                                    <div class="bg-slate-50 p-4 rounded-lg relative border border-slate-200 mb-4">
-                                        <button type="button" @click="removeAccusedAddress(index, addrIndex)" x-show="acc.addresses.length > 1" class="absolute top-2 right-2 text-slate-400 hover:text-rose-600"><i data-lucide="x" class="w-4 h-4"></i></button>
-                                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                                            <div>
-                                                <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Type</label>
-                                                <select ::name="`accused[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="w-full text-sm border-slate-300 rounded-lg">
-                                                    <option value="Permanent">Permanent</option>
-                                                    <option value="Temporary">Temporary</option>
-                                                    <option value="Office">Office</option>
-                                                </select>
-                                            </div>
-                                            <div class="lg:col-span-2"><x-input label="Address" ::name="`accused[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" required /></div>
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <div><x-input label="District" ::name="`accused[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" required /></div>
-                                                <div><x-input label="Pin" ::name="`accused[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" required /></div>
+
+                            <!-- Nested Addresses -->
+                            <div>
+                                <h4 class="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i> Known Addresses
+                                </h4>
+                                
+                                <div class="space-y-4">
+                                    <template x-for="(addr, addrIndex) in acc.addresses" :key="addrIndex">
+                                        <div class="bg-slate-50 p-5 border border-slate-200 rounded-lg relative">
+                                            <button type="button" @click="removeAccusedAddress(index, addrIndex)" x-show="acc.addresses.length > 1" class="absolute top-4 right-4 z-10 text-slate-400 hover:text-rose-600 transition-colors">
+                                                <i data-lucide="x" class="w-4 h-4"></i>
+                                            </button>
+                                            <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
+                                                <div>
+                                                    <label class="block text-sm font-semibold text-slate-700 mb-1.5">Address Type</label>
+                                                    <select :name="`accused[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all">
+                                                        <option value="Permanent" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')">Permanent</option>
+                                                        <option value="Temporary" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')">Temporary</option>
+                                                        <option value="Office" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')">Office</option>
+                                                    </select>
+                                                </div>
+                                                <div class="lg:col-span-2">
+                                                    <x-input label="Street Address" name="acc_address" x-bind:name="`accused[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" x-bind:required="step === 3" placeholder="House No, Street, Locality" />
+                                                </div>
+                                                <div class="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <x-input label="District" x-bind:name="`accused[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" x-bind:required="step === 3" placeholder="District" />
+                                                    </div>
+                                                    <div>
+                                                        <x-input label="Pincode" x-bind:name="`accused[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" x-bind:required="step === 3" placeholder="Code" />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </template>
-                                <button type="button" @click="addAccusedAddress(index)" x-show="acc.addresses.length < 3" class="text-xs font-bold text-indigo-600 flex items-center gap-1 hover:underline">
-                                    <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add Known Address
-                                </button>
+                                    </template>
+                                </div>
+                                
+                                <div class="mt-4" x-show="acc.addresses.length < 3">
+                                    <button type="button" @click="addAccusedAddress(index)" class="text-sm font-semibold text-indigo-600 bg-white hover:bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2 transition-all shadow-sm">
+                                        <i data-lucide="plus" class="w-4 h-4"></i> Add Additional Address
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </template>
-                <button type="button" @click="addAccused()" class="w-full py-4 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 hover:border-indigo-300 hover:text-indigo-600 transition-all font-bold text-sm uppercase tracking-widest flex justify-center items-center gap-2">
-                    <i data-lucide="user-plus" class="w-5 h-5"></i> Add Respondent
-                </button>
+                
+                <div class="pt-2 text-center">
+                    <button type="button" @click="addAccused()" class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 transition-all flex items-center justify-center gap-2 w-full">
+                        <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Respondent
+                    </button>
+                </div>
             </div>
 
-            <div class="mt-10 pt-6 border-t border-slate-200 flex justify-between">
-                <button type="button" @click="prevStep()" class="px-6 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2">
+            <div class="mt-10 pt-6 border-t border-slate-200 flex justify-between items-center">
+                <button type="button" @click="prevStep()" class="px-6 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
                 </button>
                 <button type="button" @click="nextStep()" class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
@@ -317,25 +370,25 @@
             </div>
         </div>
 
-        <!-- STEP 4: Review -->
-        <div x-show="step === 4" x-transition class="p-8 sm:p-10" style="display: none;">
-            <div class="text-center py-6">
-
-                
-                <div class="max-w-xl mx-auto text-left">
-                    <x-textarea label="Updated Assessment / Action" name="proposed_action" x-model="petitionDetails.proposed_action" rows="4" />
+        <!-- STEP 4: Review & Finalize -->
+        <div x-show="step === 4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="p-8 sm:p-10" style="display: none;">
+            
+            <div class="max-w-2xl mx-auto py-8">
+                <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-8">
+                    <x-textarea label="Current Assessment/Action Note" name="proposed_action" x-model="petitionDetails.proposed_action" rows="4" placeholder="Enter the remarks/notes here..." />
                 </div>
 
-                <div class="mt-10 pt-8 border-t border-slate-200 flex justify-between">
-                    <button type="button" @click="prevStep()" class="px-6 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2">
-                        Modify Details
+                <div class="flex justify-between items-center py-6 border-t border-slate-200 mt-6">
+                    <button type="button" @click="prevStep()" class="px-6 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i> Edit Details
                     </button>
-                    <button type="submit" class="px-10 py-2.5 text-sm font-bold text-white bg-slate-900 rounded-lg shadow-lg hover:bg-slate-800 transition-all flex items-center gap-2">
-                        <i data-lucide="save" class="w-5 h-5"></i> Authorize & Update Record
+                    <button type="submit" class="px-8 py-3 text-sm font-bold text-white bg-slate-900 rounded-xl shadow-md hover:bg-slate-800 transition-all flex items-center gap-2">
+                        <i data-lucide="save" class="w-5 h-5"></i> Update Petition Record
                     </button>
                 </div>
             </div>
         </div>
+
     </form>
 </div>
 
@@ -344,51 +397,126 @@
         return {
             step: 1,
             petitionDetails: {
-                petition_no: '{{ old('petition_no', $petition->petition_no) }}',
-                date: '{{ old('date_of_petition_received', $petition->date_of_petition_received) }}',
-                nature: '{{ old('nature_of_petition', $petition->nature_of_petition) }}',
-                mode: '{{ old('mode_of_petition_received', $petition->mode_of_petition_received) }}',
-                mode_others: '{{ old('mode_others', $petition->mode_of_petition_received_others) }}',
-                description: `{!! addslashes(old('description', $petition->description)) !!}`,
-                proposed_action: `{!! addslashes(old('proposed_action', $petition->proposed_action)) !!}`
+                petition_no: '{!! addslashes($petition->petition_no) !!}',
+                date: '{{ $petition->date_of_petition_received }}',
+                nature: '{{ $petition->nature_of_petition }}',
+                mode: '{{ $petition->mode_of_petition_received }}',
+                mode_others: '{!! addslashes($petition->mode_of_petition_received_others) !!}',
+                description: `{!! addslashes($petition->description) !!}`,
+                proposed_action: `{!! addslashes($petition->proposed_action) !!}`
             },
-            complainants: {!! json_encode(old('complainants', $complainants)) !!},
-            accused: {!! json_encode(old('accused', $accused)) !!},
-
-            nextStep() { if (this.step < 4) { this.step++; this.scrollToTop(); } },
-            prevStep() { if (this.step > 1) { this.step--; this.scrollToTop(); } },
-            setStep(target) { this.step = target; this.scrollToTop(); },
-            scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); this.refreshIcons(); },
+            complainants: {!! json_encode($complainants) !!},
+            accused: {!! json_encode($accused) !!},
+            deleted_uploads: [],
             
+            removeExistingUpload(id) {
+                if (confirm('Are you sure you want to remove this document? It will be permanently deleted once you update the petition.')) {
+                    this.deleted_uploads.push(id);
+                }
+            },
+            
+            nextStep() {
+                if (this.validateStep(this.step)) {
+                    if (this.step < 4) {
+                        this.step++;
+                        this.scrollToTop();
+                    }
+                }
+            },
+            prevStep() {
+                if (this.step > 1) {
+                    this.step--;
+                    this.scrollToTop();
+                }
+            },
+            validateStep(step) {
+                if (step === 1) {
+                    if (!this.petitionDetails.petition_no || !this.petitionDetails.date || !this.petitionDetails.nature || !this.petitionDetails.mode || !this.petitionDetails.description) {
+                        alert("Please fill all required petition details.");
+                        return false;
+                    }
+                } else if (step === 2) {
+                    const validComp = this.complainants.every(c => c.name.trim() !== '' && c.phone.trim() !== '');
+                    if (!validComp) {
+                        alert("Please provide at least Name and Phone for all complainants.");
+                        return false;
+                    }
+                } else if (step === 3) {
+                    const validAcc = this.accused.every(a => a.name.trim() !== '');
+                    if (!validAcc) {
+                        alert("Please provide the name of the respondent.");
+                        return false;
+                    }
+                }
+                return true;
+            },
+            setStep(target) {
+                if (target < this.step || this.validateStep(this.step)) {
+                    if (target >= 1 && target <= 4) {
+                        this.step = target;
+                        this.scrollToTop();
+                    }
+                }
+            },
+            scrollToTop() {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                this.refreshIcons();
+            },
             addComplainant() {
-                this.complainants.push({ name: '', phone: '', aadhar: '', addresses: [{ address_type: 'Permanent', address: '', district: '', pincode: '' }] });
+                this.complainants.push({ 
+                    id: Date.now(), name: '', phone: '', aadhar: '', 
+                    addresses: [{ address_type: 'Permanent', address: '', district: '', pincode: '' }] 
+                });
                 this.refreshIcons();
             },
-            removeComplainant(index) { if(this.complainants.length > 1) this.complainants.splice(index, 1); },
-            addComplainantAddress(idx) { 
-                const types = ['Permanent', 'Temporary', 'Office'];
-                const used = this.complainants[idx].addresses.map(a => a.address_type);
-                const next = types.find(t => !used.includes(t)) || 'Temporary';
-                this.complainants[idx].addresses.push({ address_type: next, address: '', district: '', pincode: '' }); 
-                this.refreshIcons();
+            removeComplainant(index) {
+                if(this.complainants.length > 1) this.complainants.splice(index, 1);
             },
-            removeComplainantAddress(cIdx, aIdx) { if(this.complainants[cIdx].addresses.length > 1) this.complainants[cIdx].addresses.splice(aIdx, 1); },
-
+            addComplainantAddress(compIndex) {
+                if (this.complainants[compIndex].addresses.length < 3) {
+                    const existingTypes = this.complainants[compIndex].addresses.map(a => a.address_type);
+                    const allTypes = ['Permanent', 'Temporary', 'Office'];
+                    const nextType = allTypes.find(t => !existingTypes.includes(t)) || 'Temporary';
+                    
+                    this.complainants[compIndex].addresses.push({ address_type: nextType, address: '', district: '', pincode: '' });
+                    this.refreshIcons();
+                }
+            },
+            removeComplainantAddress(compIndex, addrIndex) {
+                if (this.complainants[compIndex].addresses.length > 1) {
+                    this.complainants[compIndex].addresses.splice(addrIndex, 1);
+                }
+            },
             addAccused() {
-                this.accused.push({ name: '', phone: '', aadhar: '', addresses: [{ address_type: 'Permanent', address: '', district: '', pincode: '' }] });
+                this.accused.push({ 
+                    id: Date.now(), name: '', phone: '', aadhar: '', 
+                    addresses: [{ address_type: 'Permanent', address: '', district: '', pincode: '' }] 
+                });
                 this.refreshIcons();
             },
-            removeAccused(index) { if(this.accused.length > 1) this.accused.splice(index, 1); },
-            addAccusedAddress(idx) { 
-                const types = ['Permanent', 'Temporary', 'Office'];
-                const used = this.accused[idx].addresses.map(a => a.address_type);
-                const next = types.find(t => !used.includes(t)) || 'Temporary';
-                this.accused[idx].addresses.push({ address_type: next, address: '', district: '', pincode: '' }); 
-                this.refreshIcons();
+            removeAccused(index) {
+                if(this.accused.length > 1) this.accused.splice(index, 1);
             },
-            removeAccusedAddress(aIdx, adIdx) { if(this.accused[aIdx].addresses.length > 1) this.accused[aIdx].addresses.splice(adIdx, 1); },
+            addAccusedAddress(accIndex) {
+                if (this.accused[accIndex].addresses.length < 3) {
+                    const existingTypes = this.accused[accIndex].addresses.map(a => a.address_type);
+                    const allTypes = ['Permanent', 'Temporary', 'Office'];
+                    const nextType = allTypes.find(t => !existingTypes.includes(t)) || 'Temporary';
 
-            refreshIcons() { if (typeof lucide !== 'undefined') { this.$nextTick(() => { lucide.createIcons(); }); } }
+                    this.accused[accIndex].addresses.push({ address_type: nextType, address: '', district: '', pincode: '' });
+                    this.refreshIcons();
+                }
+            },
+            removeAccusedAddress(accIndex, addrIndex) {
+                if (this.accused[accIndex].addresses.length > 1) {
+                    this.accused[accIndex].addresses.splice(addrIndex, 1);
+                }
+            },
+            refreshIcons() {
+                if (typeof lucide !== 'undefined') {
+                    this.$nextTick(() => { lucide.createIcons(); });
+                }
+            }
         }
     }
 </script>
