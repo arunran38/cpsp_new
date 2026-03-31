@@ -1,232 +1,244 @@
 @extends('layouts.admin')
 
-@section('content')
-<div class="space-y-8">
-    <!-- Page Header -->
-    <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Dashboard </h1>
-        </div>
-        <div class="flex items-center gap-3">
-            <button class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium transition-all bg-white border border-slate-200 rounded-xl shadow-sm hover:bg-slate-50 text-slate-700">
-                <i data-lucide="download" class="w-4 h-4 mr-2"></i>
-                Export Report
-            </button>
-        </div>
-    </div>
+@section('title', 'Admin Dashboard')
 
-    @if(\App\Models\Seat::countVacant() > 0)
-        <div class="p-6 bg-amber-50 border border-amber-200 rounded-3xl shadow-sm animate-in fade-in slide-in-from-top-4 duration-500">
-            <div class="flex items-start gap-4">
-                <div class="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-600 flex-shrink-0">
-                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
-                </div>
-                <div class="flex-1">
-                    <h4 class="text-lg font-bold text-amber-900">Vacant Seats Detected</h4>
-                     <div class="mt-4 flex flex-wrap gap-2">
-                        @foreach(\App\Models\Seat::getVacant() as $vSeat)
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold bg-white text-amber-700 border border-amber-200 shadow-sm">
-                                {{ $vSeat->seat_name }}
-                            </span>
-                        @endforeach
+@section('content')
+@php
+    // Basic metrics from existing model methods
+    $totalUsers = \App\Models\User::countUser();
+    $totalPetitions = \App\Models\Petition::count();
+    $vrReports = \App\Models\PetitionForwarding::countOfVr();
+    $forwarded = \App\Models\Petition::countForwardedPetitions();
+    $decisions = \App\Models\Petition::countDecisionPetitions();
+
+    // Vacant Seats mapping
+    $vacantSeats = \App\Models\Seat::whereDoesntHave('seatUsers', function ($q) {
+        $q->where('is_active', true);
+    })->get();
+
+    // Chart Data: User Trends (Last 6 Months)
+    $last6Months = collect();
+    for($i = 5; $i >= 0; $i--) {
+        $last6Months->push(now()->startOfMonth()->subMonths($i)->format('M Y'));
+    }
+    
+    $userStats = \App\Models\User::all()->map(function ($u) {
+        return $u->created_at ? $u->created_at->format('M Y') : null;
+    })->filter()->countBy();
+    
+    $userTrendData = $last6Months->map(fn($m) => $userStats->get($m, 0));
+    
+    $chartUserLabels = json_encode($last6Months->toArray());
+    $chartUserData = json_encode($userTrendData->toArray());
+
+    // Chart Data: Petition Status Distribution
+    $statusStats = \App\Models\Petition::groupBy('status')->get(['status', \Illuminate\Support\Facades\DB::raw('count(*) as count')])->pluck('count', 'status');
+    $chartStatusLabels = json_encode($statusStats->keys()->toArray());
+    $chartStatusData = json_encode($statusStats->values()->toArray());
+
+    // Latest Activity (Mocked if no dedicated activity table exists, using recent petitions/users)
+    $latestUsers = \App\Models\User::orderBy('created_at', 'desc')->take(5)->get();
+@endphp
+
+<div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <!-- Header alert (Mockup style) -->
+    @if($vacantSeats->count() > 0)
+        <div class="p-6 bg-[#fffbeb] border border-[#fef3c7] rounded-3xl shadow-sm transition-all hover:shadow-md">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-[#fef3c7] rounded-2xl flex items-center justify-center text-[#d97706] shadow-inner">
+                        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-black text-[#92400e]">Vacant Seats Detected</h4>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            @foreach($vacantSeats as $vSeat)
+                                <span class="px-3 py-1 bg-white border border-[#fef3c7] rounded-lg text-[10px] font-bold text-[#b45309] shadow-sm uppercase tracking-wider">
+                                    {{ $vSeat->seat_name }}
+                                </span>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
-                <a href="{{ route('admin.seatuser.create') }}" class="px-4 py-2 bg-amber-600 text-white text-sm font-bold rounded-xl hover:bg-amber-700 transition-colors shadow-lg shadow-amber-200/50 whitespace-nowrap">
+                <a href="{{ route('admin.seatuser.create') }}" class="px-6 py-3 bg-[#d97706] text-white text-sm font-black rounded-xl hover:bg-[#b45309] transition-all shadow-xl shadow-amber-200/50 hover:-translate-y-0.5 active:translate-y-0">
                     Assign Now
                 </a>
             </div>
         </div>
     @endif
 
-    <!-- Stats Cards -->
+    <!-- 4 High-End Stat Cards -->
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <!-- Users Card -->
-        <div class="p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10 group-hover:bg-primary transition-colors">
-                    <i data-lucide="users" class="w-6 h-6 text-primary group-hover:text-white transition-colors"></i>
+        <!-- Card 1: Total Petitions -->
+        <div class="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm relative overflow-hidden group hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white border border-indigo-100/50">
+                    <i data-lucide="file-text" class="w-6 h-6"></i>
                 </div>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                <span class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase tracking-widest">
                     +12%
                 </span>
             </div>
-            <div>
-                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Users</p>
-                <h3 class="text-2xl font-bold text-slate-900 mt-1">{{ \App\Models\User::countUser() }}</h3>
+            <div class="mt-6">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">Total Petitions</p>
+                <h3 class="text-3xl font-black text-slate-900 mt-2 tracking-tight">{{ $totalPetitions }}</h3>
             </div>
         </div>
 
-        <!-- Reports Card -->
-        <a href="{{ route('petitions.reports', ['tab' => 'vrs']) }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-amber-50 group-hover:bg-amber-500 transition-colors">
-                    <i data-lucide="file-text" class="w-6 h-6 text-amber-600 group-hover:text-white transition-colors"></i>
-                </div>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                    +5%
-                </span>
-            </div>
-            <div>
-                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">VR Reports</p>
-                <h3 class="text-2xl font-bold text-slate-900 mt-1">{{ \App\Models\PetitionForwarding::countOfVr() }}</h3>
-            </div>
-        </a>
 
-        <!-- Pending Card -->
-        <a href="{{ route('petitions.reports', ['tab' => 'forwarded']) }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-rose-50 group-hover:bg-rose-500 transition-colors">
-                    <i data-lucide="send" class="w-6 h-6 text-rose-600 group-hover:text-white transition-colors"></i>
+        <!-- Card 2: Forwarded -->
+        <a href="{{ route('petitions.reports', ['tab' => 'forwarded']) }}" class="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm relative overflow-hidden group hover:shadow-2xl hover:shadow-rose-500/10 transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div class="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600 transition-colors group-hover:bg-rose-500 group-hover:text-white border border-rose-100/50">
+                    <i data-lucide="send" class="w-6 h-6"></i>
                 </div>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
+                <span class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100 uppercase tracking-widest">
                     -2%
                 </span>
             </div>
-            <div>
-                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Forwarded</p>
-                <h3 class="text-2xl font-bold text-slate-900 mt-1">{{ \App\Models\Petition::countForwardedPetitions() }}</h3>
+            <div class="mt-6">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">Forwarded</p>
+                <h3 class="text-3xl font-black text-slate-900 mt-2 tracking-tight">{{ $forwarded }}</h3>
             </div>
         </a>
 
-        <!-- Decisions Card -->
-        <a href="{{ route('petitions.reports', ['tab' => 'decisions']) }}" class="block p-6 transition-all bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md group">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-50 group-hover:bg-emerald-500 transition-colors">
-                    <i data-lucide="check-square" class="w-6 h-6 text-emerald-600 group-hover:text-white transition-colors"></i>
+                <!-- Card 3: Verification Reports -->
+        <a href="{{ route('petitions.reports', ['tab' => 'vrs']) }}" class="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm relative overflow-hidden group hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 transition-colors group-hover:bg-amber-500 group-hover:text-white border border-amber-100/50">
+                    <i data-lucide="clipboard-list" class="w-6 h-6"></i>
                 </div>
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                <span class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase tracking-widest">
+                    +5%
+                </span>
+            </div>
+            <div class="mt-6">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">Verification Reports</p>
+                <h3 class="text-3xl font-black text-slate-900 mt-2 tracking-tight">{{ $vrReports }}</h3>
+            </div>
+        </a>
+
+
+        <!-- Card 4: Decisions -->
+        <a href="{{ route('petitions.reports', ['tab' => 'decisions']) }}" class="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm relative overflow-hidden group hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300">
+            <div class="flex items-start justify-between">
+                <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 transition-colors group-hover:bg-emerald-500 group-hover:text-white border border-emerald-100/50">
+                    <i data-lucide="check-square" class="w-6 h-6"></i>
+                </div>
+                <span class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase tracking-widest">
                     +18%
                 </span>
             </div>
-            <div>
-                <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Decisions</p>
-                <h3 class="text-2xl font-bold text-slate-900 mt-1">{{ \App\Models\Petition::countDecisionPetitions() }}</h3>
+            <div class="mt-6">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest leading-none">Decisions</p>
+                <h3 class="text-3xl font-black text-slate-900 mt-2 tracking-tight">{{ $decisions }}</h3>
             </div>
         </a>
     </div>
 
-    <!-- Charts + Activity -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <!-- Chart Area -->
-        <div class="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm lg:col-span-2">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-bold text-slate-900">Analytics Overview</h3>
-                <select class="text-sm border-slate-200 rounded-lg focus:ring-primary/20 bg-slate-50 outline-none">
-                    <option>Last 7 days</option>
-                    <option>Last 30 days</option>
-                </select>
-            </div>
-            <div class="flex items-center justify-center h-80 bg-slate-50 border border-dashed border-slate-200 rounded-2xl text-slate-400">
-                <div class="text-center">
-                    <i data-lucide="bar-chart-3" class="w-12 h-12 mx-auto mb-3 opacity-20"></i>
-                    <p class="text-sm font-medium">Chart visualization placeholder</p>
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- User Growth Trend -->
+        <div class="p-8 bg-white border border-slate-200 rounded-[2.5rem] shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h3 class="text-xl font-black text-slate-900">System Growth</h3>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">User Registrations</p>
                 </div>
+            </div>
+            <div class="h-72 w-full relative">
+                <canvas id="userTrendChart"></canvas>
             </div>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col">
-            <h3 class="text-lg font-bold text-slate-900 mb-6">Recent Activity</h3>
-            <div class="flex-1 space-y-6">
-                <!-- Activity Item -->
-                <div class="flex gap-4 relative">
-                    <div class="absolute left-4 top-8 bottom-0 w-px bg-slate-100"></div>
-                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center relative z-10">
-                        <i data-lucide="user-plus" class="w-4 h-4 text-primary"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold text-slate-900">New user registered</p>
-                        <p class="text-xs text-slate-500 mt-1">John Doe just joined the platform</p>
-                        <time class="text-[10px] text-slate-400 mt-1 font-medium italic">2 minutes ago</time>
-                    </div>
-                </div>
-                <!-- Activity Item -->
-                <div class="flex gap-4 relative">
-                   <div class="absolute left-4 top-8 bottom-0 w-px bg-slate-100"></div>
-                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center relative z-10">
-                        <i data-lucide="file-text" class="w-4 h-4 text-amber-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold text-slate-900">Report submitted</p>
-                        <p class="text-xs text-slate-500 mt-1">Annual unit audit report was uploaded</p>
-                        <time class="text-[10px] text-slate-400 mt-1 font-medium italic">1 hour ago</time>
-                    </div>
-                </div>
-                 <!-- Activity Item -->
-                 <div class="flex gap-4">
-                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center relative z-10">
-                        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold text-slate-900">System updated</p>
-                        <p class="text-xs text-slate-500 mt-1">v2.1.0 patch was successfully applied</p>
-                        <time class="text-[10px] text-slate-400 mt-1 font-medium italic">5 hours ago</time>
-                    </div>
+        <!-- Petition Distribution -->
+        <div class="p-8 bg-white border border-slate-200 rounded-[2.5rem] shadow-sm relative overflow-hidden">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h3 class="text-xl font-black text-slate-900">Petition Status</h3>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Global Distribution</p>
                 </div>
             </div>
-            <button class="mt-8 w-full py-2.5 text-sm font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-colors">
-                View All Activity
-            </button>
-        </div>
-    </div>
-
-    <!-- Latest Users Table -->
-    <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 class="text-lg font-bold text-slate-900">Latest Users</h3>
-            <a href="{{ route('users.index') }}" class="text-sm font-semibold text-primary hover:underline">See all</a>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-slate-50">
-                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">User</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Status</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <img class="w-10 h-10 rounded-full" src="https://ui-avatars.com/api/?name=Arun&background=f1f5f9&color=4361ee" alt="">
-                                <div>
-                                    <p class="text-sm font-bold text-slate-900">Arun</p>
-                                    <p class="text-xs text-slate-500">arun@email.com</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                Active
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <button class="text-sm font-bold text-primary hover:text-primary-hover">Edit</button>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <img class="w-10 h-10 rounded-full" src="https://ui-avatars.com/api/?name=Meera&background=f1f5f9&color=4361ee" alt="">
-                                <div>
-                                    <p class="text-sm font-bold text-slate-900">Meera</p>
-                                    <p class="text-xs text-slate-500">meera@email.com</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                                Pending
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <button class="text-sm font-bold text-primary hover:text-primary-hover">Edit</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="h-72 w-full relative flex items-center justify-center">
+                <canvas id="statusDoughnutChart"></canvas>
+            </div>
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const colors = {
+            indigo: '#6366f1',
+            emerald: '#10b981',
+            rose: '#f43f5e',
+            amber: '#f59e0b',
+            slate: '#94a3b8'
+        };
+
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#94a3b8';
+
+        // --- User Trend Chart ---
+        const userCtx = document.getElementById('userTrendChart');
+        if (userCtx) {
+            new Chart(userCtx, {
+                type: 'line',
+                data: {
+                    labels: {!! $chartUserLabels !!},
+                    datasets: [{
+                        label: 'New Users',
+                        data: {!! $chartUserData !!},
+                        borderColor: colors.indigo,
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderWidth: 4,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: colors.indigo,
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { weight: 'bold', size: 10 } } },
+                        y: { grid: { color: '#f1f5f9' }, beginAtZero: true, ticks: { stepSize: 1, font: { weight: 'bold', size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        // --- Status Doughnut Chart ---
+        const statusCtx = document.getElementById('statusDoughnutChart');
+        if (statusCtx) {
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: {!! $chartStatusLabels !!},
+                    datasets: [{
+                        data: {!! $chartStatusData !!},
+                        backgroundColor: [colors.rose, colors.emerald, colors.amber, colors.indigo, colors.slate],
+                        borderWidth: 0,
+                        hoverOffset: 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 30, font: { weight: 'bold', size: 10 } } }
+                    }
+                }
+            });
+        }
+    });
+</script>
 @endsection

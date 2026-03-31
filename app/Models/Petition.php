@@ -12,6 +12,8 @@ use App\Models\Upload;
 
 class Petition extends Model
 {
+    use SoftDeletes;
+
     protected $primaryKey = 'petition_id';
 
    protected $guarded = [];
@@ -76,5 +78,29 @@ class Petition extends Model
    public static function countClosedPetitions()
    {
     return self::where('status','=','Closed_by_Govt')->count();
+   }
+
+   protected static function booted()
+   {
+       static::deleting(function ($petition) {
+           if ($petition->isForceDeleting()) {
+               $petition->addresses()->forceDelete();
+               $petition->uploads()->forceDelete();
+               $petition->forwardings()->forceDelete();
+               $petition->decision()->forceDelete();
+           } else {
+               $petition->addresses()->delete();
+               $petition->uploads()->delete();
+               $petition->forwardings()->delete();
+               $petition->decision()->delete();
+           }
+       });
+
+       static::restoring(function ($petition) {
+           $petition->addresses()->withTrashed()->restore();
+           $petition->uploads()->withTrashed()->restore();
+           $petition->forwardings()->withTrashed()->restore();
+           $petition->decision()->withTrashed()->restore();
+       });
    }
 }

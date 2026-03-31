@@ -294,7 +294,7 @@
 
             <!-- Main Page Content -->
             <main class="flex-1 overflow-x-hidden p-6 lg:p-8">
-                <div class="mx-auto max-w-7xl">
+                <div class="mx-auto @yield('container_width', 'max-w-7xl')">
                     @yield('content')
                 </div>
             </main>

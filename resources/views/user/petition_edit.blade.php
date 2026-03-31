@@ -1,7 +1,8 @@
 @extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.user')
+@section('container_width', 'max-w-full')
 
 @section('content')
-<div class="space-y-6 max-w-5xl mx-auto" x-data="petitionForm()">
+<div class="space-y-6" x-data="petitionForm()">
     <!-- Page Header (Professional & Clean) -->
     <div class="bg-white px-8 py-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
         <!-- Subtle top accent line -->

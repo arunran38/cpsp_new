@@ -1,7 +1,8 @@
 @extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.user')
+@section('container_width', 'max-w-full')
 
 @section('content')
-<div class="space-y-6 max-w-5xl mx-auto">
+<div class="space-y-6">
     <!-- Page Header -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white px-8 py-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-1 bg-indigo-600"></div>
@@ -16,7 +17,7 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
-            @if(auth()->user()->role === 'user')
+            @if(auth()->user()->role === 'user' || auth()->user()->role === 'admin')
                 <a href="{{ route('petitions.edit', $petition->petition_id) }}" class="px-4 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2">
                     <i data-lucide="edit" class="w-4 h-4"></i> Edit Details
                 </a>
@@ -183,7 +184,7 @@
                     <i data-lucide="git-merge" class="w-5 h-5 text-indigo-600"></i> Petition Workflow Actions
                 </h3>
 
-                @if(auth()->user()->role === 'user')
+                @if(auth()->user()->role === 'user' || auth()->user()->role === 'admin')
                     @if($petition->status === 'Received')
                         <!-- Director Forwarding Form -->
                         <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-6">

@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PetitionForwarding extends Model
 {
+    use SoftDeletes;
     protected $primaryKey = 'petition_forwarding_id';
 
     protected $fillable = [
