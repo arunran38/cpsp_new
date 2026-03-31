@@ -331,8 +331,6 @@
                 </div>
             </header>
 
-            </header>
-
             <!-- Main Page Content -->
             <main class="flex-1 overflow-x-hidden p-6 lg:p-8">
                 <div class="mx-auto @yield('container_width', 'max-w-7xl')">
