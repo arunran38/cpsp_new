@@ -216,7 +216,13 @@
         <!-- Main Content Area -->
         <div class="lg:pl-80 flex flex-col min-h-screen">
             <!-- Top Navigation -->
-            <header class="sticky top-0 z-30 flex items-center h-16 px-5 bg-slate-900/70 backdrop-blur-xl border-b border-slate-800/50 shadow-sm lg:px-8">
+            @php
+                $isAdditional = Auth::check() && Auth::user()->currentSeatUser()?->is_additional;
+                $headerClasses = $isAdditional 
+                    ? 'bg-amber-950/60 border-amber-800/40 shadow-amber-900/20' 
+                    : 'bg-slate-900/70 border-slate-800/50 shadow-sm';
+            @endphp
+            <header class="sticky top-0 z-30 flex items-center h-16 px-5 backdrop-blur-xl border-b transition-colors duration-300 lg:px-8 {{ $headerClasses }}">
                 <button type="button" 
                         class="p-2 -ml-2 text-slate-300 rounded-lg lg:hidden hover:bg-slate-800 hover:text-white transition-colors focus:outline-none"
                         @click="sidebarOpen = true">
@@ -250,8 +256,11 @@
                                     <span class="text-sm font-bold text-slate-200 leading-none">
                                         {{ Auth::user()->name }}
                                     </span>
-                                    <span class="text-[10px] font-medium text-indigo-400 uppercase tracking-wider leading-none">
-                                        {{ Auth::user()->seatUsers()->where('is_active', true)->first()?->seat?->seat_name ?? 'No Seat' }}
+                                    <span class="text-[10px] font-medium {{ $isAdditional ? 'text-amber-400' : 'text-indigo-400' }} uppercase tracking-wider leading-none flex items-center gap-1.5">
+                                        {{ Auth::user()->currentSeatUser()?->seat?->seat_name ?? 'No Seat' }}
+                                        @if($isAdditional)
+                                            <span class="text-[8px] bg-amber-500/20 text-amber-300 px-1 py-0.5 rounded shadow-sm border border-amber-500/20">Addl. Charge</span>
+                                        @endif
                                     </span>
                                 </div>
                                 <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
@@ -266,6 +275,36 @@
                                  x-transition:leave-start="transform opacity-100 scale-100"
                                  x-transition:leave-end="transform opacity-0 scale-95"
                                  class="absolute right-0 z-50 w-56 mt-2 origin-top-right bg-slate-800 border border-slate-700 rounded-2xl shadow-xl focus:outline-none">
+                                @php
+                                    $activeSeats = Auth::user()->seatUsers()->where('is_active', true)->with('seat')->get();
+                                    $currentSeatId = Auth::user()->currentSeatUser()?->seat_id;
+                                @endphp
+
+                                @if($activeSeats->count() > 1)
+                                <div class="py-1 border-b border-slate-700 bg-slate-800/50">
+                                    <div class="px-4 py-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                                        Switch Seat
+                                    </div>
+                                    @foreach($activeSeats as $seatAssignment)
+                                        @if($seatAssignment->seat_id !== $currentSeatId)
+                                        <form method="POST" action="{{ route('seat.switch', $seatAssignment->seat_id) }}">
+                                            @csrf
+                                            <button type="submit" class="flex items-center w-full gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors text-left group">
+                                                <i data-lucide="refresh-cw" class="w-4 h-4 text-indigo-400 group-hover:rotate-180 transition-transform duration-300"></i>
+                                                <span class="font-medium text-slate-200">{{ $seatAssignment->seat->seat_name }}</span>
+                                            </button>
+                                        </form>
+                                        @else
+                                        <div class="flex items-center w-full gap-3 px-4 py-2 text-sm text-white bg-slate-700/30 cursor-default relative overflow-hidden">
+                                            <div class="absolute inset-y-0 left-0 w-1 bg-emerald-400"></div>
+                                            <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
+                                            <span class="font-medium">{{ $seatAssignment->seat->seat_name }}</span>
+                                        </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                                @endif
+
                                 <!-- Email section removed -->
                                 <div class="py-1">
                                     <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors">

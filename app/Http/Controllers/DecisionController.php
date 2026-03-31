@@ -26,7 +26,7 @@ class DecisionController extends Controller
             $petition = Petition::findOrFail($request->petition_id);
             /** @var \App\Models\User|null $user */
             $user = Auth::user();
-            $seatUser = $user ? $user->seatUsers()->first() : null;
+            $seatUser = $user ? $user->currentSeatUser() : null;
             $currentSeatId = $seatUser ? $seatUser->seat_id : 1;
 
             Decision::create([

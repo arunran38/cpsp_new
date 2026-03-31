@@ -4,13 +4,18 @@
 
 @section('content')
 @php
-    $userId = Auth::id();
+    $user = Auth::user();
+    $currentSeat = $user->currentSeatUser();
     
     // Fetch user petitions
-    if (auth()->user()->role === 'admin') {
+    if ($user->role === 'admin') {
         $petitions = \App\Models\Petition::all();
     } else {
-        $petitions = \App\Models\Petition::where('user_id', $userId)->get();
+        if ($currentSeat) {
+            $petitions = \App\Models\Petition::where('seat_id', $currentSeat->seat_id)->get();
+        } else {
+            $petitions = \App\Models\Petition::where('user_id', $user->id)->get();
+        }
     }
     
     // Stat Metrics
@@ -20,7 +25,7 @@
     $finalDecisions = $petitions->filter(fn($p) => in_array($p->status, ['Closed', 'Sent_to_Govt']))->count();
 
     // Chart Data: Petitions by Nature
-    $natureStats = $petitions->groupBy('nature_of_petition')->map->count();
+    $natureStats = collect($petitions)->countBy('nature_of_petition');
     $chartNatures = json_encode($natureStats->keys()->toArray());
     $chartNatureCounts = json_encode($natureStats->values()->toArray());
 
@@ -43,17 +48,19 @@
     $chartTrendCounts = json_encode($trendData->toArray());
 
     // Recent Petitions Table Data
-    if (auth()->user()->role === 'admin') {
+    if ($user->role === 'admin') {
         $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
     } else {
-        $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
-            ->where('user_id', $userId)
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
+        $query = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision']);
+        if ($currentSeat) {
+            $query->where('seat_id', $currentSeat->seat_id);
+        } else {
+            $query->where('user_id', $user->id);
+        }
+        $recentPetitions = $query->orderBy('created_at', 'desc')->take(5)->get();
     }
 @endphp
 
