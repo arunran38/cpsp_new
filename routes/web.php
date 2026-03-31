@@ -10,6 +10,7 @@ use App\Http\Controllers\SeatController;
 use App\Http\Controllers\SeatUserController;
 use App\Http\Controllers\DecisionController;
 use App\Http\Controllers\PetitionForwardingController;
+use App\Http\Controllers\TrashController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 Route::get('/', function () {
@@ -76,6 +77,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/components-showcase', function () {
         return view('admin.components_showcase');
     })->name('admin.components-showcase');
+
+    // Trash bin routes
+    Route::get('/admin/trash', [TrashController::class, 'index'])->name('admin.trash.index');
+    Route::post('/admin/trash/{id}/restore', [TrashController::class, 'restore'])->name('admin.trash.restore');
+    Route::delete('/admin/trash/{id}/force', [TrashController::class, 'forceDelete'])->name('admin.trash.forceDelete');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::get('/profile/password', [ProfileController::class, 'passwordEdit'])->name('profile.password.edit');

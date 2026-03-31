@@ -1,4 +1,5 @@
 @extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.user')
+@section('container_width', 'max-w-full')
 
 @section('content')
 <div class="space-y-6">

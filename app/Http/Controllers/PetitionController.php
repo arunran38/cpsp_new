@@ -197,9 +197,13 @@ class PetitionController extends Controller
             case 'decisions':
                 $query->whereIn('status', ['Sent_to_Govt', 'Closed']);
                 if ($request->filled('status')) {
-                    $query->whereHas('decision', function($q) use ($request) {
-                        $q->where('decision_remarks', $request->status);
-                    });
+                    if ($request->status === 'All_Final_Decisions') {
+                        $query->whereHas('decision');
+                    } else {
+                        $query->whereHas('decision', function($q) use ($request) {
+                            $q->where('decision_remarks', $request->status);
+                        });
+                    }
                 }
                 break;
         }
@@ -358,6 +362,8 @@ class PetitionController extends Controller
             if ($tab === 'received') {
                 $query->where('status', 'Received');
             }
+        } elseif ($status === 'All_Final_Decisions') {
+            $query->whereHas('decision');
         } elseif (in_array($status, $finalDecisionStatuses)) {
             $query->whereHas('decision', function($q) use ($status) {
                 $q->where('decision_remarks', $status);
@@ -376,8 +382,8 @@ class PetitionController extends Controller
         $finalDecisionStatuses = ['PE', 'SC', 'QV', 'Closed', 'Sent to Govt', 'ICell'];
 
         if ($status === 'Received' || $tab === 'received') {
-            if ($dateFrom) $query->whereDate('created_at', '>=', $dateFrom);
-            if ($dateTo) $query->whereDate('created_at', '<=', $dateTo);
+            if ($dateFrom) $query->whereDate('date_of_petition_received', '>=', $dateFrom);
+            if ($dateTo) $query->whereDate('date_of_petition_received', '<=', $dateTo);
         } elseif ($status === 'Forwarded' || $tab === 'forwarded') {
             $query->whereHas('forwardings', function($q) use ($dateFrom, $dateTo) {
                 if ($dateFrom) $q->whereDate('forwarded_date', '>=', $dateFrom);
@@ -393,15 +399,15 @@ class PetitionController extends Controller
                 if ($dateFrom) $q->whereDate('vr_received_at_cpsp_date', '>=', $dateFrom);
                 if ($dateTo) $q->whereDate('vr_received_at_cpsp_date', '<=', $dateTo);
             });
-        } elseif (in_array($status, $finalDecisionStatuses) || $tab === 'decisions') {
+        } elseif ($status === 'All_Final_Decisions' || in_array($status, $finalDecisionStatuses) || $tab === 'decisions') {
             $query->whereHas('decision', function($q) use ($dateFrom, $dateTo) {
                 if ($dateFrom) $q->whereDate('decision_date', '>=', $dateFrom);
                 if ($dateTo) $q->whereDate('decision_date', '<=', $dateTo);
             });
         } else {
-            // Default to created_at if no specific status mapping matches
-            if ($dateFrom) $query->whereDate('created_at', '>=', $dateFrom);
-            if ($dateTo) $query->whereDate('created_at', '<=', $dateTo);
+            // Default to date_of_petition_received (All Petitions case)
+            if ($dateFrom) $query->whereDate('date_of_petition_received', '>=', $dateFrom);
+            if ($dateTo) $query->whereDate('date_of_petition_received', '<=', $dateTo);
         }
     }
 
@@ -559,14 +565,9 @@ class PetitionController extends Controller
             return redirect()->route('petitions.index')->with('error', 'Cannot delete a petition after a final decision has been issued.');
         }
 
-        // Delete uploads from storage
-        foreach ($petition->uploads as $upload) {
-            Storage::disk('public')->delete($upload->file_path);
-        }
-        
-        $petition->delete(); // Addresses and Uploads should cascade delete if set up in DB or can trigger manually.
+        $petition->delete(); // Addresses, Uploads, etc. will cascade soft delete via Model Events
 
-        return redirect()->route('petitions.index')->with('success', 'Petition deleted successfully.');
+        return redirect()->route('petitions.index')->with('success', 'Petition moved to trash successfully.');
     }
 
     private function authorizePetition(Petition $petition)

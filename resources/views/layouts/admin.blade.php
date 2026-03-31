@@ -156,33 +156,12 @@
                     <p class="px-4 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">System Control</p>
                 </div>
 
-                <!-- Units Dropdown -->
-                <div x-data="{ 
-                        hoverOpen: false,
-                        clickOpen: {{ request()->is('admin/units*') ? 'true' : 'false' }},
-                        hoverTimeout: null,
-                        toggle() { this.clickOpen = !this.clickOpen }
-                    }" 
-                    @mouseenter="hoverOpen = true; clearTimeout(hoverTimeout)"
-                    @mouseleave="hoverTimeout = setTimeout(() => { hoverOpen = false }, 200)"
-                    class="relative">
-                    
-                    <button @click="toggle()" 
-                            class="nav-item-transition flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-xl group"
-                            :class="(hoverOpen || clickOpen) ? 'bg-slate-800/60 text-white' : 'inactive-nav'">
-                        <div class="flex items-center gap-3">
-                            <i data-lucide="building-2" class="w-5 h-5" :class="(hoverOpen || clickOpen) ? 'text-indigo-400' : ''"></i>
-                            <span>Units</span>
-                        </div>
-                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': hoverOpen || clickOpen }"></i>
-                    </button>
-                    
-                    <div x-show="hoverOpen || clickOpen" x-cloak x-transition:enter="slide-down-enter-active" x-transition:enter-start="slide-down-enter-from" x-transition:enter-end="slide-down-enter-to"
-                         class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
-                        <a href="{{ route('admin.units.create') }}" class="nav-item-transition block py-2 px-3 text-sm rounded-lg {{ request()->routeIs('admin.units.create') ? 'active-submenu' : 'submenu-link' }}">Add Unit</a>
-                        <a href="{{ route('admin.units.index') }}" class="nav-item-transition block py-2 px-3 text-sm rounded-lg {{ request()->routeIs('admin.units.index') ? 'active-submenu' : 'submenu-link' }}">View Units</a>
-                    </div>
-                </div>
+                <!-- Units Link -->
+                <a href="{{ route('admin.units.index') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl group {{ request()->is('admin/units*') ? 'bg-slate-800/60 text-white' : 'inactive-nav' }}">
+                    <i data-lucide="building-2" class="w-5 h-5 {{ request()->is('admin/units*') ? 'text-indigo-400' : '' }}"></i>
+                    <span>Units</span>
+                </a>
 
                 <!-- Users Dropdown -->
                 <div x-data="{ 
@@ -278,6 +257,13 @@
                     <span>Reports</span>
                 </a>
 
+                <!-- Recycle Bin -->
+                <a href="{{ route('admin.trash.index') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl group {{ request()->routeIs('admin.trash.*') ? 'active-nav' : 'inactive-nav' }}">
+                    <i data-lucide="trash-2" class="w-5 h-5 text-rose-400 group-hover:text-rose-300 transition-colors"></i>
+                    <span class="group-hover:text-rose-100 transition-colors">Recycle Bin</span>
+                </a>
+
             
             </nav>
         </aside>
@@ -359,7 +345,7 @@
 
             <!-- Main Page Content -->
             <main class="flex-1 overflow-x-hidden p-6 lg:p-8">
-                <div class="mx-auto max-w-7xl">
+                <div class="mx-auto @yield('container_width', 'max-w-7xl')">
                     @yield('content')
                 </div>
             </main>

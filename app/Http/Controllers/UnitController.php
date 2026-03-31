@@ -10,12 +10,13 @@ class UnitController extends Controller
     public function index()
     {
         $units = Unit::paginate(10);
-        return view('admin.unit_view', compact('units'));
+        return view('admin.unit_add', compact('units'));
     }
 
     public function create()
     {
-        return view('admin.unit_add');
+        $units = Unit::paginate(10);
+        return view('admin.unit_add', compact('units'));
     }
 
     public function store(Request $request)
