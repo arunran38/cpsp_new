@@ -112,4 +112,19 @@ class SeatController extends Controller
             return back()->with('error', 'Failed to revoke assignment: ' . $e->getMessage());
         }
     }
+
+    public function switchSeat(Request $request, $seatId)
+    {
+        $user = auth()->user();
+
+        // Verify the user is assigned to this seat and it's active
+        $assignment = $user->seatUsers()->where('seat_id', $seatId)->where('is_active', true)->first();
+
+        if ($assignment) {
+            session(['current_seat_id' => $seatId]);
+            return redirect()->back()->with('success', 'Switched to new seat context successfully.');
+        }
+
+        return redirect()->back()->with('error', 'Unauthorized or inactive seat selection.');
+    }
 }

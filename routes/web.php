@@ -12,7 +12,6 @@ use App\Http\Controllers\DecisionController;
 use App\Http\Controllers\PetitionForwardingController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-
 Route::get('/', function () {
     if (Auth::check()) {
         if (Auth::user()->role === 'admin') {
@@ -87,6 +86,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile/password', [ProfileController::class, 'passwordEdit'])->name('profile.password.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Seat Switcher
+    Route::post('/switch-seat/{seatId}', [SeatController::class, 'switchSeat'])->name('seat.switch');
 });
 
 require __DIR__.'/auth.php';

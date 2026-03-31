@@ -43,6 +43,30 @@ class User extends Authenticatable
         return $this->hasMany(SeatUser::class, 'user_id', 'user_id');
     }
 
+    /**
+     * Get the currently active SeatUser based on session state, 
+     * or fallback to the primary active seat.
+     */
+    public function currentSeatUser()
+    {
+        $currentSeatId = session('current_seat_id');
+
+        if ($currentSeatId) {
+            $seatUser = $this->seatUsers()->where('seat_id', $currentSeatId)->where('is_active', true)->first();
+            if ($seatUser) {
+                return $seatUser;
+            }
+        }
+
+        $defaultSeatUser = $this->seatUsers()->where('is_active', true)->first();
+        if ($defaultSeatUser) {
+            session(['current_seat_id' => $defaultSeatUser->seat_id]);
+            return $defaultSeatUser;
+        }
+
+        return null;
+    }
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
     

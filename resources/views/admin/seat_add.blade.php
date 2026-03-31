@@ -15,7 +15,7 @@
     </div>
 
     <div class="bg-white border border-slate-200 rounded-3xl shadow-sm">
-        <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2 rounded-t-3xl">
+        <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
             <i data-lucide="plus-circle" class="w-4 h-4 text-primary"></i>
             <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">New Seat</span>
         </div>
@@ -25,28 +25,21 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- Seat Name -->
-                <div class="space-y-2.5">
-                    <label for="seat_name" class="text-sm font-bold text-slate-700">Seat Name</label>
-                    <input type="text" name="seat_name" id="seat_name" value="{{ old('seat_name') }}" required
-                           class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium text-slate-900"
-                           placeholder="Enter Seat Name">
-                    @error('seat_name')
-                        <p class="text-xs text-rose-500 mt-1 font-medium">{{ $message }}</p>
-                    @enderror
-                </div>
+                <x-input 
+                    label="Seat Name" 
+                    name="seat_name" 
+                    placeholder="Enter Seat Name" 
+                    required 
+                    :value="old('seat_name')"
+                />
 
                 <!-- Active Status -->
-                <div class="space-y-2.5">
-                    <label for="is_active" class="text-sm font-bold text-slate-700">Status</label>
-                    <div class="relative">
-                        <select name="is_active" id="is_active" 
-                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium text-slate-900 appearance-none">
-                            <option value="1" {{ old('is_active') == '1' ? 'selected' : '' }}>Active</option>
-                            <option value="0" {{ old('is_active') == '0' ? 'selected' : '' }}>Inactive</option>
-                        </select>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-                    </div>
-                </div>
+                <x-select 
+                    label="Status" 
+                    name="is_active" 
+                    :options="['1' => 'Active', '0' => 'Inactive']" 
+                    :selected="old('is_active', '1')"
+                />
             </div>
 
             <!-- Unit Assignment -->
@@ -68,16 +61,15 @@
 
             <div class="pt-6 flex items-center justify-end gap-3 border-t border-slate-100">
                 <a href="{{ route('admin.seats.index') }}" 
-                   class="px-6 py-3 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-50 border border-slate-100 rounded-xl transition-all">
+                   class="px-6 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-xl transition-all">
                     Back to List
                 </a>
-                <button type="submit" 
-                        class="px-8 py-3 text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-xl shadow-primary/20 transition-all flex items-center gap-2">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
+                <x-button variant="primary" type="submit" icon="plus">
                     Create New Seat
-                </button>
+                </x-button>
             </div>
         </form>
     </div>
 </div>
 @endsection
+

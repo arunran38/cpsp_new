@@ -39,8 +39,13 @@ class PetitionController extends Controller
             if (!$user) {
                 throw new \Exception("User not authenticated.");
             }
-            $activeSeat = $user->seatUsers()->where('is_active', true)->first();
-            $seatId = $activeSeat ? $activeSeat->seat_id : null;
+            $seatId = null;
+            if ($user && $user->role !== 'admin') {
+                $activeSeat = $user->currentSeatUser();
+                if ($activeSeat) {
+                    $seatId = $activeSeat->seat_id;
+                }
+            }
 
             // 1. Create Petition
             $petition = Petition::create([
@@ -164,7 +169,16 @@ class PetitionController extends Controller
         $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'decision', 'user', 'seat']);
         
         if (Auth::user()->role !== 'admin') {
-            $query->where('user_id', Auth::id());
+            $user = Auth::user();
+            $currentSeat = $user->currentSeatUser();
+            
+            // Filter by user's current active seat
+            if ($currentSeat) {
+                $query->where('seat_id', $currentSeat->seat_id);
+            } else {
+                // Fallback if no seat is assigned
+                $query->where('user_id', $user->id);
+            }
         }
         
         $this->applyFilters($query, $request);
@@ -178,7 +192,15 @@ class PetitionController extends Controller
         $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'decision']);
 
         if (Auth::user()->role !== 'admin') {
-            $query->where('user_id', Auth::id());
+            $user = Auth::user();
+            $currentSeat = $user->currentSeatUser();
+            
+            // Filter by user's current active seat
+            if ($currentSeat) {
+                $query->where('seat_id', $currentSeat->seat_id);
+            } else {
+                $query->where('user_id', $user->id);
+            }
         }
 
         switch ($tab) {
