@@ -20,7 +20,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <a href="{{ route('petitions.export', request()->query()) }}"
+                <a href="{{ route('petitions.export', request()->query()) }}" id="exportButton"
                     class="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-all font-semibold text-sm shadow-sm">
                     <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                     Excel Export
@@ -371,6 +371,16 @@
                         const currentTable = document.getElementById('tableContainer');
                         if (currentTable) {
                             currentTable.innerHTML = html;
+                            
+                            // Update Export Button URL
+                            const exportBtn = document.getElementById('exportButton');
+                            if (exportBtn) {
+                                const exportUrl = new URL('{{ route('petitions.export') }}', window.location.origin);
+                                // Append all current search params to the export URL
+                                searchParams.forEach((value, key) => exportUrl.searchParams.set(key, value));
+                                exportBtn.href = exportUrl.toString();
+                            }
+
                             if (window.lucide) window.lucide.createIcons();
                         }
                     })

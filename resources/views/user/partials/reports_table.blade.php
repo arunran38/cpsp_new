@@ -46,6 +46,13 @@
                             <span class="text-slate-400 italic">N/A</span>
                         @endif
                         <span class="block text-xs text-indigo-500 mt-2 truncate w-full" title="{{ $petition->nature_of_petition }}">{{ $petition->nature_of_petition }}</span>
+                        @if($petition->description)
+                            <div class="mt-2 p-2 bg-slate-50 rounded border border-slate-100">
+                                <p class="text-[10px] text-slate-500 line-clamp-2 italic" title="{{ $petition->description }}">
+                                    <i class="fa-solid fa-quote-left mr-1 opacity-50"></i>{{ $petition->description }}
+                                </p>
+                            </div>
+                        @endif
                     </td>
                     <td class="px-4 py-3 text-slate-600">
                         <span class="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700">
