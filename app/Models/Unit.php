@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Unit extends Model
 {
@@ -16,7 +17,10 @@ class Unit extends Model
         'unit_code',
     ];
 
-    public function seats()
+    /**
+     * Relationship: Associated Seats (Many-to-Many)
+     */
+    public function seats(): BelongsToMany
     {
         return $this->belongsToMany(Seat::class, 'seat_unit', 'unit_id', 'seat_id');
     }

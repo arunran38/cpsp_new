@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Decision extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasFactory;
+
     protected $primaryKey = 'decision_id';
 
     protected $fillable = [
@@ -16,14 +19,29 @@ class Decision extends Model
         'decision_remarks',
         'final_remarks',
         'decision_date',
+        'processed_by_user_id',
     ];
 
-    public function petition()
+    /**
+     * Relationship: User who processed this decision
+     */
+    public function processedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'processed_by_user_id', 'user_id');
+    }
+
+    /**
+     * Relationship: Associated Petition
+     */
+    public function petition(): BelongsTo
     {
         return $this->belongsTo(Petition::class, 'petition_id', 'petition_id');
     }
 
-    public function decidedBySeat()
+    /**
+     * Relationship: Seat that made the decision
+     */
+    public function decidedBySeat(): BelongsTo
     {
         return $this->belongsTo(Seat::class, 'decided_by_seat_id', 'seat_id');
     }

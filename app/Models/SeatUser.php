@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SeatUser extends Model
 {
@@ -27,12 +28,18 @@ class SeatUser extends Model
         'revoked_at' => 'datetime',
     ];
 
-    public function user()
+    /**
+     * Relationship: User (Officer) assigned to the seat
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id')->withTrashed();
     }
 
-    public function seat()
+    /**
+     * Relationship: The Seat itself
+     */
+    public function seat(): BelongsTo
     {
         return $this->belongsTo(Seat::class, 'seat_id', 'seat_id');
     }

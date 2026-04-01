@@ -1,4 +1,4 @@
-@extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.user')
+@extends('layouts.user')
 
 @section('title', 'User Dashboard')
 
@@ -6,18 +6,16 @@
 @php
     $user = Auth::user();
     $currentSeat = $user->currentSeatUser();
+    $isImpersonating = session('is_impersonating_seat', false);
     
-    // Fetch user petitions
-    if ($user->role === 'admin') {
+    if ($currentSeat) {
+        $petitions = \App\Models\Petition::where('seat_id', $currentSeat->seat_id)->get();
+    } elseif ($user->role === 'admin') {
         $petitions = \App\Models\Petition::all();
     } else {
-        if ($currentSeat) {
-            $petitions = \App\Models\Petition::where('seat_id', $currentSeat->seat_id)->get();
-        } else {
-            $petitions = \App\Models\Petition::where('user_id', $user->id)->get();
-        }
+        $petitions = \App\Models\Petition::where('user_id', $user->user_id)->get();
     }
-    
+
     // Stat Metrics
     $totalPetitions = $petitions->count();
     $forwarded = $petitions->filter(fn($p) => $p->status === 'Forwarded')->count();
@@ -29,42 +27,84 @@
     $chartNatures = json_encode($natureStats->keys()->toArray());
     $chartNatureCounts = json_encode($natureStats->values()->toArray());
 
-    // Chart Data: Petitions over time (Last 6 months)
-    $last6Months = collect();
-    for($i = 5; $i >= 0; $i--) {
-        // Use 1st of month to avoid boundary issues during end-of-month
-        $last6Months->push(now()->startOfMonth()->subMonths($i)->format('M Y'));
+    // Chart Data: Petitions over time (Daily trends with filtering)
+    $startDateStr = request('start_date', now()->subDays(6)->format('Y-m-d'));
+    $endDateStr = request('end_date', now()->format('Y-m-d'));
+    
+    // Ensure valid dates
+    try {
+        $startDate = \Carbon\Carbon::parse($startDateStr);
+        $endDate = \Carbon\Carbon::parse($endDateStr);
+    } catch (\Exception $e) {
+        $startDate = now()->subDays(6);
+        $endDate = now();
     }
-    
-    $monthlyStats = $petitions->map(function ($p) {
-        return \Carbon\Carbon::parse($p->date_of_petition_received)->format('M Y');
-    })->countBy();
-    
-    $trendData = $last6Months->map(function ($month) use ($monthlyStats) {
-        return $monthlyStats->get($month, 0);
+
+    if ($startDate->gt($endDate)) {
+        $temp = $startDate;
+        $startDate = $endDate;
+        $endDate = $temp;
+    }
+
+    $trendDataFiltered = $petitions->filter(function($p) use ($startDate, $endDate) {
+        $pDate = \Carbon\Carbon::parse($p->date_of_petition_received);
+        return $pDate->between($startDate->startOfDay(), $endDate->endOfDay());
     });
 
-    $chartMonths = json_encode($last6Months->toArray());
-    $chartTrendCounts = json_encode($trendData->toArray());
+    $dailyStats = $trendDataFiltered->map(function ($p) {
+        return \Carbon\Carbon::parse($p->date_of_petition_received)->format('Y-m-d');
+    })->countBy();
+
+    $chartLabels = [];
+    $chartTrendCounts = [];
+    $period = \Carbon\CarbonPeriod::create($startDate, $endDate);
+    
+    foreach ($period as $date) {
+        $dateKey = $date->format('Y-m-d');
+        $chartLabels[] = $date->format('d M');
+        $chartTrendCounts[] = $dailyStats->get($dateKey, 0);
+    }
+
+    $chartTrendLabels = json_encode($chartLabels);
+    $chartTrendCountsJson = json_encode($chartTrendCounts);
 
     // Recent Petitions Table Data
-    if ($user->role === 'admin') {
+    if ($currentSeat) {
+        $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
+            ->where('seat_id', $currentSeat->seat_id)
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+    } elseif ($user->role === 'admin') {
         $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
     } else {
-        $query = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision']);
-        if ($currentSeat) {
-            $query->where('seat_id', $currentSeat->seat_id);
-        } else {
-            $query->where('user_id', $user->id);
-        }
-        $recentPetitions = $query->orderBy('created_at', 'desc')->take(5)->get();
+        $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
+            ->where('user_id', $user->user_id)
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
     }
 @endphp
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    @if($isImpersonating && $currentSeat)
+        <div class="rounded-3xl border border-amber-400/20 bg-amber-500/10 p-5 text-amber-100">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm font-semibold">Viewing as seat: {{ $currentSeat->seat->seat_name ?? 'Unknown' }}</p>
+                    <p class="text-xs text-amber-200/80">You are still logged in as Admin. Use the button to switch back to the admin dashboard.</p>
+                </div>
+                <form method="POST" action="{{ route('seat.switchBack') }}">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center justify-center rounded-2xl bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-500/20 transition duration-200 hover:bg-amber-400">Switch Back to Admin</button>
+                </form>
+            </div>
+        </div>
+    @endif
+
     <!-- Page Header -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white px-8 py-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
         <div class="absolute -top-12 -right-12 w-40 h-40 bg-indigo-500 rounded-full blur-[80px] opacity-20 pointer-events-none"></div>
@@ -90,89 +130,114 @@
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <!-- Stat Card 1 -->
-        <a href="{{ route('petitions.reports', ['tab' => 'all']) }}" class="group block p-6 transition-all bg-white border border-slate-200 rounded-3xl relative overflow-hidden hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110 duration-500"></div>
-            <div class="flex items-center justify-between z-10 relative">
-                <div class="w-12 h-12 flex items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30">
-                    <i data-lucide="file-text" class="w-5 h-5"></i>
-                </div>
-                <span class="flex items-center gap-1 text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg">
-                    Total
-                </span>
+   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 p-6">
+    <a href="{{ route('petitions.reports', ['tab' => 'all']) }}" 
+       class="group relative block p-8 transition-all duration-500 bg-blue-50 border border-blue-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(59,130,246,0.2)] hover:-translate-y-2">
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
+        
+        <div class="flex items-center justify-between relative z-10">
+            <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                <i data-lucide="file-text" class="w-6 h-6"></i>
             </div>
-            <div class="mt-5 relative z-10">
-                <p class="text-4xl font-black text-slate-900 tracking-tight">{{ $totalPetitions }}</p>
-                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Total Petitions</h3>
-            </div>
-        </a>
+            <span class="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-700 bg-white/50 backdrop-blur-md rounded-full border border-blue-200">
+                Total
+            </span>
+        </div>
 
-        <!-- Stat Card 2 -->
-        <a href="{{ route('petitions.reports', ['tab' => 'forwarded']) }}" class="group block p-6 transition-all bg-white border border-slate-200 rounded-3xl relative overflow-hidden hover:shadow-2xl hover:shadow-amber-500/10 hover:-translate-y-1">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110 duration-500"></div>
-            <div class="flex items-center justify-between z-10 relative">
-                <div class="w-12 h-12 flex items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/30">
-                    <i data-lucide="send" class="w-5 h-5"></i>
-                </div>
-                <span class="flex items-center gap-1 text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg">
-                    In Prog
-                </span>
-            </div>
-            <div class="mt-5 relative z-10">
-                <p class="text-4xl font-black text-slate-900 tracking-tight">{{ $forwarded }}</p>
-                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Forwarded Units</h3>
-            </div>
-        </a>
+        <div class="mt-8 relative z-10">
+            <p class="text-5xl font-black text-blue-900 tracking-tight">{{ $totalPetitions }}</p>
+            <h3 class="text-sm font-bold text-blue-700/60 uppercase tracking-widest mt-2">Total Petitions</h3>
+        </div>
+    </a>
 
-        <!-- Stat Card 3 -->
-        <a href="{{ route('petitions.reports', ['tab' => 'vrs']) }}" class="group block p-6 transition-all bg-white border border-slate-200 rounded-3xl relative overflow-hidden hover:shadow-2xl hover:shadow-purple-500/10 hover:-translate-y-1">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110 duration-500"></div>
-            <div class="flex items-center justify-between z-10 relative">
-                <div class="w-12 h-12 flex items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-fuchsia-600 text-white shadow-lg shadow-purple-500/30">
-                    <i data-lucide="file-check" class="w-5 h-5"></i>
-                </div>
-                <span class="flex items-center gap-1 text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg">
-                    Reported
-                </span>
+    <a href="{{ route('petitions.reports', ['tab' => 'forwarded']) }}" 
+       class="group relative block p-8 transition-all duration-500 bg-amber-50 border border-amber-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(245,158,11,0.2)] hover:-translate-y-2">
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all duration-500"></div>
+        
+        <div class="flex items-center justify-between relative z-10">
+            <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-white text-amber-600 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                <i data-lucide="send" class="w-6 h-6"></i>
             </div>
-            <div class="mt-5 relative z-10">
-                <p class="text-4xl font-black text-slate-900 tracking-tight">{{ $vrsReceived }}</p>
-                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">VRs Received</h3>
-            </div>
-        </a>
+            <span class="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700 bg-white/50 backdrop-blur-md rounded-full border border-amber-200">
+                In Prog
+            </span>
+        </div>
 
-        <!-- Stat Card 4 -->
-        <a href="{{ route('petitions.reports', ['tab' => 'decisions']) }}" class="group block p-6 transition-all bg-white border border-slate-200 rounded-3xl relative overflow-hidden hover:shadow-2xl hover:shadow-emerald-500/10 hover:-translate-y-1">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110 duration-500"></div>
-            <div class="flex items-center justify-between z-10 relative">
-                <div class="w-12 h-12 flex items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/30">
-                    <i data-lucide="check-square" class="w-5 h-5"></i>
-                </div>
-                <span class="flex items-center gap-1 text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50 border border-slate-100 px-2 py-1 rounded-lg">
-                    Completed
-                </span>
-            </div>
-            <div class="mt-5 relative z-10">
-                <p class="text-4xl font-black text-slate-900 tracking-tight">{{ $finalDecisions }}</p>
-                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Final Decisions</h3>
-            </div>
-        </a>
-    </div>
+        <div class="mt-8 relative z-10">
+            <p class="text-5xl font-black text-amber-900 tracking-tight">{{ $forwarded }}</p>
+            <h3 class="text-sm font-bold text-amber-700/60 uppercase tracking-widest mt-2">Forwarded Units</h3>
+        </div>
+    </a>
 
+    <a href="{{ route('petitions.reports', ['tab' => 'vrs']) }}" 
+       class="group relative block p-8 transition-all duration-500 bg-purple-50 border border-purple-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(147,51,234,0.2)] hover:-translate-y-2">
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all duration-500"></div>
+        
+        <div class="flex items-center justify-between relative z-10">
+            <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-white text-purple-600 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                <i data-lucide="file-check" class="w-6 h-6"></i>
+            </div>
+            <span class="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-purple-700 bg-white/50 backdrop-blur-md rounded-full border border-purple-200">
+                Reported
+            </span>
+        </div>
+
+        <div class="mt-8 relative z-10">
+            <p class="text-5xl font-black text-purple-900 tracking-tight">{{ $vrsReceived }}</p>
+            <h3 class="text-sm font-bold text-purple-700/60 uppercase tracking-widest mt-2">Verification Reports Received</h3>
+        </div>
+    </a>
+
+    <a href="{{ route('petitions.reports', ['tab' => 'decisions']) }}" 
+       class="group relative block p-8 transition-all duration-500 bg-emerald-50 border border-emerald-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(16,185,129,0.2)] hover:-translate-y-2">
+        <div class="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all duration-500"></div>
+        
+        <div class="flex items-center justify-between relative z-10">
+            <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm group-hover:scale-110 transition-transform duration-500">
+                <i data-lucide="check-square" class="w-6 h-6"></i>
+            </div>
+            <span class="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-white/50 backdrop-blur-md rounded-full border border-emerald-200">
+                Completed
+            </span>
+        </div>
+
+        <div class="mt-8 relative z-10">
+            <p class="text-5xl font-black text-emerald-900 tracking-tight">{{ $finalDecisions }}</p>
+            <h3 class="text-sm font-bold text-emerald-700/60 uppercase tracking-widest mt-2">Final Decisions</h3>
+        </div>
+    </a>
+</div>
     <!-- Visualizations Grid -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <!-- Monthly Trends Chart (Spans 2 columns on wide screens) -->
-        <div class="xl:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden">
+        <div class="xl:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden flex flex-col">
             <div class="flex items-center justify-between mb-6 relative z-10">
                 <div>
                     <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <i data-lucide="trending-up" class="w-5 h-5 text-indigo-500"></i> Petition Trends
                     </h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Submissions over the last 6 months</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Daily submissions for the selected period</p>
                 </div>
+                <!-- Time Range Filter -->
+                <form action="{{ url()->current() }}" method="GET" class="flex flex-wrap items-center gap-2">
+                    <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                        <input type="date" placeholder="DD-MM-YYYY" name="start_date" value="{{ $startDate->format('Y-m-d') }}" max="{{ date('Y-m-d') }}"
+                               class="bg-transparent border-none text-[10px] font-bold text-slate-600 focus:ring-0 py-1 cursor-pointer">
+                        <span class="text-slate-300 text-[10px] font-black mx-1">—</span>
+                        <input type="date" placeholder="DD-MM-YYYY" name="end_date" value="{{ $endDate->format('Y-m-d') }}" max="{{ date('Y-m-d') }}"
+                               class="bg-transparent border-none text-[10px] font-bold text-slate-600 focus:ring-0 py-1 cursor-pointer">
+                    </div>
+                    <button type="submit" class="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+                        <i data-lucide="filter" class="w-4 h-4"></i>
+                    </button>
+                    @if(request()->has('start_date') || request()->has('end_date'))
+                        <a href="{{ url()->current() }}" class="p-2 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </a>
+                    @endif
+                </form>
             </div>
-            <div class="relative h-[300px] w-full z-10">
+            <div class="relative flex-grow w-full z-10 min-h-[350px]">
                 <canvas id="trendChart"></canvas>
             </div>
         </div>
@@ -293,37 +358,27 @@
         Chart.defaults.font.family = fontFamily;
         Chart.defaults.color = colors.slateDark;
 
-        // --- 2. Trend Area Chart ---
+        // --- 2. Trend Bar Chart ---
         const trendCtx = document.getElementById('trendChart');
         if (trendCtx) {
-            const chartMonths = {!! $chartMonths !!};
-            const chartTrendCounts = {!! $chartTrendCounts !!};
+            const chartTrendLabels = {!! $chartTrendLabels !!};
+            const chartTrendCounts = {!! $chartTrendCountsJson !!};
 
-            const gradient = trendCtx.getContext('2d').createLinearGradient(0, 0, 0, 300);
-            gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)'); // Indigo 500 w/ opacity
-            gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
-
-            if (chartMonths.length === 0 || chartTrendCounts.every(val => val === 0)) {
+            if (chartTrendLabels.length === 0 || chartTrendCounts.every(val => val === 0)) {
                 trendCtx.style.display = 'none';
-                trendCtx.parentElement.innerHTML += '<div class="absolute inset-0 flex flex-col justify-center items-center text-slate-400 text-sm font-medium"><i data-lucide="activity" class="w-8 h-8 mb-2 opacity-50"></i>Not enough data for trends</div>';
+                trendCtx.parentElement.innerHTML += '<div class="absolute inset-0 flex flex-col justify-center items-center text-slate-400 text-sm font-medium"><i data-lucide="activity" class="w-8 h-8 mb-2 opacity-50"></i>No data for this period</div>';
             } else {
                 new Chart(trendCtx, {
-                    type: 'line',
+                    type: 'bar',
                     data: {
-                        labels: chartMonths,
+                        labels: chartTrendLabels,
                         datasets: [{
                             label: 'New Petitions',
                             data: chartTrendCounts,
-                            borderColor: colors.primary,
-                            backgroundColor: gradient,
-                            borderWidth: 3,
-                            pointBackgroundColor: '#fff',
-                            pointBorderColor: colors.primary,
-                            pointBorderWidth: 2,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            fill: true,
-                            tension: 0.4
+                            backgroundColor: colors.primary,
+                            hoverBackgroundColor: colors.secondary,
+                            borderRadius: 6,
+                            borderSkipped: false,
                         }]
                     },
                     options: {
@@ -338,20 +393,34 @@
                                 padding: 12,
                                 displayColors: false,
                                 cornerRadius: 8,
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.parsed.y + ' Petitions';
+                                    }
+                                }
                             }
                         },
                         scales: {
                             x: {
-                                grid: { display: false, drawBorder: false },
-                                ticks: { font: { size: 12, weight: '500' } }
+                                grid: { 
+                                    display: true,
+                                    drawOnChartArea: false,
+                                    drawTicks: true,
+                                    color: gridColor,
+                                    lineWidth: 2
+                                },
+                                ticks: { font: { size: 10, weight: '600' }, padding: 8 }
                             },
                             y: {
                                 grid: { color: gridColor, drawBorder: false },
                                 beginAtZero: true,
-                                ticks: { stepSize: 1, font: { size: 12 } }
+                                ticks: { 
+                                    stepSize: 1, 
+                                    font: { size: 10 },
+                                    precision: 0
+                                }
                             }
-                        },
-                        interaction: { intersect: false, mode: 'index' },
+                        }
                     }
                 });
             }

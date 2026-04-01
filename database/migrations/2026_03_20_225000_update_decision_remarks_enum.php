@@ -12,7 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE decisions MODIFY COLUMN decision_remarks ENUM('PE', 'SC', 'QV', 'Closed', 'Sent to Govt', 'ICell')");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE decisions MODIFY COLUMN decision_remarks ENUM('PE', 'SC', 'QV', 'Closed', 'Sent to Govt', 'ICell')");
+        }
     }
 
     /**
@@ -20,6 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE decisions MODIFY COLUMN decision_remarks ENUM('PE', 'SC', 'QV', 'KDIS', 'Govt', 'ICell')");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE decisions MODIFY COLUMN decision_remarks ENUM('PE', 'SC', 'QV', 'KDIS', 'Govt', 'ICell')");
+        }
     }
 };

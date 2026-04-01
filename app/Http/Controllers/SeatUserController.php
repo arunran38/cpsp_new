@@ -6,23 +6,36 @@ use App\Models\Seat;
 use App\Models\User;
 use App\Models\SeatUser;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
 
 class SeatUserController extends Controller
 {
-    public function index()
+    /**
+     * Display a listing of seat-user assignments.
+     */
+    public function index(): RedirectResponse
     {
         return redirect()->route('admin.seats.index');
     }
 
-    public function create(Request $request)
+    /**
+     * Show the form for creating a new seat-user assignment.
+     */
+    public function create(Request $request): View
     {
         $users = User::all();
         $seats = Seat::where('is_active', true)->get();
         $selectedSeatId = $request->get('seat_id');
+        
         return view('admin.seatuser_add', compact('users', 'seats', 'selectedSeatId'));
     }
 
-    public function store(Request $request)
+    /**
+     * Store a newly created seat-user assignment in storage.
+     */
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'user_id' => 'required|exists:users,user_id',
@@ -30,90 +43,85 @@ class SeatUserController extends Controller
             'is_additional' => 'nullable|boolean',
         ]);
 
-        try {
-            $userId = $request->user_id;
-            $seatId = $request->seat_id;
-            $isAdditional = $request->boolean('is_additional');
+        return DB::transaction(function () use ($request) {
+            try {
+                $userId = $request->user_id;
+                $seatId = $request->seat_id;
+                $isAdditional = $request->boolean('is_additional');
 
-            // Check if THIS user already has THIS seat active
-            $existingUserSeat = SeatUser::where('user_id', $userId)
-                ->where('seat_id', $seatId)
-                ->where('is_active', true)
-                ->exists();
+                // 1. Check if user already has this specific assignment active
+                $exists = SeatUser::where('user_id', $userId)
+                    ->where('seat_id', $seatId)
+                    ->where('is_active', true)
+                    ->exists();
 
-            if ($existingUserSeat) {
-                return back()->withErrors(['seat_id' => 'This user is already assigned to this seat.'])->withInput();
-            }
+                if ($exists) {
+                    return back()->withErrors(['seat_id' => 'This user is already assigned to this seat.'])->withInput();
+                }
 
-            // A seat can only have ONE active user. Revoke current occupant regardless of additional/primary.
-            SeatUser::where('seat_id', $seatId)
-                ->where('is_active', true)
-                ->update([
-                    'is_active' => false,
-                    'revoked_at' => now(),
+                // 2. Validate primary seat constraint
+                if (!$isAdditional) {
+                    $hasPrimary = SeatUser::where('user_id', $userId)
+                        ->where('is_active', true)
+                        ->where('is_additional', false)
+                        ->exists();
+
+                    if ($hasPrimary) {
+                        return back()->with('error', "User already has a primary seat assigned. Please select 'Additional Charge'.")->withInput();
+                    }
+                }
+
+                // 3. Revoke current occupant (Seat can only have one active user)
+                SeatUser::where('seat_id', $seatId)
+                    ->where('is_active', true)
+                    ->update(['is_active' => false, 'revoked_at' => now()]);
+
+                // 4. Create new assignment
+                SeatUser::create([
+                    'user_id' => $userId,
+                    'seat_id' => $seatId,
+                    'is_additional' => $isAdditional,
+                    'assigned_at' => now(),
+                    'is_active' => true,
                 ]);
 
-            // If NOT an additional charge, check if the user already has a primary seat
-            if (!$isAdditional) {
-                $hasPrimary = SeatUser::with('seat')
-                    ->where('user_id', $userId)
-                    ->where('is_active', true)
-                    ->where('is_additional', false)
-                    ->first();
-
-                if ($hasPrimary) {
-                    $seatName = $hasPrimary->seat->seat_name ?? 'CPSP I or CPSP II or CPSP III';
-                    return back()->with('error', "User already has a $seatName seat assigned. Please select \"Additional Charge\".")->withInput();
-                }
+                $suffix = $isAdditional ? ' as additional charge.' : '.';
+                return redirect()->route('admin.seatuser.index')->with('success', "Seat assigned successfully$suffix");
+            } catch (\Exception $e) {
+                return back()->with('error', 'Failed to assign seat: ' . $e->getMessage())->withInput();
             }
-
-            SeatUser::create([
-                'user_id' => $userId,
-                'seat_id' => $seatId,
-                'is_additional' => $isAdditional,
-                'assigned_at' => now(),
-                'is_active' => true,
-            ]);
-
-            $message = 'Seat assigned successfully' . ($isAdditional ? ' as additional charge.' : '.');
-            return redirect()->route('admin.seatuser.index')->with('success', $message);
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to assign seat: ' . $e->getMessage())->withInput();
-        }
+        });
     }
 
-    public function destroy($id)
+    /**
+     * Remove the specified seat-user assignment from storage.
+     */
+    public function destroy(int $id): RedirectResponse
     {
-        try {
-            $assignment = SeatUser::findOrFail($id);
-            
-            $wasAdditional = $assignment->is_additional;
-            $seatId = $assignment->seat_id;
+        return DB::transaction(function () use ($id) {
+            try {
+                $assignment = SeatUser::findOrFail($id);
+                $wasAdditional = $assignment->is_additional;
+                $seatId = $assignment->seat_id;
 
-            $assignment->update([
-                'is_active' => false,
-                'revoked_at' => now(),
-            ]);
+                $assignment->update(['is_active' => false, 'revoked_at' => now()]);
 
-            if ($wasAdditional) {
-                // Find the most recent primary assignment for this seat that was revoked
-                $previousPrimary = SeatUser::where('seat_id', $seatId)
-                    ->where('is_additional', false)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
+                // Fallback logic for additional charges
+                if ($wasAdditional) {
+                    $previousPrimary = SeatUser::where('seat_id', $seatId)
+                        ->where('is_additional', false)
+                        ->orderBy('created_at', 'desc')
+                        ->first();
 
-                if ($previousPrimary) {
-                    // Reactivate the original user's assignment
-                    $previousPrimary->update([
-                        'is_active' => true,
-                        'revoked_at' => null,
-                    ]);
+                    if ($previousPrimary) {
+                        $previousPrimary->update(['is_active' => true, 'revoked_at' => null]);
+                    }
                 }
-            }
 
-            return redirect()->route('admin.seatuser.index')->with('success', 'Seat assignment revoked successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to revoke assignment: ' . $e->getMessage());
-        }
+                return redirect()->route('admin.seatuser.index')->with('success', 'Seat assignment revoked successfully.');
+            } catch (\Exception $e) {
+                return back()->with('error', 'Failed to revoke assignment.');
+            }
+        });
     }
 }

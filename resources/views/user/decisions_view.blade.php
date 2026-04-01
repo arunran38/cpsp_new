@@ -1,4 +1,4 @@
-@extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.user')
+@extends(auth()->user()->role === 'admin' && !session('is_impersonating_seat') ? 'layouts.admin' : 'layouts.user')
 @section('container_width', 'max-w-full')
 
 @section('content')
@@ -23,16 +23,16 @@
                     <label class="block text-xs font-medium text-slate-700 mb-1">Search Petitions</label>
                     <div class="relative flex items-center">
                         <i data-lucide="search" class="w-4 h-4 absolute left-3 text-slate-400"></i>
-                        <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-9 pr-3 py-[9px] rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="Petition No, Petitioner Name, or Accused Name...">
+                        <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-9 pr-3 py-[9px] rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black" placeholder="Petition No, Petitioner Name, or Accused Name...">
                     </div>
                 </div>
                 <div class="flex-1 min-w-[150px]">
                     <label class="block text-xs font-medium text-slate-700 mb-1">Date From</label>
-                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px]">
+                    <input type="date" placeholder="DD-MM-YYYY" name="date_from" value="{{ request('date_from') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-black">
                 </div>
                 <div class="flex-1 min-w-[150px]">
                     <label class="block text-xs font-medium text-slate-700 mb-1">Date To</label>
-                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px]">
+                    <input type="date" placeholder="DD-MM-YYYY" name="date_to" value="{{ request('date_to') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-black">
                 </div>
                 <div class="flex-none">
                     <label class="block text-xs font-medium text-transparent mb-1">&nbsp;</label>
@@ -209,3 +209,4 @@
     });
 </script>
 @endsection
+

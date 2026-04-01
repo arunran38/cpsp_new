@@ -50,7 +50,7 @@ class ProfileController extends Controller
         if ($request->hasFile('photo')) {
             $file = $request->file('photo');
             
-            if ($file->isValid() && !empty($file->getRealPath())) {
+            if ($file->isValid()) {
                 $filename = time() . '_profile_' . $user->user_id . '.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs('profile_photos', $filename, 'public');
 
@@ -62,9 +62,9 @@ class ProfileController extends Controller
                     'uploaded_by' => $user->user_id,
                 ]);
 
-                // Delete old photo if exists
+                // Cleanup old photo
                 if ($user->profilePhoto) {
-                    Storage::disk('public')->delete($user->profilePhoto->file_path);
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profilePhoto->file_path);
                     $user->profilePhoto->delete();
                 }
 

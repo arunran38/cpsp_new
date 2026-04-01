@@ -4,7 +4,7 @@
 <div class="max-w-4xl mx-auto space-y-8">
     <!-- Page Header -->
     <div class="flex flex-col gap-1">
-        <h1 class="text-2xl font-bold tracking-tight text-slate-900">Update Unit</h1>
+        <h1 class="text-2xl font-bold tracking-tight text-white">Update Unit</h1>
        
     </div>
 

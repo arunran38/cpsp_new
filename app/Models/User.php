@@ -2,22 +2,17 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Upload;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-
-#[Fillable(['name', 'email', 'password', 'mobile_number', 'role', 'designation', 'other_designation', 'pen', 'photo', 'status'])]
-#[Hidden(['password', 'remember_token'])]
-  
 class User extends Authenticatable
 {
+    use HasFactory, Notifiable, SoftDeletes;
+
     protected $primaryKey = 'user_id';
 
     protected $fillable = [
@@ -33,12 +28,23 @@ class User extends Authenticatable
         'status',
     ];
 
-    public function profilePhoto()
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * Relationship: Profile Photo (Upload)
+     */
+    public function profilePhoto(): BelongsTo
     {
         return $this->belongsTo(Upload::class, 'photo', 'upload_id');
     }
 
-    public function seatUsers()
+    /**
+     * Relationship: Seat Assignments
+     */
+    public function seatUsers(): HasMany
     {
         return $this->hasMany(SeatUser::class, 'user_id', 'user_id');
     }
@@ -47,7 +53,7 @@ class User extends Authenticatable
      * Get the currently active SeatUser based on session state, 
      * or fallback to the primary active seat.
      */
-    public function currentSeatUser()
+    public function currentSeatUser(): ?SeatUser
     {
         $currentSeatId = session('current_seat_id');
 
@@ -67,15 +73,8 @@ class User extends Authenticatable
         return null;
     }
 
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes;
-    
-
-
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Attributes which should be cast.
      */
     protected function casts(): array
     {
@@ -84,7 +83,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    public static function countUser(){
+
+    /**
+     * Statistics helper for user role
+     */
+    public static function countUser(): int
+    {
         return self::where('role', 'user')->count();
     }   
 }

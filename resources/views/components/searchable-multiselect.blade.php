@@ -43,9 +43,9 @@
     @endif
 
     <!-- Trigger Box -->
-    <div @click="open = true" 
+    <div @click="open = true; if ($root?.formErrors?.unit_ids) delete $root.formErrors.unit_ids" 
          class="flex flex-wrap items-center gap-2 w-full px-4 py-3 min-h-[58px] bg-slate-50/50 border rounded-2xl cursor-text transition-all duration-300 relative z-0 shadow-sm"
-         :class="open ? 'border-primary bg-white ring-4 ring-primary/10' : 'border-slate-200 hover:border-slate-300 group-hover/wrapper:bg-white'">
+         :class="$root?.formErrors?.unit_ids ? 'border-rose-500 ring-4 ring-rose-500/10 bg-rose-50/5' : (open ? 'border-primary bg-white ring-4 ring-primary/10' : 'border-slate-200 hover:border-slate-300 group-hover/wrapper:bg-white')">
         
         <!-- Selected Items Tags -->
         <template x-for="val in selected" :key="val">
@@ -67,6 +67,10 @@
         <!-- Hidden inputs for submission -->
         <template x-for="val in selected" :key="'input-' + val">
             <input type="hidden" name="{{ $name }}[]" :value="val">
+        </template>
+
+        <template x-if="$root?.formErrors?.unit_ids">
+            <p class="text-xs text-rose-500 mt-1" x-text="$root.formErrors.unit_ids"></p>
         </template>
 
         <!-- Chevron / Indicator -->

@@ -1,4 +1,4 @@
-@extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.user')
+@extends(auth()->user()->role === 'admin' && !session('is_impersonating_seat') ? 'layouts.admin' : 'layouts.user')
 @section('container_width', 'max-w-full')
 
 @section('content')
@@ -43,17 +43,7 @@
         </div>
     @endif
 
-    @if (session('error'))
-        <div class="bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r-xl shadow-sm animate-in fade-in slide-in-from-top-2">
-            <div class="flex items-start gap-3">
-                <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5"></i>
-                <div>
-                    <h3 class="text-sm font-bold text-rose-800 mb-1">Update Failed</h3>
-                    <p class="text-sm text-rose-700">{{ session('error') }}</p>
-                </div>
-            </div>
-        </div>
-    @endif
+
 
     <!-- Stepper Navigation (Elegant Line-based) -->
     <div class="py-4">
@@ -120,7 +110,7 @@
                         <x-input label="Petition No *" name="petition_no" x-model="petitionDetails.petition_no" required placeholder="Ex. PT-2026-001" />
                     </div>
                     <div class="lg:col-span-1">
-                        <x-input type="date" label="Date of Receipt *" name="date_of_petition_received" x-model="petitionDetails.date" required />
+                        <x-input type="date" placeholder="DD-MM-YYYY" label="Date of Receipt *" name="date_of_petition_received" x-model="petitionDetails.date" required max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}" />
                     </div>
                     <div class="lg:col-span-1">
                         <x-select label="Nature of Petition *" name="nature_of_petition" x-model="petitionDetails.nature" required :options="['' => 'Select Category', 'Bribery' => 'Bribery', 'Misuse of authority' => 'Misuse of authority', 'Fraud / financial irregularities' => 'Fraud / financial irregularities', 'Serious negligence' => 'Serious negligence', 'others' => 'Others']" />
@@ -155,7 +145,7 @@
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1">
-                                        <a href="{{ Storage::url($upload->file_path) }}" target="_blank" class="shrink-0 p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="View Document">
+                                        <a href="{{ route('petitions.download', $upload->upload_id) }}" target="_blank" class="shrink-0 p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="View Document">
                                             <i data-lucide="external-link" class="w-4 h-4"></i>
                                         </a>
                                         <button type="button" @click="removeExistingUpload({{ $upload->upload_id }})" class="shrink-0 p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" title="Remove Document">
@@ -233,11 +223,16 @@
                                             <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
                                                 <div>
                                                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Address Type</label>
-                                                    <select :name="`complainants[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all">
-                                                        <option value="Permanent" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')">Permanent</option>
-                                                        <option value="Temporary" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')">Temporary</option>
-                                                        <option value="Office" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')">Office</option>
-                                                    </select>
+                                                    <div class="relative flex items-center">
+                                                        <select :name="`complainants[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" 
+                                                            class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all appearance-none pr-10"
+                                                            style="background-image: none !important;">
+                                                            <option value="Permanent" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')">Permanent</option>
+                                                            <option value="Temporary" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')">Temporary</option>
+                                                            <option value="Office" :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')">Office</option>
+                                                        </select>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-2 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                                                    </div>
                                                 </div>
                                                 <div class="lg:col-span-2">
                                                     <x-input label="Street Address *" name="comp_address" x-bind:name="`complainants[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" x-bind:required="step === 2" placeholder="House No, Street, Locality" />
@@ -322,11 +317,16 @@
                                             <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
                                                 <div>
                                                     <label class="block text-sm font-semibold text-slate-700 mb-1.5">Address Type</label>
-                                                    <select :name="`accused[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all">
-                                                        <option value="Permanent" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')">Permanent</option>
-                                                        <option value="Temporary" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')">Temporary</option>
-                                                        <option value="Office" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')">Office</option>
-                                                    </select>
+                                                    <div class="relative flex items-center">
+                                                        <select :name="`accused[${index}][addresses][${addrIndex}][address_type]`" x-model="addr.address_type" 
+                                                            class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all appearance-none pr-10"
+                                                            style="background-image: none !important;">
+                                                            <option value="Permanent" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')">Permanent</option>
+                                                            <option value="Temporary" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')">Temporary</option>
+                                                            <option value="Office" :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')">Office</option>
+                                                        </select>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-2 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                                                    </div>
                                                 </div>
                                                 <div class="lg:col-span-2">
                                                     <x-input label="Street Address" name="acc_address" x-bind:name="`accused[${index}][addresses][${addrIndex}][address]`" x-model="addr.address" x-bind:required="step === 3" placeholder="House No, Street, Locality" />
@@ -522,3 +522,4 @@
     }
 </script>
 @endsection
+
