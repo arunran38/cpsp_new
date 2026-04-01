@@ -173,7 +173,7 @@ class PetitionController extends Controller
         if (Auth::user()->role !== 'admin') {
             $user = Auth::user();
             $currentSeat = $user->currentSeatUser();
-            
+
             // Filter by user's current active seat
             if ($currentSeat) {
                 $query->where('seat_id', $currentSeat->seat_id);
@@ -210,25 +210,40 @@ class PetitionController extends Controller
 
         // Collect filter information for the header
         $filterInfo = [];
-        if ($request->filled('search')) $filterInfo[] = "Search: " . $request->search;
-        if ($request->filled('date_from')) $filterInfo[] = "From: " . $request->date_from;
-        if ($request->filled('date_to')) $filterInfo[] = "To: " . $request->date_to;
-        if ($request->filled('status')) $filterInfo[] = "Status: " . $request->status;
-        if ($request->filled('nature_of_petition')) $filterInfo[] = "Nature: " . $request->nature_of_petition;
-        if ($request->filled('mode_of_petition')) $filterInfo[] = "Mode: " . $request->mode_of_petition;
-        
+        if ($request->filled('search'))
+            $filterInfo[] = "Search: " . $request->search;
+        if ($request->filled('date_from'))
+            $filterInfo[] = "From: " . $request->date_from;
+        if ($request->filled('date_to'))
+            $filterInfo[] = "To: " . $request->date_to;
+        if ($request->filled('status'))
+            $filterInfo[] = "Status: " . $request->status;
+        if ($request->filled('nature_of_petition'))
+            $filterInfo[] = "Nature: " . $request->nature_of_petition;
+        if ($request->filled('mode_of_petition'))
+            $filterInfo[] = "Mode: " . $request->mode_of_petition;
+
         $filterString = !empty($filterInfo) ? implode(' | ', $filterInfo) : "All Records";
 
         $columns = ['#', 'Petition No', 'Received Date', 'Petitioner', 'Respondent', 'Nature', 'Description', 'Mode', 'Status'];
-        
-        if (Auth::user()->role === 'admin') $columns[] = 'Seat';
-        if ($tab === 'forwarded') $columns[] = 'Unit';
-        if ($tab === 'vrs') { $columns[] = 'VR Ref No'; $columns[] = 'VR Date'; }
-        if ($tab === 'decisions') $columns[] = 'Decision';
+
+        if (Auth::user()->role === 'admin')
+            $columns[] = 'Seat';
+        if ($tab === 'forwarded')
+            $columns[] = 'Unit';
+        if ($tab === 'vrs') {
+            $columns[] = 'VR Ref No';
+            $columns[] = 'VR Date';
+        }
+        if ($tab === 'decisions')
+            $columns[] = 'Decision';
 
         // Prepare dynamic heading based on date filters
-        $dateFrom = $request->filled('date_from') ? date('d/m/Y', strtotime($request->date_from)) : '...';
-        $dateTo = $request->filled('date_to') ? date('d/m/Y', strtotime($request->date_to)) : date('d/m/Y');
+        $minDate = $petitions->isNotEmpty() ? $petitions->min('date_of_petition_received') : null;
+        $maxDate = $petitions->isNotEmpty() ? $petitions->max('date_of_petition_received') : null;
+
+        $dateFrom = $request->filled('date_from') ? date('d/m/Y', strtotime($request->date_from)) : ($minDate ? date('d/m/Y', strtotime($minDate)) : '...');
+        $dateTo = $request->filled('date_to') ? date('d/m/Y', strtotime($request->date_to)) : ($maxDate ? date('d/m/Y', strtotime($maxDate)) : date('d/m/Y'));
         $mainHeading = "DETAILS OF PETITIONS RECEIVED FROM $dateFrom TO $dateTo";
 
         $output = '
@@ -254,7 +269,6 @@ class PetitionController extends Controller
         <body>
             <table>
                 <tr><td colspan="' . count($columns) . '" class="header-title" style="border:none;">' . $mainHeading . '</td></tr>
-                <tr><td colspan="' . count($columns) . '" class="filter-info" style="border:none;">Report Type: ' . strtoupper($tab) . ' | Other Filters: ' . ($request->filled('search') ? "Search: ".$request->search : "None") . ' | Generated: ' . date('d M Y, H:i') . '</td></tr>
                 <tr><td colspan="' . count($columns) . '" style="border:none; height:10px;"></td></tr>
                 
                 <colgroup>
@@ -267,13 +281,13 @@ class PetitionController extends Controller
                     <col style="width: 250pt;"> <!-- Description -->
                     <col style="width: 60pt;"> <!-- Mode -->
                     <col style="width: 70pt;"> <!-- Status -->';
-        
+
         // Add extra col widths if needed
         if (Auth::user()->role === 'admin' || $tab !== 'all') {
-            $output .= '<col style="width: 80pt;">'; 
+            $output .= '<col style="width: 80pt;">';
         }
         if ($tab === 'vrs') {
-            $output .= '<col style="width: 80pt;">'; 
+            $output .= '<col style="width: 80pt;">';
         }
 
         $output .= '</colgroup>
