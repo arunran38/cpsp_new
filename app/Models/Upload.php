@@ -8,7 +8,7 @@ use App\Models\User;
 
 class Upload extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, \Illuminate\Database\Eloquent\Factories\HasFactory;
     protected $primaryKey = 'upload_id';
     protected $guarded = [];
 

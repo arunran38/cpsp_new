@@ -1,239 +1,441 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | CPSP</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome CPSP</title>
 
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Vite (Laravel) -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background: url('/images/login-bg.jpg') no-repeat center center fixed;
-            background-color: #0b0717; /* Fallback dark background */
-            background-size: cover;
-            color: #ffffff;
-        }
-        
-        .login-card {
-            background: rgba(26, 31, 39, 0.85); /* Dark solid-ish glass */
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
-            width: 100%;
-            max-width: 360px;
-            padding: 2.5rem 2.5rem;
+            background-color: #020617;
+            /* Slate 950 */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
             position: relative;
+            padding: 2rem 1rem;
+        }
+
+        /* Dashbaord-consistent Ambient background */
+        .ambient-bg {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            animation: pulse 10s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1) translate(0, 0);
+                opacity: 0.1;
+            }
+
+            100% {
+                transform: scale(1.1) translate(20px, 20px);
+                opacity: 0.2;
+            }
+        }
+
+        .orb-1 {
+            width: 40rem;
+            height: 40rem;
+            background: #4f46e5;
+            top: -10rem;
+            left: -10rem;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 30rem;
+            height: 30rem;
+            background: #9333ea;
+            top: 50%;
+            right: -5rem;
+            animation-delay: -2s;
+        }
+
+        .orb-3 {
+            width: 35rem;
+            height: 35rem;
+            background: #1e293b;
+            bottom: -5rem;
+            left: 20%;
+            animation-delay: -5s;
+        }
+
+        .welcome-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Dashboard-style Branding */
+        .brand-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+            animation: fadeInDown 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 4rem;
+            height: 4rem;
+            border-radius: 1.25rem;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
         }
 
         .logo-text {
-            font-size: 20px;
-            font-weight: 700;
             text-align: center;
-            margin-bottom: 20px;
-            letter-spacing: 1px;
+        }
+
+        .logo-text h1 {
+            font-size: 1.875rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
             color: #ffffff;
-        }
-
-        .avatar-container {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 30px auto;
-            background: transparent;
-            overflow: hidden;
-        }
-
-        .avatar-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .form-label {
-            font-size: 10px;
-            color: #ffffff;
-            margin-bottom: 6px;
-            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            line-height: 1;
+        }
+
+        .logo-text h1 span {
+            color: #818cf8;
+        }
+
+        .logo-text p {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        .login-card {
+            background: rgba(15, 23, 42, 0.7);
+            /* slate-900/70 */
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            /* slate-800/50 */
+            border-radius: 2rem;
+            padding: 3rem;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .input-group {
-            background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 6px;
-            overflow: hidden;
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+            margin-left: 0.25rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: rgba(2, 6, 23, 0.5);
+            /* slate-950/50 */
+            border: 1px solid rgba(51, 65, 85, 0.8);
+            border-radius: 1rem;
+            color: #f1f5f9;
+            font-size: 0.9375rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: rgba(2, 6, 23, 0.8);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            bottom: 0.9rem;
+            color: #475569;
+            width: 1.125rem;
+            height: 1.125rem;
+            transition: color 0.3s ease;
+        }
+
+        .input-field:focus+.input-icon {
+            color: #818cf8;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            bottom: 0.9rem;
+            background: none;
+            border: none;
+            color: #475569;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            color: #818cf8;
+        }
+
+        .options {
             display: flex;
-            height: 40px;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            margin-bottom: 2.5rem;
         }
 
-        .input-group:focus-within {
-            border: 1px solid rgba(255, 255, 255, 0.6);
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            font-size: 0.875rem;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: color 0.2s;
         }
 
-        .form-control {
-            background: #eef1f5; /* Light bluish-white input area */
+        .remember-me:hover {
+            color: #f1f5f9;
+        }
+
+        .checkbox {
+            width: 1.125rem;
+            height: 1.125rem;
+            accent-color: #6366f1;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(to br, #6366f1, #4f46e5);
             border: none;
-            color: #000000;
-            padding: 10px 14px;
-            font-size: 13px;
-            font-weight: 500;
-            box-shadow: none !important;
-            flex: 1;
-        }
-
-        .form-control::placeholder {
-            color: #888888;
-        }
-
-        .input-group-text {
-            background: transparent;
-            border: none;
-            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 1rem;
             color: #ffffff;
-            padding: 0 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-        
-        .input-group-text i {
-            font-size: 14px;
+            gap: 0.5rem;
         }
 
-        .mb-custom {
-            margin-bottom: 20px;
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 30px -10px rgba(79, 70, 229, 0.5);
+            filter: brightness(1.1);
         }
 
-        .form-check {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 0;
+        .login-btn:active {
+            transform: translateY(0);
         }
 
-        .form-check-input {
-            background-color: transparent;
-            border-color: rgba(255, 255, 255, 0.4);
-            border-radius: 3px;
-            margin-top: 2px;
-            margin-right: 8px;
-            width: 14px;
-            height: 14px;
-        }
-
-        .form-check-input:checked {
-            background-color: #9061f9;
-            border-color: #9061f9;
-        }
-
-        .form-check-label {
-            font-size: 11px;
-            color: #ffffff;
-            cursor: pointer;
+        .footer {
+            text-align: center;
+            margin-top: auto;
+            padding: 3rem 2rem;
+            font-size: 0.75rem;
             font-weight: 500;
-        }
-
-        .mb-4-spacer {
-            margin-bottom: 25px;
-            margin-top: 15px;
-        }
-
-        .btn-login {
-            background: #9b72e6; /* Solid bright purple matching the image */
-            border: none;
-            border-radius: 20px; /* Pill layout */
-            color: #ffffff;
-            padding: 10px;
-            font-weight: 600;
-            font-size: 14px;
+            color: #64748b;
+            z-index: 10;
+            letter-spacing: 0.025em;
             width: 100%;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(155, 114, 230, 0.3);
+            animation: fadeIn 1s ease-out 0.5s both;
         }
 
-        .btn-login:hover {
-            background: #8757db;
-            color: #ffffff;
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
-        .invalid-feedback {
-            font-size: 11px;
-            margin-top: 6px;
-            padding-left: 4px;
-            display: block;
-            color: #ff6b6b !important;
+        .footer span {
+            color: #818cf8;
+            font-weight: 700;
+        }
+
+        .footer-sep {
+            height: 1px;
+            width: 2rem;
+            background: rgba(51, 65, 85, 0.5);
+            margin: 0.5rem auto 1rem;
         }
     </style>
 </head>
-<body>
 
-<div class="container d-flex align-items-center justify-content-center min-vh-100">
-    <div class="login-card">
-        <div class="logo-text">CPSP</div>
-        
-        <div class="avatar-container">
-            <img src="{{ asset('images/logo.png') }}" alt="Kerala VACB Logo">
+<body x-data="{ showPassword: false, loading: false }">
+
+    <!-- Ambient Background Effects -->
+    <div class="ambient-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="welcome-container">
+        <!-- Dashboard-style Branding -->
+        <div class="brand-logo">
+            <div class="logo-icon">
+                <i data-lucide="scroll-text" class="w-8 h-8 text-white"></i>
+            </div>
+            <div class="logo-text">
+                <h1>CPSP</h1>
+                <p>Centralized Processing System of Petitions Cell</p>
+            </div>
         </div>
 
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
+        <div class="login-card">
+            <form method="POST" action="{{ route('login') }}" @submit="loading = true">
+                @csrf
 
-            <div class="mb-custom">
-                <label class="form-label">PEN</label>
                 <div class="input-group">
-                    <input type="text" class="form-control" name="pen" placeholder="963950" value="{{ old('pen') }}" autofocus>
-                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <label for="pen" class="input-label">PEN Number</label>
+                    <input type="text" name="pen" id="pen" value="{{ old('pen') }}" class="input-field"
+                        placeholder="Permanent Employee Number" required autofocus>
+                    <i data-lucide="user" class="input-icon"></i>
+                    @error('pen')
+                        <span
+                            class="text-rose-400 text-[11px] font-semibold mt-1.5 ml-1 block uppercase tracking-wider">{{ $message }}</span>
+                    @enderror
                 </div>
-                @if($errors->has('pen'))
-                    <div class="invalid-feedback">{{ $errors->first('pen') }}</div>
-                @endif
-            </div>
 
-            <div class="mb-custom">
-                <label class="form-label">Password</label>
                 <div class="input-group">
-                    <input type="password" class="form-control" name="password" placeholder="••••••">
-                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <label for="password" class="input-label">Password</label>
+                    <input :type="showPassword ? 'text' : 'password'" name="password" id="password" class="input-field"
+                        placeholder="••••••••" required>
+                    <i data-lucide="lock" class="input-icon"></i>
+                    <button type="button" @click="showPassword = !showPassword" class="password-toggle">
+                        <i data-lucide="eye" x-show="!showPassword" class="w-4 h-4"></i>
+                        <i data-lucide="eye-off" x-show="showPassword" x-cloak class="w-4 h-4"></i>
+                    </button>
+                    @error('password')
+                        <span
+                            class="text-rose-400 text-[11px] font-semibold mt-1.5 ml-1 block uppercase tracking-wider">{{ $message }}</span>
+                    @enderror
                 </div>
-                @if($errors->has('password'))
-                    <div class="invalid-feedback">{{ $errors->first('password') }}</div>
-                @endif
-            </div>
 
-            <div class="form-check mb-4-spacer">
-                <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                <div>
-                    <label class="form-check-label" for="remember">
-                        Remember Me
+                <div class="options">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember" class="checkbox" {{ old('remember') ? 'checked' : '' }}>
+                        Remember me
                     </label>
                 </div>
-            </div>
 
-            <button type="submit" class="btn btn-login">
-                Login
-            </button>
-        </form>
+                <button type="submit" :disabled="loading" class="login-btn">
+                    <span x-show="!loading">Sign In</span>
+                    <i x-show="!loading" data-lucide="arrow-right" class="w-4 h-4"></i>
+                    <span x-show="loading" x-cloak class="flex items-center gap-2">
+                        <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                        Authenticating...
+                    </span>
+                </button>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="footer">
+        <div class="footer-sep"></div>
+        Designed by <span>Software Development Division</span><br>
+        <span>VACB Directorate</span>, Kerala
+    </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @include('partials.sweetalert-session')
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
 </body>
+
 </html>

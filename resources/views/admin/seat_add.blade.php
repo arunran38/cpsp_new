@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="max-w-4xl mx-auto space-y-8">
+<div class="max-w-4xl mx-auto space-y-8" x-data="adminFormValidation()">
     <!-- Page Header -->
     <div class="flex items-center gap-4">
         <a href="{{ route('admin.seats.index') }}" 
@@ -9,7 +9,7 @@
             <i data-lucide="arrow-left" class="w-5 h-5"></i>
         </a>
         <div>
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Add New Seat</h1>
+            <h1 class="text-2xl font-bold tracking-tight text-white">Add New Seat</h1>
             <p class="text-sm text-slate-500">Create a new organizational seat assignment.</p>
         </div>
     </div>
@@ -20,7 +20,7 @@
             <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">New Seat</span>
         </div>
 
-        <form method="POST" action="{{ route('admin.seats.store') }}" class="p-8 space-y-8">
+        <form method="POST" action="{{ route('admin.seats.store') }}" class="p-8 space-y-8" @submit.prevent="submitForm($event)">
             @csrf
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -54,9 +54,6 @@
                     :selected="old('unit_ids', [])"
                     placeholder="Search and select units for this seat..."
                 />
-                @error('unit_ids')
-                    <p class="text-xs text-rose-500 mt-1 font-medium">{{ $message }}</p>
-                @enderror
             </div>
 
             <div class="pt-6 flex items-center justify-end gap-3 border-t border-slate-100">
@@ -70,6 +67,10 @@
             </div>
         </form>
     </div>
+
+    @section('scripts')
+        @include('components.admin-form-validation-script')
+    @endsection
 </div>
 @endsection
 

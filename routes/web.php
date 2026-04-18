@@ -12,12 +12,17 @@ use App\Http\Controllers\DecisionController;
 use App\Http\Controllers\PetitionForwardingController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+Route::get('/dashboard', function () {
+    $user = Auth::user();
+    if ($user->role === 'admin' && !session('is_impersonating_seat')) {
+        return redirect()->route('admin.dashboard');
+    }
+    return redirect()->route('user.dashboard');
+})->middleware(['auth'])->name('dashboard');
+
 Route::get('/', function () {
     if (Auth::check()) {
-        if (Auth::user()->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        }
-        return redirect()->route('user.dashboard');
+        return redirect()->route('dashboard');
     }
     return view('welcome');
 });
@@ -38,6 +43,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/petitions/export', [PetitionController::class, 'export'])->name('petitions.export');
 
     Route::resource("petitions", PetitionController::class);
+    Route::post('/petitions/check-petition-no', [PetitionController::class, 'checkPetitionNo'])->name('petitions.checkPetitionNo');
+    Route::get('/petitions/download/{upload_id}', [PetitionController::class, 'downloadAttachment'])->name('petitions.download');
 
     // Petition Workflow Routes
     Route::post('/forwardings', [PetitionForwardingController::class, 'store'])->name('forwardings.store');
@@ -45,6 +52,11 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/forwardings/{id}/receive-vr', [PetitionForwardingController::class, 'receiveVr'])->name('forwardings.receiveVr');
     
     Route::post('/decisions', [DecisionController::class, 'store'])->name('decisions.store');
+
+    // Pull Back Routes
+    Route::delete('/forwardings/{id}/pullback', [PetitionForwardingController::class, 'pullbackForwarding'])->name('forwardings.pullback');
+    Route::patch('/forwardings/{id}/pullback-vr', [PetitionForwardingController::class, 'pullbackVr'])->name('forwardings.pullbackVr');
+    Route::delete('/decisions/{id}/pullback', [DecisionController::class, 'pullbackDecision'])->name('decisions.pullback');
 
     Route::resource("units", UnitController::class)->names([
         'index' => 'admin.units.index',
@@ -54,6 +66,11 @@ Route::middleware(['auth'])->group(function () {
         'update' => 'admin.units.update',
         'destroy' => 'admin.units.destroy',
     ]);
+    Route::post('/admin/units/check-code', [UnitController::class, 'checkUnitCode'])->name('admin.units.checkCode');
+    Route::post('/users/check-unique', [UserController::class, 'checkUnique'])->name('users.checkUnique');
+
+    Route::get('/seats/statistics', [SeatController::class, 'statistics'])->name('admin.seats.statistics');
+    Route::get('/seats/statistics/export', [SeatController::class, 'exportStatistics'])->name('admin.seats.statistics.export');
 
     Route::resource("seats", SeatController::class)->names([
         'index' => 'admin.seats.index',
@@ -63,6 +80,7 @@ Route::middleware(['auth'])->group(function () {
         'update' => 'admin.seats.update',
         'destroy' => 'admin.seats.destroy',
     ]);
+    Route::post('/admin/seats/check-name', [SeatController::class, 'checkSeatName'])->name('admin.seats.checkName');
     Route::get('/seats/{id}/history', [SeatController::class, 'history'])->name('admin.seats.history');
     Route::post('/seats/{id}/revoke', [SeatController::class, 'revokeAssignment'])->name('admin.seats.revoke');
 
@@ -89,6 +107,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Seat Switcher
     Route::post('/switch-seat/{seatId}', [SeatController::class, 'switchSeat'])->name('seat.switch');
+    Route::post('/switch-back-admin', [SeatController::class, 'switchBack'])->name('seat.switchBack');
 });
 
 require __DIR__.'/auth.php';

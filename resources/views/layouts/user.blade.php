@@ -20,12 +20,17 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
     <style>
+        :root {
+            --sidebar-width: 20rem;
+            --transition-main: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
         /* Custom scrollbar for sidebar */
         .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: #1e3a8a;
+            background: rgba(30, 58, 138, 0.1);
             border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
@@ -36,72 +41,143 @@
             background: #60a5fa;
         }
         
-        /* Smooth transitions for active states */
+        /* Smooth transitions */
         .nav-item-transition {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s var(--transition-main);
         }
         
         /* Alpine.js x-cloak */
         [x-cloak] { display: none !important; }
-        
+
+        /* Glassmorphism effects */
+        .glass-sidebar {
+            background: rgba(15, 23, 42, 0.8) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .glass-header {
+            background: rgba(15, 23, 42, 0.6) !important;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
         /* Active state styling for top-level links */
         .active-nav {
-            background: rgba(30, 58, 138, 0.6) !important;
-            background-color: #1e3a8a !important;
-            color: #eff6ff !important;
-            border-left: 3px solid #14b8a6 !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 2px rgba(0,0,0,0.1);
+            background: linear-gradient(90deg, rgba(79, 70, 229, 0.15) 0%, rgba(79, 70, 229, 0.05) 100%) !important;
+            color: #ffffff !important;
+            position: relative;
+            overflow: hidden;
         }
         
+        .active-nav::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 20%;
+            bottom: 20%;
+            width: 3px;
+            background: #6366f1;
+            border-radius: 0 4px 4px 0;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
+        }
+
         .active-nav i {
-            color: #2dd4bf !important;
+            color: #818cf8 !important;
+            filter: drop-shadow(0 0 5px rgba(129, 140, 248, 0.4));
         }
         
         /* Inactive nav hover state */
         .inactive-nav {
-            color: #93c5fd;
-            border-left: 3px solid transparent;
+            color: #94a3b8;
         }
         
         .inactive-nav:hover {
-            background-color: rgba(30, 58, 138, 0.5);
-            color: #dbeafe;
+            background-color: rgba(255, 255, 255, 0.03);
+            color: #f8fafc;
+            transform: translateX(4px);
+        }
+
+        .inactive-nav:hover i {
+            color: #818cf8 !important;
+            transform: scale(1.1);
         }
         
-        /* Submenu link styles */
+        /* Enhanced Submenu link styles */
         .active-submenu {
-            background: rgba(20, 184, 166, 0.15);
-            color: #eff6ff;
-            border-left: 2px solid #14b8a6;
+            background: rgba(20, 184, 166, 0.1) !important;
+            color: #5eead4 !important;
+            font-weight: 600 !important;
+        }
+        
+        .active-submenu .submenu-indicator {
+            opacity: 1 !important;
+            transform: scale(1.2);
+            box-shadow: 0 0 8px rgba(94, 234, 212, 0.6);
         }
         
         .submenu-link {
-            color: #93c5fd;
-            border-left: 2px solid transparent;
+            color: #94a3b8;
+            transition: all 0.2s var(--transition-main);
         }
         
         .submenu-link:hover {
-            color: #dbeafe;
-            border-left-color: #3b82f6;
+            color: #f8fafc;
+            transform: translateX(4px);
         }
 
-        /* Slide down animation for dropdown */
+        .submenu-link:hover .submenu-indicator {
+            opacity: 0.5;
+            background-color: #5eead4;
+        }
+
+        /* Slide down animation with scale effect */
         .slide-down-enter-active,
         .slide-down-leave-active {
-            transition: all 0.25s ease-out;
-            overflow-y: hidden;
+            transition: all 0.4s var(--transition-main);
+            overflow: hidden;
         }
         .slide-down-enter-from,
         .slide-down-leave-to {
             opacity: 0;
             max-height: 0;
-            transform: translateY(-8px);
+            transform: translateY(-10px) scale(0.98);
         }
         .slide-down-enter-to,
         .slide-down-leave-from {
             opacity: 1;
-            max-height: 300px;
-            transform: translateY(0);
+            max-height: 500px;
+            transform: translateY(0) scale(1);
+        }
+        
+        /* Active indicator dot */
+        .submenu-indicator {
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            background-color: #475569;
+            border-radius: 50%;
+            margin-right: 12px;
+            opacity: 0.3;
+            transition: all 0.3s var(--transition-main);
+        }
+        
+        /* Profile Dropdown Professional Polish */
+        .profile-dropdown-menu {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Hover animation for icons */
+        .icon-bounce {
+            transition: transform 0.3s var(--transition-main);
+        }
+        .group:hover .icon-bounce {
+            transform: translateY(-2px);
         }
     </style>
     
@@ -131,12 +207,12 @@
 
         <!-- Sidebar Component -->
         <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-               class="fixed inset-y-0 left-0 z-50 flex flex-col w-80 transition-transform duration-300 ease-out bg-slate-900 shadow-2xl shadow-black/30 lg:translate-x-0 border-r border-slate-800/60">
+               class="fixed inset-y-0 left-0 z-50 flex flex-col w-80 transition-transform duration-300 ease-out glass-sidebar shadow-2xl shadow-black/30 lg:translate-x-0">
             
             <!-- Sidebar Header -->
-            <div class="flex items-center h-20 px-6 border-b border-slate-800/80 bg-slate-900/80">
-                <a href="{{ route('user.dashboard') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                    <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg shadow-indigo-500/20">
+            <div class="flex items-center h-20 px-6 border-b border-slate-800/80 bg-white/5">
+                <a href="{{ route('user.dashboard') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity group">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-300">
                         <i data-lucide="scroll-text" class="w-5 h-5 text-white"></i>
                     </div>
                     <div>
@@ -171,12 +247,12 @@
                     
                     <button @click="toggle()" 
                             class="nav-item-transition flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-xl group"
-                            :class="(hoverOpen || clickOpen) ? 'bg-slate-800/60 text-white' : 'inactive-nav'">
+                            :class="(hoverOpen || clickOpen) ? 'bg-white/5 text-white' : 'inactive-nav'">
                         <div class="flex items-center gap-3">
-                            <i data-lucide="file-text" class="w-5 h-5" :class="(hoverOpen || clickOpen) ? 'text-indigo-400' : ''"></i>
+                            <i data-lucide="file-text" class="w-5 h-5 icon-bounce" :class="(hoverOpen || clickOpen) ? 'text-indigo-400' : ''"></i>
                             <span>Petitions</span>
                         </div>
-                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': hoverOpen || clickOpen }"></i>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': hoverOpen || clickOpen }"></i>
                     </button>
                     
                     <!-- Submenu with slide-down animation -->
@@ -191,11 +267,13 @@
                          class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
                         
                         <a href="{{ route('petitions.create') }}" 
-                           class="nav-item-transition block py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.create') ? 'active-submenu' : 'submenu-link' }}">
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.create') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator"></span>
                            Add Petitions
                         </a>
                         <a href="{{ route('petitions.index') }}" 
-                           class="nav-item-transition block py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator"></span>
                            View Petitions
                         </a>
                     </div>
@@ -204,7 +282,7 @@
                 <!-- Reports -->
                 <a href="{{ route('petitions.reports') }}" 
                    class="nav-item-transition flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl group {{ request()->routeIs('petitions.reports') ? 'active-nav' : 'inactive-nav' }}">
-                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                    <i data-lucide="bar-chart-3" class="w-5 h-5 icon-bounce"></i>
                     <span>Reports</span>
                 </a>
 
@@ -222,7 +300,7 @@
                     ? 'bg-amber-950/60 border-amber-800/40 shadow-amber-900/20' 
                     : 'bg-slate-900/70 border-slate-800/50 shadow-sm';
             @endphp
-            <header class="sticky top-0 z-30 flex items-center h-16 px-5 backdrop-blur-xl border-b transition-colors duration-300 lg:px-8 {{ $headerClasses }}">
+            <header class="sticky top-0 z-30 flex items-center h-20 px-5 transition-all duration-300 lg:px-8 glass-header {{ $headerClasses }}">
                 <button type="button" 
                         class="p-2 -ml-2 text-slate-300 rounded-lg lg:hidden hover:bg-slate-800 hover:text-white transition-colors focus:outline-none"
                         @click="sidebarOpen = true">
@@ -235,22 +313,34 @@
                     </div>
 
                     <div class="flex items-center gap-x-4 ml-auto">
-                        <!-- Notifications removed -->
-
+                        @if(session('is_impersonating_seat'))
+                            <div class="mr-2">
+                                <form method="POST" action="{{ route('seat.switchBack') }}">
+                                    @csrf
+                                    <button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 hover:bg-amber-500/20 transition-all text-[10px] font-black uppercase tracking-widest">
+                                        <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                                        Exit User View
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
                         <!-- Profile Dropdown -->
                         <div x-data="{ open: false }" class="relative">
                             <button @click="open = !open" 
                                     @click.away="open = false"
                                     type="button" 
                                     class="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-indigo-500/40 transition-all">
-                                @if(Auth::user()->profilePhoto)
+                                @php
+                                    $hasPhoto = Auth::user()->profilePhoto && \Illuminate\Support\Facades\Storage::disk('public')->exists(Auth::user()->profilePhoto->file_path);
+                                @endphp
+                                @if($hasPhoto)
                                     <img class="w-10 h-10 rounded-full border border-slate-700 shadow-sm object-cover" 
                                          src="{{ asset('storage/' . Auth::user()->profilePhoto->file_path) }}" 
                                          alt="Profile">
                                 @else
-                                    <img class="w-10 h-10 rounded-full border border-slate-700 shadow-sm" 
-                                         src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'Admin User') }}&background=4f46e5&color=fff&bold=true" 
-                                         alt="Profile">
+                                    <div class="w-10 h-10 rounded-full border border-slate-700 shadow-sm bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+                                        {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
+                                    </div>
                                 @endif
                                 <div class="hidden lg:flex flex-col items-start gap-0.5 text-left">
                                     <span class="text-sm font-bold text-slate-200 leading-none">
@@ -274,13 +364,13 @@
                                  x-transition:leave="transition ease-in duration-100"
                                  x-transition:leave-start="transform opacity-100 scale-100"
                                  x-transition:leave-end="transform opacity-0 scale-95"
-                                 class="absolute right-0 z-50 w-56 mt-2 origin-top-right bg-slate-800 border border-slate-700 rounded-2xl shadow-xl focus:outline-none">
+                                 class="absolute right-0 z-50 w-56 mt-2 origin-top-right profile-dropdown-menu rounded-2xl shadow-xl focus:outline-none overflow-hidden">
                                 @php
                                     $activeSeats = Auth::user()->seatUsers()->where('is_active', true)->with('seat')->get();
                                     $currentSeatId = Auth::user()->currentSeatUser()?->seat_id;
                                 @endphp
 
-                                @if($activeSeats->count() > 1)
+                                @if(Auth::user()->role !== 'admin' && $activeSeats->count() > 1)
                                 <div class="py-1 border-b border-slate-700 bg-slate-800/50">
                                     <div class="px-4 py-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">
                                         Switch Seat
@@ -339,8 +429,14 @@
             </main>
             
             <!-- Footer -->
-            <footer class="py-4 text-center border-t border-slate-800/50 text-slate-500 text-xs">
-                &copy; {{ date('Y') }} — Centralized Processing System of Petitions Cell
+            <footer class="py-6 text-center border-t border-slate-800/50 text-slate-400 text-xs">
+                <div class="mb-2 uppercase tracking-widest opacity-80">
+                    &copy; {{ date('Y') }} — Centralized Processing System of Petitions Cell
+                </div>
+                <div class="text-[10px] text-slate-500 font-medium">
+                    Designed by <span class="text-indigo-400">Software Development Division</span>, 
+                    <span class="text-indigo-400">VACB Directorate</span>, Kerala
+                </div>
             </footer>
         </div>
     </div>
@@ -351,12 +447,13 @@
             lucide.createIcons();
         });
         
-        // Re-initialize for dynamic content (e.g., HTMX, Turbo, Alpine)
-        document.addEventListener('alpine:init', () => {
-             // Lucide icons are often used inside x-show/transition, ensure they render
-             setTimeout(() => lucide.createIcons(), 50);
+        // Handle re-rendering for Alpine.js dynamic components
+        document.addEventListener('alpine:initialized', () => {
+            lucide.createIcons();
         });
     </script>
     @yield('scripts')
+    @include('sweetalert::alert')
+    @include('partials.sweetalert-session')
 </body>
 </html>

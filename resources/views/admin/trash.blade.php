@@ -1,4 +1,5 @@
 @extends('layouts.admin')
+@section('container_width', 'max-w-full')
 
 @section('title', 'Recycle Bin')
 
@@ -24,12 +25,7 @@
             </div>
         </div>
 
-        @if(session('success'))
-            <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl flex items-center gap-3">
-                <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i>
-                {{ session('success') }}
-            </div>
-        @endif
+
 
         <!-- Data Table -->
         <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">

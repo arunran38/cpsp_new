@@ -1,4 +1,4 @@
-@extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.user')
+@extends(auth()->user()->role === 'admin' && !session('is_impersonating_seat') ? 'layouts.admin' : 'layouts.user')
 @section('container_width', 'max-w-full')
 
 @section('content')
@@ -20,7 +20,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <a href="{{ route('petitions.export', request()->query()) }}"
+                <a href="{{ route('petitions.export', request()->query()) }}" id="exportButton"
                     class="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-all font-semibold text-sm shadow-sm">
                     <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                     Excel Export
@@ -52,97 +52,111 @@
                             <i data-lucide="search" class="w-4 h-4 absolute left-3 text-slate-400"></i>
                             <input type="text" name="search" value="{{ request('search') }}"
                                 class="w-full pl-9 pr-3 py-2 rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm transition-all bg-white"
-                                placeholder="Petition No, Petitioner, or Accused...">
+                                placeholder="Petition No, Petitioner, Accused, or Phone...">
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Date
                             From</label>
-                        <input type="date" name="date_from" value="{{ request('date_from') }}"
+                        <input type="date" placeholder="DD-MM-YYYY" name="date_from" value="{{ request('date_from') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                             class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2 transition-all bg-white">
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Date
                             To</label>
-                        <input type="date" name="date_to" value="{{ request('date_to') }}"
+                        <input type="date" placeholder="DD-MM-YYYY" name="date_to" value="{{ request('date_to') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                             class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2 transition-all bg-white">
                     </div>
 
                     <div class="lg:col-span-1">
                         <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Status /
                             Timeline</label>
-                        <select name="status"
-                            class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white">
-                            <option value="" class="font-medium text-slate-800 bg-white py-1">All Petitions</option>
-                            <optgroup label="Petition Timeline" class="font-bold text-slate-900 bg-slate-50">
-                                <option value="Received" {{ request('status') == 'Received' ? 'selected' : '' }}
-                                    class="font-medium text-slate-800 bg-white py-1">Received</option>
-                                <option value="Forwarded" {{ request('status') == 'Forwarded' ? 'selected' : '' }}
-                                    class="font-medium text-slate-800 bg-white py-1">Forwarded</option>
-                                <option value="VR_Received" {{ request('status') == 'VR_Received' ? 'selected' : '' }}
-                                    class="font-medium text-slate-800 bg-white py-1">Verification Report Received</option>
-                                <option value="VR_Received_at_cpsp_date" {{ request('status') == 'VR_Received_at_cpsp_date' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Verification Report
-                                    Received at CPSP</option>
-                            </optgroup>
-                            <optgroup label="Final Decisions" class="font-bold text-slate-900 bg-slate-50">
-                                <option value="All_Final_Decisions" {{ request('status') == 'All_Final_Decisions' ? 'selected' : '' }} class="font-medium text-indigo-600 bg-indigo-50/50 py-1.5 font-bold">All Final
-                                    Decisions</option>
-                                <option value="PE" {{ request('status') == 'PE' ? 'selected' : '' }}
-                                    class="font-medium text-slate-800 bg-white py-1">PE (Preliminary Enquiry)</option>
-                                <option value="SC" {{ request('status') == 'SC' ? 'selected' : '' }}
-                                    class="font-medium text-slate-800 bg-white py-1">SC (Show Cause)</option>
-                                <option value="QV" {{ request('status') == 'QV' ? 'selected' : '' }}
-                                    class="font-medium text-slate-800 bg-white py-1">QV (Quick Verification)</option>
-                                <option value="ICell" {{ request('status') == 'ICell' ? 'selected' : '' }}
-                                    class="font-medium text-slate-800 bg-white py-1">ICell</option>
-                                <option value="Closed" {{ request('status') == 'Closed' ? 'selected' : '' }}
-                                    class="font-medium text-slate-800 bg-white py-1">Closed</option>
-                                <option value="Sent to Govt" {{ request('status') == 'Sent to Govt' ? 'selected' : '' }}
-                                    class="font-medium text-slate-800 bg-white py-1">Sent to Govt</option>
-                            </optgroup>
-                        </select>
+                        <div class="relative flex items-center">
+                            <select name="status"
+                                class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white appearance-none pr-10">
+                                <option value="" class="font-medium text-slate-800 bg-white py-1">All Petitions</option>
+                                <optgroup label="Petition Timeline" class="font-bold text-slate-900 bg-slate-50">
+                                    <option value="Received" {{ request('status') == 'Received' ? 'selected' : '' }}
+                                        class="font-medium text-slate-800 bg-white py-1">Received</option>
+                                    <option value="Forwarded" {{ request('status') == 'Forwarded' ? 'selected' : '' }}
+                                        class="font-medium text-slate-800 bg-white py-1">Forwarded</option>
+                                    <option value="VR_Received" {{ request('status') == 'VR_Received' ? 'selected' : '' }}
+                                        class="font-medium text-slate-800 bg-white py-1">Verification Report Received</option>
+                                    <option value="VR_Received_at_cpsp_date" {{ request('status') == 'VR_Received_at_cpsp_date' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Verification Report
+                                        Received at CPSP</option>
+                                </optgroup>
+                                <optgroup label="Final Decisions" class="font-bold text-slate-900 bg-slate-50">
+                                    <option value="All_Final_Decisions" {{ request('status') == 'All_Final_Decisions' ? 'selected' : '' }} class="font-medium text-indigo-600 bg-indigo-50/50 py-1.5 font-bold">All Final
+                                        Decisions</option>
+                                    <option value="PE" {{ request('status') == 'PE' ? 'selected' : '' }}
+                                        class="font-medium text-slate-800 bg-white py-1">PE (Preliminary Enquiry)</option>
+                                    <option value="SC" {{ request('status') == 'SC' ? 'selected' : '' }}
+                                        class="font-medium text-slate-800 bg-white py-1">SC (Surprise Check)</option>
+                                    <option value="QV" {{ request('status') == 'QV' ? 'selected' : '' }}
+                                        class="font-medium text-slate-800 bg-white py-1">QV (Quick Verification)</option>
+                                    <option value="ICell" {{ request('status') == 'ICell' ? 'selected' : '' }}
+                                        class="font-medium text-slate-800 bg-white py-1">ICell</option>
+                                    <option value="Closed" {{ request('status') == 'Closed' ? 'selected' : '' }}
+                                        class="font-medium text-slate-800 bg-white py-1">Closed</option>
+                                    <option value="Sent to Govt" {{ request('status') == 'Sent to Govt' ? 'selected' : '' }}
+                                        class="font-medium text-slate-800 bg-white py-1">Sent to Govt</option>
+                                </optgroup>
+                            </select>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Nature of
                             Petition</label>
-                        <select name="nature_of_petition"
-                            class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white">
-                            <option value="" class="font-medium text-slate-800 bg-white py-1">All Natures</option>
-                            @foreach(['Bribery', 'Misuse of authority', 'Fraud / financial irregularities', 'Serious negligence', 'others'] as $nature)
-                                <option value="{{ $nature }}" {{ request('nature_of_petition') == $nature ? 'selected' : '' }}
-                                    class="font-medium text-slate-800 bg-white py-1">{{ $nature }}</option>
-                            @endforeach
-                        </select>
+                        <div class="relative flex items-center">
+                            <select name="nature_of_petition"
+                                class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white appearance-none pr-10"
+                                style="background-image: none !important;">
+                                <option value="" class="font-medium text-slate-800 bg-white py-1">All Natures</option>
+                                @foreach(['Bribery', 'Misuse of authority', 'Fraud / financial irregularities', 'Serious negligence', 'others'] as $nature)
+                                    <option value="{{ $nature }}" {{ request('nature_of_petition') == $nature ? 'selected' : '' }}
+                                        class="font-medium text-slate-800 bg-white py-1">{{ $nature }}</option>
+                                @endforeach
+                            </select>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Mode of
                             Receipt</label>
-                        <select name="mode_of_petition"
-                            class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white">
-                            <option value="" class="font-medium text-slate-800 bg-white py-1">All Modes</option>
-                            @foreach(['Direct', 'Email', 'Whatsapp', 'Tollfree', 'others'] as $mode)
-                                <option value="{{ $mode }}" {{ request('mode_of_petition') == $mode ? 'selected' : '' }}
-                                    class="font-medium text-slate-800 bg-white py-1">{{ $mode }}</option>
-                            @endforeach
-                        </select>
+                        <div class="relative flex items-center">
+                            <select name="mode_of_petition"
+                                class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white appearance-none pr-10"
+                                style="background-image: none !important;">
+                                <option value="" class="font-medium text-slate-800 bg-white py-1">All Modes</option>
+                                @foreach(['Direct', 'Email', 'Whatsapp', 'Tollfree', 'others'] as $mode)
+                                    <option value="{{ $mode }}" {{ request('mode_of_petition') == $mode ? 'selected' : '' }}
+                                        class="font-medium text-slate-800 bg-white py-1">{{ $mode }}</option>
+                                @endforeach
+                            </select>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
                     </div>
 
                     @if(auth()->user()->role === 'admin' && isset($seats))
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Filter by
                                 Seat</label>
-                            <select name="seat_id"
-                                class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white">
-                                <option value="" class="font-medium text-slate-800 bg-white py-1">All Seats</option>
-                                @foreach($seats as $seat)
-                                    <option value="{{ $seat->seat_id }}" {{ request('seat_id') == $seat->seat_id ? 'selected' : '' }}
-                                        class="font-medium text-slate-800 bg-white py-1">{{ $seat->seat_name }}</option>
-                                @endforeach
-                            </select>
+                            <div class="relative flex items-center">
+                                <select name="seat_id"
+                                    class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white appearance-none pr-10">
+                                    <option value="" class="font-medium text-slate-800 bg-white py-1">All Seats</option>
+                                    @foreach($seats as $seat)
+                                        <option value="{{ $seat->seat_id }}" {{ request('seat_id') == $seat->seat_id ? 'selected' : '' }}
+                                            class="font-medium text-slate-800 bg-white py-1">{{ $seat->seat_name }}</option>
+                                    @endforeach
+                                </select>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
                         </div>
                     @endif
 
@@ -186,30 +200,38 @@
                     <div x-data="{ action: '' }" class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Action</label>
-                            <select name="action" x-model="action"
-                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                required>
-                                <option value="">Select Action...</option>
-                                <option value="Forward_To_Unit">Forward to Unit</option>
-                                <option value="Sent_to_Govt">Send to Govt (Decision)</option>
-                                <option value="Close">Close Petition (Decision)</option>
-                            </select>
+                            <div class="relative flex items-center">
+                                <select name="action" x-model="action"
+                                    class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm appearance-none pr-10 text-black"
+                                    style="background-image: none !important;"
+                                    required>
+                                    <option value="">Select Action...</option>
+                                    <option value="Forward_To_Unit">Forward to Unit</option>
+                                    <option value="Sent_to_Govt">Send to Govt (Decision)</option>
+                                    <option value="Close">Close Petition (Decision)</option>
+                                </select>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
                         </div>
                         <div x-show="action === 'Forward_To_Unit'" x-cloak class="pt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Select Unit</label>
-                            <select name="to_unit_id"
-                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                :required="action === 'Forward_To_Unit'">
-                                <option value="">Select Unit...</option>
-                                @foreach(\App\Models\Unit::all() as $unit)
-                                    <option value="{{ $unit->unit_id }}">{{ $unit->unit_name }}</option>
-                                @endforeach
-                            </select>
+                            <div class="relative flex items-center">
+                                <select name="to_unit_id"
+                                    class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm appearance-none pr-10 text-black"
+                                    style="background-image: none !important;"
+                                    :required="action === 'Forward_To_Unit'">
+                                    <option value="">Select Unit...</option>
+                                    @foreach(\App\Models\Unit::all() as $unit)
+                                        <option value="{{ $unit->unit_id }}">{{ $unit->unit_name }}</option>
+                                    @endforeach
+                                </select>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
                         </div>
                         <div class="pt-2 border-t border-slate-100 mt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Director Remarks</label>
                             <textarea name="director_remarks" rows="3"
-                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
                                 placeholder="Enter instructions or remarks..." required></textarea>
                         </div>
                         <div class="flex justify-end gap-3 pt-6">
@@ -245,23 +267,23 @@
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">VR Ref No</label>
                             <input type="text" name="vr_ref_no"
-                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
                                 required>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">VR Date</label>
-                            <input type="date" name="vr_date"
-                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                required>
+                            <input type="date" placeholder="DD-MM-YYYY" name="vr_date"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
+                                required max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">VR Remarks</label>
                         <textarea name="vr_remarks" rows="2"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
                             placeholder="Enter findings or notes..." required></textarea>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-5">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Upload Report</label>
                             <input type="file" name="vr_file"
@@ -269,10 +291,10 @@
                         </div>
                         <div>
                             <label
-                                class="block text-sm font-medium text-blue-600 mb-1 uppercase text-[10px] font-bold">Received
+                                class="block text-sm font-medium text-blue-600 mb-1 uppercase text-[11px] font-bold tracking-wider">Received
                                 in CPSP Date</label>
-                            <input type="date" name="vr_received_at_cpsp_date"
-                                class="w-full rounded-lg border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-1.5 bg-blue-50/30">
+                            <input type="date" placeholder="DD-MM-YYYY" name="vr_received_at_cpsp_date"
+                                class="w-full rounded-lg border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-1.5 bg-blue-50/20 text-black px-3" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                         </div>
                     </div>
                     <div class="flex justify-end gap-3 pt-6">
@@ -306,7 +328,7 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Decision Code</label>
                         <select name="decision_remarks"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm"
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-black"
                             required>
                             <option value="">Select...</option>
                             <option value="PE">PE</option>
@@ -320,7 +342,7 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Final Remarks</label>
                         <textarea name="final_remarks" rows="3"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm"
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-black"
                             placeholder="Director's final remarks..." required></textarea>
                     </div>
                     <div class="flex justify-end gap-3 pt-6">
@@ -371,6 +393,16 @@
                         const currentTable = document.getElementById('tableContainer');
                         if (currentTable) {
                             currentTable.innerHTML = html;
+
+                            // Update Export Button URL
+                            const exportBtn = document.getElementById('exportButton');
+                            if (exportBtn) {
+                                const exportUrl = new URL('{{ route('petitions.export') }}', window.location.origin);
+                                // Append all current search params to the export URL
+                                searchParams.forEach((value, key) => exportUrl.searchParams.set(key, value));
+                                exportBtn.href = exportUrl.toString();
+                            }
+
                             if (window.lucide) window.lucide.createIcons();
                         }
                     })

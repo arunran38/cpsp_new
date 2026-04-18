@@ -1,4 +1,4 @@
-@extends(auth()->user()->role === 'admin' ? 'layouts.admin' : 'layouts.user')
+@extends(auth()->user()->role === 'admin' && !session('is_impersonating_seat') ? 'layouts.admin' : 'layouts.user')
 @section('container_width', 'max-w-full')
 
 @section('content')
@@ -20,11 +20,6 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <a href="{{ route('petitions.export', request()->query()) }}"
-                    class="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-all font-semibold text-sm shadow-sm">
-                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-                    Excel Export
-                </a>
                 @if(auth()->user()->role === 'user')
                     <a href="{{ route('petitions.create') }}"
                         class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
@@ -74,19 +69,7 @@
             </div>
         @endif
 
-        @if(session('success'))
-            <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl flex items-center gap-3">
-                <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i>
-                {{ session('success') }}
-            </div>
-        @endif
 
-        @if(session('error'))
-            <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl flex items-center gap-3">
-                <i data-lucide="alert-circle" class="w-5 h-5 text-rose-600"></i>
-                {{ session('error') }}
-            </div>
-        @endif
 
         @if ($errors->any())
             <div class="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl space-y-1">
@@ -113,19 +96,19 @@
                         <div class="relative flex items-center">
                             <i data-lucide="search" class="w-4 h-4 absolute left-3 text-slate-400"></i>
                             <input type="text" name="search" value="{{ request('search') }}"
-                                class="w-full pl-9 pr-3 py-[9px] rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                placeholder="Petition No, Petitioner Name, or Accused Name...">
+                                class="w-full pl-9 pr-3 py-[9px] rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
+                                placeholder="Petition No, Petitioner, Accused, or Phone...">
                         </div>
                     </div>
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Date From</label>
-                        <input type="date" name="date_from" value="{{ request('date_from') }}"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px]">
+                        <input type="date" placeholder="DD-MM-YYYY" name="date_from" value="{{ request('date_from') }}"
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-black">
                     </div>
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Date To</label>
-                        <input type="date" name="date_to" value="{{ request('date_to') }}"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px]">
+                        <input type="date" placeholder="DD-MM-YYYY" name="date_to" value="{{ request('date_to') }}"
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-black">
                     </div>
                     <div class="flex-none">
                         <label class="block text-xs font-medium text-transparent mb-1">&nbsp;</label>
@@ -164,28 +147,22 @@
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 
                     <div x-data="{ action: '' }" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Action</label>
-                            <select name="action" x-model="action"
-                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                required>
-                                <option value="">Select Action...</option>
-                                <option value="Forward_To_Unit">Forward to Unit</option>
-                                <option value="Sent_to_Govt">Send to Govt (Decision)</option>
-                                <option value="Close">Close Petition (Decision)</option>
-                            </select>
-                        </div>
+                        @php
+                            $actionOptions = [
+                                'Forward_To_Unit' => 'Forward to Unit',
+                                'Sent_to_Govt' => 'Send to Govt (Decision)',
+                                'Close' => 'Close Petition (Decision)'
+                            ];
+                        @endphp
+                        <x-select label="Action" name="action" :options="$actionOptions" x-model="action"
+                            placeholder="Select Action..." required />
 
                         <div x-show="action === 'Forward_To_Unit'" x-cloak class="pt-2">
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Select Unit</label>
-                            <select name="to_unit_id"
-                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                :required="action === 'Forward_To_Unit'">
-                                <option value="">Select Unit...</option>
-                                @foreach(\App\Models\Unit::all() as $unit)
-                                    <option value="{{ $unit->unit_id }}">{{ $unit->unit_name }}</option>
-                                @endforeach
-                            </select>
+                            @php
+                                $unitOptions = \App\Models\Unit::pluck('unit_name', 'unit_id')->toArray();
+                            @endphp
+                            <x-select label="Select Unit" name="to_unit_id" :options="$unitOptions"
+                                placeholder="Select Unit..." x-bind:required="action === 'Forward_To_Unit'" />
                         </div>
 
                         <div x-show="action === 'Close' || action === 'Sent_to_Govt'" x-cloak class="pt-2">
@@ -197,7 +174,7 @@
                         <div class="pt-2 border-t border-slate-100 mt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Director Remarks</label>
                             <textarea name="director_remarks" rows="3"
-                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
                                 placeholder="Enter instructions or remarks..." required></textarea>
                         </div>
 
@@ -237,33 +214,36 @@
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">VR Ref No</label>
                             <input type="text" name="vr_ref_no"
-                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
                                 required>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">VR Date</label>
-                            <input type="date" name="vr_date"
-                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                                required>
+                            <input type="date" placeholder="DD-MM-YYYY" name="vr_date"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
+                                required
+                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">VR Remarks</label>
                         <textarea name="vr_remarks" rows="2"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
                             placeholder="Enter findings or notes..." required></textarea>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-5">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Upload verification report</label>
                             <input type="file" name="vr_file"
-                                class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1 text-blue-600 font-bold">VR received
-                                in CPSP date</label>
-                            <input type="date" name="vr_received_at_cpsp_date"
-                                class="w-full rounded-lg border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                            <label
+                                class="block text-sm font-medium text-blue-600 mb-2 mt-2 tracking-wider text-[11px] font-bold">VR
+                                received in CPSP</label>
+                            <input type="date" placeholder="DD-MM-YYYY" name="vr_received_at_cpsp_date"
+                                class="w-full rounded-lg border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-black bg-blue-50/20"
+                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                         </div>
                     </div>
                     <div class="flex justify-end gap-3 pt-6">
@@ -297,24 +277,24 @@
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Decision Code</label>
-                        <select name="decision_remarks"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm"
-                            required>
-                            <option value="">Select...</option>
-                            <option value="PE">PE</option>
-                            <option value="SC">SC</option>
-                            <option value="QV">QV</option>
-                            <option value="Closed">Closed</option>
-                            <option value="Sent to Govt">Sent to Govt</option>
-                            <option value="ICell">ICell</option>
-                        </select>
+                    <div class="space-y-4">
+                        @php
+                            $decisionOptions = [
+                                'PE' => 'PE',
+                                'SC' => 'SC',
+                                'QV' => 'QV',
+                                'Closed' => 'Closed',
+                                'Sent to Govt' => 'Sent to Govt',
+                                'ICell' => 'ICell'
+                            ];
+                        @endphp
+                        <x-select label="Decision Code" name="decision_remarks" :options="$decisionOptions"
+                            placeholder="Select..." required />
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Final Remarks</label>
                         <textarea name="final_remarks" rows="3"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm"
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-black"
                             placeholder="Director's final remarks..." required></textarea>
                     </div>
                     <div>

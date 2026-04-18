@@ -5,7 +5,7 @@
     <!-- Page Header -->
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Seat History: {{ $seat->seat_name }}</h1>
+            <h1 class="text-2xl font-bold tracking-tight text-white">Seat History: {{ $seat->seat_name }}</h1>
             <p class="text-sm text-slate-500">List of all officers assigned to this seat over time.</p>
         </div>
         <a href="{{ route('admin.seats.index') }}" class="px-4 py-2 text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">

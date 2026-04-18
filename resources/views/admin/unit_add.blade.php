@@ -6,12 +6,12 @@
         <!-- Add Unit Form Section -->
         <div class="space-y-6">
             <div class="flex flex-col gap-1">
-                <h1 class="text-2xl font-bold tracking-tight text-slate-900 border-b-2 border-primary w-fit pb-1">Unit
+                <h1 class="text-2xl font-bold tracking-tight text-white border-b-2 border-primary w-fit pb-1">Unit
                     Management</h1>
             </div>
 
-            <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-visible text-slate-900">
-                <form method="POST" action="{{ route('admin.units.store') }}" class="p-8">
+            <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-visible text-slate-900" x-data="adminFormValidation()">
+                <form method="POST" action="{{ route('admin.units.store') }}" class="p-8" @submit.prevent="submitForm($event)">
                     @csrf
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <x-input label="Unit Name" name="unit_name" placeholder="Full Name of Unit" required />
@@ -22,7 +22,7 @@
                             <label class="block text-sm font-bold text-transparent mb-1.5 select-none"
                                 aria-hidden="true">&nbsp;</label>
                             <x-button icon="save" class="w-md">
-                                Save Unit Details
+                                Save Unit
                             </x-button>
                         </div>
                     </div>
@@ -33,23 +33,17 @@
         <!-- Units List Section -->
         <div class="space-y-6">
             <div class="flex flex-col gap-1">
-                <h2 class="text-xl font-bold tracking-tight text-slate-900">Unit Details</h2>
+                <h2 class="text-xl font-bold tracking-tight text-white">Unit Details</h2>
             </div>
 
-            @if(session('success'))
-                <div
-                    class="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-3 text-emerald-800 text-sm font-medium animate-pulse">
-                    <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600"></i>
-                    {{ session('success') }}
-                </div>
-            @endif
+
 
             <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50/50">
-                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest w-20">Sl No
+                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest w-12 text-center">#
                                 </th>
                                 <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Unit Name
                                 </th>
@@ -62,7 +56,7 @@
                         <tbody class="divide-y divide-slate-100">
                             @forelse($units as $unit)
                                 <tr class="hover:bg-slate-50/30 transition-colors group">
-                                    <td class="px-6 py-4">
+                                    <td class="px-6 py-4 text-center">
                                         <span
                                             class="text-sm font-bold text-slate-400 group-hover:text-primary transition-colors">{{ $units->firstItem() + $loop->index }}</span>
                                     </td>
@@ -124,4 +118,8 @@
             </div>
         </div>
     </div>
+
+    @section('scripts')
+        @include('components.admin-form-validation-script')
+    @endsection
 @endsection

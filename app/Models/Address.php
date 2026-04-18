@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Address extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, \Illuminate\Database\Eloquent\Factories\HasFactory;
     protected $primaryKey = 'address_id';
     protected $guarded = [];
 

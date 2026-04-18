@@ -2,200 +2,132 @@
 
 namespace App\Http\Controllers;
 
-
 use App\Models\User;
 use App\Models\Upload;
 use App\Models\SeatUser;
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
+use Illuminate\View\View;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
-
-
-    
-
- 
-    public function index()
+    /**
+     * Display a listing of users.
+     */
+    public function index(): View
     {
         $users = User::with('profilePhoto')
             ->orderBy('status', 'asc')
             ->orderBy('name', 'asc')
             ->paginate(10);
+            
         return view("admin.users_view", compact("users"));
     }
 
-      public function create()
+    /**
+     * Show the form for creating a new user.
+     */
+    public function create(): View
     {
         return view("admin.user_registration");
     }
 
-    public function store(Request $request)
+    /**
+     * Store a newly created user in storage.
+     */
+    public function store(StoreUserRequest $request): RedirectResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'pen' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'mobile_number' => 'required|string|max:255',
-            'role' => 'required|string|max:255',
-            'user_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'designation' => 'required|string|max:255',
-            'other_designation' => 'nullable|string|max:255',
-            'password' => 'required|string|min:3',
-        ]);
-        
-        try {
-            $user = new User();
-            $user->name = $request->name;
-            $user->pen = $request->pen;
-            $user->email = $request->email;
-            $user->mobile_number = $request->mobile_number;
-            $user->role = $request->role;
-            $user->designation = $request->designation;
-            $user->other_designation = $request->other_designation;
-            $user->password = Hash::make($request->password);
-            $user->save();
+        return DB::transaction(function () use ($request) {
+            try {
+                $user = User::create([
+                    'name' => $request->name,
+                    'pen' => $request->pen,
+                    'email' => $request->email,
+                    'mobile_number' => $request->mobile_number,
+                    'role' => $request->role,
+                    'designation' => $request->designation,
+                    'other_designation' => $request->other_designation,
+                    'password' => Hash::make($request->password),
+                ]);
 
-            if ($request->hasFile('user_photo')) {
-                $file = $request->file('user_photo');
-
-                if ($file->isValid()) {
-                    $originalName = $file->getClientOriginalName();
-                    $filename = time() . '_' . $originalName;
-                    
-                    $destinationPath = storage_path('app/public/profile_photos');
-                    $file->move($destinationPath, $filename);
-                    $path = 'profile_photos/' . $filename;
-                    
-                    $upload = Upload::create([
-                        'petition_id' => null,
-                        'category' => Upload::CATEGORY_PROFILE_PHOTO,
-                        'original_filename' => $originalName,
-                        'file_path' => $path,
-                        'uploaded_by' => $user->user_id,
-                    ]);
-                    
-                    $user->photo = $upload->upload_id;
-                    $user->save();
+                if ($request->hasFile('user_photo')) {
+                    $this->handleProfilePhoto($user, $request->file('user_photo'));
                 }
+                
+                return redirect()->route("users.index")->with('success', 'User registered successfully.');
+            } catch (\Exception $e) {
+                return back()->with('error', 'Failed to register user: ' . $e->getMessage())->withInput();
             }
-            
-            return redirect()->route("users.index")->with('success', 'User registered successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to register user: ' . $e->getMessage())->withInput();
-        }
+        });
     }
 
-    public function show($id)
-    {
-        //
-    }
-
-    public function edit($id)
+    /**
+     * Show the form for editing the specified user.
+     */
+    public function edit(string $id): View|RedirectResponse
     {
         try {
-            $userId = decrypt($id);
-            $user = User::findOrFail($userId);
+            $user = User::findOrFail(decrypt($id));
             return view("admin.edit_users", compact("user"));
         } catch (\Exception $e) {
-            return redirect()->route("users.index")->with('error', 'Invalid user ID.');
+            return redirect()->route("users.index")->with('error', 'Invalid user selection.');
         }
     }
 
-    public function update(Request $request, $id)
+    /**
+     * Update the specified user in storage.
+     */
+    public function update(UpdateUserRequest $request, string $id): RedirectResponse
     {
-        try {
-            $userId = decrypt($id);
-            $user = User::findOrFail($userId);
+        return DB::transaction(function () use ($request, $id) {
+            try {
+                $user = User::findOrFail(decrypt($id));
 
-            $request->validate([
-                'name' => 'required|string|max:255',
-                'pen' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users,email,' . $user->user_id . ',user_id',
-                'mobile_number' => 'nullable|string|max:255',
-                'role' => 'required|string|max:255',
-                'user_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'designation' => 'required|string|max:255',
-                'other_designation' => 'nullable|string|max:255',
-                'status' => 'required|in:Active,Transferred',
-                'password' => 'nullable|string|min:3',
-            ]);
+                $userData = $request->only([
+                    'name', 'pen', 'email', 'mobile_number', 'role', 
+                    'designation', 'other_designation', 'status'
+                ]);
 
-            $user->name = $request->name;
-            $user->pen = $request->pen;
-            $user->email = $request->email;
-            $user->mobile_number = $request->mobile_number;
-            $user->role = $request->role;
-            $user->designation = $request->designation;
-            $user->other_designation = $request->other_designation;
-            $user->status = $request->status;
-            
-            if ($request->hasFile('user_photo')) {
-                $file = $request->file('user_photo');
-
-                if ($file->isValid()) {
-                    $originalName = $file->getClientOriginalName();
-                    $filename = time() . '_' . $originalName;
-                    
-                    $destinationPath = storage_path('app/public/profile_photos');
-                    $file->move($destinationPath, $filename);
-                    $path = 'profile_photos/' . $filename;
-                    
-                    $upload = Upload::create([
-                        'petition_id' => null,
-                        'category' => Upload::CATEGORY_PROFILE_PHOTO,
-                        'original_filename' => $originalName,
-                        'file_path' => $path,
-                        'uploaded_by' => $user->user_id,
-                    ]);
-                    
-                    $user->photo = $upload->upload_id;
+                if ($request->filled('password')) {
+                    $userData['password'] = Hash::make($request->password);
                 }
-            }
 
-            if ($request->filled('password')) {
-                $user->password = Hash::make($request->password);
-            }
-            
-            $user->save();
+                $user->update($userData);
 
-            // Auto-revoke seats if status changed to Transferred
-            if ($request->status === 'Transferred') {
-                SeatUser::where('user_id', $user->user_id)
-                    ->where('is_active', true)
-                    ->update([
-                        'is_active' => false,
-                        'revoked_at' => now(),
-                    ]);
+                if ($request->hasFile('user_photo')) {
+                    $this->handleProfilePhoto($user, $request->file('user_photo'));
+                }
+
+                if ($request->status === 'Transferred') {
+                    $this->revokeActiveSeats($user->user_id);
+                }
+                
+                return redirect()->route("users.index")->with('success', 'User updated successfully.');
+            } catch (\Exception $e) {
+                return back()->with('error', 'Failed to update user: ' . $e->getMessage())->withInput();
             }
-            
-            return redirect()->route("users.index")->with('success', 'User updated successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to update user: ' . $e->getMessage())->withInput();
-        }
+        });
     }
-    public function updateStatus(Request $request, $id)
+
+    /**
+     * Update the status of specified user.
+     */
+    public function updateStatus(Request $request, string $id): RedirectResponse
     {
         try {
-            $userId = decrypt($id);
-            $user = User::findOrFail($userId);
+            $request->validate(['status' => 'required|in:Active,Transferred']);
             
-            $request->validate([
-                'status' => 'required|in:Active,Transferred',
-            ]);
-            
-            $user->status = $request->status;
-            $user->save();
+            $user = User::findOrFail(decrypt($id));
+            $user->update(['status' => $request->status]);
 
-            // Auto-revoke seats if status changed to Transferred
             if ($request->status === 'Transferred') {
-                SeatUser::where('user_id', $user->user_id)
-                    ->where('is_active', true)
-                    ->update([
-                        'is_active' => false,
-                        'revoked_at' => now(),
-                    ]);
+                $this->revokeActiveSeats($user->user_id);
             }
             
             return redirect()->route("users.index")->with('success', 'User status updated successfully.');
@@ -204,24 +136,75 @@ class UserController extends Controller
         }
     }
 
-    public function destroy($id)
+    /**
+     * Remove the specified user from storage.
+     */
+    public function destroy(string $id): RedirectResponse
     {
-        try {
-            $userId = decrypt($id);
-            $user = User::findOrFail($userId);
-            $user->delete(); // Automatically soft deletes due to SoftDeletes trait
+        return DB::transaction(function () use ($id) {
+            try {
+                $user = User::findOrFail(decrypt($id));
+                $userId = $user->user_id;
+                
+                $user->delete();
+                $this->revokeActiveSeats($userId);
+                
+                return redirect()->route("users.index")->with('success', 'User deleted successfully.');
+            } catch (\Exception $e) {
+                return redirect()->route("users.index")->with('error', 'Failed to delete user.');
+            }
+        });
+    }
+
+    /**
+     * Helper: Handle profile photo upload and cleanup.
+     */
+    private function handleProfilePhoto(User $user, $file): void
+    {
+        if ($file->isValid()) {
+            $filename = time() . "_profile_{$user->user_id}." . $file->getClientOriginalExtension();
+            $path = $file->storeAs('profile_photos', $filename, 'public');
             
-            // Auto-revoke seats when user is deleted
-            SeatUser::where('user_id', $user->user_id)
-                ->where('is_active', true)
-                ->update([
-                    'is_active' => false,
-                    'revoked_at' => now(),
-                ]);
+            $upload = Upload::create([
+                'category' => Upload::CATEGORY_PROFILE_PHOTO,
+                'original_filename' => $file->getClientOriginalName(),
+                'file_path' => $path,
+                'uploaded_by' => $user->user_id,
+            ]);
             
-            return redirect()->route("users.index")->with('success', 'User deleted successfully.');
-        } catch (\Exception $e) {
-            return redirect()->route("users.index")->with('error', 'Failed to delete user: ' . $e->getMessage());
+            if ($user->profilePhoto) {
+                Storage::disk('public')->delete($user->profilePhoto->file_path);
+                $user->profilePhoto->delete();
+            }
+            
+            $user->update(['photo' => $upload->upload_id]);
         }
+    }
+
+    /**
+     * Helper: Revoke all active seat assignments for a user.
+     */
+    private function revokeActiveSeats(int $userId): void
+    {
+        SeatUser::where('user_id', $userId)
+            ->where('is_active', true)
+            ->update([
+                'is_active' => false,
+                'revoked_at' => now(),
+            ]);
+    }
+
+    /**
+     * AJAX endpoint to check unique values.
+     */
+    public function checkUnique(Request $request): JsonResponse
+    {
+        $request->validate([
+            'field' => 'required|string|in:email,pen',
+            'value' => 'required|string|max:255',
+        ]);
+
+        $exists = User::where($request->field, $request->value)->exists();
+        return response()->json(['exists' => $exists]);
     }
 }

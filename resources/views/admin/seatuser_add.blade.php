@@ -9,17 +9,12 @@
             <i data-lucide="arrow-left" class="w-5 h-5"></i>
         </a>
         <div>
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Assign Seat to User</h1>
+            <h1 class="text-2xl font-bold tracking-tight text-white">Assign Seat to User</h1>
             <p class="text-sm text-slate-500">Create a new organizational seat assignment.</p>
         </div>
     </div>
 
-    @if(session('error'))
-        <div class="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-800 text-sm font-medium shadow-sm">
-            <i data-lucide="alert-circle" class="w-5 h-5"></i>
-            {{ session('error') }}
-        </div>
-    @endif
+
 
     <div class="bg-white border border-slate-200 rounded-3xl shadow-sm">
         <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2 rounded-t-3xl">
@@ -36,7 +31,8 @@
                     <label for="seat_id" class="text-sm font-bold text-slate-700">Target Seat</label>
                     <div class="relative">
                         <select name="seat_id" id="seat_id" required
-                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium text-slate-900 appearance-none">
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium text-slate-900 appearance-none !bg-none"
+                                style="background-image: none !important;">
                             <option value="">Select a Seat</option>
                             @foreach($seats as $seat)
                                 <option value="{{ $seat->seat_id }}" {{ (old('seat_id') ?? ($selectedSeatId ?? '')) == $seat->seat_id ? 'selected' : '' }}>
@@ -44,7 +40,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
                     </div>
                     @error('seat_id')
                         <p class="text-xs text-rose-500 mt-1 font-medium">{{ $message }}</p>
@@ -56,7 +52,8 @@
                     <label for="user_id" class="text-sm font-bold text-slate-700">Officer / User</label>
                     <div class="relative">
                         <select name="user_id" id="user_id" required
-                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium text-slate-900 appearance-none">
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium text-slate-900 appearance-none !bg-none"
+                                style="background-image: none !important;">
                             <option value="">Select an Officer</option>
                             @foreach($users as $user)
                                 <option value="{{ $user->user_id }}" {{ old('user_id') == $user->user_id ? 'selected' : '' }}>
@@ -64,7 +61,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
                     </div>
                     @error('user_id')
                         <p class="text-xs text-rose-500 mt-1 font-medium">{{ $message }}</p>

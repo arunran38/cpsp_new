@@ -70,7 +70,10 @@
                     </div>
                     <div class="space-y-2">
                         <label for="pen" class="block text-xs font-semibold text-slate-500">PEN Number</label>
-                        <input id="pen" name="pen" type="text" class="w-full bg-slate-950 border-slate-800 rounded-lg text-white text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all py-3 px-4" value="{{ old('pen', $user->pen) }}" />
+                        <div class="relative group">
+                            <input id="pen" name="pen" type="text" class="w-full bg-slate-900 border-slate-800 text-slate-500 rounded-lg text-sm py-3 px-4 pr-10 cursor-not-allowed" value="{{ old('pen', $user->pen) }}" readonly />
+                            <i data-lucide="lock" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-700"></i>
+                        </div>
                         <x-input-error :messages="$errors->get('pen')" />
                     </div>
                 </div>

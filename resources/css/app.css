@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    select, option {
+        @apply text-slate-900;
+    }
+}
+
+/* Fix for @tailwindcss/forms double arrow issue - Move out of @layer for priority */
+select.appearance-none,
+select[style*="background-image: none"] {
+    background: none !important;
+    background-image: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+}
