@@ -193,7 +193,7 @@
         <!-- Charts Section -->
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div
-                class="col-span-full bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden flex flex-col">
+                class="lg:col-span-1 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden flex flex-col">
                 <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6 relative z-10">
                     <div>
                         <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
