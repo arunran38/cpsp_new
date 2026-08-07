@@ -115,7 +115,7 @@
                                                     class="bg-blue-100 text-blue-800 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded tracking-widest w-16 text-center shrink-0">{{ $addr->address_type }}</span>
                                                 <span
                                                     class="text-xs font-medium text-gray-800 leading-snug">{{ $addr->full_address }},
-                                                    {{ $addr->district }} - {{ $addr->pincode }}</span>
+                                                    {{ $addr->district->district_name ?? '' }} - {{ $addr->pincode }}</span>
                                             </div>
                                         @endforeach
                                     </div>
@@ -131,7 +131,7 @@
                     <div>
                         <h3
                             class="text-base font-bold text-gray-900 border-b-2 border-slate-200 pb-2 mb-4 flex items-center gap-2 w-max">
-                            <i data-lucide="user-x" class="w-5 h-5 text-rose-600"></i> Respondents (Accused)
+                            <i data-lucide="user-x" class="w-5 h-5 text-rose-600"></i> Suspects (Accused)
                         </h3>
                         <div class="space-y-4">
                             @php
@@ -159,13 +159,13 @@
                                                     class="bg-rose-100 text-rose-800 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded tracking-widest w-16 text-center shrink-0">{{ $addr->address_type }}</span>
                                                 <span
                                                     class="text-xs font-medium text-gray-800 leading-snug">{{ $addr->full_address }},
-                                                    {{ $addr->district }} - {{ $addr->pincode }}</span>
+                                                    {{ $addr->district->district_name ?? '' }} - {{ $addr->pincode }}</span>
                                             </div>
                                         @endforeach
                                     </div>
                                 </div>
                             @empty
-                                <p class="text-gray-600 italic text-sm p-4 bg-slate-50 rounded-lg">No Respondents recorded.</p>
+                                <p class="text-gray-600 italic text-sm p-4 bg-slate-50 rounded-lg">No Suspects recorded.</p>
                             @endforelse
                         </div>
                     </div>

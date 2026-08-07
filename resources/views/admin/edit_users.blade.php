@@ -41,12 +41,22 @@
 
                 <!-- Current Photo -->
                 @if($user->profilePhoto)
-                <div class="sm:col-span-2 flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                    <img id="photo-preview" src="{{ asset('storage/' . $user->profilePhoto->file_path) }}" 
-                         alt="Current Profile" 
-                         class="w-16 h-16 rounded-xl object-cover border-2 border-white shadow-sm">
+                <div id="current-photo-container" class="sm:col-span-2 flex items-center gap-6 p-5 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <div class="relative shrink-0">
+                        <img id="photo-preview" src="{{ asset('storage/' . $user->profilePhoto->file_path) }}" 
+                             alt="Current Profile" 
+                             class="w-16 h-16 rounded-xl object-cover border-2 border-white shadow-sm">
+                        
+                        <input type="hidden" name="remove_photo" id="remove_photo_input" value="0">
+                        <button type="button" 
+                                onclick="document.getElementById('remove_photo_input').value='1'; document.getElementById('current-photo-container').style.display='none';" 
+                                class="absolute top-0 right-0 z-10 flex items-center justify-center w-6 h-6 bg-rose-500 text-white rounded-full shadow-lg hover:bg-rose-600 hover:scale-110 transition-all border-2 border-white focus:outline-none transform translate-x-1/3 -translate-y-1/3 cursor-pointer"
+                                title="Remove photo">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
                     <div>
-                        <p class="text-sm font-semibold text-slate-700">Current Photo</p>
+                        <p class="text-sm font-semibold text-slate-900">Current Photo</p>
                         <p class="text-xs text-slate-500">Keep as is or upload a new one below.</p>
                     </div>
                 </div>

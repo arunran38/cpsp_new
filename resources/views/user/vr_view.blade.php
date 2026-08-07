@@ -51,7 +51,7 @@
                         <th class="px-6 py-4 font-bold w-12 text-center">#</th>
                         <th class="px-6 py-4 font-bold">Petition No</th>
                         <th class="px-6 py-4 font-bold">Petitioner</th>
-                        <th class="px-6 py-4 font-bold">Respondent</th>
+                        <th class="px-6 py-4 font-bold">Suspect</th>
                         <th class="px-6 py-4 font-bold">Unit</th>
                         <th class="px-6 py-4 font-bold">VR Reference NO</th>
                         <th class="px-6 py-4 font-bold">VR Date</th>

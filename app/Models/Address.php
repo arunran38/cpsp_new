@@ -15,4 +15,9 @@ class Address extends Model
     {
         return $this->belongsTo(Petition::class, 'petition_id');
     }
+
+    public function district()
+    {
+        return $this->belongsTo(District::class, 'district_id');
+    }
 }

@@ -128,7 +128,7 @@ class PetitionService
                         'phone' => $phone,
                         'Aadhar_number' => $aadhar,
                         'full_address' => $addr['address'],
-                        'district' => $addr['district'] ?? '',
+                        'district_id' => !empty($addr['district_id']) ? $addr['district_id'] : null,
                         'pincode' => $addr['pincode'] ?? null,
                     ]);
                 }

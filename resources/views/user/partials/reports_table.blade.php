@@ -5,7 +5,7 @@
                 <th class="px-6 py-4 font-bold w-12 text-center">#</th>
                 <th class="px-6 py-4 font-bold">Petition No & Received Date</th>
                 <th class="px-6 py-4 font-bold">Petitioner Name</th>
-                <th class="px-6 py-4 font-bold">Respondent Name <br> Nature of petition</th>
+                <th class="px-6 py-4 font-bold">Suspect Name <br> Nature of petition</th>
                 <th class="px-6 py-4 font-bold">Mode of Receipt</th>
                 <th class="px-6 py-4 font-bold">Brief of the Petition</th>
                 <th class="px-6 py-4 font-bold text-center">Status</th>

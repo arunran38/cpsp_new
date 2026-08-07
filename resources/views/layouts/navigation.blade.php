@@ -1,6 +1,7 @@
-<nav x-data="{ open: false }" class="bg-slate-900 text-slate-200 border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-xl">
+<nav x-data="{ open: false }"
+    class="bg-slate-900 text-slate-200 border-b border-slate-800/60 sticky top-0 z-40 backdrop-blur-xl">
     <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-20">
             <div class="flex">
                 <!-- Logo -->

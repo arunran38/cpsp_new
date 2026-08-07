@@ -33,7 +33,8 @@ class PetitionController extends Controller
      */
     public function create(): View
     {
-        return view('user.petition_add');
+        $districts = \App\Models\District::orderBy('district_id')->get();
+        return view('user.petition_add', compact('districts'));
     }
 
     /**
@@ -142,7 +143,8 @@ class PetitionController extends Controller
         $complainants = $this->formatAddressesForAlpine($petition, 'Complainant');
         $accused = $this->formatAddressesForAlpine($petition, 'Accused');
 
-        return view('user.petition_edit', compact('petition', 'complainants', 'accused'));
+        $districts = \App\Models\District::orderBy('district_id')->get();
+        return view('user.petition_edit', compact('petition', 'complainants', 'accused', 'districts'));
     }
 
     /**
@@ -278,7 +280,7 @@ class PetitionController extends Controller
                     'addresses' => $addresses->map(fn($addr) => [
                         'address_type' => (string) $addr->address_type,
                         'address' => (string) $addr->full_address,
-                        'district' => (string) $addr->district,
+                        'district_id' => (string) $addr->district_id,
                         'pincode' => (string) $addr->pincode,
                     ])->values()->all()
                 ];

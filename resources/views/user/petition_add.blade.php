@@ -69,7 +69,7 @@
                             <span x-show="step <= 3">3</span>
                         </div>
                         <span class="text-xs font-semibold whitespace-nowrap transition-colors"
-                            :class="step >= 3 ? 'text-white' : 'text-blue-200'">Respondent</span>
+                            :class="step >= 3 ? 'text-white' : 'text-blue-200'">Suspect</span>
                     </button>
 
                     <!-- Step 4 -->
@@ -112,11 +112,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="lg:col-span-1">
                             <x-input label="Petition No *" name="petition_no" x-model="petitionDetails.petition_no" required
-                                placeholder="Ex. PT-2026-001" @input="count = $event.target.value.length" @blur="validateField($event)" />
+                                placeholder="Ex. PT-2026-001" @input="count = $event.target.value.length"
+                                @blur="validateField($event)" />
                         </div>
                         <div class="lg:col-span-1">
-                            <x-input type="date" placeholder="DD-MM-YYYY" label="Date of Receipt *" name="date_of_petition_received"
-                                x-model="petitionDetails.date" required
+                            <x-input type="date" placeholder="DD-MM-YYYY" label="Date of Receipt *"
+                                name="date_of_petition_received" x-model="petitionDetails.date" required
                                 max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}" />
                         </div>
                         <div class="lg:col-span-1">
@@ -189,19 +190,18 @@
                                 <!-- Fields -->
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                     <div>
-                                        <x-input label="Full Name" name="comp_name"
-                                            x-bind:name="`complainants[${index}][name]`" x-model="comp.name"
-                                            placeholder="Legal Name" />
+                                        <x-input label="Name" name="comp_name" x-bind:name="`complainants[${index}][name]`"
+                                            x-model="comp.name" placeholder="Full Name" />
                                     </div>
                                     <div>
                                         <x-input label="Phone Number" name="comp_phone"
                                             x-bind:name="`complainants[${index}][phone]`" x-model="comp.phone"
-                                            placeholder="10-digit Mobile" />
+                                            placeholder="Mobile Number" />
                                     </div>
                                     <div>
                                         <x-input label="Aadhar Number" name="comp_aadhar"
                                             x-bind:name="`complainants[${index}][aadhar]`" x-model="comp.aadhar"
-                                            placeholder="12-digit Aadhar" />
+                                            placeholder="Aadhar Number" />
                                     </div>
                                 </div>
                             </div>
@@ -210,7 +210,7 @@
                             <div>
                                 <h4
                                     class="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
-                                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i> Address Book
+                                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i> Complainant Address
                                 </h4>
 
                                 <div class="space-y-4">
@@ -238,23 +238,22 @@
                                                     </x-select>
                                                 </div>
                                                 <div class="lg:col-span-2">
-                                                    <x-input label="Street Address" name="comp_address"
+                                                    <x-input label="Address" name="comp_address"
                                                         x-bind:name="`complainants[${index}][addresses][${addrIndex}][address]`"
                                                         x-model="addr.address"
-                                                        placeholder="House No, Street, Locality" />
+                                                        placeholder="House/Building Name, Locality" />
                                                 </div>
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <x-input label="District" name="comp_district"
-                                                            x-bind:name="`complainants[${index}][addresses][${addrIndex}][district]`"
-                                                            x-model="addr.district"
-                                                            placeholder="District" />
+                                                        <x-select label="District" 
+                                                            x-bind:name="`complainants[${index}][addresses][${addrIndex}][district_id]`"
+                                                            x-model="addr.district_id" placeholder="Select District" 
+                                                            :options="$districts->pluck('district_name', 'district_id')->toArray()" />
                                                     </div>
                                                     <div>
                                                         <x-input label="Pincode" name="comp_pincode"
                                                             x-bind:name="`complainants[${index}][addresses][${addrIndex}][pincode]`"
-                                                            x-model="addr.pincode"
-                                                            placeholder="Code" />
+                                                            x-model="addr.pincode" placeholder="Code" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -289,19 +288,19 @@
                 </button>
                 <button type="button" @click="nextStep()"
                     class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
-                    Continue to Respondent <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    Continue to Suspect <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
             </div>
     </div>
 
-    <!-- STEP 3: Respondent Details -->
+    <!-- STEP 3: Suspect Details -->
     <div x-show="step === 3" x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
         class="p-8 sm:p-10" style="display: none;">
 
         <div class="mb-8 border-b border-slate-100 pb-5">
             {{-- <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <i data-lucide="users" class="w-5 h-5 text-indigo-600"></i> Section 3: Respondent Details
+                <i data-lucide="users" class="w-5 h-5 text-indigo-600"></i> Section 3: Suspect Details
             </h2>
             <p class="text-sm text-slate-500 mt-1">Add one or more accused individuals regarding this petition.</p> --}}
         </div>
@@ -315,7 +314,7 @@
                             <span
                                 class="bg-indigo-100 text-indigo-700 w-5 h-5 rounded-md flex items-center justify-center text-xs"
                                 x-text="index + 1"></span>
-                            Respondent Information
+                            Suspect Information
                         </h3>
                         <button type="button" @click="removeAccused(index)" x-show="accused.length > 1"
                             class="text-rose-600 hover:text-rose-700 text-xs font-semibold flex items-center gap-1">
@@ -327,12 +326,12 @@
                         <!-- Fields -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                             <div>
-                                <x-input label="Full Name" name="acc_name" x-bind:name="`accused[${index}][name]`"
-                                    x-model="acc.name" placeholder="Legal Name" />
+                                <x-input label="Name" name="acc_name" x-bind:name="`accused[${index}][name]`"
+                                    x-model="acc.name" placeholder="Full Name" />
                             </div>
                             <div>
                                 <x-input label="Phone Number" name="acc_phone" x-bind:name="`accused[${index}][phone]`"
-                                    x-model="acc.phone" placeholder="Optional Mobile" />
+                                    x-model="acc.phone" placeholder="Mobile Number" />
                             </div>
                             <div>
                                 <x-input label="Aadhar Number" name="acc_aadhar" x-bind:name="`accused[${index}][aadhar]`"
@@ -344,7 +343,7 @@
                         <div>
                             <h4
                                 class="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
-                                <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i> Known Addresses
+                                <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i> Suspect Addresses
                             </h4>
 
                             <div class="space-y-4">
@@ -372,23 +371,21 @@
                                                 </x-select>
                                             </div>
                                             <div class="lg:col-span-2">
-                                                <x-input label="Street Address" name="acc_address"
+                                                <x-input label="Address" name="acc_address"
                                                     x-bind:name="`accused[${index}][addresses][${addrIndex}][address]`"
-                                                    x-model="addr.address"
-                                                    placeholder="House No, Street, Locality" />
+                                                    x-model="addr.address" placeholder="House/Building Name, Locality" />
                                             </div>
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <x-input label="District" name="acc_district"
-                                                        x-bind:name="`accused[${index}][addresses][${addrIndex}][district]`"
-                                                        x-model="addr.district"
-                                                        placeholder="District" />
+                                                    <x-select label="District" 
+                                                        x-bind:name="`accused[${index}][addresses][${addrIndex}][district_id]`"
+                                                        x-model="addr.district_id" placeholder="Select District" 
+                                                        :options="$districts->pluck('district_name', 'district_id')->toArray()" />
                                                 </div>
                                                 <div>
                                                     <x-input label="Pincode" name="acc_pincode"
                                                         x-bind:name="`accused[${index}][addresses][${addrIndex}][pincode]`"
-                                                        x-model="addr.pincode"
-                                                        placeholder="Code" />
+                                                        x-model="addr.pincode" placeholder="Code" />
                                                 </div>
                                             </div>
                                         </div>
@@ -411,7 +408,7 @@
             <div class="pt-2 text-center" x-show="accused[accused.length - 1].name.trim() !== ''">
                 <button type="button" @click="addAccused()"
                     class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 transition-all flex items-center justify-center gap-2 w-full">
-                    <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Respondent
+                    <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Suspect
                 </button>
             </div>
         </div>
@@ -438,8 +435,8 @@
 
 
                 <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-8">
-                    <x-textarea label="Initial Assessment/Action Note" name="proposed_action" x-model="petitionDetails.proposed_action" rows="4"
-                        placeholder="Enter the remarks/notes here..." />
+                    <x-textarea label="Initial Assessment/Action Note" name="proposed_action"
+                        x-model="petitionDetails.proposed_action" rows="4" placeholder="Enter the remarks/notes here..." />
                 </div>
 
                 <div class="flex gap-4 mb-4">
@@ -619,7 +616,7 @@
                                                         class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shadow-sm mt-0.5 w-16 text-center shrink-0"
                                                         x-text="addr.address_type"></span>
                                                     <span class="font-medium text-slate-700"
-                                                        x-text="`${addr.address}, ${addr.district} — PIN:${addr.pincode}`"></span>
+                                                        x-text="`${addr.address}, ${districtNames[addr.district_id] || ''} — PIN:${addr.pincode}`"></span>
                                                 </div>
                                             </template>
                                         </div>
@@ -629,13 +626,13 @@
                         </div>
                     </div>
 
-                    <!-- Respondents Column -->
+                    <!-- Suspects Column -->
                     <div class="relative">
                         <div class="flex items-center gap-4 mb-6">
                             <div
                                 class="flex items-center justify-center w-8 h-8 rounded-full bg-rose-100 text-rose-700 font-bold text-sm shadow-sm border border-rose-200 ring-4 ring-white z-10">
                                 3</div>
-                            <h4 class="text-lg font-bold text-slate-900">Respondents</h4>
+                            <h4 class="text-lg font-bold text-slate-900">Suspects</h4>
                             <div class="flex-1 h-px bg-slate-200"></div>
                         </div>
 
@@ -683,7 +680,7 @@
                                                         class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shadow-sm mt-0.5 w-16 text-center shrink-0"
                                                         x-text="addr.address_type"></span>
                                                     <span class="font-medium text-slate-700"
-                                                        x-text="`${addr.address}, ${addr.district} — PIN:${addr.pincode}`"></span>
+                                                        x-text="`${addr.address}, ${districtNames[addr.district_id] || ''} — PIN:${addr.pincode}`"></span>
                                                 </div>
                                             </template>
                                         </div>
@@ -740,6 +737,7 @@
         function petitionForm() {
             return {
                 step: {{ old('step', 1) }},
+                districtNames: @json($districts->pluck('district_name', 'district_id')),
                 formErrors: {},
 
                 showPreview: false,
@@ -752,8 +750,8 @@
                     description: `{!! addslashes(old('description')) !!}`,
                     proposed_action: `{!! addslashes(old('proposed_action')) !!}`
                 },
-                complainants: @json(old('complainants')) || [{ id: Date.now(), name: '', phone: '', aadhar: '', addresses: [{ address_type: 'Permanent', address: '', district: '', pincode: '' }] }],
-                accused: @json(old('accused')) || [{ id: Date.now() + 1, name: '', phone: '', aadhar: '', addresses: [{ address_type: 'Permanent', address: '', district: '', pincode: '' }] }],
+                complainants: @json(old('complainants')) || [{ id: Date.now(), name: '', phone: '', aadhar: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
+                accused: @json(old('accused')) || [{ id: Date.now() + 1, name: '', phone: '', aadhar: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
 
 
                 nextStep() {
@@ -878,19 +876,19 @@
 
                         // Check for duplicate names
                         if (name && names.has(name)) {
-                            errors.push(`Respondent #${index + 1}: Name "${acc.name}" is already used by another respondent.`);
+                            errors.push(`Suspect #${index + 1}: Name "${acc.name}" is already used by another suspect.`);
                         }
                         if (name) names.add(name);
 
                         // Check for duplicate phone numbers
                         if (phone && phones.has(phone)) {
-                            errors.push(`Respondent #${index + 1}: Phone number "${phone}" is already used by another respondent.`);
+                            errors.push(`Suspect #${index + 1}: Phone number "${phone}" is already used by another suspect.`);
                         }
                         if (phone) phones.add(phone);
 
                         // Check for duplicate aadhar numbers
                         if (aadhar && aadhars.has(aadhar)) {
-                            errors.push(`Respondent #${index + 1}: Aadhar number "${aadhar}" is already used by another respondent.`);
+                            errors.push(`Suspect #${index + 1}: Aadhar number "${aadhar}" is already used by another suspect.`);
                         }
                         if (aadhar) aadhars.add(aadhar);
                     });
@@ -1128,7 +1126,7 @@
                     if (last.name.trim() !== '') {
                         this.complainants.push({
                             id: Date.now(), name: '', phone: '', aadhar: '',
-                            addresses: [{ address_type: 'Permanent', address: '', district: '', pincode: '' }]
+                            addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }]
                         });
                         this.refreshIcons();
                     }
@@ -1143,7 +1141,7 @@
                         const allTypes = ['Permanent', 'Temporary', 'Office'];
                         const nextType = allTypes.find(t => !existingTypes.includes(t)) || 'Temporary';
 
-                        this.complainants[compIndex].addresses.push({ address_type: nextType, address: '', district: '', pincode: '' });
+                        this.complainants[compIndex].addresses.push({ address_type: nextType, address: '', district_id: '', pincode: '' });
                         this.refreshIcons();
                     }
                 },
@@ -1157,7 +1155,7 @@
                     if (last.name.trim() !== '') {
                         this.accused.push({
                             id: Date.now(), name: '', phone: '', aadhar: '',
-                            addresses: [{ address_type: 'Permanent', address: '', district: '', pincode: '' }]
+                            addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }]
                         });
                         this.refreshIcons();
                     }
@@ -1172,7 +1170,7 @@
                         const allTypes = ['Permanent', 'Temporary', 'Office'];
                         const nextType = allTypes.find(t => !existingTypes.includes(t)) || 'Temporary';
 
-                        this.accused[accIndex].addresses.push({ address_type: nextType, address: '', district: '', pincode: '' });
+                        this.accused[accIndex].addresses.push({ address_type: nextType, address: '', district_id: '', pincode: '' });
                         this.refreshIcons();
                     }
                 },

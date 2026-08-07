@@ -26,7 +26,7 @@
             <col style="width: 80pt;"> <!-- Petition No -->
             <col style="width: 70pt;"> <!-- Received Date -->
             <col style="width: 100pt;"> <!-- Petitioner -->
-            <col style="width: 100pt;"> <!-- Respondent -->
+            <col style="width: 100pt;"> <!-- Suspect -->
             <col style="width: 90pt;"> <!-- Nature -->
             <col style="width: 250pt;"> <!-- Description -->
             <col style="width: 60pt;"> <!-- Mode -->

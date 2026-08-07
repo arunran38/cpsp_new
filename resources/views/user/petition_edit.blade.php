@@ -81,7 +81,7 @@
                         <span x-show="step > 3"><i data-lucide="check" class="w-4 h-4"></i></span>
                         <span x-show="step <= 3">3</span>
                     </div>
-                    <span class="text-xs font-semibold whitespace-nowrap transition-colors" :class="step >= 3 ? 'text-white' : 'text-blue-200'">Respondent</span>
+                    <span class="text-xs font-semibold whitespace-nowrap transition-colors" :class="step >= 3 ? 'text-white' : 'text-blue-200'">Suspect</span>
                 </button>
 
                 <!-- Step 4 -->
@@ -239,7 +239,12 @@
                                                 </div>
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <x-input label="District *" name="comp_district" x-bind:name="`complainants[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" x-bind:required="step === 2" placeholder="District" />
+                                                        <x-select label="District *" 
+                                                            x-bind:name="`complainants[${index}][addresses][${addrIndex}][district_id]`" 
+                                                            x-model="addr.district_id" 
+                                                            x-bind:required="step === 2" 
+                                                            placeholder="Select District" 
+                                                            :options="$districts->pluck('district_name', 'district_id')->toArray()" />
                                                     </div>
                                                     <div>
                                                         <x-input label="Pincode *" name="comp_pincode" x-bind:name="`complainants[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" x-bind:required="step === 2" placeholder="Code" />
@@ -272,12 +277,12 @@
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
                 </button>
                 <button type="button" @click="nextStep()" class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
-                    Continue to Respondent <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    Continue to Suspect <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
             </div>
         </div>
 
-        <!-- STEP 3: Respondent Details -->
+        <!-- STEP 3: Suspect Details -->
         <div x-show="step === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="p-8 sm:p-10" style="display: none;">
             
             <div class="space-y-8">
@@ -287,7 +292,7 @@
                         <div class="flex justify-between items-center px-6 py-4 bg-slate-50 border-b border-slate-200">
                             <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
                                 <span class="bg-indigo-100 text-indigo-700 w-5 h-5 rounded-md flex items-center justify-center text-xs" x-text="index + 1"></span>
-                                Respondent Information
+                                Suspect Information
                             </h3>
                             <button type="button" @click="removeAccused(index)" x-show="accused.length > 1" class="text-rose-600 hover:text-rose-700 text-xs font-semibold flex items-center gap-1">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove
@@ -333,7 +338,12 @@
                                                 </div>
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <x-input label="District" x-bind:name="`accused[${index}][addresses][${addrIndex}][district]`" x-model="addr.district" x-bind:required="step === 3" placeholder="District" />
+                                                        <x-select label="District" 
+                                                            x-bind:name="`accused[${index}][addresses][${addrIndex}][district_id]`" 
+                                                            x-model="addr.district_id" 
+                                                            x-bind:required="step === 3" 
+                                                            placeholder="Select District" 
+                                                            :options="$districts->pluck('district_name', 'district_id')->toArray()" />
                                                     </div>
                                                     <div>
                                                         <x-input label="Pincode" x-bind:name="`accused[${index}][addresses][${addrIndex}][pincode]`" x-model="addr.pincode" x-bind:required="step === 3" placeholder="Code" />
@@ -356,7 +366,7 @@
                 
                 <div class="pt-2 text-center">
                     <button type="button" @click="addAccused()" class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 transition-all flex items-center justify-center gap-2 w-full">
-                        <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Respondent
+                        <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Suspect
                     </button>
                 </div>
             </div>
@@ -445,7 +455,7 @@
                 } else if (step === 3) {
                     const validAcc = this.accused.every(a => a.name.trim() !== '');
                     if (!validAcc) {
-                        alert("Please provide the name of the respondent.");
+                        alert("Please provide the name of the suspect.");
                         return false;
                     }
                 }
@@ -466,7 +476,7 @@
             addComplainant() {
                 this.complainants.push({ 
                     id: Date.now(), name: '', phone: '', aadhar: '', 
-                    addresses: [{ address_type: 'Permanent', address: '', district: '', pincode: '' }] 
+                    addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] 
                 });
                 this.refreshIcons();
             },
@@ -479,7 +489,7 @@
                     const allTypes = ['Permanent', 'Temporary', 'Office'];
                     const nextType = allTypes.find(t => !existingTypes.includes(t)) || 'Temporary';
                     
-                    this.complainants[compIndex].addresses.push({ address_type: nextType, address: '', district: '', pincode: '' });
+                    this.complainants[compIndex].addresses.push({ address_type: nextType, address: '', district_id: '', pincode: '' });
                     this.refreshIcons();
                 }
             },
@@ -491,7 +501,7 @@
             addAccused() {
                 this.accused.push({ 
                     id: Date.now(), name: '', phone: '', aadhar: '', 
-                    addresses: [{ address_type: 'Permanent', address: '', district: '', pincode: '' }] 
+                    addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] 
                 });
                 this.refreshIcons();
             },
@@ -504,7 +514,7 @@
                     const allTypes = ['Permanent', 'Temporary', 'Office'];
                     const nextType = allTypes.find(t => !existingTypes.includes(t)) || 'Temporary';
 
-                    this.accused[accIndex].addresses.push({ address_type: nextType, address: '', district: '', pincode: '' });
+                    this.accused[accIndex].addresses.push({ address_type: nextType, address: '', district_id: '', pincode: '' });
                     this.refreshIcons();
                 }
             },

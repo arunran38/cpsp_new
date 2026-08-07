@@ -100,7 +100,13 @@ class UserController extends Controller
 
                 $user->update($userData);
 
-                if ($request->hasFile('user_photo')) {
+                if ($request->has('remove_photo') && $request->remove_photo == '1') {
+                    if ($user->profilePhoto) {
+                        Storage::disk('public')->delete($user->profilePhoto->file_path);
+                        $user->profilePhoto->delete();
+                        $user->update(['photo' => null]);
+                    }
+                } elseif ($request->hasFile('user_photo')) {
                     $this->handleProfilePhoto($user, $request->file('user_photo'));
                 }
 

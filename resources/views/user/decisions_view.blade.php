@@ -50,7 +50,7 @@
                         <th class="px-6 py-4 font-bold w-12 text-center">#</th>
                         <th class="px-6 py-4 font-bold">Petition No</th>
                         <th class="px-6 py-4 font-bold">Petitioner</th>
-                        <th class="px-6 py-4 font-bold">Respondent</th>
+                        <th class="px-6 py-4 font-bold">Suspect</th>
                         <th class="px-6 py-4 font-bold">Final Rec.</th>
                         <th class="px-6 py-4 font-bold">Final Remarks</th>
                         <th class="px-6 py-4 font-bold">Date Decided</th>
