@@ -387,15 +387,19 @@
                                             <div>
                                                 <x-select label="Address Type"
                                                     x-bind:name="`accused[${index}][addresses][${addrIndex}][address_type]`"
-                                                    x-model="addr.address_type">
+                                                    x-model="addr.address_type"
+                                                    x-bind:class="acc.entity_type === 'Firm' ? 'pointer-events-none bg-slate-50 text-slate-500' : ''"
+                                                    x-bind:tabindex="acc.entity_type === 'Firm' ? '-1' : '0'">
                                                     <option value="Permanent"
-                                                        :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')"
+                                                        :disabled="acc.entity_type === 'Firm' || acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')"
+                                                        x-show="acc.entity_type !== 'Firm'"
                                                         class="font-semibold text-slate-900 bg-white">Permanent</option>
                                                     <option value="Temporary"
-                                                        :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')"
+                                                        :disabled="acc.entity_type === 'Firm' || acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')"
+                                                        x-show="acc.entity_type !== 'Firm'"
                                                         class="font-semibold text-slate-900 bg-white">Temporary</option>
                                                     <option value="Office"
-                                                        :disabled="acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')"
+                                                        :disabled="acc.entity_type !== 'Firm' && acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')"
                                                         class="font-semibold text-slate-900 bg-white">Office</option>
                                                 </x-select>
                                             </div>
@@ -423,7 +427,7 @@
                             </div>
 
                             <div class="mt-4"
-                                x-show="acc.addresses.length < 3 && acc.addresses[acc.addresses.length - 1].address.trim() !== ''">
+                                x-show="acc.entity_type !== 'Firm' && acc.addresses.length < 3 && acc.addresses[acc.addresses.length - 1].address.trim() !== ''">
                                 <button type="button" @click="addAccusedAddress(index)"
                                     class="text-sm font-semibold text-indigo-600 bg-white hover:bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2 transition-all shadow-sm">
                                     <i data-lucide="plus" class="w-4 h-4"></i> Add Additional Address
