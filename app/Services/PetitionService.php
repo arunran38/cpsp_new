@@ -111,7 +111,6 @@ class PetitionService
 
             $personName = $person['name'];
             $phone = $person['phone'] ?? null;
-            $aadhar = $person['aadhar'] ?? null;
 
             if (isset($person['addresses']) && is_array($person['addresses'])) {
                 foreach ($person['addresses'] as $index => $addr) {
@@ -126,7 +125,6 @@ class PetitionService
                         'address_type' => $addr['address_type'] ?? 'Temporary',
                         'is_primary' => ($index === 0),
                         'phone' => $phone,
-                        'Aadhar_number' => $aadhar,
                         'full_address' => $addr['address'],
                         'district_id' => !empty($addr['district_id']) ? $addr['district_id'] : null,
                         'pincode' => $addr['pincode'] ?? null,

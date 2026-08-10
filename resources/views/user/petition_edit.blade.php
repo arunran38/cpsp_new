@@ -196,15 +196,12 @@
 
                         <div class="p-6">
                             <!-- Fields -->
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                                 <div>
                                     <x-input label="Full Name" name="comp_name" x-bind:name="`complainants[${index}][name]`" x-model="comp.name" x-bind:required="step === 2" placeholder="Legal Name" />
                                 </div>
                                 <div>
                                     <x-input label="Phone Number" name="comp_phone" x-bind:name="`complainants[${index}][phone]`" x-model="comp.phone" x-bind:required="step === 2" placeholder="10-digit Mobile" />
-                                </div>
-                                <div>
-                                    <x-input label="Aadhar Number" name="comp_aadhar" x-bind:name="`complainants[${index}][aadhar]`" x-model="comp.aadhar" placeholder="12-digit Aadhar" />
                                 </div>
                             </div>
 
@@ -301,10 +298,9 @@
 
                         <div class="p-6">
                             <!-- Fields -->
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                                 <div><x-input label="Full Name *" name="acc_name" x-bind:name="`accused[${index}][name]`" x-model="acc.name" x-bind:required="step === 3" placeholder="Legal Name" /></div>
                                 <div><x-input label="Phone" name="acc_phone" x-bind:name="`accused[${index}][phone]`" x-model="acc.phone" /></div>
-                                <div><x-input label="Aadhar" name="acc_aadhar" x-bind:name="`accused[${index}][aadhar]`" x-model="acc.aadhar" /></div>
                             </div>
 
                             <!-- Nested Addresses -->
@@ -475,7 +471,7 @@
             },
             addComplainant() {
                 this.complainants.push({ 
-                    id: Date.now(), name: '', phone: '', aadhar: '', 
+                    id: Date.now(), name: '', phone: '', 
                     addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] 
                 });
                 this.refreshIcons();
@@ -500,7 +496,7 @@
             },
             addAccused() {
                 this.accused.push({ 
-                    id: Date.now(), name: '', phone: '', aadhar: '', 
+                    id: Date.now(), name: '', phone: '', 
                     addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] 
                 });
                 this.refreshIcons();

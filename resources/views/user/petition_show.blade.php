@@ -98,12 +98,9 @@
                                 @php $first = $addresses->first(); @endphp
                                 <div class="bg-white border border-slate-200 rounded-lg p-5">
                                     <h4 class="font-bold text-gray-900 mb-4">{{ $name }}</h4>
-                                    <div class="grid grid-cols-2 gap-2 mb-4">
+                                    <div class="grid grid-cols-1 gap-2 mb-4">
                                         <div class="text-xs"><span class="text-gray-600 block mb-0.5">Phone:</span> <span
                                                 class="font-semibold text-gray-900">{{ $first->phone ?? 'N/A' }}</span></div>
-                                        <div class="text-xs"><span class="text-gray-600 block mb-0.5">Aadhar:</span> <span
-                                                class="font-semibold text-gray-900">{{ $first->Aadhar_number ?? 'N/A' }}</span>
-                                        </div>
                                     </div>
 
                                     <div class="space-y-3 pt-3 border-t border-slate-100">
@@ -142,12 +139,9 @@
                                 @php $first = $addresses->first(); @endphp
                                 <div class="bg-white border border-slate-200 rounded-lg p-5">
                                     <h4 class="font-bold text-gray-900 mb-4">{{ $name }}</h4>
-                                    <div class="grid grid-cols-2 gap-2 mb-4">
+                                    <div class="grid grid-cols-1 gap-2 mb-4">
                                         <div class="text-xs"><span class="text-gray-600 block mb-0.5">Phone:</span> <span
                                                 class="font-semibold text-gray-900">{{ $first->phone ?? 'N/A' }}</span></div>
-                                        <div class="text-xs"><span class="text-gray-600 block mb-0.5">Aadhar:</span> <span
-                                                class="font-semibold text-gray-900">{{ $first->Aadhar_number ?? 'N/A' }}</span>
-                                        </div>
                                     </div>
 
                                     <div class="space-y-3 pt-3 border-t border-slate-100">

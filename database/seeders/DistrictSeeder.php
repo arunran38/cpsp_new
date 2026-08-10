@@ -16,7 +16,7 @@ class DistrictSeeder extends Seeder
             'Thiruvananthapuram', 'Kollam', 'Pathanamthitta', 'Alappuzha',
             'Kottayam', 'Idukki', 'Ernakulam', 'Thrissur', 'Palakkad',
             'Malappuram', 'Kozhikode', 'Wayanad', 'Kannur', 'Kasaragod',
-            'Other State', 'Other Country'
+            'Other State'
         ];
 
         foreach ($districts as $district) {

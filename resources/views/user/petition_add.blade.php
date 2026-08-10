@@ -188,7 +188,7 @@
 
                             <div class="p-6">
                                 <!-- Fields -->
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                                     <div>
                                         <x-input label="Name" name="comp_name" x-bind:name="`complainants[${index}][name]`"
                                             x-model="comp.name" placeholder="Full Name" />
@@ -197,11 +197,6 @@
                                         <x-input label="Phone Number" name="comp_phone"
                                             x-bind:name="`complainants[${index}][phone]`" x-model="comp.phone"
                                             placeholder="Mobile Number" />
-                                    </div>
-                                    <div>
-                                        <x-input label="Aadhar Number" name="comp_aadhar"
-                                            x-bind:name="`complainants[${index}][aadhar]`" x-model="comp.aadhar"
-                                            placeholder="Aadhar Number" />
                                     </div>
                                 </div>
                             </div>
@@ -324,7 +319,7 @@
 
                     <div class="p-6">
                         <!-- Fields -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                             <div>
                                 <x-input label="Name" name="acc_name" x-bind:name="`accused[${index}][name]`"
                                     x-model="acc.name" placeholder="Full Name" />
@@ -332,10 +327,6 @@
                             <div>
                                 <x-input label="Phone Number" name="acc_phone" x-bind:name="`accused[${index}][phone]`"
                                     x-model="acc.phone" placeholder="Mobile Number" />
-                            </div>
-                            <div>
-                                <x-input label="Aadhar Number" name="acc_aadhar" x-bind:name="`accused[${index}][aadhar]`"
-                                    x-model="acc.aadhar" placeholder="Optional 12-digit" />
                             </div>
                         </div>
 
@@ -597,13 +588,7 @@
                                                 <p class="text-sm font-semibold text-slate-900"
                                                     x-text="comp.phone || 'N/A'"></p>
                                             </div>
-                                            <div>
-                                                <p
-                                                    class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                                                    Verification (Aadhar)</p>
-                                                <p class="text-sm font-mono font-semibold text-slate-900"
-                                                    x-text="comp.aadhar || 'Pending'"></p>
-                                            </div>
+
                                         </div>
                                         <div class="space-y-2 mt-4 pt-4 border-t border-slate-100">
                                             <p
@@ -661,13 +646,7 @@
                                                 <p class="text-sm font-semibold text-slate-900" x-text="acc.phone || 'N/A'">
                                                 </p>
                                             </div>
-                                            <div>
-                                                <p
-                                                    class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                                                    Verification (Aadhar)</p>
-                                                <p class="text-sm font-mono font-semibold text-slate-900"
-                                                    x-text="acc.aadhar || 'Pending'"></p>
-                                            </div>
+
                                         </div>
                                         <div class="space-y-2 mt-4 pt-4 border-t border-slate-100">
                                             <p
@@ -750,8 +729,8 @@
                     description: `{!! addslashes(old('description')) !!}`,
                     proposed_action: `{!! addslashes(old('proposed_action')) !!}`
                 },
-                complainants: @json(old('complainants')) || [{ id: Date.now(), name: '', phone: '', aadhar: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
-                accused: @json(old('accused')) || [{ id: Date.now() + 1, name: '', phone: '', aadhar: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
+                complainants: @json(old('complainants')) || [{ id: Date.now(), name: '', phone: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
+                accused: @json(old('accused')) || [{ id: Date.now() + 1, name: '', phone: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
 
 
                 nextStep() {
@@ -812,7 +791,7 @@
                     });
 
                     // Check for duplicates in Step 2 (Complainants) - only if there are complainants
-                    if (step === 2 && isValid && this.complainants.some(c => c.name.trim() || c.phone.trim() || c.aadhar.trim())) {
+                    if (step === 2 && isValid && this.complainants.some(c => c.name.trim() || c.phone.trim())) {
                         const duplicates = this.checkDuplicateComplainants();
                         if (duplicates.length > 0) {
                             isValid = false;
@@ -821,7 +800,7 @@
                     }
 
                     // Check for duplicates in Step 3 (Accused) - only if there are accused
-                    if (step === 3 && isValid && this.accused.some(a => a.name.trim() || a.phone.trim() || a.aadhar.trim())) {
+                    if (step === 3 && isValid && this.accused.some(a => a.name.trim() || a.phone.trim())) {
                         const duplicates = this.checkDuplicateAccused();
                         if (duplicates.length > 0) {
                             isValid = false;
@@ -835,12 +814,9 @@
                     const errors = [];
                     const names = new Set();
                     const phones = new Set();
-                    const aadhars = new Set();
-
                     this.complainants.forEach((comp, index) => {
                         const name = comp.name.trim().toLowerCase();
                         const phone = comp.phone.trim();
-                        const aadhar = comp.aadhar.trim();
 
                         // Check for duplicate names
                         if (name && names.has(name)) {
@@ -853,12 +829,6 @@
                             errors.push(`Complainant #${index + 1}: Phone number "${phone}" is already used by another complainant.`);
                         }
                         if (phone) phones.add(phone);
-
-                        // Check for duplicate aadhar numbers
-                        if (aadhar && aadhars.has(aadhar)) {
-                            errors.push(`Complainant #${index + 1}: Aadhar number "${aadhar}" is already used by another complainant.`);
-                        }
-                        if (aadhar) aadhars.add(aadhar);
                     });
 
                     return errors;
@@ -867,12 +837,9 @@
                     const errors = [];
                     const names = new Set();
                     const phones = new Set();
-                    const aadhars = new Set();
-
                     this.accused.forEach((acc, index) => {
                         const name = acc.name.trim().toLowerCase();
                         const phone = acc.phone.trim();
-                        const aadhar = acc.aadhar.trim();
 
                         // Check for duplicate names
                         if (name && names.has(name)) {
@@ -885,12 +852,6 @@
                             errors.push(`Suspect #${index + 1}: Phone number "${phone}" is already used by another suspect.`);
                         }
                         if (phone) phones.add(phone);
-
-                        // Check for duplicate aadhar numbers
-                        if (aadhar && aadhars.has(aadhar)) {
-                            errors.push(`Suspect #${index + 1}: Aadhar number "${aadhar}" is already used by another suspect.`);
-                        }
-                        if (aadhar) aadhars.add(aadhar);
                     });
 
                     return errors;
@@ -926,12 +887,7 @@
                                 } else {
                                     this.formErrors[fieldName] = '';
                                 }
-                            } else if (fieldName.includes('[aadhar]') || fieldName === 'comp_aadhar' || fieldName === 'acc_aadhar') {
-                                if (!/^\d{12}$/.test(fieldValue.replace(/\D/g, ''))) {
-                                    this.formErrors[fieldName] = 'Aadhar number must be 12 digits.';
-                                } else {
-                                    this.formErrors[fieldName] = '';
-                                }
+
                             } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode' || fieldName === 'acc_pincode') {
                                 if (!/^\d{6}$/.test(fieldValue.replace(/\D/g, ''))) {
                                     this.formErrors[fieldName] = 'Pincode must be 6 digits.';
@@ -959,12 +915,7 @@
                         } else {
                             this.formErrors[fieldName] = '';
                         }
-                    } else if (fieldName.includes('[aadhar]') || fieldName === 'comp_aadhar') {
-                        if (fieldValue && !/^\d{12}$/.test(fieldValue.replace(/\D/g, ''))) {
-                            this.formErrors[fieldName] = 'Aadhar number must be 12 digits.';
-                        } else {
-                            this.formErrors[fieldName] = '';
-                        }
+
                     } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode') {
                         if (fieldValue && !/^\d{6}$/.test(fieldValue.replace(/\D/g, ''))) {
                             this.formErrors[fieldName] = 'Pincode must be 6 digits.';
@@ -1056,10 +1007,7 @@
                             if (fieldValue && /^\d{10}$/.test(fieldValue.replace(/\D/g, ''))) {
                                 this.formErrors[fieldName] = '';
                             }
-                        } else if (fieldName.includes('[aadhar]') || fieldName === 'comp_aadhar') {
-                            if (!fieldValue || /^\d{12}$/.test(fieldValue.replace(/\D/g, ''))) {
-                                this.formErrors[fieldName] = '';
-                            }
+
                         } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode') {
                             if (!fieldValue || /^\d{6}$/.test(fieldValue.replace(/\D/g, ''))) {
                                 this.formErrors[fieldName] = '';
@@ -1082,10 +1030,7 @@
                             } else if (!fieldValue && !el.hasAttribute('required')) {
                                 this.formErrors[fieldName] = '';
                             }
-                        } else if (fieldName.includes('[aadhar]') || fieldName === 'comp_aadhar') {
-                            if (!fieldValue || /^\d{12}$/.test(fieldValue.replace(/\D/g, ''))) {
-                                this.formErrors[fieldName] = '';
-                            }
+
                         } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode') {
                             if (!fieldValue || /^\d{6}$/.test(fieldValue.replace(/\D/g, ''))) {
                                 this.formErrors[fieldName] = '';
@@ -1125,7 +1070,7 @@
                     const last = this.complainants[this.complainants.length - 1];
                     if (last.name.trim() !== '') {
                         this.complainants.push({
-                            id: Date.now(), name: '', phone: '', aadhar: '',
+                            id: Date.now(), name: '', phone: '',
                             addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }]
                         });
                         this.refreshIcons();
@@ -1154,7 +1099,7 @@
                     const last = this.accused[this.accused.length - 1];
                     if (last.name.trim() !== '') {
                         this.accused.push({
-                            id: Date.now(), name: '', phone: '', aadhar: '',
+                            id: Date.now(), name: '', phone: '',
                             addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }]
                         });
                         this.refreshIcons();

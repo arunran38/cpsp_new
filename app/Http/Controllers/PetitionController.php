@@ -276,7 +276,6 @@ class PetitionController extends Controller
                     'id' => rand(1000, 9999),
                     'name' => (string) $name,
                     'phone' => (string) $first->phone,
-                    'aadhar' => (string) $first->Aadhar_number,
                     'addresses' => $addresses->map(fn($addr) => [
                         'address_type' => (string) $addr->address_type,
                         'address' => (string) $addr->full_address,

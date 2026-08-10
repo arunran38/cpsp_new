@@ -24,7 +24,6 @@ class AddressFactory extends Factory
             'address_type' => $this->faker->randomElement(['Permanent', 'Temporary', 'Office']),
             'is_primary' => false,
             'phone' => $this->faker->phoneNumber(),
-            'Aadhar_number' => $this->faker->bothify('############'),
             'full_address' => $this->faker->address(),
             'district' => $this->faker->city(),
             'pincode' => $this->faker->numerify('######'),

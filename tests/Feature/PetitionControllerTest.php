@@ -62,7 +62,6 @@ class PetitionControllerTest extends TestCase
                 [
                     'name' => 'John Doe',
                     'phone' => '1234567890',
-                    'aadhar' => '123412341234',
                     'addresses' => [
                         [
                             'address_type' => 'Permanent',

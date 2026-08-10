@@ -21,7 +21,6 @@ return new class extends Migration
             $table->enum('address_type', ['Permanent', 'Temporary', 'Office']);
             $table->boolean('is_primary')->default(false);
             $table->string('phone')->nullable();
-            $table->string('Aadhar_number')->nullable();
             $table->text('full_address');
             $table->string('district');
             $table->string('pincode', 6)->nullable();
