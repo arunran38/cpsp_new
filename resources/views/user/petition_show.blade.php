@@ -110,9 +110,15 @@
                                                 class="flex items-start gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
                                                 <span
                                                     class="bg-blue-100 text-blue-800 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded tracking-widest w-16 text-center shrink-0">{{ $addr->address_type }}</span>
-                                                <span
-                                                    class="text-xs font-medium text-gray-800 leading-snug">{{ $addr->full_address }},
-                                                    {{ $addr->district->district_name ?? '' }} - {{ $addr->pincode }}</span>
+                                                <span class="text-xs font-medium text-gray-800 leading-snug">
+                                                    {{ $addr->full_address }}
+                                                    @if(!empty($addr->district->district_name))
+                                                        , {{ $addr->district->district_name }}
+                                                    @endif
+                                                    @if(!empty($addr->pincode))
+                                                        - {{ $addr->pincode }}
+                                                    @endif
+                                                </span>
                                             </div>
                                         @endforeach
                                     </div>
@@ -169,9 +175,15 @@
                                                 class="flex items-start gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
                                                 <span
                                                     class="bg-rose-100 text-rose-800 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded tracking-widest w-16 text-center shrink-0">{{ $addr->address_type }}</span>
-                                                <span
-                                                    class="text-xs font-medium text-gray-800 leading-snug">{{ $addr->full_address }},
-                                                    {{ $addr->district->district_name ?? '' }} - {{ $addr->pincode }}</span>
+                                                <span class="text-xs font-medium text-gray-800 leading-snug">
+                                                    {{ $addr->full_address }}
+                                                    @if(!empty($addr->district->district_name))
+                                                        , {{ $addr->district->district_name }}
+                                                    @endif
+                                                    @if(!empty($addr->pincode))
+                                                        - {{ $addr->pincode }}
+                                                    @endif
+                                                </span>
                                             </div>
                                         @endforeach
                                     </div>
