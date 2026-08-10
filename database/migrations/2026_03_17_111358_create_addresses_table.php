@@ -20,6 +20,7 @@ return new class extends Migration
             $table->enum('person_type', ['Complainant', 'Accused']);
             $table->enum('address_type', ['Permanent', 'Temporary', 'Office']);
             $table->boolean('is_primary')->default(false);
+            $table->string('Aadhar_number')->nullable();
             $table->string('phone')->nullable();
             $table->text('full_address');
             $table->string('district');
