@@ -30,7 +30,9 @@ class StorePetitionRequest extends FormRequest
             'complainants.*.phone' => 'nullable|string',
             'complainants.*.addresses' => 'nullable|array',
             'accused' => 'nullable|array',
+            'accused.*.entity_type' => 'required|in:Person,Firm',
             'accused.*.name' => 'required|string',
+            'accused.*.contact_person' => 'nullable|required_if:accused.*.entity_type,Firm|string',
             'accused.*.phone' => 'nullable|string',
             'accused.*.addresses' => 'nullable|array',
         ];

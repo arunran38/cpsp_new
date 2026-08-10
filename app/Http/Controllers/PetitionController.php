@@ -276,6 +276,8 @@ class PetitionController extends Controller
                     'id' => rand(1000, 9999),
                     'name' => (string) $name,
                     'phone' => (string) $first->phone,
+                    'entity_type' => $first->entity_type ?? 'Person',
+                    'contact_person' => (string) $first->contact_person,
                     'addresses' => $addresses->map(fn($addr) => [
                         'address_type' => (string) $addr->address_type,
                         'address' => (string) $addr->full_address,

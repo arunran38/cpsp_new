@@ -138,11 +138,29 @@
                             @forelse($accused as $name => $addresses)
                                 @php $first = $addresses->first(); @endphp
                                 <div class="bg-white border border-slate-200 rounded-lg p-5">
-                                    <h4 class="font-bold text-gray-900 mb-4">{{ $name }}</h4>
-                                    <div class="grid grid-cols-1 gap-2 mb-4">
-                                        <div class="text-xs"><span class="text-gray-600 block mb-0.5">Phone:</span> <span
-                                                class="font-semibold text-gray-900">{{ $first->phone ?? 'N/A' }}</span></div>
-                                    </div>
+                                    @if(isset($first->entity_type) && $first->entity_type === 'Firm')
+                                        <div class="mb-4">
+                                            <span class="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold tracking-widest uppercase rounded mb-1">Firm / Project</span>
+                                            <h4 class="font-bold text-gray-900">{{ $name }}</h4>
+                                        </div>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+                                            @if($first->contact_person)
+                                                <div class="text-xs"><span class="text-gray-600 block mb-0.5">Contact Person:</span> <span
+                                                        class="font-semibold text-gray-900">{{ $first->contact_person }}</span></div>
+                                            @endif
+                                            <div class="text-xs"><span class="text-gray-600 block mb-0.5">Phone:</span> <span
+                                                    class="font-semibold text-gray-900">{{ $first->phone ?? 'N/A' }}</span></div>
+                                        </div>
+                                    @else
+                                        <div class="mb-4">
+                                            <span class="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold tracking-widest uppercase rounded mb-1">Person</span>
+                                            <h4 class="font-bold text-gray-900">{{ $name }}</h4>
+                                        </div>
+                                        <div class="grid grid-cols-1 gap-2 mb-4">
+                                            <div class="text-xs"><span class="text-gray-600 block mb-0.5">Phone:</span> <span
+                                                    class="font-semibold text-gray-900">{{ $first->phone ?? 'N/A' }}</span></div>
+                                        </div>
+                                    @endif
 
                                     <div class="space-y-3 pt-3 border-t border-slate-100">
                                         <h5 class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Addresses</h5>

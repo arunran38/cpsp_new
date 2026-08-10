@@ -240,9 +240,9 @@
                                                 </div>
                                                 <div class="grid grid-cols-2 gap-4">
                                                     <div>
-                                                        <x-select label="District" 
+                                                        <x-select label="District"
                                                             x-bind:name="`complainants[${index}][addresses][${addrIndex}][district_id]`"
-                                                            x-model="addr.district_id" placeholder="Select District" 
+                                                            x-model="addr.district_id" placeholder="Select District"
                                                             :options="$districts->pluck('district_name', 'district_id')->toArray()" />
                                                     </div>
                                                     <div>
@@ -304,25 +304,63 @@
             <template x-for="(acc, index) in accused" :key="acc.id">
                 <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
                     <!-- Header for the section -->
-                    <div class="flex justify-between items-center px-6 py-4 bg-slate-50 border-b border-slate-200">
-                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                            <span
-                                class="bg-indigo-100 text-indigo-700 w-5 h-5 rounded-md flex items-center justify-center text-xs"
-                                x-text="index + 1"></span>
-                            Suspect Information
-                        </h3>
+                    <div
+                        class="flex flex-wrap justify-between items-center px-6 py-4 bg-slate-50/80 border-b border-slate-200 gap-4">
+                        <div class="flex flex-wrap items-center gap-6">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <span
+                                    class="bg-indigo-100 text-indigo-700 w-5 h-5 rounded-md flex items-center justify-center text-xs"
+                                    x-text="index + 1"></span>
+                                Suspect Information
+                            </h3>
+
+                            <!-- Catchy Entity Type Selection -->
+                            <div class="inline-flex p-1 bg-indigo-600 rounded-full shadow-inner">
+                                <label class="relative flex-1 cursor-pointer min-w-[150px] text-center mb-0">
+                                    <input type="radio" x-model="acc.entity_type" value="Person"
+                                        x-bind:name="`accused[${index}][entity_type]`" class="sr-only">
+                                    <div class="px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2"
+                                        :class="acc.entity_type === 'Person' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-100 hover:text-white'">
+                                        <i data-lucide="user" class="w-4 h-4"></i> Person
+                                    </div>
+                                </label>
+                                <label class="relative flex-1 cursor-pointer min-w-[150px] text-center mb-0">
+                                    <input type="radio" x-model="acc.entity_type" value="Firm"
+                                        x-bind:name="`accused[${index}][entity_type]`"
+                                        @change="if(acc.addresses.length > 0 && acc.addresses[0].address_type === 'Permanent') acc.addresses[0].address_type = 'Office';"
+                                        class="sr-only">
+                                    <div class="px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2"
+                                        :class="acc.entity_type === 'Firm' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-100 hover:text-white'">
+                                        <i data-lucide="building-2" class="w-4 h-4"></i> Firm / Project
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
                         <button type="button" @click="removeAccused(index)" x-show="accused.length > 1"
-                            class="text-rose-600 hover:text-rose-700 text-xs font-semibold flex items-center gap-1">
+                            class="text-rose-600 hover:text-rose-700 text-xs font-semibold flex items-center gap-1 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors">
                             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove
                         </button>
                     </div>
 
-                    <div class="p-6">
+                    <div class="p-6 pt-7">
                         <!-- Fields -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            <div>
+                        <div class="grid gap-6 mb-8"
+                            :class="acc.entity_type === 'Firm' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'">
+                            <div x-show="acc.entity_type === 'Person'">
                                 <x-input label="Name" name="acc_name" x-bind:name="`accused[${index}][name]`"
-                                    x-model="acc.name" placeholder="Full Name" />
+                                    x-model="acc.name" placeholder="Full Name"
+                                    x-bind:required="acc.entity_type === 'Person'" />
+                            </div>
+                            <div x-show="acc.entity_type === 'Firm'">
+                                <x-input label="Firm / Project Name" name="acc_firm_name"
+                                    x-bind:name="`accused[${index}][name]`" x-model="acc.name"
+                                    placeholder="Firm / Project Name" x-bind:required="acc.entity_type === 'Firm'" />
+                            </div>
+                            <div x-show="acc.entity_type === 'Firm'" x-cloak>
+                                <x-input label="Contact Person / Representative" name="acc_contact_person"
+                                    x-bind:name="`accused[${index}][contact_person]`" x-model="acc.contact_person"
+                                    placeholder="Eg: Manager, Director, etc." />
                             </div>
                             <div>
                                 <x-input label="Phone Number" name="acc_phone" x-bind:name="`accused[${index}][phone]`"
@@ -368,9 +406,9 @@
                                             </div>
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <x-select label="District" 
+                                                    <x-select label="District"
                                                         x-bind:name="`accused[${index}][addresses][${addrIndex}][district_id]`"
-                                                        x-model="addr.district_id" placeholder="Select District" 
+                                                        x-model="addr.district_id" placeholder="Select District"
                                                         :options="$districts->pluck('district_name', 'district_id')->toArray()" />
                                                 </div>
                                                 <div>
@@ -730,7 +768,7 @@
                     proposed_action: `{!! addslashes(old('proposed_action')) !!}`
                 },
                 complainants: @json(old('complainants')) || [{ id: Date.now(), name: '', phone: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
-                accused: @json(old('accused')) || [{ id: Date.now() + 1, name: '', phone: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
+                accused: @json(old('accused')) || [{ id: Date.now() + 1, entity_type: 'Person', contact_person: '', name: '', phone: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
 
 
                 nextStep() {
@@ -1099,7 +1137,7 @@
                     const last = this.accused[this.accused.length - 1];
                     if (last.name.trim() !== '') {
                         this.accused.push({
-                            id: Date.now(), name: '', phone: '',
+                            id: Date.now(), entity_type: 'Person', contact_person: '', name: '', phone: '',
                             addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }]
                         });
                         this.refreshIcons();
