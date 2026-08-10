@@ -150,9 +150,13 @@
                                             <h4 class="font-bold text-gray-900">{{ $name }}</h4>
                                         </div>
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
-                                            @if($first->contact_person)
-                                                <div class="text-xs"><span class="text-gray-600 block mb-0.5">Contact Person:</span> <span
-                                                        class="font-semibold text-gray-900">{{ $first->contact_person }}</span></div>
+                                            @if($first->designation)
+                                                <div class="text-xs"><span class="text-gray-600 block mb-0.5">Designation:</span> <span
+                                                        class="font-semibold text-gray-900">{{ $first->designation->designation_name }}</span></div>
+                                            @endif
+                                            @if($first->department)
+                                                <div class="text-xs"><span class="text-gray-600 block mb-0.5">Department:</span> <span
+                                                        class="font-semibold text-gray-900">{{ $first->department->department_name }}</span></div>
                                             @endif
                                             <div class="text-xs"><span class="text-gray-600 block mb-0.5">Phone:</span> <span
                                                     class="font-semibold text-gray-900">{{ $first->phone ?? 'N/A' }}</span></div>
@@ -162,9 +166,21 @@
                                             <span class="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold tracking-widest uppercase rounded mb-1">Person</span>
                                             <h4 class="font-bold text-gray-900">{{ $name }}</h4>
                                         </div>
-                                        <div class="grid grid-cols-1 gap-2 mb-4">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+                                            @if($first->designation)
+                                                <div class="text-xs"><span class="text-gray-600 block mb-0.5">Designation:</span> <span
+                                                        class="font-semibold text-gray-900">{{ $first->designation->designation_name }}</span></div>
+                                            @endif
+                                            @if($first->department)
+                                                <div class="text-xs"><span class="text-gray-600 block mb-0.5">Department:</span> <span
+                                                        class="font-semibold text-gray-900">{{ $first->department->department_name }}</span></div>
+                                            @endif
                                             <div class="text-xs"><span class="text-gray-600 block mb-0.5">Phone:</span> <span
                                                     class="font-semibold text-gray-900">{{ $first->phone ?? 'N/A' }}</span></div>
+                                            @if(!empty($first->pen_number))
+                                                <div class="text-xs"><span class="text-gray-600 block mb-0.5">PEN Number:</span> <span
+                                                        class="font-semibold text-gray-900">{{ $first->pen_number }}</span></div>
+                                            @endif
                                         </div>
                                     @endif
 

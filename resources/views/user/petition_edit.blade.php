@@ -373,18 +373,19 @@
 
                                     <!-- Catchy Entity Type Selection -->
                                     <div class="inline-flex p-1 bg-indigo-600 rounded-full shadow-inner">
-                                        <label class="relative flex-1 cursor-pointer min-w-[100px] text-center mb-0">
+                                        <label class="relative flex-1 cursor-pointer min-w-[150px] text-center mb-0">
                                             <input type="radio" x-model="acc.entity_type" value="Person"
-                                                x-bind:name="`accused[${index}][entity_type]`" class="sr-only">
+                                                x-bind:name="`accused[${index}][entity_type]`"
+                                                @change="changeEntityType(index, 'Person')" class="sr-only">
                                             <div class="px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2"
                                                 :class="acc.entity_type === 'Person' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-100 hover:text-white'">
                                                 <i data-lucide="user" class="w-4 h-4"></i> Person
                                             </div>
                                         </label>
-                                        <label class="relative flex-1 cursor-pointer min-w-[130px] text-center mb-0">
+                                        <label class="relative flex-1 cursor-pointer min-w-[150px] text-center mb-0">
                                             <input type="radio" x-model="acc.entity_type" value="Firm"
                                                 x-bind:name="`accused[${index}][entity_type]`"
-                                                @change="if(acc.addresses.length > 0 && acc.addresses[0].address_type === 'Permanent') acc.addresses[0].address_type = 'Office';"
+                                                @change="changeEntityType(index, 'Firm')"
                                                 class="sr-only">
                                             <div class="px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2"
                                                 :class="acc.entity_type === 'Firm' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-100 hover:text-white'">
@@ -402,27 +403,44 @@
 
                             <div class="p-6 pt-7">
                                 <!-- Fields -->
-                                <div class="grid gap-6 mb-8"
-                                    :class="acc.entity_type === 'Firm' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'">
-                                    <div x-show="acc.entity_type === 'Person'">
-                                        <x-input label="Full Name *" name="acc_name" x-bind:name="`accused[${index}][name]`"
-                                            x-model="acc.name" x-bind:required="step === 3 && acc.entity_type === 'Person'"
-                                            placeholder="Legal Name" />
-                                    </div>
-                                    <div x-show="acc.entity_type === 'Firm'">
-                                        <x-input label="Firm / Project Name *" name="acc_firm_name"
-                                            x-bind:name="`accused[${index}][name]`" x-model="acc.name"
-                                            x-bind:required="step === 3 && acc.entity_type === 'Firm'"
-                                            placeholder="Firm / Project Name" />
-                                    </div>
-                                    <div x-show="acc.entity_type === 'Firm'" x-cloak>
-                                        <x-input label="Contact Person" name="acc_contact_person"
-                                            x-bind:name="`accused[${index}][contact_person]`" x-model="acc.contact_person"
-                                            placeholder="Representative Name" />
-                                    </div>
-                                    <div><x-input label="Phone" name="acc_phone" x-bind:name="`accused[${index}][phone]`"
-                                            x-model="acc.phone" /></div>
-                                </div>
+                                 <div class="space-y-6 mb-8">
+                                     <!-- Row 1: Name, Phone, and optional PEN -->
+                                     <div class="grid gap-6 grid-cols-1" :class="acc.entity_type === 'Person' ? 'md:grid-cols-3' : 'md:grid-cols-2'">
+                                         <div x-show="acc.entity_type === 'Person'">
+                                             <x-input label="Full Name *" name="acc_name" x-bind:name="`accused[${index}][name]`"
+                                                 x-model="acc.name" x-bind:required="step === 3 && acc.entity_type === 'Person'"
+                                                 placeholder="Legal Name" />
+                                         </div>
+                                         <div x-show="acc.entity_type === 'Firm'">
+                                             <x-input label="Firm / Project Name *" name="acc_firm_name"
+                                                 x-bind:name="`accused[${index}][name]`" x-model="acc.name"
+                                                 x-bind:required="step === 3 && acc.entity_type === 'Firm'"
+                                                 placeholder="Firm / Project Name" />
+                                         </div>
+                                         <div>
+                                             <x-input label="Phone" name="acc_phone" x-bind:name="`accused[${index}][phone]`"
+                                                 x-model="acc.phone" placeholder="Mobile Number" />
+                                         </div>
+                                         <div x-show="acc.entity_type === 'Person'">
+                                             <x-input label="PEN Number" name="acc_pen_number" x-bind:name="`accused[${index}][pen_number]`"
+                                                 x-model="acc.pen_number" placeholder="6 or 7 digit PEN" pattern="\d{6,7}" title="PEN must be 6 or 7 digits" />
+                                         </div>
+                                     </div>
+
+                                     <!-- Row 2: Designation and Department -->
+                                     <div class="grid gap-6 grid-cols-1 md:grid-cols-2">
+                                         <div>
+                                             <x-searchable-select label="Designation"
+                                                 x-bind:name="`accused[${index}][designation_id]`" x-model="acc.designation_id"
+                                                 :options="$designations->pluck('designation_name', 'id')->toArray()" placeholder="Select Designation" />
+                                         </div>
+                                         <div>
+                                             <x-searchable-select label="Department"
+                                                 x-bind:name="`accused[${index}][department_id]`" x-model="acc.department_id"
+                                                 :options="$departments->pluck('department_name', 'id')->toArray()" placeholder="Select Department" />
+                                         </div>
+                                     </div>
+                                 </div>
 
                                 <!-- Nested Addresses -->
                                 <div>
@@ -506,7 +524,7 @@
                         </div>
                     </template>
 
-                    <div class="pt-2 text-center">
+                    <div class="pt-2 text-center" x-show="accused.length > 0 && accused[accused.length - 1].name.trim() !== ''">
                         <button type="button" @click="addAccused()"
                             class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 transition-all flex items-center justify-center gap-2 w-full">
                             <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Suspect
@@ -650,14 +668,31 @@
                     }
                 },
                 addAccused() {
-                    this.accused.push({
-                        id: Date.now(), entity_type: 'Person', contact_person: '', name: '', phone: '',
-                        addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }]
-                    });
-                    this.refreshIcons();
+                    const last = this.accused[this.accused.length - 1];
+                    if (!last || last.name.trim() !== '') {
+                        this.accused.push({
+                            id: Date.now(), entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '',
+                            addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }]
+                        });
+                        this.refreshIcons();
+                    }
                 },
                 removeAccused(index) {
                     if (this.accused.length > 1) this.accused.splice(index, 1);
+                },
+                changeEntityType(accIndex, newType) {
+                    let acc = this.accused[accIndex];
+                    acc.entity_type = newType;
+                    if (newType === 'Firm') {
+                        if (acc.addresses.length > 0 && acc.addresses[0].address_type === 'Permanent') {
+                            acc.addresses[0].address_type = 'Office';
+                        }
+                    } else {
+                        if (acc.addresses.length > 0 && acc.addresses[0].address_type === 'Office') {
+                            acc.addresses[0].address_type = 'Permanent';
+                        }
+                    }
+                    this.refreshIcons();
                 },
                 addAccusedAddress(accIndex) {
                     if (this.accused[accIndex].addresses.length < 3) {

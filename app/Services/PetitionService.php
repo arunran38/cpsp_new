@@ -112,7 +112,9 @@ class PetitionService
             $personName = $person['name'];
             $phone = $person['phone'] ?? null;
             $entityType = $person['entity_type'] ?? 'Person';
-            $contactPerson = $person['contact_person'] ?? null;
+            $designationId = $person['designation_id'] ?? null;
+            $departmentId = $person['department_id'] ?? null;
+            $penNumber = $person['pen_number'] ?? null;
 
             if (isset($person['addresses']) && is_array($person['addresses'])) {
                 foreach ($person['addresses'] as $index => $addr) {
@@ -125,10 +127,12 @@ class PetitionService
                         'person_name' => $personName,
                         'person_type' => $type,
                         'entity_type' => $entityType,
-                        'contact_person' => $contactPerson,
+                        'designation_id' => $designationId,
+                        'department_id' => $departmentId,
                         'address_type' => $addr['address_type'] ?? 'Temporary',
                         'is_primary' => ($index === 0),
                         'phone' => $phone,
+                        'pen_number' => $penNumber,
                         'full_address' => $addr['address'],
                         'district_id' => !empty($addr['district_id']) ? $addr['district_id'] : null,
                         'pincode' => $addr['pincode'] ?? null,

@@ -20,4 +20,14 @@ class Address extends Model
     {
         return $this->belongsTo(District::class, 'district_id');
     }
+
+    public function designation()
+    {
+        return $this->belongsTo(DesignationList::class, 'designation_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(DepartmentList::class, 'department_id');
+    }
 }

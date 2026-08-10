@@ -34,7 +34,9 @@ class PetitionController extends Controller
     public function create(): View
     {
         $districts = \App\Models\District::orderBy('district_id')->get();
-        return view('user.petition_add', compact('districts'));
+        $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
+        $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
+        return view('user.petition_add', compact('districts', 'designations', 'departments'));
     }
 
     /**
@@ -122,7 +124,7 @@ class PetitionController extends Controller
      */
     public function show($id): View
     {
-        $petition = Petition::with(['addresses', 'uploads'])->findOrFail($id);
+        $petition = Petition::with(['addresses.designation', 'addresses.department', 'uploads'])->findOrFail($id);
         $this->authorize('view', $petition);
         return view('user.petition_show', compact('petition'));
     }
@@ -144,7 +146,9 @@ class PetitionController extends Controller
         $accused = $this->formatAddressesForAlpine($petition, 'Accused');
 
         $districts = \App\Models\District::orderBy('district_id')->get();
-        return view('user.petition_edit', compact('petition', 'complainants', 'accused', 'districts'));
+        $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
+        $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
+        return view('user.petition_edit', compact('petition', 'complainants', 'accused', 'districts', 'designations', 'departments'));
     }
 
     /**
@@ -277,7 +281,9 @@ class PetitionController extends Controller
                     'name' => (string) $name,
                     'phone' => (string) $first->phone,
                     'entity_type' => $first->entity_type ?? 'Person',
-                    'contact_person' => (string) $first->contact_person,
+                    'designation_id' => (string) $first->designation_id,
+                    'department_id' => (string) $first->department_id,
+                    'pen_number' => (string) $first->pen_number,
                     'addresses' => $addresses->map(fn($addr) => [
                         'address_type' => (string) $addr->address_type,
                         'address' => (string) $addr->full_address,

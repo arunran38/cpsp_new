@@ -26,14 +26,16 @@ class StorePetitionRequest extends FormRequest
             'proposed_action' => 'nullable|string',
             'mode_others' => 'nullable|string',
             'complainants' => 'nullable|array',
-            'complainants.*.name' => 'required|string',
+            'complainants.*.name' => 'nullable|string',
             'complainants.*.phone' => 'nullable|string',
             'complainants.*.addresses' => 'nullable|array',
             'accused' => 'nullable|array',
-            'accused.*.entity_type' => 'required|in:Person,Firm/Project',
+            'accused.*.entity_type' => 'required|in:Person,Firm',
             'accused.*.name' => 'required|string',
-            'accused.*.contact_person' => 'nullable|required_if:accused.*.entity_type,Firm|string',
+            'accused.*.designation_id' => 'nullable|exists:designation_lists,id',
+            'accused.*.department_id' => 'nullable|exists:department_lists,id',
             'accused.*.phone' => 'nullable|string',
+            'accused.*.pen_number' => 'nullable|digits_between:6,7',
             'accused.*.addresses' => 'nullable|array',
         ];
     }
@@ -42,6 +44,7 @@ class StorePetitionRequest extends FormRequest
     {
         return [
             'date_of_petition_received.before_or_equal' => 'Date cannot be in the future.',
+            'accused.*.pen_number.digits_between' => 'The PEN number must be either 6 or 7 digits.',
         ];
     }
 }
