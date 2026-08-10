@@ -57,21 +57,21 @@
                                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                                         <i data-lucide="calendar" class="h-4 w-4 text-slate-400"></i>
                                     </div>
-                                    <input type="date" name="date_from" value="{{ $dateFrom }}"
+                                    <input type="date" name="date_from" value="{{ $dateFrom }}" placeholder="DD-MM-YYYY"
                                         max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300">
+                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300" style="color: #1e40af !important;">
                                 </div>
                             </div>
-
+ 
                             <div class="w-full sm:w-auto flex-1 space-y-1.5">
                                 <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Date To</label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                                         <i data-lucide="calendar" class="h-4 w-4 text-slate-400"></i>
                                     </div>
-                                    <input type="date" name="date_to" value="{{ $dateTo }}"
+                                    <input type="date" name="date_to" value="{{ $dateTo }}" placeholder="DD-MM-YYYY"
                                         max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300">
+                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300" style="color: #1e40af !important;">
                                 </div>
                             </div>
 
@@ -131,15 +131,17 @@
                                 title="Forwarded Petitions">Forwarded Petitions</th>
                             <th class="px-6 py-4 align-middle border-r border-slate-200" rowspan="2"
                                 title="Verification Reports">Verification Reports Received</th>
-                            <th class="px-6 py-2 border-b border-slate-200 bg-slate-100/50" colspan="7">Final Decisions
+                            <th class="px-6 py-2 border-b border-slate-200 bg-slate-100/50" colspan="9">Final Decisions
                             </th>
                         </tr>
                         <tr class="bg-slate-50">
                             <th class="px-4 py-2 border-r border-slate-200 bg-slate-100/50" title="Total Final Decisions">
                                 Final Decisions</th>
+                            <th class="px-3 py-2 border-r border-slate-200">VC</th>
+                            <th class="px-3 py-2 border-r border-slate-200">VE</th>
                             <th class="px-3 py-2 border-r border-slate-200">PE</th>
                             <th class="px-3 py-2 border-r border-slate-200">SC</th>
-                            <th class="px-3 py-2 border-r border-slate-200">QV</th>
+                            <th class="px-3 py-2 border-r border-slate-200">CV</th>
                             <th class="px-3 py-2 border-r border-slate-200">ICell</th>
                             <th class="px-3 py-2 border-r border-slate-200">Closed</th>
                             <th class="px-3 py-2">Sent to Govt</th>
@@ -162,16 +164,18 @@
                                 <td class="px-6 py-4 text-center">{{ $seat->vr_received_count }}</td>
                                 <td class="px-6 py-4 text-center font-bold bg-slate-50">{{ $seat->decisions_made_count }}
                                 </td>
+                                <td class="px-6 py-4 text-center">{{ $seat->decisions_vc_count }}</td>
+                                <td class="px-6 py-4 text-center">{{ $seat->decisions_ve_count }}</td>
                                 <td class="px-6 py-4 text-center">{{ $seat->decisions_pe_count }}</td>
                                 <td class="px-6 py-4 text-center">{{ $seat->decisions_sc_count }}</td>
-                                <td class="px-6 py-4 text-center">{{ $seat->decisions_qv_count }}</td>
+                                <td class="px-6 py-4 text-center">{{ $seat->decisions_cv_count }}</td>
                                 <td class="px-6 py-4 text-center">{{ $seat->decisions_icell_count }}</td>
                                 <td class="px-6 py-4 text-center">{{ $seat->decisions_closed_count }}</td>
                                 <td class="px-6 py-4 text-center">{{ $seat->decisions_sent_count }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="12" class="text-center py-10 text-slate-500">
+                                <td colspan="14" class="text-center py-10 text-slate-500">
                                     No data found
                                 </td>
                             </tr>
@@ -190,9 +194,11 @@
                                 <td class="text-center">{{ $seats->sum('vr_received_count') }}</td>
                                 <td class="text-center font-bold bg-indigo-100/50">{{ $seats->sum('decisions_made_count') }}
                                 </td>
+                                <td class="text-center">{{ $seats->sum('decisions_vc_count') }}</td>
+                                <td class="text-center">{{ $seats->sum('decisions_ve_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('decisions_pe_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('decisions_sc_count') }}</td>
-                                <td class="text-center">{{ $seats->sum('decisions_qv_count') }}</td>
+                                <td class="text-center">{{ $seats->sum('decisions_cv_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('decisions_icell_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('decisions_closed_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('decisions_sent_count') }}</td>

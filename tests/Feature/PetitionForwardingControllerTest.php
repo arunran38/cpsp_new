@@ -43,6 +43,7 @@ class PetitionForwardingControllerTest extends TestCase
             'action' => 'Forward_To_Unit',
             'director_remarks' => 'Please verify this.',
             'to_unit_id' => $unit->unit_id,
+            'forwarded_date' => '2024-03-01',
         ]);
 
         $response->assertStatus(302);
@@ -105,6 +106,7 @@ class PetitionForwardingControllerTest extends TestCase
             'petition_id' => $petition->petition_id,
             'action' => 'Close',
             'director_remarks' => 'Closing based on initial review.',
+            'forwarded_date' => '2024-03-01',
         ]);
 
         $response->assertStatus(302);

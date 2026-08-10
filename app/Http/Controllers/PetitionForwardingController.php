@@ -24,6 +24,7 @@ class PetitionForwardingController extends Controller
             'director_remarks' => 'required|string',
             'to_unit_id' => 'required_if:action,Forward_To_Unit|nullable|exists:units,unit_id',
             'final_order_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:10240',
+            'forwarded_date' => 'required|date|before_or_equal:today',
         ]);
 
         return DB::transaction(function () use ($request) {
@@ -39,7 +40,7 @@ class PetitionForwardingController extends Controller
                         'from_seat_id' => $currentSeatId,
                         'to_unit_id' => $request->to_unit_id,
                         'director_remarks' => $request->director_remarks,
-                        'forwarded_date' => now(),
+                        'forwarded_date' => $request->forwarded_date,
                         'processed_by_user_id' => Auth::id(),
                     ]);
                     $petition->update(['status' => Petition::STATUS_FORWARDED]);
@@ -52,7 +53,7 @@ class PetitionForwardingController extends Controller
                         'decided_by_seat_id' => $currentSeatId,
                         'decision_remarks' => $decisionRemarks,
                         'final_remarks' => $request->director_remarks,
-                        'decision_date' => now(),
+                        'decision_date' => $request->forwarded_date,
                         'processed_by_user_id' => Auth::id(),
                     ]);
                     $petition->update(['status' => $status]);

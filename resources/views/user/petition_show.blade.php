@@ -53,7 +53,7 @@
                             <span
                                 class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
                                 @if($petition->decision)
-                                    Final : {{ $petition->decision->decision_remarks }}
+                                    Final : {{ \App\Models\Decision::getDecisionLabel($petition->decision->decision_remarks) }}
                                 @else
                                     {{ $petition->status }}
                                 @endif
@@ -296,7 +296,6 @@
                                             </svg>
                                         </div>
                                     </div>
-
                                     <div id="final-doc-div-fwd" style="display: none;">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Upload Final Order
                                             Document</label>
@@ -322,6 +321,13 @@
                                                 <path d="m6 9 6 6 6-6" />
                                             </svg>
                                         </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Action Date</label>
+                                        <input type="date" name="forwarded_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
+                                            style="color: #1e40af !important;" required>
                                     </div>
 
                                     <div>
@@ -414,9 +420,9 @@
                                             </div>
                                         @endif
                                         <div class="md:col-span-2">
-                                            <span class="text-gray-600 font-semibold">VR Remarks/Findings:</span>
+                                            <span class="text-gray-600 font-semibold">VR Recommendation:</span>
                                             <span
-                                                class="text-gray-800 block mt-1">{{ $petition->latestForwarding->vr_remarks }}</span>
+                                                class="text-gray-800 block mt-1">{{ \App\Models\Decision::getDecisionLabel($petition->latestForwarding->vr_remarks) ?? $petition->latestForwarding->vr_remarks }}</span>
                                         </div>
 
                                         @php
@@ -467,16 +473,35 @@
                                             <div>
                                                 <label class="block text-sm font-medium text-gray-700 mb-1">VR Date</label>
                                                 <input type="date" placeholder="DD-MM-YYYY" name="vr_date"
-                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900"
+                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
+                                                    style="color: #1e40af !important;"
                                                     required
                                                     max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                                             </div>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">VR Remarks</label>
-                                            <textarea name="vr_remarks" rows="2"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900"
-                                                placeholder="Findings or remarks..." required></textarea>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">VR Recommendation</label>
+                                            <div class="relative flex items-center">
+                                                <select name="vr_remarks"
+                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
+                                                    style="background-image: none !important;" required>
+                                                    <option value="">Select Recommendation...</option>
+                                                    <option value="VC">Vigilance Case (VC)</option>
+                                                    <option value="VE">Vigilance Enquiry (VE)</option>
+                                                    <option value="PE">Preliminary Enquiry (PE)</option>
+                                                    <option value="SC">Surprise Check (SC)</option>
+                                                    <option value="CV">Confidential Verification (CV)</option>
+                                                    <option value="ICell">Intelligence Cell (I Cell)</option>
+                                                    <option value="Closed">Closed</option>
+                                                    <option value="Sent to Govt">Sent to Govt</option>
+                                                </select>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none">
+                                                    <path d="m6 9 6 6 6-6" />
+                                                </svg>
+                                            </div>
                                         </div>
                                         <div class="space-y-5">
                                             <div>
@@ -490,7 +515,8 @@
                                                     class="block text-sm font-medium text-gray-700 mb-1 mt-2 text-blue-700 font-bold tracking-wider text-[11px]">VR
                                                     received in CPSP</label>
                                                 <input type="date" placeholder="DD-MM-YYYY" name="vr_received_at_cpsp_date"
-                                                    class="w-full rounded-lg border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-gray-900 bg-blue-50/20"
+                                                    class="w-full rounded-lg border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-slate-800 font-semibold bg-blue-50/20"
+                                                    style="color: #1e40af !important;"
                                                     max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                                             </div>
                                         </div>
@@ -526,7 +552,8 @@
                                                 in
                                                 CPSP date</label>
                                             <input type="date" placeholder="DD-MM-YYYY" name="vr_received_at_cpsp_date"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-gray-900"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-slate-800 font-semibold"
+                                                style="color: #1e40af !important;"
                                                 value="{{ date('Y-m-d') }}" required
                                                 max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                                         </div>
@@ -547,19 +574,20 @@
                                         <input type="hidden" name="petition_id" value="{{ $petition->petition_id }}">
 
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Decision Remarks
-                                                (Code)</label>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Final Decision</label>
                                             <div class="relative flex items-center">
                                                 <select name="decision_remarks"
                                                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 appearance-none pr-10 py-2 text-sm text-gray-900"
                                                     style="background-image: none !important;" required>
                                                     <option value="">Select...</option>
-                                                    <option value="PE">PE</option>
-                                                    <option value="SC">SC</option>
-                                                    <option value="QV">QV</option>
+                                                    <option value="VC">Vigilance Case (VC)</option>
+                                                    <option value="VE">Vigilance Enquiry (VE)</option>
+                                                    <option value="PE">Preliminary Enquiry (PE)</option>
+                                                    <option value="SC">Surprise Check (SC)</option>
+                                                    <option value="CV">Confidential Verification (CV)</option>
+                                                    <option value="ICell">Intelligence Cell (I Cell)</option>
                                                     <option value="Closed">Closed</option>
                                                     <option value="Sent to Govt">Sent to Govt</option>
-                                                    <option value="ICell">ICell</option>
                                                 </select>
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                                     fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -568,6 +596,12 @@
                                                     <path d="m6 9 6 6 6-6" />
                                                 </svg>
                                             </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Decision Date</label>
+                                            <input type="date" name="decision_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm py-[9px] text-slate-800 font-semibold"
+                                                style="color: #1e40af !important;" required>
                                         </div>
 
                                         <div>
@@ -596,9 +630,9 @@
                                         <h4 class="font-bold text-gray-800 mb-4 border-b border-slate-200 pb-2">Decision Details</h4>
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                             <div>
-                                                <span class="text-gray-600 font-semibold">Decision Code:</span>
+                                                <span class="text-gray-600 font-semibold">Final Decision:</span>
                                                 <span
-                                                    class="text-gray-900 block mt-1">{{ $petition->decision->decision_remarks }}</span>
+                                                    class="text-gray-900 block mt-1">{{ \App\Models\Decision::getDecisionLabel($petition->decision->decision_remarks) }}</span>
                                             </div>
                                             <div>
                                                 <span class="text-gray-600 font-semibold">Decided On:</span>

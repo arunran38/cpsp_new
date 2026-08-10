@@ -26,7 +26,7 @@ class SeatUserController extends Controller
     public function create(Request $request): View
     {
         $users = User::all();
-        $seats = Seat::where('is_active', true)->get();
+        $seats = Seat::where('is_active', true)->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $selectedSeatId = $request->get('seat_id');
         
         return view('admin.seatuser_add', compact('users', 'seats', 'selectedSeatId'));

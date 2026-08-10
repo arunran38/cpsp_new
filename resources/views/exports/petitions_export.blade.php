@@ -25,8 +25,8 @@
             <col style="width: 30pt;"> <!-- # -->
             <col style="width: 80pt;"> <!-- Petition No -->
             <col style="width: 70pt;"> <!-- Received Date -->
-            <col style="width: 100pt;"> <!-- Petitioner -->
-            <col style="width: 100pt;"> <!-- Suspect -->
+            <col style="width: 220pt;"> <!-- Complainant Name & Address -->
+            <col style="width: 220pt;"> <!-- Suspect Name & Address -->
             <col style="width: 90pt;"> <!-- Nature -->
             <col style="width: 250pt;"> <!-- Description -->
             <col style="width: 60pt;"> <!-- Mode -->
@@ -48,15 +48,68 @@
         <tbody>
             @foreach ($petitions as $index => $petition)
                 @php
-                    $complainants = $petition->addresses->where('person_type', 'Complainant')->pluck('person_name')->implode(', ');
-                    $accused = $petition->addresses->where('person_type', 'Accused')->pluck('person_name')->implode(', ');
+                    $complainantsDetails = [];
+                    foreach ($petition->addresses->where('person_type', 'Complainant') as $addr) {
+                        $detail = "<strong>" . e($addr->person_name) . "</strong>";
+                        if ($addr->entity_type === 'Firm' && !empty($addr->contact_person)) {
+                            $detail .= " (Contact: " . e($addr->contact_person) . ")";
+                        }
+                        
+                        $addrParts = [];
+                        if (!empty($addr->full_address)) {
+                            $addrParts[] = e($addr->full_address);
+                        }
+                        if ($addr->district && !empty($addr->district->district_name)) {
+                            $addrParts[] = e($addr->district->district_name);
+                        }
+                        if (!empty($addr->pincode)) {
+                            $addrParts[] = e($addr->pincode);
+                        }
+                        if (!empty($addr->phone)) {
+                            $addrParts[] = "Ph: " . e($addr->phone);
+                        }
+                        
+                        if (count($addrParts) > 0) {
+                            $detail .= "<br>" . implode(', ', $addrParts);
+                        }
+                        
+                        $complainantsDetails[] = $detail;
+                    }
+                    
+                    $accusedDetails = [];
+                    foreach ($petition->addresses->where('person_type', 'Accused') as $addr) {
+                        $detail = "<strong>" . e($addr->person_name) . "</strong>";
+                        if ($addr->entity_type === 'Firm' && !empty($addr->contact_person)) {
+                            $detail .= " (Contact: " . e($addr->contact_person) . ")";
+                        }
+                        
+                        $addrParts = [];
+                        if (!empty($addr->full_address)) {
+                            $addrParts[] = e($addr->full_address);
+                        }
+                        if ($addr->district && !empty($addr->district->district_name)) {
+                            $addrParts[] = e($addr->district->district_name);
+                        }
+                        if (!empty($addr->pincode)) {
+                            $addrParts[] = e($addr->pincode);
+                        }
+                        if (!empty($addr->phone)) {
+                            $addrParts[] = "Ph: " . e($addr->phone);
+                        }
+                        
+                        if (count($addrParts) > 0) {
+                            $detail .= "<br>" . implode(', ', $addrParts);
+                        }
+                        
+                        $accusedDetails[] = $detail;
+                    }
                 @endphp
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td style="mso-number-format:'\@';" class="bold">{{ $petition->petition_no }}</td>
                     <td class="text-center">{{ date('d-m-Y', strtotime($petition->date_of_petition_received)) }}</td>
-                    <td>{{ $complainants }}</td>
-                    <td>{{ $accused }}</td>
+                    <td>{!! implode('<br><br>', $complainantsDetails) !!}</td>
+                    <td>{!! implode('<br><br>', $accusedDetails) !!}</td>
                     <td>{{ $petition->nature_of_petition }}</td>
                     <td>{{ $petition->description }}</td>
                     <td class="text-center">{{ $petition->mode_of_petition_received }}</td>

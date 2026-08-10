@@ -210,7 +210,7 @@
 <body class="h-full font-sans antialiased text-slate-200 bg-slate-950 selection:bg-indigo-500/30 relative" x-data="{ 
         sidebarOpen: false,
         usersOpen: {{ request()->routeIs('users.*') ? 'true' : 'false' }},
-        seatsOpen: {{ request()->routeIs('admin.seats.*') ? 'true' : 'false' }},
+        seatsOpen: {{ request()->routeIs('admin.seats.*') && !request()->routeIs('admin.seats.statistics') ? 'true' : 'false' }},
         petitionsOpen: {{ request()->routeIs('petitions.*') && !request()->routeIs('petitions.reports') ? 'true' : 'false' }}
     }">
 
@@ -326,7 +326,7 @@
                             class="nav-item-transition flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-xl group"
                             :class="(seatsOpen || hoverOpen) ? 'menu-open' : 'inactive-nav'">
                         <div class="flex items-center gap-3">
-                            <i data-lucide="layout" class="w-5 h-5 icon-bounce" :class="(seatsOpen || hoverOpen) || {{ request()->routeIs('admin.seats.*') ? 'true' : 'false' }} ? 'text-indigo-400' : ''"></i>
+                            <i data-lucide="layout" class="w-5 h-5 icon-bounce" :class="(seatsOpen || hoverOpen) || {{ request()->routeIs('admin.seats.*') && !request()->routeIs('admin.seats.statistics') ? 'true' : 'false' }} ? 'text-indigo-400' : ''"></i>
                             <span>Seats</span>
                         </div>
                         <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': seatsOpen || hoverOpen }"></i>

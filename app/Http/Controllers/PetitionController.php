@@ -78,7 +78,7 @@ class PetitionController extends Controller
 
         $seats = [];
         if (Auth::user()->role === 'admin') {
-            $seats = Seat::where('is_active', true)->orderBy('seat_name')->get();
+            $seats = Seat::where('is_active', true)->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         }
 
         if ($request->ajax()) {
@@ -99,7 +99,7 @@ class PetitionController extends Controller
         $filename = "petitions_report_" . $tab . "_" . date('Y-m-d') . ".xls";
         
         // Prepare metadata for the export view
-        $columns = ['#', 'Petition No', 'Received Date', 'Petitioner', 'Respondent', 'Nature', 'Description', 'Mode', 'Status'];
+        $columns = ['#', 'Petition No', 'Received Date', 'Complainant Name & Address', 'Suspect Name & Address', 'Nature', 'Description', 'Mode', 'Status'];
         if (Auth::user()->role === 'admin') $columns[] = 'Seat';
         if ($tab === 'forwarded') $columns[] = 'Unit';
         if ($tab === 'vrs') { $columns[] = 'VR Ref No'; $columns[] = 'VR Date'; }
@@ -240,7 +240,7 @@ class PetitionController extends Controller
         // Apply filters using scopes
         $query->filterByTab($request->get('tab', 'all'))
               ->filterByStatus($request->status, $request->get('tab', 'all'))
-              ->search($request->search)
+              ->search($request->search, $request->search_type)
               ->filterDates($request->date_from, $request->date_to, $request->status, $request->get('tab', 'all'));
 
         // Additional field filters

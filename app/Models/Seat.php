@@ -112,9 +112,11 @@ class Seat extends Model
             },
 
             // Final Decision Type Breakdown
+            'petitionsReceived as decisions_vc_count' => fn($q) => $this->filterDecisionType($q, 'VC', $from, $to),
+            'petitionsReceived as decisions_ve_count' => fn($q) => $this->filterDecisionType($q, 'VE', $from, $to),
             'petitionsReceived as decisions_pe_count' => fn($q) => $this->filterDecisionType($q, 'PE', $from, $to),
             'petitionsReceived as decisions_sc_count' => fn($q) => $this->filterDecisionType($q, 'SC', $from, $to),
-            'petitionsReceived as decisions_qv_count' => fn($q) => $this->filterDecisionType($q, 'QV', $from, $to),
+            'petitionsReceived as decisions_cv_count' => fn($q) => $this->filterDecisionType($q, 'CV', $from, $to),
             'petitionsReceived as decisions_icell_count' => fn($q) => $this->filterDecisionType($q, 'ICell', $from, $to),
             'petitionsReceived as decisions_closed_count' => fn($q) => $this->filterDecisionType($q, 'Closed', $from, $to),
             'petitionsReceived as decisions_sent_count' => fn($q) => $this->filterDecisionType($q, 'Sent to Govt', $from, $to),

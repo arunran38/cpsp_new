@@ -45,4 +45,23 @@ class Decision extends Model
     {
         return $this->belongsTo(Seat::class, 'decided_by_seat_id', 'seat_id');
     }
+
+    /**
+     * Helper to get user-friendly label for decision code
+     */
+    public static function getDecisionLabel(?string $code): string
+    {
+        if (empty($code)) return 'N/A';
+        $labels = [
+            'VC' => 'Vigilance Case (VC)',
+            'VE' => 'Vigilance Enquiry (VE)',
+            'PE' => 'Preliminary Enquiry (PE)',
+            'SC' => 'Surprise Check (SC)',
+            'CV' => 'Confidential Verification (CV)',
+            'ICell' => 'Intelligence Cell (I Cell)',
+            'Closed' => 'Closed',
+            'Sent to Govt' => 'Sent to Govt'
+        ];
+        return $labels[$code] ?? $code;
+    }
 }

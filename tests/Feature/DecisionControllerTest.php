@@ -42,7 +42,8 @@ class DecisionControllerTest extends TestCase
             'petition_id' => $petition->petition_id,
             'decision_remarks' => 'SC',
             'final_remarks' => 'Suggesting SC action.',
-            'final_order_file' => UploadedFile::fake()->create('final_order.pdf', 1000)
+            'final_order_file' => UploadedFile::fake()->create('final_order.pdf', 1000),
+            'decision_date' => '2024-03-01',
         ];
 
         $response = $this->actingAs($this->admin)->post(route('decisions.store'), $decisionData);
@@ -68,6 +69,7 @@ class DecisionControllerTest extends TestCase
             'petition_id' => $petition->petition_id,
             'decision_remarks' => 'Sent to Govt',
             'final_remarks' => 'Sent to higher authorities.',
+            'decision_date' => '2024-03-01',
         ]);
 
         $response->assertStatus(302);

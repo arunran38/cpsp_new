@@ -110,7 +110,7 @@ class Petition extends Model
     {
         if (empty($status)) return $query;
 
-        $finalDecisionStatuses = ['PE', 'SC', 'QV', 'ICell', 'Closed', 'Sent to Govt'];
+        $finalDecisionStatuses = ['VC', 'VE', 'PE', 'SC', 'CV', 'ICell', 'Closed', 'Sent to Govt'];
 
         if ($status === self::STATUS_FORWARDED) {
             return $query->whereHas('forwardings');
@@ -139,19 +139,40 @@ class Petition extends Model
         return $query->where('status', $status);
     }
 
-    public function scopeSearch(Builder $query, ?string $search): Builder
+    public function scopeSearch(Builder $query, ?string $search, ?string $searchType = null): Builder
     {
         if (empty($search)) return $query;
 
-        return $query->where(function ($q) use ($search) {
-            $q->where('petition_no', 'like', "%{$search}%")
-                ->orWhereHas('addresses', function ($q2) use ($search) {
-                    $q2->whereIn('person_type', ['Complainant', 'Accused'])
-                        ->where(function ($q3) use ($search) {
-                            $q3->where('person_name', 'like', "%{$search}%")
-                               ->orWhere('phone', 'like', "%{$search}%");
-                        });
+        return $query->where(function ($q) use ($search, $searchType) {
+            // Only search petition_no if searchType is empty/all or 'petition_no'
+            $matchPetitionNo = empty($searchType) || $searchType === 'petition_no';
+            if ($matchPetitionNo) {
+                $q->where('petition_no', 'like', "%{$search}%");
+            }
+
+            $orWhereHas = $matchPetitionNo ? 'orWhereHas' : 'whereHas';
+
+            $q->$orWhereHas('addresses', function ($q2) use ($search, $searchType) {
+                // Apply targeted filters based on searchType
+                if ($searchType === 'complainant') {
+                    $q2->where('person_type', 'Complainant');
+                } elseif ($searchType === 'suspect') {
+                    $q2->where('person_type', 'Accused')
+                       ->where('entity_type', 'Person');
+                } elseif ($searchType === 'firm') {
+                    $q2->where('person_type', 'Accused')
+                       ->where('entity_type', 'Firm');
+                } else {
+                    // Default to Complainant or Accused
+                    $q2->whereIn('person_type', ['Complainant', 'Accused']);
+                }
+
+                $q2->where(function ($q3) use ($search) {
+                    $q3->where('person_name', 'like', "%{$search}%")
+                       ->orWhere('phone', 'like', "%{$search}%")
+                       ->orWhere('pen_number', 'like', "%{$search}%");
                 });
+            });
         });
     }
 
@@ -159,7 +180,7 @@ class Petition extends Model
     {
         if (!$dateFrom && !$dateTo) return $query;
 
-        $finalDecisionStatuses = ['PE', 'SC', 'QV', 'Closed', 'Sent to Govt', 'ICell'];
+        $finalDecisionStatuses = ['VC', 'VE', 'PE', 'SC', 'CV', 'Closed', 'Sent to Govt', 'ICell'];
 
         $column = 'date_of_petition_received';
         $relation = null;

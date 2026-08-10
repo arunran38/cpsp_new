@@ -46,13 +46,25 @@
                     <input type="hidden" name="tab" value="{{ $tab }}">
 
                     <div class="lg:col-span-2">
-                        <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Search
-                            Text</label>
-                        <div class="relative flex items-center">
-                            <i data-lucide="search" class="w-4 h-4 absolute left-3 text-slate-400"></i>
-                            <input type="text" name="search" value="{{ request('search') }}"
-                                class="w-full pl-9 pr-3 py-2 rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm transition-all bg-white"
-                                placeholder="Petition No, Petitioner, Accused, or Phone...">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Search</label>
+                        <div class="flex gap-2 w-full" style="width: 100%;">
+                            <div class="relative flex items-center" style="width: 30%; min-width: 120px; flex-shrink: 0;">
+                                <select name="search_type"
+                                    class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-semibold text-slate-700 py-2 transition-all bg-white appearance-none pr-8">
+                                    <option value="" class="font-medium text-slate-800 bg-white py-1">All Petitions</option>
+                                    <option value="complainant" {{ request('search_type') == 'complainant' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Complainant</option>
+                                    <option value="suspect" {{ request('search_type') == 'suspect' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Suspect (Accused)</option>
+                                    <option value="firm" {{ request('search_type') == 'firm' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Firm / Project</option>
+                                </select>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-blue-600 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                            <div class="relative flex items-center" style="width: 70%; flex-grow: 1;">
+                                <i data-lucide="search" class="w-4 h-4 absolute left-3 text-blue-600"></i>
+                                <input type="text" name="search" value="{{ request('search') }}"
+                                    class="w-full pl-9 pr-3 py-2 rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm transition-all bg-white text-black font-semibold"
+                                    placeholder="Petition No, Petitioner, Accused, Firm/Project, Phone, or PEN..."
+                                    style="color: #000000 !important;">
+                            </div>
                         </div>
                     </div>
 
@@ -60,14 +72,16 @@
                         <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Date
                             From</label>
                         <input type="date" placeholder="DD-MM-YYYY" name="date_from" value="{{ request('date_from') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                            class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2 transition-all bg-white">
+                            class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2 transition-all bg-white text-slate-800 font-semibold"
+                            style="color: #1e40af !important;">
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Date
                             To</label>
                         <input type="date" placeholder="DD-MM-YYYY" name="date_to" value="{{ request('date_to') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                            class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2 transition-all bg-white">
+                            class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2 transition-all bg-white text-slate-800 font-semibold"
+                            style="color: #1e40af !important;">
                     </div>
 
                     <div class="lg:col-span-1">
@@ -88,20 +102,15 @@
                                         Received at CPSP</option>
                                 </optgroup>
                                 <optgroup label="Final Decisions" class="font-bold text-slate-900 bg-slate-50">
-                                    <option value="All_Final_Decisions" {{ request('status') == 'All_Final_Decisions' ? 'selected' : '' }} class="font-medium text-indigo-600 bg-indigo-50/50 py-1.5 font-bold">All Final
-                                        Decisions</option>
-                                    <option value="PE" {{ request('status') == 'PE' ? 'selected' : '' }}
-                                        class="font-medium text-slate-800 bg-white py-1">PE (Preliminary Enquiry)</option>
-                                    <option value="SC" {{ request('status') == 'SC' ? 'selected' : '' }}
-                                        class="font-medium text-slate-800 bg-white py-1">SC (Surprise Check)</option>
-                                    <option value="QV" {{ request('status') == 'QV' ? 'selected' : '' }}
-                                        class="font-medium text-slate-800 bg-white py-1">QV (Quick Verification)</option>
-                                    <option value="ICell" {{ request('status') == 'ICell' ? 'selected' : '' }}
-                                        class="font-medium text-slate-800 bg-white py-1">ICell</option>
-                                    <option value="Closed" {{ request('status') == 'Closed' ? 'selected' : '' }}
-                                        class="font-medium text-slate-800 bg-white py-1">Closed</option>
-                                    <option value="Sent to Govt" {{ request('status') == 'Sent to Govt' ? 'selected' : '' }}
-                                        class="font-medium text-slate-800 bg-white py-1">Sent to Govt</option>
+                                    <option value="All_Final_Decisions" {{ request('status') == 'All_Final_Decisions' ? 'selected' : '' }} class="font-medium text-indigo-600 bg-indigo-50/50 py-1.5 font-bold">All Final Decisions</option>
+                                    <option value="VC" {{ request('status') == 'VC' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Vigilance Case (VC)</option>
+                                    <option value="VE" {{ request('status') == 'VE' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Vigilance Enquiry (VE)</option>
+                                    <option value="PE" {{ request('status') == 'PE' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Preliminary Enquiry (PE)</option>
+                                    <option value="SC" {{ request('status') == 'SC' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Surprise Check (SC)</option>
+                                    <option value="CV" {{ request('status') == 'CV' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Confidential Verification (CV)</option>
+                                    <option value="ICell" {{ request('status') == 'ICell' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Intelligence Cell (I Cell)</option>
+                                    <option value="Closed" {{ request('status') == 'Closed' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Closed</option>
+                                    <option value="Sent to Govt" {{ request('status') == 'Sent to Govt' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Sent to Govt</option>
                                 </optgroup>
                             </select>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
@@ -202,9 +211,9 @@
                             <label class="block text-sm font-medium text-slate-700 mb-1">Action</label>
                             <div class="relative flex items-center">
                                 <select name="action" x-model="action"
-                                    class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm appearance-none pr-10 text-black"
-                                    style="background-image: none !important;"
-                                    required>
+                                        class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm appearance-none pr-10 text-black"
+                                        style="background-image: none !important;"
+                                        required>
                                     <option value="">Select Action...</option>
                                     <option value="Forward_To_Unit">Forward to Unit</option>
                                     <option value="Sent_to_Govt">Send to Govt (Decision)</option>
@@ -228,6 +237,14 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
                             </div>
                         </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Action Date</label>
+                            <input type="date" name="forwarded_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
+                                style="color: #1e40af !important;" required>
+                        </div>
+
                         <div class="pt-2 border-t border-slate-100 mt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Director Remarks</label>
                             <textarea name="director_remarks" rows="3"
@@ -273,15 +290,30 @@
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">VR Date</label>
                             <input type="date" placeholder="DD-MM-YYYY" name="vr_date"
-                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
+                                style="color: #1e40af !important;"
                                 required max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">VR Remarks</label>
-                        <textarea name="vr_remarks" rows="2"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
-                            placeholder="Enter findings or notes..." required></textarea>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">VR Recommendation</label>
+                        <div class="relative flex items-center">
+                            <select name="vr_remarks"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm appearance-none pr-10 text-black"
+                                style="background-image: none !important;"
+                                required>
+                                <option value="">Select Recommendation...</option>
+                                <option value="VC">Vigilance Case (VC)</option>
+                                <option value="VE">Vigilance Enquiry (VE)</option>
+                                <option value="PE">Preliminary Enquiry (PE)</option>
+                                <option value="SC">Surprise Check (SC)</option>
+                                <option value="CV">Confidential Verification (CV)</option>
+                                <option value="ICell">Intelligence Cell (I Cell)</option>
+                                <option value="Closed">Closed</option>
+                                <option value="Sent to Govt">Sent to Govt</option>
+                            </select>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
                     </div>
                     <div class="space-y-5">
                         <div>
@@ -294,7 +326,9 @@
                                 class="block text-sm font-medium text-blue-600 mb-1 uppercase text-[11px] font-bold tracking-wider">Received
                                 in CPSP Date</label>
                             <input type="date" placeholder="DD-MM-YYYY" name="vr_received_at_cpsp_date"
-                                class="w-full rounded-lg border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-1.5 bg-blue-50/20 text-black px-3" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
+                                class="w-full rounded-lg border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-1.5 bg-blue-50/20 text-slate-800 font-semibold px-3"
+                                style="color: #1e40af !important;"
+                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                         </div>
                     </div>
                     <div class="flex justify-end gap-3 pt-6">
@@ -326,18 +360,26 @@
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Decision Code</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Final Decision</label>
                         <select name="decision_remarks"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-black"
                             required>
                             <option value="">Select...</option>
-                            <option value="PE">PE</option>
-                            <option value="SC">SC</option>
-                            <option value="QV">QV</option>
-                            <option value="ICell">ICell</option>
+                            <option value="VC">Vigilance Case (VC)</option>
+                            <option value="VE">Vigilance Enquiry (VE)</option>
+                            <option value="PE">Preliminary Enquiry (PE)</option>
+                            <option value="SC">Surprise Check (SC)</option>
+                            <option value="CV">Confidential Verification (CV)</option>
+                            <option value="ICell">Intelligence Cell (I Cell)</option>
                             <option value="Closed">Closed</option>
                             <option value="Sent to Govt">Sent to Govt</option>
                         </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Decision Date</label>
+                        <input type="date" name="decision_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-slate-800 font-semibold"
+                            style="color: #1e40af !important;" required>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Final Remarks</label>

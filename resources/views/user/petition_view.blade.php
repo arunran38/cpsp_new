@@ -58,7 +58,17 @@
             <div
                 class="flex flex-wrap items-center gap-2 mb-6 p-1 bg-slate-50/50 rounded-2xl border border-slate-200 animate-in fade-in slide-in-from-top-2 duration-300">
                 @php
-                    $statuses = ['All' => null, 'PE' => 'PE', 'SC' => 'SC', 'QV' => 'QV', 'Closed' => 'Closed', 'Sent to Govt' => 'Sent to Govt', 'ICell' => 'ICell'];
+                    $statuses = [
+                        'All' => null,
+                        'VC' => 'VC',
+                        'VE' => 'VE',
+                        'PE' => 'PE',
+                        'SC' => 'SC',
+                        'CV' => 'CV',
+                        'ICell' => 'ICell',
+                        'Closed' => 'Closed',
+                        'Sent to Govt' => 'Sent to Govt'
+                    ];
                 @endphp
                 @foreach($statuses as $label => $value)
                     <a href="{{ route('petitions.index', ['tab' => 'decisions', 'status' => $value]) }}"
@@ -97,18 +107,20 @@
                             <i data-lucide="search" class="w-4 h-4 absolute left-3 text-slate-400"></i>
                             <input type="text" name="search" value="{{ request('search') }}"
                                 class="w-full pl-9 pr-3 py-[9px] rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
-                                placeholder="Petition No, Petitioner, Accused, or Phone...">
+                                placeholder="Petition No, Petitioner, Accused, Firm/Project, Phone, or PEN...">
                         </div>
                     </div>
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Date From</label>
                         <input type="date" placeholder="DD-MM-YYYY" name="date_from" value="{{ request('date_from') }}"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-black">
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
+                            style="color: #1e40af !important;">
                     </div>
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Date To</label>
                         <input type="date" placeholder="DD-MM-YYYY" name="date_to" value="{{ request('date_to') }}"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-black">
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
+                            style="color: #1e40af !important;">
                     </div>
                     <div class="flex-none">
                         <label class="block text-xs font-medium text-transparent mb-1">&nbsp;</label>
@@ -171,6 +183,13 @@
                                 class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                         </div>
 
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Action Date</label>
+                            <input type="date" name="forwarded_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
+                                style="color: #1e40af !important;" required>
+                        </div>
+
                         <div class="pt-2 border-t border-slate-100 mt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Director Remarks</label>
                             <textarea name="director_remarks" rows="3"
@@ -220,16 +239,27 @@
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">VR Date</label>
                             <input type="date" placeholder="DD-MM-YYYY" name="vr_date"
-                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
+                                style="color: #1e40af !important;"
                                 required
                                 max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">VR Remarks</label>
-                        <textarea name="vr_remarks" rows="2"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
-                            placeholder="Enter findings or notes..." required></textarea>
+                        @php
+                            $vrRecommendationOptions = [
+                                'VC' => 'Vigilance Case (VC)',
+                                'VE' => 'Vigilance Enquiry (VE)',
+                                'PE' => 'Preliminary Enquiry (PE)',
+                                'SC' => 'Surprise Check (SC)',
+                                'CV' => 'Confidential Verification (CV)',
+                                'ICell' => 'Intelligence Cell (I Cell)',
+                                'Closed' => 'Closed',
+                                'Sent to Govt' => 'Sent to Govt'
+                            ];
+                        @endphp
+                        <x-select label="VR Recommendation" name="vr_remarks" :options="$vrRecommendationOptions"
+                            placeholder="Select Recommendation..." required />
                     </div>
                     <div class="space-y-5">
                         <div>
@@ -242,7 +272,8 @@
                                 class="block text-sm font-medium text-blue-600 mb-2 mt-2 tracking-wider text-[11px] font-bold">VR
                                 received in CPSP</label>
                             <input type="date" placeholder="DD-MM-YYYY" name="vr_received_at_cpsp_date"
-                                class="w-full rounded-lg border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-black bg-blue-50/20"
+                                class="w-full rounded-lg border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-slate-800 font-semibold bg-blue-50/20"
+                                style="color: #1e40af !important;"
                                 max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                         </div>
                     </div>
@@ -280,16 +311,25 @@
                     <div class="space-y-4">
                         @php
                             $decisionOptions = [
-                                'PE' => 'PE',
-                                'SC' => 'SC',
-                                'QV' => 'QV',
+                                'VC' => 'Vigilance Case (VC)',
+                                'VE' => 'Vigilance Enquiry (VE)',
+                                'PE' => 'Preliminary Enquiry (PE)',
+                                'SC' => 'Surprise Check (SC)',
+                                'CV' => 'Confidential Verification (CV)',
+                                'ICell' => 'Intelligence Cell (I Cell)',
                                 'Closed' => 'Closed',
-                                'Sent to Govt' => 'Sent to Govt',
-                                'ICell' => 'ICell'
+                                'Sent to Govt' => 'Sent to Govt'
                             ];
                         @endphp
-                        <x-select label="Decision Code" name="decision_remarks" :options="$decisionOptions"
+                        <x-select label="Final Decision" name="decision_remarks" :options="$decisionOptions"
                             placeholder="Select..." required />
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Decision Date</label>
+                            <input type="date" name="decision_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-slate-800 font-semibold"
+                                style="color: #1e40af !important;" required>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Final Remarks</label>

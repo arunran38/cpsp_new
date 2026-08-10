@@ -19,9 +19,10 @@ class DecisionController extends Controller
     {
         $request->validate([
             'petition_id' => 'required|exists:petitions,petition_id',
-            'decision_remarks' => 'required|in:PE,SC,QV,Closed,Sent to Govt,ICell',
+            'decision_remarks' => 'required|in:VC,VE,PE,SC,CV,Closed,Sent to Govt,ICell',
             'final_remarks' => 'nullable|string',
             'final_order_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:10240',
+            'decision_date' => 'required|date|before_or_equal:today',
         ]);
 
         return DB::transaction(function () use ($request) {
@@ -36,7 +37,7 @@ class DecisionController extends Controller
                     'decided_by_seat_id' => $currentSeatId,
                     'decision_remarks' => $request->decision_remarks,
                     'final_remarks' => $request->final_remarks,
-                    'decision_date' => now(),
+                    'decision_date' => $request->decision_date,
                     'processed_by_user_id' => Auth::id(),
                 ]);
 

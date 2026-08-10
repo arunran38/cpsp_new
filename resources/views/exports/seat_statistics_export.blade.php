@@ -18,8 +18,8 @@
 </head>
 <body>
     <table>
-        <tr><td colspan="12" class="header-title" style="border:none;">{{ $mainHeading }}</td></tr>
-        <tr><td colspan="12" style="border:none; height:10px;"></td></tr>
+        <tr><td colspan="14" class="header-title" style="border:none;">{{ $mainHeading }}</td></tr>
+        <tr><td colspan="14" style="border:none; height:10px;"></td></tr>
         
         <colgroup>
             <col style="width: 120pt;"> <!-- Seat -->
@@ -28,9 +28,11 @@
             <col style="width: 60pt;"> <!-- Forwarded Petitions -->
             <col style="width: 60pt;"> <!-- VR Received -->
             <col style="width: 60pt;"> <!-- Total Decisions -->
+            <col style="width: 40pt;"> <!-- VC -->
+            <col style="width: 40pt;"> <!-- VE -->
             <col style="width: 40pt;"> <!-- PE -->
             <col style="width: 40pt;"> <!-- SC -->
-            <col style="width: 40pt;"> <!-- QV -->
+            <col style="width: 40pt;"> <!-- CV -->
             <col style="width: 40pt;"> <!-- ICell -->
             <col style="width: 50pt;"> <!-- Closed -->
             <col style="width: 60pt;"> <!-- Sent Govt -->
@@ -42,13 +44,15 @@
                 <th rowspan="2">New Petitions</th>
                 <th rowspan="2">Forwarded Petitions</th>
                 <th rowspan="2">Verification Reports Received</th>
-                <th colspan="7">Final Decisions</th>
+                <th colspan="9">Final Decisions</th>
             </tr>
             <tr>
                 <th>Total</th>
+                <th>VC</th>
+                <th>VE</th>
                 <th>PE</th>
                 <th>SC</th>
-                <th>QV</th>
+                <th>CV</th>
                 <th>ICell</th>
                 <th>Closed</th>
                 <th>Sent Govt</th>
@@ -63,9 +67,11 @@
                     <td>{{ $seat->forwardings_out_count }}</td>
                     <td>{{ $seat->vr_received_count }}</td>
                     <td class="bold">{{ $seat->decisions_made_count }}</td>
+                    <td>{{ $seat->decisions_vc_count }}</td>
+                    <td>{{ $seat->decisions_ve_count }}</td>
                     <td>{{ $seat->decisions_pe_count }}</td>
                     <td>{{ $seat->decisions_sc_count }}</td>
-                    <td>{{ $seat->decisions_qv_count }}</td>
+                    <td>{{ $seat->decisions_cv_count }}</td>
                     <td>{{ $seat->decisions_icell_count }}</td>
                     <td>{{ $seat->decisions_closed_count }}</td>
                     <td>{{ $seat->decisions_sent_count }}</td>
@@ -80,9 +86,11 @@
                     <td>{{ $seats->sum('forwardings_out_count') }}</td>
                     <td>{{ $seats->sum('vr_received_count') }}</td>
                     <td>{{ $seats->sum('decisions_made_count') }}</td>
+                    <td>{{ $seats->sum('decisions_vc_count') }}</td>
+                    <td>{{ $seats->sum('decisions_ve_count') }}</td>
                     <td>{{ $seats->sum('decisions_pe_count') }}</td>
                     <td>{{ $seats->sum('decisions_sc_count') }}</td>
-                    <td>{{ $seats->sum('decisions_qv_count') }}</td>
+                    <td>{{ $seats->sum('decisions_cv_count') }}</td>
                     <td>{{ $seats->sum('decisions_icell_count') }}</td>
                     <td>{{ $seats->sum('decisions_closed_count') }}</td>
                     <td>{{ $seats->sum('decisions_sent_count') }}</td>

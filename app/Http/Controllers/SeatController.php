@@ -91,7 +91,8 @@ class SeatController extends Controller
 
         $seats = Seat::with('activeAssignment.user')
                      ->withStatistics($from, $to)
-                     ->get();
+                     ->get()
+                     ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
 
         return view('admin.seat_statistics', compact('seats', 'dateFrom', 'dateTo'));
     }
@@ -109,7 +110,8 @@ class SeatController extends Controller
 
         $seats = Seat::with('activeAssignment.user')
                      ->withStatistics($from, $to)
-                     ->get();
+                     ->get()
+                     ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
 
         // Filename generation
         $filenameDateText = $dateFrom && $dateTo ? "{$dateFrom}_to_{$dateTo}" : ($dateFrom ? "from_{$dateFrom}" : ($dateTo ? "up_to_{$dateTo}" : "all_time"));

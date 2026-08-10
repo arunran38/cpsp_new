@@ -222,10 +222,10 @@
                 <form action="{{ url()->current() }}" method="GET" class="flex flex-wrap items-center gap-2">
                     <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
                         <input type="date" placeholder="DD-MM-YYYY" name="start_date" value="{{ $startDate->format('Y-m-d') }}" max="{{ date('Y-m-d') }}"
-                               class="bg-transparent border-none text-[10px] font-bold text-slate-600 focus:ring-0 py-1 cursor-pointer">
+                               class="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer" style="color: #1e40af !important;">
                         <span class="text-slate-300 text-[10px] font-black mx-1">—</span>
                         <input type="date" placeholder="DD-MM-YYYY" name="end_date" value="{{ $endDate->format('Y-m-d') }}" max="{{ date('Y-m-d') }}"
-                               class="bg-transparent border-none text-[10px] font-bold text-slate-600 focus:ring-0 py-1 cursor-pointer">
+                               class="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer" style="color: #1e40af !important;">
                     </div>
                     <button type="submit" class="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
                         <i data-lucide="filter" class="w-4 h-4"></i>
