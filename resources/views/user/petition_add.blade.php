@@ -112,7 +112,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="lg:col-span-1">
                             <x-input label="Petition No *" name="petition_no" x-model="petitionDetails.petition_no" required
-                                placeholder="Ex. PT-2026-001" @input="count = $event.target.value.length"
+                                placeholder="Ex. 12/DVACB/2026-CPSP 5" @input="count = $event.target.value.length"
                                 @blur="validateField($event)" />
                         </div>
                         <div class="lg:col-span-1">
@@ -804,7 +804,7 @@
                 </button>
             </div>
 
-            <div class="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/50">
+            <div class="p-6 overflow-y-auto custom-scrollbar bg-slate-50/50" style="max-height: calc(90vh - 70px);">
                 <p class="text-sm text-slate-600 mb-5">The following petitions share similarities (Name, Phone, or PEN) with
                     your current entry. You can choose to link this new entry to one of them.</p>
 
@@ -816,40 +816,51 @@
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mb-4">
                                     <!-- Petition No -->
                                     <div class="flex items-center gap-3">
-                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider w-24">Petition No:</span>
-                                        <span class="inline-flex text-sm font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100" x-text="dup.petition_no"></span>
+                                        <span
+                                            class="text-xs font-bold text-slate-500 uppercase tracking-wider w-24">Petition
+                                            No:</span>
+                                        <span
+                                            class="inline-flex text-sm font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100"
+                                            x-text="dup.petition_no"></span>
                                     </div>
                                     <!-- Date -->
                                     <div class="flex items-center gap-3">
-                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider w-24">Date:</span>
-                                        <span class="text-sm font-semibold text-slate-700 flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">
-                                            <i data-lucide="calendar" class="w-4 h-4 text-indigo-400"></i> <span x-text="dup.date"></span>
+                                        <span
+                                            class="text-xs font-bold text-slate-500 uppercase tracking-wider w-24">Date:</span>
+                                        <span
+                                            class="text-sm font-semibold text-slate-700 flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">
+                                            <i data-lucide="calendar" class="w-4 h-4 text-indigo-400"></i> <span
+                                                x-text="dup.date"></span>
                                         </span>
                                     </div>
                                     <!-- Complainant -->
                                     <div class="flex items-start gap-3 sm:col-span-2">
-                                        <span class="text-xs font-bold text-indigo-900 uppercase tracking-wider w-24 shrink-0 mt-0.5">Complainant:</span>
+                                        <span
+                                            class="text-xs font-bold text-indigo-900 uppercase tracking-wider w-24 shrink-0 mt-0.5">Complainant:</span>
                                         <span class="text-sm font-medium text-slate-800" x-text="dup.complainant"></span>
                                     </div>
                                     <!-- Suspect -->
                                     <div class="flex items-start gap-3 sm:col-span-2">
-                                        <span class="text-xs font-bold text-rose-900 uppercase tracking-wider w-24 shrink-0 mt-0.5">Suspect:</span>
+                                        <span
+                                            class="text-xs font-bold text-rose-900 uppercase tracking-wider w-24 shrink-0 mt-0.5">Suspect:</span>
                                         <span class="text-sm font-medium text-slate-800" x-text="dup.accused"></span>
                                     </div>
                                 </div>
 
-                                <div class="mt-2 bg-gradient-to-r from-slate-50 to-white p-3 rounded-xl border border-slate-100 shadow-inner">
+                                <div
+                                    class="mt-2 bg-gradient-to-r from-slate-50 to-white p-3 rounded-xl border border-slate-100 shadow-inner">
                                     <p class="text-sm text-slate-600 italic line-clamp-2" x-text="dup.description"></p>
                                 </div>
 
                                 <div class="mt-4 flex flex-wrap items-center gap-2">
                                     <span class="px-2.5 py-1 bg-slate-100 border border-slate-200 rounded-md text-xs">
-                                        <span class="text-slate-500 font-semibold uppercase tracking-wider">Status:</span> 
+                                        <span class="text-slate-500 font-semibold uppercase tracking-wider">Status:</span>
                                         <span class="font-bold text-slate-700 ml-1" x-text="dup.status"></span>
                                     </span>
                                     <template x-if="dup.decision">
-                                        <span class="px-2.5 py-1 bg-blue-50 border border-blue-100 text-blue-700 rounded-md text-xs">
-                                            <span class="font-semibold uppercase tracking-wider">Decision:</span> 
+                                        <span
+                                            class="px-2.5 py-1 bg-blue-50 border border-blue-100 text-blue-700 rounded-md text-xs">
+                                            <span class="font-semibold uppercase tracking-wider">Decision:</span>
                                             <span class="font-bold ml-1" x-text="dup.decision"></span>
                                         </span>
                                     </template>
@@ -1125,6 +1136,12 @@
                                 } else {
                                     this.formErrors[fieldName] = '';
                                 }
+                            } else if (fieldName.includes('[pen_number]') || fieldName === 'acc_pen_number') {
+                                if (!/^\d{6,7}$/.test(fieldValue.replace(/\D/g, ''))) {
+                                    this.formErrors[fieldName] = 'PEN must be 6 or 7 digits.';
+                                } else {
+                                    this.formErrors[fieldName] = '';
+                                }
                             } else {
                                 // For other fields in Step 2/3, clear errors if they have valid input
                                 this.formErrors[fieldName] = '';
@@ -1241,6 +1258,10 @@
 
                         } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode') {
                             if (!fieldValue || /^\d{6}$/.test(fieldValue.replace(/\D/g, ''))) {
+                                this.formErrors[fieldName] = '';
+                            }
+                        } else if (fieldName.includes('[pen_number]') || fieldName === 'acc_pen_number') {
+                            if (!fieldValue || /^\d{6,7}$/.test(fieldValue.replace(/\D/g, ''))) {
                                 this.formErrors[fieldName] = '';
                             }
                         } else if (fieldName.includes('[name]') || fieldName === 'comp_name') {

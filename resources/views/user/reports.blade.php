@@ -151,7 +151,7 @@
                         </div>
                     </div>
 
-                    @if(auth()->user()->role === 'admin' && isset($seats))
+                    @if(auth()->user()->role === 'admin' && !session('is_impersonating_seat') && isset($seats))
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Filter by
                                 Seat</label>

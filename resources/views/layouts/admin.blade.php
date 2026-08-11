@@ -554,6 +554,22 @@
             // Only run if icons aren't already created
             lucide.createIcons();
         });
+        // Global date picker trigger
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'INPUT' && e.target.type === 'date') {
+                try { e.target.showPicker(); } catch(err) {}
+            } else {
+                let wrapper = e.target.closest('div');
+                if (wrapper && wrapper.children.length > 0) {
+                    for (let i = 0; i < wrapper.children.length; i++) {
+                        if (wrapper.children[i].tagName === 'INPUT' && wrapper.children[i].type === 'date') {
+                            try { wrapper.children[i].showPicker(); } catch(err) {}
+                            break;
+                        }
+                    }
+                }
+            }
+        });
     </script>
     @yield('scripts')
     @include('sweetalert::alert')
