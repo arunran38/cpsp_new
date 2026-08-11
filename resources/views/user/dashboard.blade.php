@@ -9,11 +9,11 @@
     $isImpersonating = session('is_impersonating_seat', false);
     
     if ($currentSeat) {
-        $petitions = \App\Models\Petition::where('seat_id', $currentSeat->seat_id)->get();
+        $petitions = \App\Models\Petition::where('seat_id', $currentSeat->seat_id)->whereNull('linked_petition_id')->get();
     } elseif ($user->role === 'admin') {
-        $petitions = \App\Models\Petition::all();
+        $petitions = \App\Models\Petition::whereNull('linked_petition_id')->get();
     } else {
-        $petitions = \App\Models\Petition::where('user_id', $user->user_id)->get();
+        $petitions = \App\Models\Petition::where('user_id', $user->user_id)->whereNull('linked_petition_id')->get();
     }
 
     // Stat Metrics

@@ -24,12 +24,18 @@
                     </td>
                     <td class="px-6 py-4">
                         <span class="font-bold text-slate-800">{{ $petition->petition_no }}</span>
+                        @if($petition->originalPetition)
+                            <span class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-orange-100 text-orange-700 border border-orange-200">
+                                <i data-lucide="link" class="w-3 h-3"></i> Linked
+                            </span>
+                        @endif
                         <span
                             class="block text-xs text-slate-500 mt-1">{{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}</span>
                     </td>
                     <td class="px-6 py-4 text-slate-600">
                         @php
-                            $complainants = $petition->addresses->where('person_type', 'Complainant')->unique('person_name');
+                            $targetPetition = $petition->originalPetition ?? $petition;
+                            $complainants = $targetPetition->addresses->where('person_type', 'Complainant')->unique('person_name');
                         @endphp
                         @if($complainants->count() > 0)
                             @foreach($complainants as $complainant)
@@ -42,7 +48,7 @@
                     </td>
                     <td class="px-6 py-4 max-w-xs text-slate-700">
                         @php
-                            $accused = $petition->addresses->where('person_type', 'Accused')->unique('person_name');
+                            $accused = $targetPetition->addresses->where('person_type', 'Accused')->unique('person_name');
                         @endphp
                         @if($accused->count() > 0)
                             @foreach($accused as $accuse)
@@ -53,32 +59,32 @@
                             <span class="text-slate-400 italic">N/A</span>
                         @endif
                         <span class="block text-xs text-indigo-500 mt-2 truncate w-full"
-                            title="{{ $petition->nature_of_petition }}">{{ $petition->nature_of_petition }}</span>
+                            title="{{ $targetPetition->nature_of_petition }}">{{ $targetPetition->nature_of_petition }}</span>
 
                     </td>
                     <td class="px-6 py-4 text-slate-600">
                         <span
                             class="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700">
-                            {{ $petition->mode_of_petition_received }}
+                            {{ $targetPetition->mode_of_petition_received }}
                         </span>
                     </td>
                     <td class="px-6 py-4 text-slate-600">
                         <span
                             class="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 max-w-[150px] truncate"
-                            title="{{ $petition->description }}">
-                            {{ $petition->description }}
+                            title="{{ $targetPetition->description }}">
+                            {{ $targetPetition->description }}
                         </span>
                     </td>
                     <td class="px-6 py-4 text-center">
-                        @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt')
+                        @if($targetPetition->status === 'Closed' || $targetPetition->status === 'Sent_to_Govt')
                             <span
                                 class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-700">
-                                Final : {{ $petition->decision->decision_remarks ?? $petition->status }}
+                                Final : {{ $targetPetition->decision->decision_remarks ?? $targetPetition->status }}
                             </span>
                         @else
                             <span
                                 class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-amber-100 text-amber-700">
-                                {{ $petition->status }}
+                                {{ $targetPetition->status }}
                             </span>
                         @endif
                     </td>
@@ -87,33 +93,39 @@
                             @php $role = auth()->user()->role; @endphp
                             
                             @if($role === 'admin' || $role === 'user')
-                                @if($petition->status === 'Received')
-                                    <button @click="showForwardModal = true; activePetitionId = {{ $petition->petition_id }}"
-                                        class="px-3 py-1 text-xs font-bold text-white bg-amber-500 rounded hover:bg-amber-600 transition-colors shadow-sm">
-                                        Forward
-                                    </button>
-                                @endif
-                                
-                                @if($petition->status === 'Forwarded' && $petition->latestForwarding)
-                                    <button
-                                        @click="showVrModal = true; activeForwardingId = {{ $petition->latestForwarding->petition_forwarding_id }}"
-                                        class="px-3 py-1 text-xs font-bold text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors shadow-sm">
-                                        Update VR
-                                    </button>
-                                @endif
-                                
-                                @if($petition->status === 'VR_Received')
-                                    <button @click="showDecisionModal = true; activePetitionId = {{ $petition->petition_id }}"
-                                        class="px-3 py-1 text-xs font-bold text-white bg-rose-500 rounded hover:bg-rose-600 transition-colors shadow-sm">
-                                        Decision
-                                    </button>
-                                @endif
-                                
-                                @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt')
-                                    <a href="{{ route('petitions.show', $petition->petition_id) }}#decision"
-                                        class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline flex items-center gap-1">
-                                        <i class="fa-solid fa-circle-check"></i> Finalized
-                                    </a>
+                                @if(!$petition->linked_petition_id)
+                                    @if($petition->status === 'Received')
+                                        <button @click="showForwardModal = true; activePetitionId = {{ $petition->petition_id }}"
+                                            class="px-3 py-1 text-xs font-bold text-white bg-amber-500 rounded hover:bg-amber-600 transition-colors shadow-sm">
+                                            Forward
+                                        </button>
+                                    @endif
+                                    
+                                    @if($petition->status === 'Forwarded' && $petition->latestForwarding)
+                                        <button
+                                            @click="showVrModal = true; activeForwardingId = {{ $petition->latestForwarding->petition_forwarding_id }}"
+                                            class="px-3 py-1 text-xs font-bold text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors shadow-sm">
+                                            Update VR
+                                        </button>
+                                    @endif
+                                    
+                                    @if($petition->status === 'VR_Received')
+                                        <button @click="showDecisionModal = true; activePetitionId = {{ $petition->petition_id }}"
+                                            class="px-3 py-1 text-xs font-bold text-white bg-rose-500 rounded hover:bg-rose-600 transition-colors shadow-sm">
+                                            Decision
+                                        </button>
+                                    @endif
+                                    
+                                    @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt')
+                                        <a href="{{ route('petitions.show', $petition->petition_id) }}#decision"
+                                            class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline flex items-center gap-1">
+                                            <i class="fa-solid fa-circle-check"></i> Finalized
+                                        </a>
+                                    @endif
+                                @else
+                                    <span class="text-[10px] font-bold text-slate-400 italic flex items-center gap-1">
+                                        <i class="fa-solid fa-link"></i> Linked
+                                    </span>
                                 @endif
                             @endif
 

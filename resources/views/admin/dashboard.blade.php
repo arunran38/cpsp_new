@@ -10,24 +10,26 @@
         // Basic metrics filtered by date range
         $totalUsers = \App\Models\User::countUser(); // Lifetime total as per agreement
 
-        $totalPetitions = \App\Models\Petition::whereBetween('date_of_petition_received', [$fromDate, $toDate])->count();
+        $totalPetitions = \App\Models\Petition::whereNull('linked_petition_id')->count();
 
-        $vrReports = \App\Models\PetitionForwarding::where(function ($q) use ($fromDate, $toDate) {
-            $q->whereBetween('vr_received_at_cpsp_date', [$fromDate, $toDate])
-                ->orWhereBetween('vr_date', [$fromDate, $toDate]);
-        })
+        $vrReports = \App\Models\PetitionForwarding::whereNotNull('vr_date')
             ->whereHas('petition', function ($query) {
-                $query->where('status', 'VR_Received');
+                $query->where('status', 'VR_Received')
+                      ->whereNull('linked_petition_id');
             })
             ->count();
 
-        $forwarded = \App\Models\PetitionForwarding::whereBetween('forwarded_date', [$fromDate, $toDate])
+        $forwarded = \App\Models\PetitionForwarding::whereNotNull('forwarded_date')
             ->whereHas('petition', function ($query) {
-                $query->where('status', 'Forwarded');
+                $query->where('status', 'Forwarded')
+                      ->whereNull('linked_petition_id');
             })
             ->count();
 
-        $decisions = \App\Models\Decision::whereBetween('decision_date', [$fromDate, $toDate])->count();
+        $decisions = \App\Models\Decision::whereHas('petition', function ($query) {
+                $query->whereNull('linked_petition_id');
+            })
+            ->count();
 
         // Vacant Seats mapping
         $vacantSeats = \App\Models\Seat::whereDoesntHave('seatUsers', function ($q) {
@@ -48,6 +50,7 @@
 
         // Chart Data: Petition Status Distribution (Filtered)
         $statusStats = \App\Models\Petition::whereBetween('date_of_petition_received', [$fromDate, $toDate])
+            ->whereNull('linked_petition_id')
             ->groupBy('status')
             ->get(['status', \Illuminate\Support\Facades\DB::raw('count(*) as count')])
             ->pluck('count', 'status');

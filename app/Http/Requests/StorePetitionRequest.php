@@ -20,9 +20,9 @@ class StorePetitionRequest extends FormRequest
         return [
             'petition_no' => 'required|unique:petitions,petition_no',
             'date_of_petition_received' => 'required|date|before_or_equal:today',
-            'nature_of_petition' => 'required',
-            'mode_of_petition_received' => 'required',
-            'description' => 'required',
+            'nature_of_petition' => 'required_without:duplicate_link_number',
+            'mode_of_petition_received' => 'required_without:duplicate_link_number',
+            'description' => 'required_without:duplicate_link_number',
             'proposed_action' => 'nullable|string',
             'mode_others' => 'nullable|string',
             'complainants' => 'nullable|array',
@@ -37,6 +37,7 @@ class StorePetitionRequest extends FormRequest
             'accused.*.phone' => 'nullable|string',
             'accused.*.pen_number' => 'nullable|digits_between:6,7',
             'accused.*.addresses' => 'nullable|array',
+            'linked_petition_id' => 'nullable|exists:petitions,petition_id',
         ];
     }
 

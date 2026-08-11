@@ -42,9 +42,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/petitions/reports', [PetitionController::class, 'reports'])->name('petitions.reports');
     Route::get('/petitions/export', [PetitionController::class, 'export'])->name('petitions.export');
 
-    Route::resource("petitions", PetitionController::class);
+    // Custom Petition Routes (MUST be before resource route)
     Route::post('/petitions/check-petition-no', [PetitionController::class, 'checkPetitionNo'])->name('petitions.checkPetitionNo');
+    Route::post('/petitions/check-duplicates', [PetitionController::class, 'checkDuplicates'])->name('petitions.checkDuplicates');
+    Route::get('/petitions/search-duplicates', [PetitionController::class, 'searchDuplicates'])->name('petitions.searchDuplicates');
+    Route::post('/petitions/{id}/link-duplicate', [PetitionController::class, 'linkDuplicate'])->name('petitions.linkDuplicate');
+    Route::post('/petitions/{id}/unlink-duplicate', [PetitionController::class, 'unlinkDuplicate'])->name('petitions.unlinkDuplicate');
     Route::get('/petitions/download/{upload_id}', [PetitionController::class, 'downloadAttachment'])->name('petitions.download');
+
+    Route::resource("petitions", PetitionController::class);
 
     // Petition Workflow Routes
     Route::post('/forwardings', [PetitionForwardingController::class, 'store'])->name('forwardings.store');

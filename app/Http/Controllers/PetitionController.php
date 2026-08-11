@@ -45,7 +45,31 @@ class PetitionController extends Controller
     public function store(StorePetitionRequest $request): RedirectResponse
     {
         try {
+            if ($request->filled('duplicate_link_number')) {
+                $originalPetition = Petition::where('petition_no', $request->input('duplicate_link_number'))->first();
+                
+                if ($originalPetition) {
+                    $petition = new Petition();
+                    $petition->petition_no = $request->petition_no;
+                    $petition->date_of_petition_received = $request->date_of_petition_received;
+                    
+                    // Set minimal required fields for duplicate stub
+                    $petition->mode_of_petition_received = 'others';
+                    $petition->mode_of_petition_received_others = 'Duplicate Entry';
+                    $petition->nature_of_petition = 'others';
+                    $petition->description = 'Registered as a duplicate of Petition No: ' . $originalPetition->petition_no;
+                    
+                    $petition->linked_petition_id = $originalPetition->petition_id;
+                    $petition->user_id = auth()->id();
+                    $petition->status = Petition::STATUS_CLOSED; // Auto-close duplicate entry
+                    $petition->save();
+                }
+                
+                return redirect()->route('petitions.create');
+            }
+
             $this->petitionService->store($request->validated(), $request->file('evidence_files') ?? []);
+            
             return redirect()->route('petitions.index')->with('success', 'Petition submitted successfully.');
         } catch (\Exception $e) {
             Log::error('Petition Store Exception: ' . $e->getMessage());
@@ -126,7 +150,14 @@ class PetitionController extends Controller
      */
     public function show($id): View
     {
-        $petition = Petition::with(['addresses.designation', 'addresses.department', 'uploads'])->findOrFail($id);
+        $petition = Petition::with([
+            'addresses.designation', 
+            'addresses.department', 
+            'uploads', 
+            'originalPetition.addresses.designation', 
+            'originalPetition.addresses.department', 
+            'duplicates'
+        ])->findOrFail($id);
         $this->authorize('view', $petition);
         return view('user.petition_show', compact('petition'));
     }
@@ -192,6 +223,128 @@ class PetitionController extends Controller
     }
 
     /**
+     * Link an existing petition to another as a duplicate.
+     */
+    public function linkDuplicate(Request $request, $id): RedirectResponse
+    {
+        $request->validate([
+            'original_petition_no' => 'required|string',
+        ]);
+
+        $petition = Petition::findOrFail($id);
+        $this->authorize('update', $petition);
+
+        if ($petition->linked_petition_id) {
+            return back()->with('error', 'This petition is already linked as a duplicate.');
+        }
+
+        $originalPetition = Petition::where('petition_no', $request->original_petition_no)->first();
+
+        if (!$originalPetition) {
+            return back()->with('error', 'Original petition not found. Please check the petition number.');
+        }
+
+        if ($originalPetition->petition_id === $petition->petition_id) {
+            return back()->with('error', 'Cannot link a petition to itself.');
+        }
+
+        // If the target petition is already a duplicate, resolve to its root original petition
+        while ($originalPetition->linked_petition_id) {
+            $originalPetition = Petition::find($originalPetition->linked_petition_id);
+            if (!$originalPetition) {
+                return back()->with('error', 'Could not resolve the root original petition.');
+            }
+        }
+
+        $petition->update([
+            'linked_petition_id' => $originalPetition->petition_id,
+            'previous_status' => $petition->status,
+            'status' => Petition::STATUS_DUPLICATE,
+        ]);
+
+        // Merge Details: Replicate Addresses (Suspects/Complainants)
+        foreach ($petition->addresses as $address) {
+            $newAddress = $address->replicate();
+            $newAddress->petition_id = $originalPetition->petition_id;
+            $newAddress->save();
+        }
+
+        // Merge Details: Replicate Uploads (Attachments)
+        foreach ($petition->uploads as $upload) {
+            $newUpload = $upload->replicate();
+            $newUpload->petition_id = $originalPetition->petition_id;
+            $newUpload->save();
+        }
+
+        return redirect()->route('petitions.show', $petition->petition_id)->with('success', 'Petition successfully linked as a duplicate of ' . $originalPetition->petition_no . '. The suspects and attachments have been copied to the original petition.');
+    }
+
+    /**
+     * Unlink a petition that was mistakenly marked as duplicate.
+     */
+    public function unlinkDuplicate(Request $request, $id): RedirectResponse
+    {
+        $petition = Petition::findOrFail($id);
+        $this->authorize('update', $petition);
+
+        if (!$petition->linked_petition_id) {
+            return back()->with('error', 'This petition is not currently linked to any other petition.');
+        }
+
+        $originalPetition = $petition->originalPetition;
+
+        $petition->update([
+            'linked_petition_id' => null,
+            'status' => $petition->previous_status ?: Petition::STATUS_RECEIVED,
+            'previous_status' => null,
+        ]);
+
+        if ($originalPetition) {
+            return redirect()->route('petitions.show', $originalPetition->petition_id)->with('success', 'Petition has been unlinked successfully and its previous status restored.');
+        }
+
+        return redirect()->route('petitions.index')->with('success', 'Petition has been unlinked successfully and its previous status restored.');
+    }
+
+    /**
+     * Search petitions for the autocomplete link duplicate feature
+     */
+    public function searchDuplicates(Request $request)
+    {
+        $query = $request->get('q');
+        $excludeId = $request->get('exclude');
+
+        if (!$query) {
+            return response()->json([]);
+        }
+
+        $petitions = Petition::where(function($q) use ($query) {
+            $q->where('petition_no', 'LIKE', "%{$query}%")
+              ->orWhere('nature_of_petition', 'LIKE', "%{$query}%")
+              ->orWhereHas('addresses', function ($q2) use ($query) {
+                  $q2->where('person_name', 'LIKE', "%{$query}%");
+              });
+        });
+
+        if ($excludeId) {
+            $petitions->where('petition_id', '!=', $excludeId);
+        }
+
+        // We allow linking to duplicate petitions; the backend will automatically resolve to the root original.
+
+        $results = $petitions->take(10)->get()->map(function ($petition) {
+            $complainant = $petition->addresses->where('person_type', 'Complainant')->first();
+            $name = $complainant ? $complainant->person_name : 'No Name';
+            return [
+                'id' => $petition->petition_no, // We return petition_no as id because the form submits original_petition_no
+                'text' => "{$petition->petition_no} - {$petition->nature_of_petition} ({$name})"
+            ];
+        });
+
+        return response()->json($results);
+    }
+
+    /**
      * Download an attachment.
      */
     public function downloadAttachment($uploadId)
@@ -222,11 +375,100 @@ class PetitionController extends Controller
     }
 
     /**
+     * Check for potential duplicate petitions based on names, phones, and PENs.
+     */
+    public function checkDuplicates(Request $request)
+    {
+        $complainants = $request->input('complainants', []);
+        $accused = $request->input('accused', []);
+
+        $c_phones = collect($complainants)->pluck('phone')->filter()->toArray();
+        $c_names = collect($complainants)->pluck('name')->filter()->map(fn($n) => trim($n))->toArray();
+
+        $a_phones = collect($accused)->pluck('phone')->filter()->toArray();
+        $a_pens = collect($accused)->pluck('pen_number')->filter()->toArray();
+        $a_names = collect($accused)->pluck('name')->filter()->map(fn($n) => trim($n))->toArray();
+
+        // Need at least one identifier from both sides to find a meaningful duplicate
+        if ((empty($c_names) && empty($c_phones)) || (empty($a_names) && empty($a_phones) && empty($a_pens))) {
+            return response()->json([]);
+        }
+
+        $query = Petition::query()->with(['decision', 'addresses.district']);
+
+        // Must match a complainant
+        $query->whereHas('addresses', function ($q) use ($c_phones, $c_names) {
+            $q->where('person_type', 'Complainant');
+            $q->where(function ($sub) use ($c_phones, $c_names) {
+                if (!empty($c_phones)) {
+                    $sub->orWhereIn('phone', $c_phones);
+                }
+                if (!empty($c_names)) {
+                    foreach ($c_names as $name) {
+                        if (strlen($name) > 3) {
+                            $sub->orWhere('person_name', 'LIKE', '%' . $name . '%');
+                        }
+                    }
+                }
+            });
+        });
+
+        // Must ALSO match an accused
+        $query->whereHas('addresses', function ($q) use ($a_phones, $a_pens, $a_names) {
+            $q->where('person_type', 'Accused');
+            $q->where(function ($sub) use ($a_phones, $a_pens, $a_names) {
+                if (!empty($a_phones)) {
+                    $sub->orWhereIn('phone', $a_phones);
+                }
+                if (!empty($a_pens)) {
+                    $sub->orWhereIn('pen_number', $a_pens);
+                }
+                if (!empty($a_names)) {
+                    foreach ($a_names as $name) {
+                        if (strlen($name) > 3) {
+                            $sub->orWhere('person_name', 'LIKE', '%' . $name . '%');
+                        }
+                    }
+                }
+            });
+        });
+
+        $duplicates = $query->orderBy('date_of_petition_received', 'desc')->take(5)->get()->map(function($p) {
+            $complainants = $p->addresses->where('person_type', 'Complainant');
+            $primaryComplainant = $complainants->first();
+            $complainantText = $primaryComplainant ? $primaryComplainant->person_name . ($primaryComplainant->district ? ', ' . $primaryComplainant->district->district_name : '') : 'N/A';
+            if ($complainants->count() > 1) {
+                $complainantText .= ' (+' . ($complainants->count() - 1) . ' others)';
+            }
+
+            $accused = $p->addresses->where('person_type', 'Accused');
+            $primaryAccused = $accused->first();
+            $accusedText = $primaryAccused ? $primaryAccused->person_name . ($primaryAccused->district ? ', ' . $primaryAccused->district->district_name : '') : 'N/A';
+            if ($accused->count() > 1) {
+                $accusedText .= ' (+' . ($accused->count() - 1) . ' others)';
+            }
+
+            return [
+                'petition_id' => $p->petition_id,
+                'petition_no' => $p->petition_no,
+                'date' => date('d-m-Y', strtotime($p->date_of_petition_received)),
+                'complainant' => $complainantText,
+                'accused' => $accusedText,
+                'description' => \Illuminate\Support\Str::limit(strip_tags($p->description), 100),
+                'status' => $p->status,
+                'decision' => $p->decision ? $p->decision->decision_remarks : null,
+            ];
+        });
+
+        return response()->json($duplicates);
+    }
+
+    /**
      * Helper to build the filtered petitions query.
      */
     private function getPetitionsQuery(Request $request)
     {
-        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'decision', 'user', 'seat']);
+        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'decision', 'user', 'seat', 'originalPetition.addresses']);
         $user = Auth::user();
 
         // Security: Filter by user/seat if not unrestricted admin
@@ -244,6 +486,11 @@ class PetitionController extends Controller
               ->filterByStatus($request->status, $request->get('tab', 'all'))
               ->search($request->search, $request->search_type)
               ->filterDates($request->date_from, $request->date_to, $request->status, $request->get('tab', 'all'));
+
+        // Hide duplicate (linked) petitions from general list, unless explicitly searched
+        if (!$request->filled('petition_no') && !$request->filled('search')) {
+            $query->whereNull('linked_petition_id');
+        }
 
         // Additional field filters
         if ($request->filled('petition_no')) {

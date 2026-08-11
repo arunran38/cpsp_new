@@ -585,8 +585,8 @@
                     description: `{!! addslashes($petition->description) !!}`,
                     proposed_action: `{!! addslashes($petition->proposed_action) !!}`
                 },
-                complainants: {!! json_encode($complainants) !!},
-                accused: {!! json_encode($accused) !!},
+                complainants: {!! json_encode($complainants) !!}.length > 0 ? {!! json_encode($complainants) !!} : [{ id: Date.now(), name: '', phone: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
+                accused: {!! json_encode($accused) !!}.length > 0 ? {!! json_encode($accused) !!} : [{ id: Date.now() + 1, entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
                 deleted_uploads: [],
 
                 removeExistingUpload(id) {

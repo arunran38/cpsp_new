@@ -42,6 +42,7 @@ class PetitionService
                 'status' => Petition::STATUS_RECEIVED,
                 'user_id' => Auth::id(),
                 'seat_id' => $seatId,
+                'linked_petition_id' => $data['linked_petition_id'] ?? null,
             ]);
 
             if (isset($data['complainants'])) {
@@ -116,12 +117,14 @@ class PetitionService
             $departmentId = $person['department_id'] ?? null;
             $penNumber = $person['pen_number'] ?? null;
 
+            $hasValidAddress = false;
             if (isset($person['addresses']) && is_array($person['addresses'])) {
                 foreach ($person['addresses'] as $index => $addr) {
                     if (empty($addr['address'])) {
                         continue;
                     }
 
+                    $hasValidAddress = true;
                     Address::create([
                         'petition_id' => $petitionId,
                         'person_name' => $personName,
@@ -138,6 +141,25 @@ class PetitionService
                         'pincode' => $addr['pincode'] ?? null,
                     ]);
                 }
+            }
+
+            // Ensure the person is saved even if no valid address is provided
+            if (!$hasValidAddress) {
+                Address::create([
+                    'petition_id' => $petitionId,
+                    'person_name' => $personName,
+                    'person_type' => $type,
+                    'entity_type' => $entityType,
+                    'designation_id' => $designationId,
+                    'department_id' => $departmentId,
+                    'address_type' => 'Temporary',
+                    'is_primary' => true,
+                    'phone' => $phone,
+                    'pen_number' => $penNumber,
+                    'full_address' => 'Not provided',
+                    'district_id' => null,
+                    'pincode' => null,
+                ]);
             }
         }
     }

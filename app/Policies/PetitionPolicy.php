@@ -69,6 +69,17 @@ class PetitionPolicy
             return true;
         }
 
+        // 4. If it's a duplicate, allow access if the user can access the original petition
+        if ($petition->linked_petition_id) {
+            // Prevent infinite recursion by not using $this->authorize directly for the parent
+            // Just duplicate the basic checks for the parent petition
+            $original = Petition::find($petition->linked_petition_id);
+            if ($original) {
+                if ($original->user_id === $user->id) return true;
+                if ($currentSeat && $original->seat_id === $currentSeat->seat_id) return true;
+            }
+        }
+
         return false;
     }
 }

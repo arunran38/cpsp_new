@@ -288,10 +288,32 @@
             </div>
     </div>
 
-    <!-- STEP 3: Suspect Details -->
     <div x-show="step === 3" x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
         class="p-8 sm:p-10" style="display: none;">
+
+        <!-- Duplicate Detection Banner -->
+        <div x-show="duplicates.length > 0 && !linkedPetitionId" x-cloak
+            class="mb-6 p-4 border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
+            style="background-color: #fffbeb; border-color: #fde68a;" x-transition>
+            <div class="flex items-start gap-3">
+                <div class="mt-0.5" style="color: #d97706;">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold" style="color: #92400e;">Potential Duplicates Detected!</h4>
+                    <p class="text-xs mt-1" style="color: #b45309;">We found <span x-text="duplicates.length"
+                            class="font-bold"></span>
+                        existing petition(s) that look similar to the details you entered.</p>
+                </div>
+            </div>
+            <button type="button" @click="showDuplicateModal = true" style="background-color: #f59e0b; color: white;"
+                class="whitespace-nowrap text-xs font-bold px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
+                View & Link Duplicates
+            </button>
+        </div>
+
+        <input type="hidden" name="linked_petition_id" :value="linkedPetitionId">
 
         <div class="mb-8 border-b border-slate-100 pb-5">
             {{-- <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -318,7 +340,7 @@
                             <div class="inline-flex p-1 bg-indigo-600 rounded-full shadow-inner">
                                 <label class="relative flex-1 cursor-pointer min-w-[150px] text-center mb-0">
                                     <input type="radio" x-model="acc.entity_type" value="Person"
-                                        x-bind:name="`accused[${index}][entity_type]`" 
+                                        x-bind:name="`accused[${index}][entity_type]`"
                                         @change="changeEntityType(index, 'Person')" class="sr-only">
                                     <div class="px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2"
                                         :class="acc.entity_type === 'Person' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-100 hover:text-white'">
@@ -328,8 +350,7 @@
                                 <label class="relative flex-1 cursor-pointer min-w-[150px] text-center mb-0">
                                     <input type="radio" x-model="acc.entity_type" value="Firm"
                                         x-bind:name="`accused[${index}][entity_type]`"
-                                        @change="changeEntityType(index, 'Firm')"
-                                        class="sr-only">
+                                        @change="changeEntityType(index, 'Firm')" class="sr-only">
                                     <div class="px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2"
                                         :class="acc.entity_type === 'Firm' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-100 hover:text-white'">
                                         <i data-lucide="building-2" class="w-4 h-4"></i> Firm / Project
@@ -347,7 +368,8 @@
                     <div class="p-6 pt-7">
                         <div class="space-y-6 mb-8">
                             <!-- Row 1: Name, Phone, and optional PEN -->
-                            <div class="grid gap-6 grid-cols-1" :class="acc.entity_type === 'Person' ? 'md:grid-cols-3' : 'md:grid-cols-2'">
+                            <div class="grid gap-6 grid-cols-1"
+                                :class="acc.entity_type === 'Person' ? 'md:grid-cols-3' : 'md:grid-cols-2'">
                                 <div x-show="acc.entity_type === 'Person'">
                                     <x-input label="Name" name="acc_name" x-bind:name="`accused[${index}][name]`"
                                         x-model="acc.name" placeholder="Full Name"
@@ -363,8 +385,10 @@
                                         x-model="acc.phone" placeholder="Mobile Number" />
                                 </div>
                                 <div x-show="acc.entity_type === 'Person'">
-                                    <x-input label="PEN Number" name="acc_pen_number" x-bind:name="`accused[${index}][pen_number]`"
-                                        x-model="acc.pen_number" placeholder="6 or 7 digit PEN" pattern="\d{6,7}" title="PEN must be 6 or 7 digits" />
+                                    <x-input label="PEN Number" name="acc_pen_number"
+                                        x-bind:name="`accused[${index}][pen_number]`" x-model="acc.pen_number"
+                                        placeholder="6 or 7 digit PEN" pattern="\d{6,7}"
+                                        title="PEN must be 6 or 7 digits" />
                                 </div>
                             </div>
 
@@ -373,12 +397,12 @@
                                 <div>
                                     <x-searchable-select label="Designation"
                                         x-bind:name="`accused[${index}][designation_id]`" x-model="acc.designation_id"
-                                        :options="$designations->pluck('designation_name', 'id')->toArray()" placeholder="Select Designation" />
+                                        :options="$designations->pluck('designation_name', 'id')->toArray()"
+                                        placeholder="Select Designation" />
                                 </div>
                                 <div>
-                                    <x-searchable-select label="Department"
-                                        x-bind:name="`accused[${index}][department_id]`" x-model="acc.department_id"
-                                        :options="$departments->pluck('department_name', 'id')->toArray()" placeholder="Select Department" />
+                                    <x-searchable-select label="Department" x-bind:name="`accused[${index}][department_id]`"
+                                        x-model="acc.department_id" :options="$departments->pluck('department_name', 'id')->toArray()" placeholder="Select Department" />
                                 </div>
                             </div>
                         </div>
@@ -765,7 +789,83 @@
             </div>
         </div>
     </div>
+    <!-- Duplicate Detection Modal -->
+    <div x-show="showDuplicateModal" x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" x-transition>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
+            @click.stop>
+            <div class="flex items-center justify-between px-6 py-4" style="background-color: #4f46e5;">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="copy" class="w-5 h-5 text-indigo-100"></i> Potential Duplicates
+                </h3>
+                <button type="button" @click="showDuplicateModal = false"
+                    class="text-white hover:text-gray-200 transition-colors p-1.5">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
 
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-1 bg-slate-50/50">
+                <p class="text-sm text-slate-600 mb-5">The following petitions share similarities (Name, Phone, or PEN) with
+                    your current entry. You can choose to link this new entry to one of them.</p>
+
+                <div class="space-y-5">
+                    <template x-for="dup in duplicates" :key="dup.petition_id">
+                        <div
+                            class="bg-white border border-slate-200 hover:border-indigo-300 rounded-2xl p-5 flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between shadow-sm hover:shadow-md transition-all duration-300">
+                            <div class="flex-1 w-full">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mb-4">
+                                    <!-- Petition No -->
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider w-24">Petition No:</span>
+                                        <span class="inline-flex text-sm font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100" x-text="dup.petition_no"></span>
+                                    </div>
+                                    <!-- Date -->
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider w-24">Date:</span>
+                                        <span class="text-sm font-semibold text-slate-700 flex items-center gap-1.5 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-200">
+                                            <i data-lucide="calendar" class="w-4 h-4 text-indigo-400"></i> <span x-text="dup.date"></span>
+                                        </span>
+                                    </div>
+                                    <!-- Complainant -->
+                                    <div class="flex items-start gap-3 sm:col-span-2">
+                                        <span class="text-xs font-bold text-indigo-900 uppercase tracking-wider w-24 shrink-0 mt-0.5">Complainant:</span>
+                                        <span class="text-sm font-medium text-slate-800" x-text="dup.complainant"></span>
+                                    </div>
+                                    <!-- Suspect -->
+                                    <div class="flex items-start gap-3 sm:col-span-2">
+                                        <span class="text-xs font-bold text-rose-900 uppercase tracking-wider w-24 shrink-0 mt-0.5">Suspect:</span>
+                                        <span class="text-sm font-medium text-slate-800" x-text="dup.accused"></span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2 bg-gradient-to-r from-slate-50 to-white p-3 rounded-xl border border-slate-100 shadow-inner">
+                                    <p class="text-sm text-slate-600 italic line-clamp-2" x-text="dup.description"></p>
+                                </div>
+
+                                <div class="mt-4 flex flex-wrap items-center gap-2">
+                                    <span class="px-2.5 py-1 bg-slate-100 border border-slate-200 rounded-md text-xs">
+                                        <span class="text-slate-500 font-semibold uppercase tracking-wider">Status:</span> 
+                                        <span class="font-bold text-slate-700 ml-1" x-text="dup.status"></span>
+                                    </span>
+                                    <template x-if="dup.decision">
+                                        <span class="px-2.5 py-1 bg-blue-50 border border-blue-100 text-blue-700 rounded-md text-xs">
+                                            <span class="font-semibold uppercase tracking-wider">Decision:</span> 
+                                            <span class="font-bold ml-1" x-text="dup.decision"></span>
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+                            <button type="button" @click="linkPetition(dup.petition_id, dup.petition_no)"
+                                style="background-color: #10b981; color: white;"
+                                class="w-full sm:w-auto px-6 py-2.5 text-sm font-bold rounded-xl shadow-md shrink-0 flex justify-center items-center gap-2 hover:opacity-90 transition-opacity border border-transparent">
+                                <i data-lucide="link" class="w-4 h-4"></i> Link Petition
+                            </button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
     </form>
     </div>
 
@@ -789,6 +889,80 @@
                 complainants: @json(old('complainants')) || [{ id: Date.now(), name: '', phone: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
                 accused: @json(old('accused')) || [{ id: Date.now() + 1, entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
 
+                // Duplicate Checking State
+                duplicates: [],
+                showDuplicateModal: false,
+                linkedPetitionId: '{{ old('linked_petition_id') }}' || null,
+                isCheckingDuplicates: false,
+                debounceTimer: null,
+
+                init() {
+                    this.$watch('accused', () => {
+                        if (this.step === 3) this.debouncedCheckDuplicates();
+                    });
+                    this.$watch('complainants', () => {
+                        if (this.step === 3) this.debouncedCheckDuplicates();
+                    });
+                    this.$watch('step', (newStep) => {
+                        if (newStep === 3) this.debouncedCheckDuplicates();
+                    });
+                },
+
+                debouncedCheckDuplicates() {
+                    clearTimeout(this.debounceTimer);
+                    this.debounceTimer = setTimeout(() => {
+                        this.fetchDuplicates();
+                    }, 1000);
+                },
+
+                fetchDuplicates() {
+                    this.isCheckingDuplicates = true;
+                    fetch('{{ route('petitions.checkDuplicates') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            complainants: this.complainants,
+                            accused: this.accused
+                        })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            this.duplicates = data;
+                            this.isCheckingDuplicates = false;
+                        })
+                        .catch(err => {
+                            console.error('Error checking duplicates', err);
+                            this.isCheckingDuplicates = false;
+                        });
+                },
+
+                linkPetition(id, number) {
+                    this.linkedPetitionId = id;
+                    this.showDuplicateModal = false;
+
+                    Swal.fire({
+                        title: 'Petition Linked!',
+                        text: 'Petition is linked to ' + number,
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#10b981',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            let form = document.getElementById('petitionFormElement');
+                            let redirectInput = document.createElement('input');
+                            redirectInput.type = 'hidden';
+                            redirectInput.name = 'duplicate_link_number';
+                            redirectInput.value = number;
+                            form.appendChild(redirectInput);
+                            form.submit();
+                        }
+                    });
+                },
 
                 nextStep() {
                     if (this.validateStep(this.step)) {

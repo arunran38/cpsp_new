@@ -21,6 +21,7 @@ class Petition extends Model
     public const STATUS_SENT_TO_GOVT = 'Sent_to_Govt';
     public const STATUS_CLOSED = 'Closed';
     public const STATUS_CLOSED_BY_GOVT = 'Closed_by_Govt';
+    public const STATUS_DUPLICATE = 'Duplicate';
 
     protected $primaryKey = 'petition_id';
 
@@ -33,8 +34,10 @@ class Petition extends Model
         'description',
         'proposed_action',
         'status',
+        'previous_status',
         'user_id',
         'seat_id',
+        'linked_petition_id',
     ];
 
     /**
@@ -51,6 +54,22 @@ class Petition extends Model
     public function seat(): BelongsTo
     {
         return $this->belongsTo(Seat::class, 'seat_id', 'seat_id');
+    }
+
+    /**
+     * Relationship: Original Petition (if this is a duplicate)
+     */
+    public function originalPetition(): BelongsTo
+    {
+        return $this->belongsTo(Petition::class, 'linked_petition_id', 'petition_id');
+    }
+
+    /**
+     * Relationship: Duplicate Petitions (if this is the original)
+     */
+    public function duplicates(): HasMany
+    {
+        return $this->hasMany(Petition::class, 'linked_petition_id', 'petition_id');
     }
 
     /**
@@ -113,11 +132,11 @@ class Petition extends Model
         $finalDecisionStatuses = ['VC', 'VE', 'PE', 'SC', 'CV', 'ICell', 'Closed', 'Sent to Govt'];
 
         if ($status === self::STATUS_FORWARDED) {
-            return $query->whereHas('forwardings');
+            return $query->where('status', self::STATUS_FORWARDED);
         } 
         
         if ($status === self::STATUS_VR_RECEIVED) {
-            return $query->whereHas('forwardings', fn($q) => $q->whereNotNull('vr_date'));
+            return $query->where('status', self::STATUS_VR_RECEIVED);
         } 
         
         if ($status === 'VR_Received_at_cpsp_date') {

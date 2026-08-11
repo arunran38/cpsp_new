@@ -58,7 +58,7 @@ class Seat extends Model
      */
     public function petitionsReceived(): HasMany
     {
-        return $this->hasMany(Petition::class, 'seat_id', 'seat_id');
+        return $this->hasMany(Petition::class, 'seat_id', 'seat_id')->whereNull('linked_petition_id');
     }
 
     /**
