@@ -192,8 +192,11 @@
         }
 
         .input-group {
-            position: relative;
             margin-bottom: 1.5rem;
+        }
+
+        .input-wrapper {
+            position: relative;
         }
 
         .input-label {
@@ -229,7 +232,8 @@
         .input-icon {
             position: absolute;
             left: 1rem;
-            bottom: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
             color: #475569;
             width: 1.125rem;
             height: 1.125rem;
@@ -243,11 +247,15 @@
         .password-toggle {
             position: absolute;
             right: 1rem;
-            bottom: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
             background: none;
             border: none;
             color: #475569;
             cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
             transition: color 0.3s ease;
         }
 
@@ -377,9 +385,11 @@
 
                 <div class="input-group">
                     <label for="pen" class="input-label">PEN Number</label>
-                    <input type="text" name="pen" id="pen" value="{{ old('pen') }}" class="input-field"
-                        placeholder="Permanent Employee Number" required autofocus>
-                    <i data-lucide="user" class="input-icon"></i>
+                    <div class="input-wrapper">
+                        <input type="text" name="pen" id="pen" value="{{ old('pen') }}" class="input-field"
+                            placeholder="Permanent Employee Number" required autofocus>
+                        <i data-lucide="user" class="input-icon"></i>
+                    </div>
                     @error('pen')
                         <span
                             class="text-rose-400 text-[11px] font-semibold mt-1.5 ml-1 block uppercase tracking-wider">{{ $message }}</span>
@@ -388,13 +398,15 @@
 
                 <div class="input-group">
                     <label for="password" class="input-label">Password</label>
-                    <input :type="showPassword ? 'text' : 'password'" name="password" id="password" class="input-field"
-                        placeholder="••••••••" required>
-                    <i data-lucide="lock" class="input-icon"></i>
-                    <button type="button" @click="showPassword = !showPassword" class="password-toggle">
-                        <i data-lucide="eye" x-show="!showPassword" class="w-4 h-4"></i>
-                        <i data-lucide="eye-off" x-show="showPassword" x-cloak class="w-4 h-4"></i>
-                    </button>
+                    <div class="input-wrapper">
+                        <input :type="showPassword ? 'text' : 'password'" name="password" id="password" class="input-field"
+                            placeholder="••••••••" required>
+                        <i data-lucide="lock" class="input-icon"></i>
+                        <button type="button" @click="showPassword = !showPassword" class="password-toggle">
+                            <i data-lucide="eye" x-show="!showPassword" class="w-4 h-4"></i>
+                            <i data-lucide="eye-off" x-show="showPassword" x-cloak class="w-4 h-4"></i>
+                        </button>
+                    </div>
                     @error('password')
                         <span
                             class="text-rose-400 text-[11px] font-semibold mt-1.5 ml-1 block uppercase tracking-wider">{{ $message }}</span>

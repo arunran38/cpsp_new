@@ -81,11 +81,13 @@ class PetitionController extends Controller
             $seats = Seat::where('is_active', true)->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         }
 
+        $departments = \App\Models\DepartmentList::orderBy('department_name')->pluck('department_name', 'id')->toArray();
+
         if ($request->ajax()) {
             return view('user.partials.reports_table', compact('petitions', 'tab'))->render();
         }
 
-        return view('user.reports', compact('petitions', 'tab', 'seats'));
+        return view('user.reports', compact('petitions', 'tab', 'seats', 'departments'));
     }
 
     /**
@@ -99,7 +101,7 @@ class PetitionController extends Controller
         $filename = "petitions_report_" . $tab . "_" . date('Y-m-d') . ".xls";
         
         // Prepare metadata for the export view
-        $columns = ['#', 'Petition No', 'Received Date', 'Complainant Name & Address', 'Suspect Name & Address', 'Nature', 'Description', 'Mode', 'Status'];
+        $columns = ['#', 'Petition No', 'Received Date', 'Complainant Name & Address', 'Suspect Name & Address', 'Nature', 'Description', 'Mode', 'Present Status', 'Final Recommendation'];
         if (Auth::user()->role === 'admin') $columns[] = 'Seat';
         if ($tab === 'forwarded') $columns[] = 'Unit';
         if ($tab === 'vrs') { $columns[] = 'VR Ref No'; $columns[] = 'VR Date'; }
@@ -255,6 +257,9 @@ class PetitionController extends Controller
         }
         if ($request->filled('seat_id')) {
             $query->where('seat_id', $request->seat_id);
+        }
+        if ($request->filled('department_id')) {
+            $query->whereHas('addresses', fn($q) => $q->where('department_id', $request->department_id));
         }
 
         // Address-based filters

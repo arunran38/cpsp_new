@@ -30,7 +30,8 @@
             <col style="width: 90pt;"> <!-- Nature -->
             <col style="width: 250pt;"> <!-- Description -->
             <col style="width: 60pt;"> <!-- Mode -->
-            <col style="width: 70pt;"> <!-- Status -->
+            <col style="width: 70pt;"> <!-- Present Status -->
+            <col style="width: 90pt;"> <!-- Final Recommendation -->
             @if(Auth::user()->role === 'admin' || $tab !== 'all')
                 <col style="width: 80pt;">
             @endif
@@ -114,6 +115,7 @@
                     <td>{{ $petition->description }}</td>
                     <td class="text-center">{{ $petition->mode_of_petition_received }}</td>
                     <td class="text-center"><span class="bold">{{ $petition->status }}</span></td>
+                    <td class="text-center">{{ $petition->decision->decision_remarks ?? '-' }}</td>
 
                     @if (Auth::user()->role === 'admin')
                         <td>{{ $petition->seat->seat_name ?? 'N/A' }}</td>

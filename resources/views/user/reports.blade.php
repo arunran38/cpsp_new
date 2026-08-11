@@ -169,6 +169,12 @@
                         </div>
                     @endif
 
+                    <div style="z-index: 10;">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Department</label>
+                        <x-searchable-select name="department_id" :options="$departments"
+                            :selected="request('department_id')" placeholder="All Departments" />
+                    </div>
+
                     <div class="flex items-center gap-2 h-[38px]">
                         <button type="submit"
                             class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl text-sm shadow-sm transition-all flex items-center justify-center gap-2">
