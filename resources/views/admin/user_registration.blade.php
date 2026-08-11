@@ -22,12 +22,12 @@
 
                     <!-- PEN -->
                     <div class="pr-2">
-                        <x-input label="PEN" name="pen" placeholder="Enter PEN" required icon="hash" />
+                        <x-input label="PEN" name="pen" placeholder="Enter PEN" required icon="hash" maxlength="7" minlength="6" required/>
                     </div>
 
                     <!-- Mobile Number -->
                     <div class="pl-2">
-                        <x-input label="Mobile Number" name="mobile_number" placeholder="Enter Mobile Number" required
+                        <x-input label="Mobile Number" name="mobile_number" placeholder="Enter Mobile Number" maxlength="10" required
                             icon="smartphone" />
                     </div>
 

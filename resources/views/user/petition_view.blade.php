@@ -112,15 +112,18 @@
                     </div>
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Date From</label>
-                        <input type="date" placeholder="DD-MM-YYYY" name="date_from" value="{{ request('date_from') }}"
+                        <input type="date" id="date_from" placeholder="DD-MM-YYYY" name="date_from" value="{{ request('date_from') }}"
+                            max="{{ \Carbon\Carbon::yesterday()->format('Y-m-d') }}"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                             style="color: #1e40af !important;">
                     </div>
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Date To</label>
-                        <input type="date" placeholder="DD-MM-YYYY" name="date_to" value="{{ request('date_to') }}"
+                        <input type="date" id="date_to" placeholder="DD-MM-YYYY" name="date_to" value="{{ request('date_to') }}"
+                            max="{{ \Carbon\Carbon::yesterday()->format('Y-m-d') }}"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                             style="color: #1e40af !important;">
+                        <p id="dateRangeError" class="mt-1 text-xs text-rose-600 hidden" aria-live="polite"></p>
                     </div>
                     <div class="flex-none">
                         <label class="block text-xs font-medium text-transparent mb-1">&nbsp;</label>
@@ -366,7 +369,43 @@
             let timer = null;
             let abortController = null;
 
+            const dateFromInput = document.getElementById('date_from');
+            const dateToInput = document.getElementById('date_to');
+            const dateRangeError = document.getElementById('dateRangeError');
+
+            const validateDateRange = () => {
+                if (!dateFromInput || !dateToInput || !dateRangeError) {
+                    return true;
+                }
+
+                const dateFrom = dateFromInput.value;
+                const dateTo = dateToInput.value;
+
+                if (!dateFrom) {
+                    dateToInput.removeAttribute('min');
+                    dateRangeError.textContent = '';
+                    dateRangeError.classList.add('hidden');
+                    return true;
+                }
+
+                dateToInput.setAttribute('min', dateFrom);
+
+                if (dateTo && dateTo < dateFrom) {
+                    dateRangeError.textContent = 'Date To must be greater than Date From.';
+                    dateRangeError.classList.remove('hidden');
+                    return false;
+                }
+
+                dateRangeError.textContent = '';
+                dateRangeError.classList.add('hidden');
+                return true;
+            };
+
             const performSearch = () => {
+                if (!validateDateRange()) {
+                    return;
+                }
+
                 const formData = new FormData(searchForm);
                 const searchParams = new URLSearchParams(formData);
                 const url = `${searchForm.action}?${searchParams.toString()}`;
@@ -416,8 +455,20 @@
             // Attach change event for date, select inputs
             const changeInputs = searchForm.querySelectorAll('input[type="date"], select');
             changeInputs.forEach(input => {
-                input.addEventListener('change', performSearch);
+                input.addEventListener('change', () => {
+                    if (validateDateRange()) {
+                        performSearch();
+                    }
+                });
             });
+
+            if (dateFromInput) {
+                dateFromInput.addEventListener('change', validateDateRange);
+            }
+
+            if (dateToInput) {
+                dateToInput.addEventListener('change', validateDateRange);
+            }
 
             // Prevent default form submission via enter key
             searchForm.addEventListener('submit', (e) => {
