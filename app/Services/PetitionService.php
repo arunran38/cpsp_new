@@ -24,11 +24,9 @@ class PetitionService
             }
 
             $seatId = null;
-            if ($user->role !== 'admin' || session('is_impersonating_seat')) {
-                $activeSeat = $user->currentSeatUser();
-                if ($activeSeat) {
-                    $seatId = $activeSeat->seat_id;
-                }
+            $activeSeat = $user->currentSeatUser();
+            if ($activeSeat) {
+                $seatId = $activeSeat->seat_id;
             }
 
             $petition = Petition::create([
