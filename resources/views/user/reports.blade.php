@@ -2,7 +2,7 @@
 @section('container_width', 'max-w-full')
 
 @section('content')
-    <div x-data="{ showForwardModal: false, showVrModal: false, showDecisionModal: false, activePetitionId: null, activeForwardingId: null }"
+    <div x-data="{ showForwardModal: false, showVrModal: false, showDecisionModal: false, activePetitionId: null, activeForwardingId: null, showExportModal: false }"
         class="space-y-4">
         <!-- Page Header -->
         <div
@@ -20,6 +20,11 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
+                <button type="button" @click="showExportModal = true"
+                    class="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-all font-semibold text-sm shadow-sm">
+                    <i data-lucide="settings-2" class="w-4 h-4"></i>
+                    Custom Export
+                </button>
                 <a href="{{ route('petitions.export', request()->query()) }}" id="exportButton"
                     class="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-all font-semibold text-sm shadow-sm">
                     <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
@@ -400,6 +405,98 @@
                             class="px-4 py-2 text-sm font-medium text-white bg-rose-600 border border-transparent rounded-lg hover:bg-rose-700 shadow-sm transition-colors flex items-center gap-2">
                             Submit Decision <i data-lucide="arrow-right" class="w-4 h-4"></i>
                         </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- Custom Export Modal -->
+        <div x-show="showExportModal" x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-slate-900/50 backdrop-blur-sm"
+            style="display: none;">
+            <div @click.away="showExportModal = false" class="relative w-full max-w-2xl p-6 bg-white rounded-2xl shadow-xl m-4">
+                <div class="flex items-center justify-between mb-5 border-b border-slate-100 pb-3">
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2"><i data-lucide="settings-2"
+                            class="w-5 h-5 text-indigo-600"></i> Custom Excel Export</h3>
+                    <button type="button" @click="showExportModal = false"
+                        class="text-slate-400 hover:text-slate-600 transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <form action="{{ route('petitions.export') }}" method="GET" id="customExportForm">
+                    <!-- Preserve existing search filters -->
+                    <input type="hidden" name="tab" value="{{ request('tab', 'all') }}">
+                    @if(request('status')) <input type="hidden" name="status" value="{{ request('status') }}"> @endif
+                    @if(request('search_type')) <input type="hidden" name="search_type" value="{{ request('search_type') }}"> @endif
+                    @if(request('search')) <input type="hidden" name="search" value="{{ request('search') }}"> @endif
+                    @if(request('date_from')) <input type="hidden" name="date_from" value="{{ request('date_from') }}"> @endif
+                    @if(request('date_to')) <input type="hidden" name="date_to" value="{{ request('date_to') }}"> @endif
+
+                    <div x-data="{ 
+                        allSelected: true, 
+                        toggleAll() {
+                            const checkboxes = document.querySelectorAll('.export-column-cb');
+                            checkboxes.forEach(cb => cb.checked = this.allSelected);
+                        } 
+                    }">
+                        <div class="mb-4 pb-3 border-b border-slate-100 flex justify-between items-center">
+                            <p class="text-sm text-slate-600">Select the columns you want to include in the export.</p>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" x-model="allSelected" @change="toggleAll()" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                <span class="text-sm font-semibold text-slate-700">Select All</span>
+                            </label>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6 max-h-[60vh] overflow-y-auto p-1">
+                            @php
+                                $availableColumns = [
+                                    '#' => 'Sl No',
+                                    'Petition No' => 'Petition No',
+                                    'Received Date' => 'Received Date',
+                                    'Complainant Name' => 'Complainant Name',
+                                    'Complainant Phone' => 'Complainant Phone',
+                                    'Complainant Email' => 'Complainant Email',
+                                    'Complainant Address' => 'Complainant Address',
+                                    'Suspect Name' => 'Suspect Name',
+                                    'Suspect Phone' => 'Suspect Phone',
+                                    'Suspect Email' => 'Suspect Email',
+                                    'Suspect Address' => 'Suspect Address',
+                                    'Nature' => 'Nature',
+                                    'Description' => 'Description',
+                                    'Mode' => 'Mode',
+                                    'Proposed Action' => 'Proposed Action',
+                                    'Present Status' => 'Present Status',
+                                    'Seat' => 'Seat',
+                                    'Unit' => 'Unit (Forwarded To)',
+                                    'Forwarded Date' => 'Date of Forwarding',
+                                    'VR Ref No' => 'VR Ref No',
+                                    'VR Date' => 'VR Date',
+                                    'VR Received At CPSP' => 'VR Received at CPSP',
+                                    'VR Remarks' => 'VR Remarks',
+                                    'Decision' => 'Decision',
+                                    'Final Decision Date' => 'Final Decision Date',
+                                    'Final Recommendation' => 'Final Recommendation',
+                                ];
+                            @endphp
+
+                            @foreach($availableColumns as $colKey => $colLabel)
+                                <label class="flex items-start gap-2 p-2 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-slate-100">
+                                    <input type="checkbox" name="custom_columns[]" value="{{ $colKey }}" checked class="export-column-cb w-4 h-4 mt-0.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                    <span class="text-sm font-medium text-slate-700 leading-tight">{{ $colLabel }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                            <button type="button" @click="showExportModal = false"
+                                class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500/50 shadow-sm">
+                                Cancel
+                            </button>
+                            <button type="submit" @click="setTimeout(() => showExportModal = false, 500)"
+                                class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2">
+                                <i data-lucide="download" class="w-4 h-4"></i> Download Export
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

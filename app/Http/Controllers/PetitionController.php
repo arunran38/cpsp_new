@@ -125,11 +125,16 @@ class PetitionController extends Controller
         $filename = "petitions_report_" . $tab . "_" . date('Y-m-d') . ".xls";
         
         // Prepare metadata for the export view
-        $columns = ['#', 'Petition No', 'Received Date', 'Complainant Name & Address', 'Suspect Name & Address', 'Nature', 'Description', 'Mode', 'Proposed Action', 'Present Status', 'Final Recommendation'];
-        if (Auth::user()->role === 'admin') $columns[] = 'Seat';
-        if ($tab === 'forwarded') $columns[] = 'Unit';
-        if ($tab === 'vrs') { $columns[] = 'VR Ref No'; $columns[] = 'VR Date'; }
-        if ($tab === 'decisions') $columns[] = 'Decision';
+        $requestedColumns = $request->get('custom_columns');
+        if ($requestedColumns && is_array($requestedColumns)) {
+            $columns = $requestedColumns;
+        } else {
+            $columns = ['#', 'Petition No', 'Received Date', 'Complainant Name & Address', 'Suspect Name & Address', 'Nature', 'Description', 'Mode', 'Proposed Action', 'Present Status', 'Final Recommendation'];
+            if (Auth::user()->role === 'admin') $columns[] = 'Seat';
+            if ($tab === 'forwarded') $columns[] = 'Unit';
+            if ($tab === 'vrs') { $columns[] = 'VR Ref No'; $columns[] = 'VR Date'; }
+            if ($tab === 'decisions') $columns[] = 'Decision';
+        }
 
         $minDate = $petitions->min('date_of_petition_received');
         $maxDate = $petitions->max('date_of_petition_received');

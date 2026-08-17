@@ -22,23 +22,14 @@
         <tr><td colspan="{{ count($columns) }}" style="border:none; height:10px;"></td></tr>
         
         <colgroup>
-            <col style="width: 30pt;"> <!-- # -->
-            <col style="width: 80pt;"> <!-- Petition No -->
-            <col style="width: 70pt;"> <!-- Received Date -->
-            <col style="width: 220pt;"> <!-- Complainant Name & Address -->
-            <col style="width: 220pt;"> <!-- Suspect Name & Address -->
-            <col style="width: 90pt;"> <!-- Nature -->
-            <col style="width: 250pt;"> <!-- Description -->
-            <col style="width: 60pt;"> <!-- Mode -->
-            <col style="width: 150pt;"> <!-- Proposed Action -->
-            <col style="width: 70pt;"> <!-- Present Status -->
-            <col style="width: 90pt;"> <!-- Final Recommendation -->
-            @if(Auth::user()->role === 'admin' || $tab !== 'all')
-                <col style="width: 80pt;">
-            @endif
-            @if($tab === 'vrs')
-                <col style="width: 80pt;">
-            @endif
+            @foreach ($columns as $column)
+                @if($column === '#') <col style="width: 30pt;">
+                @elseif($column === 'Petition No') <col style="width: 80pt;">
+                @elseif($column === 'Description' || str_contains($column, 'Address')) <col style="width: 220pt;">
+                @elseif(in_array($column, ['VR Remarks', 'Decision', 'Final Recommendation'])) <col style="width: 150pt;">
+                @else <col style="width: 100pt;">
+                @endif
+            @endforeach
         </colgroup>
         <thead>
             <tr>
@@ -50,88 +41,82 @@
         <tbody>
             @foreach ($petitions as $index => $petition)
                 @php
-                    $complainantsDetails = [];
-                    foreach ($petition->addresses->where('person_type', 'Complainant') as $addr) {
-                        $detail = "<strong>" . e($addr->person_name) . "</strong>";
-                        if ($addr->entity_type === 'Firm' && !empty($addr->contact_person)) {
-                            $detail .= " (Contact: " . e($addr->contact_person) . ")";
-                        }
-                        
-                        $addrParts = [];
-                        if (!empty($addr->full_address)) {
-                            $addrParts[] = e($addr->full_address);
-                        }
-                        if ($addr->district && !empty($addr->district->district_name)) {
-                            $addrParts[] = e($addr->district->district_name);
-                        }
-                        if (!empty($addr->pincode)) {
-                            $addrParts[] = e($addr->pincode);
-                        }
-                        if (!empty($addr->phone)) {
-                            $addrParts[] = "Ph: " . e($addr->phone);
-                        }
-                        
-                        if (count($addrParts) > 0) {
-                            $detail .= "<br>" . implode(', ', $addrParts);
-                        }
-                        
-                        $complainantsDetails[] = $detail;
-                    }
+                    $complainants = $petition->addresses->where('person_type', 'Complainant');
+                    $accused = $petition->addresses->where('person_type', 'Accused');
                     
-                    $accusedDetails = [];
-                    foreach ($petition->addresses->where('person_type', 'Accused') as $addr) {
-                        $detail = "<strong>" . e($addr->person_name) . "</strong>";
-                        if ($addr->entity_type === 'Firm' && !empty($addr->contact_person)) {
-                            $detail .= " (Contact: " . e($addr->contact_person) . ")";
+                    // Helpers to extract specific fields
+                    $getNames = fn($list) => implode('<br><br>', $list->pluck('person_name')->toArray());
+                    $getPhones = fn($list) => implode('<br><br>', $list->pluck('phone')->filter()->toArray());
+                    $getEmails = fn($list) => implode('<br><br>', $list->pluck('email')->filter()->toArray());
+                    
+                    $getAddresses = function($list) {
+                        $details = [];
+                        foreach ($list as $addr) {
+                            $addrParts = [];
+                            if (!empty($addr->full_address)) $addrParts[] = e($addr->full_address);
+                            if ($addr->district && !empty($addr->district->district_name)) $addrParts[] = e($addr->district->district_name);
+                            if (!empty($addr->pincode)) $addrParts[] = e($addr->pincode);
+                            $details[] = implode(', ', $addrParts);
                         }
-                        
-                        $addrParts = [];
-                        if (!empty($addr->full_address)) {
-                            $addrParts[] = e($addr->full_address);
+                        return implode('<br><br>', $details);
+                    };
+
+                    $getNameAndAddress = function($list) {
+                        $details = [];
+                        foreach ($list as $addr) {
+                            $detail = "<strong>" . e($addr->person_name) . "</strong>";
+                            if ($addr->entity_type === 'Firm' && !empty($addr->contact_person)) {
+                                $detail .= " (Contact: " . e($addr->contact_person) . ")";
+                            }
+                            
+                            $addrParts = [];
+                            if (!empty($addr->full_address)) $addrParts[] = e($addr->full_address);
+                            if ($addr->district && !empty($addr->district->district_name)) $addrParts[] = e($addr->district->district_name);
+                            if (!empty($addr->pincode)) $addrParts[] = e($addr->pincode);
+                            if (!empty($addr->phone)) $addrParts[] = "Ph: " . e($addr->phone);
+                            if (!empty($addr->email)) $addrParts[] = "Email: " . e($addr->email);
+                            
+                            if (count($addrParts) > 0) $detail .= "<br>" . implode(', ', $addrParts);
+                            $details[] = $detail;
                         }
-                        if ($addr->district && !empty($addr->district->district_name)) {
-                            $addrParts[] = e($addr->district->district_name);
-                        }
-                        if (!empty($addr->pincode)) {
-                            $addrParts[] = e($addr->pincode);
-                        }
-                        if (!empty($addr->phone)) {
-                            $addrParts[] = "Ph: " . e($addr->phone);
-                        }
-                        
-                        if (count($addrParts) > 0) {
-                            $detail .= "<br>" . implode(', ', $addrParts);
-                        }
-                        
-                        $accusedDetails[] = $detail;
-                    }
+                        return implode('<br><br>', $details);
+                    };
+
+                    $rowData = [
+                        '#' => '<td class="text-center">' . ($index + 1) . '</td>',
+                        'Petition No' => '<td style="mso-number-format:\'\@\';" class="bold">' . $petition->petition_no . '</td>',
+                        'Received Date' => '<td class="text-center">' . date('d-m-Y', strtotime($petition->date_of_petition_received)) . '</td>',
+                        'Complainant Name & Address' => '<td>' . $getNameAndAddress($complainants) . '</td>',
+                        'Suspect Name & Address' => '<td>' . $getNameAndAddress($accused) . '</td>',
+                        'Complainant Name' => '<td>' . $getNames($complainants) . '</td>',
+                        'Complainant Phone' => '<td>' . $getPhones($complainants) . '</td>',
+                        'Complainant Email' => '<td>' . $getEmails($complainants) . '</td>',
+                        'Complainant Address' => '<td>' . $getAddresses($complainants) . '</td>',
+                        'Suspect Name' => '<td>' . $getNames($accused) . '</td>',
+                        'Suspect Phone' => '<td>' . $getPhones($accused) . '</td>',
+                        'Suspect Email' => '<td>' . $getEmails($accused) . '</td>',
+                        'Suspect Address' => '<td>' . $getAddresses($accused) . '</td>',
+                        'Nature' => '<td>' . $petition->nature_of_petition . '</td>',
+                        'Description' => '<td>' . $petition->description . '</td>',
+                        'Mode' => '<td class="text-center">' . $petition->mode_of_petition_received . '</td>',
+                        'Proposed Action' => '<td>' . $petition->proposed_action . '</td>',
+                        'Present Status' => '<td class="text-center"><span class="bold">' . $petition->status . '</span></td>',
+                        'Seat' => '<td>' . ($petition->seat->seat_name ?? 'N/A') . '</td>',
+                        'Unit' => '<td>' . ($petition->latestForwarding->toUnit->unit_name ?? 'N/A') . '</td>',
+                        'Forwarded Date' => '<td class="text-center">' . ($petition->latestForwarding?->forwarded_date ? date('d-m-Y', strtotime($petition->latestForwarding->forwarded_date)) : 'N/A') . '</td>',
+                        'VR Ref No' => '<td>' . ($petition->latestForwarding->vr_ref_no ?? 'N/A') . '</td>',
+                        'VR Date' => '<td class="text-center">' . ($petition->latestForwarding?->vr_date ? date('d-m-Y', strtotime($petition->latestForwarding->vr_date)) : 'N/A') . '</td>',
+                        'VR Received At CPSP' => '<td class="text-center">' . ($petition->latestForwarding?->vr_received_at_cpsp_date ? date('d-m-Y', strtotime($petition->latestForwarding->vr_received_at_cpsp_date)) : 'N/A') . '</td>',
+                        'VR Remarks' => '<td>' . ($petition->latestForwarding->vr_remarks ?? 'N/A') . '</td>',
+                        'Decision' => '<td>' . ($petition->decision->decision_remarks ?? 'N/A') . '</td>',
+                        'Final Decision Date' => '<td class="text-center">' . ($petition->decision?->decision_date ? date('d-m-Y', strtotime($petition->decision->decision_date)) : 'N/A') . '</td>',
+                        'Final Recommendation' => '<td>' . ($petition->decision->decision_remarks ?? 'N/A') . '</td>',
+                    ];
                 @endphp
                 <tr>
-                    <td class="text-center">{{ $index + 1 }}</td>
-                    <td style="mso-number-format:'\@';" class="bold">{{ $petition->petition_no }}</td>
-                    <td class="text-center">{{ date('d-m-Y', strtotime($petition->date_of_petition_received)) }}</td>
-                    <td>{!! implode('<br><br>', $complainantsDetails) !!}</td>
-                    <td>{!! implode('<br><br>', $accusedDetails) !!}</td>
-                    <td>{{ $petition->nature_of_petition }}</td>
-                    <td>{{ $petition->description }}</td>
-                    <td class="text-center">{{ $petition->mode_of_petition_received }}</td>
-                    <td>{{ $petition->proposed_action }}</td>
-                    <td class="text-center"><span class="bold">{{ $petition->status }}</span></td>
-                    <td class="text-center">{{ $petition->decision->decision_remarks ?? '-' }}</td>
-
-                    @if (Auth::user()->role === 'admin')
-                        <td>{{ $petition->seat->seat_name ?? 'N/A' }}</td>
-                    @endif
-                    @if ($tab === 'forwarded')
-                        <td>{{ $petition->latestForwarding->toUnit->unit_name ?? 'N/A' }}</td>
-                    @endif
-                    @if ($tab === 'vrs')
-                        <td>{{ $petition->latestForwarding->vr_ref_no ?? 'N/A' }}</td>
-                        <td class="text-center">{{ $petition->latestForwarding->vr_date ? date('d-m-Y', strtotime($petition->latestForwarding->vr_date)) : 'N/A' }}</td>
-                    @endif
-                    @if ($tab === 'decisions')
-                        <td>{{ $petition->decision->decision_remarks ?? 'N/A' }}</td>
-                    @endif
+                    @foreach ($columns as $column)
+                        {!! $rowData[$column] ?? '<td>-</td>' !!}
+                    @endforeach
                 </tr>
             @endforeach
         </tbody>

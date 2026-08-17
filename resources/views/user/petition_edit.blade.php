@@ -173,9 +173,11 @@
                                             </div>
                                             <div class="truncate">
                                                 <p class="text-xs font-semibold text-slate-900 truncate">
-                                                    {{ $upload->original_filename }}</p>
+                                                    {{ $upload->original_filename }}
+                                                </p>
                                                 <p class="text-[10px] text-slate-500 uppercase font-bold tracking-tight">
-                                                    {{ $upload->created_at->format('M d, Y') }}</p>
+                                                    {{ $upload->created_at->format('M d, Y') }}
+                                                </p>
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-1">
@@ -249,9 +251,9 @@
                                             x-bind:required="step === 2" placeholder="10-digit Mobile" />
                                     </div>
                                     <div>
-                                        <x-input label="Email (Optional)" name="comp_email"
-                                            x-bind:name="`complainants[${index}][email]`" x-model="comp.email"
-                                            type="email" placeholder="Email Address" />
+                                        <x-input label="Email" name="comp_email"
+                                            x-bind:name="`complainants[${index}][email]`" x-model="comp.email" type="email"
+                                            placeholder="Email Address" />
                                     </div>
                                 </div>
 
@@ -390,8 +392,7 @@
                                         <label class="relative flex-1 cursor-pointer min-w-[150px] text-center mb-0">
                                             <input type="radio" x-model="acc.entity_type" value="Firm"
                                                 x-bind:name="`accused[${index}][entity_type]`"
-                                                @change="changeEntityType(index, 'Firm')"
-                                                class="sr-only">
+                                                @change="changeEntityType(index, 'Firm')" class="sr-only">
                                             <div class="px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2"
                                                 :class="acc.entity_type === 'Firm' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-100 hover:text-white'">
                                                 <i data-lucide="building-2" class="w-4 h-4"></i> Firm / Project
@@ -408,44 +409,51 @@
 
                             <div class="p-6 pt-7">
                                 <!-- Fields -->
-                                 <div class="space-y-6 mb-8">
-                                     <!-- Row 1: Name, Phone, and optional PEN -->
-                                     <div class="grid gap-6 grid-cols-1" :class="acc.entity_type === 'Person' ? 'md:grid-cols-3' : 'md:grid-cols-2'">
-                                         <div x-show="acc.entity_type === 'Person'">
-                                             <x-input label="Full Name *" name="acc_name" x-bind:name="`accused[${index}][name]`"
-                                                 x-model="acc.name" x-bind:required="step === 3 && acc.entity_type === 'Person'"
-                                                 placeholder="Legal Name" />
-                                         </div>
-                                         <div x-show="acc.entity_type === 'Firm'">
-                                             <x-input label="Firm / Project Name *" name="acc_firm_name"
-                                                 x-bind:name="`accused[${index}][name]`" x-model="acc.name"
-                                                 x-bind:required="step === 3 && acc.entity_type === 'Firm'"
-                                                 placeholder="Firm / Project Name" />
-                                         </div>
-                                         <div>
-                                             <x-input label="Phone" name="acc_phone" x-bind:name="`accused[${index}][phone]`"
-                                                 x-model="acc.phone" placeholder="Mobile Number" />
-                                         </div>
-                                         <div x-show="acc.entity_type === 'Person'">
-                                             <x-input label="PEN Number" name="acc_pen_number" x-bind:name="`accused[${index}][pen_number]`"
-                                                 x-model="acc.pen_number" placeholder="6 or 7 digit PEN" pattern="\d{6,7}" title="PEN must be 6 or 7 digits" />
-                                         </div>
-                                     </div>
+                                <div class="space-y-6 mb-8">
+                                    <!-- Row 1: Name, Phone, and optional PEN -->
+                                    <div class="grid gap-6 grid-cols-1"
+                                        :class="acc.entity_type === 'Person' ? 'md:grid-cols-3' : 'md:grid-cols-2'">
+                                        <div x-show="acc.entity_type === 'Person'">
+                                            <x-input label="Full Name *" name="acc_name"
+                                                x-bind:name="`accused[${index}][name]`" x-model="acc.name"
+                                                x-bind:required="step === 3 && acc.entity_type === 'Person'"
+                                                placeholder="Legal Name" />
+                                        </div>
+                                        <div x-show="acc.entity_type === 'Firm'">
+                                            <x-input label="Firm / Project Name *" name="acc_firm_name"
+                                                x-bind:name="`accused[${index}][name]`" x-model="acc.name"
+                                                x-bind:required="step === 3 && acc.entity_type === 'Firm'"
+                                                placeholder="Firm / Project Name" />
+                                        </div>
+                                        <div>
+                                            <x-input label="Phone" name="acc_phone" x-bind:name="`accused[${index}][phone]`"
+                                                x-model="acc.phone" placeholder="Mobile Number" />
+                                        </div>
+                                        <div x-show="acc.entity_type === 'Person'">
+                                            <x-input label="PEN Number" name="acc_pen_number"
+                                                x-bind:name="`accused[${index}][pen_number]`" x-model="acc.pen_number"
+                                                placeholder="6 or 7 digit PEN" pattern="\d{6,7}"
+                                                title="PEN must be 6 or 7 digits" />
+                                        </div>
+                                    </div>
 
-                                     <!-- Row 2: Designation and Department -->
-                                     <div class="grid gap-6 grid-cols-1 md:grid-cols-2">
-                                         <div>
-                                             <x-searchable-select label="Designation"
-                                                 x-bind:name="`accused[${index}][designation_id]`" x-model="acc.designation_id"
-                                                 :options="$designations->pluck('designation_name', 'id')->toArray()" placeholder="Select Designation" />
-                                         </div>
-                                         <div>
-                                             <x-searchable-select label="Department"
-                                                 x-bind:name="`accused[${index}][department_id]`" x-model="acc.department_id"
-                                                 :options="$departments->pluck('department_name', 'id')->toArray()" placeholder="Select Department" />
-                                         </div>
-                                     </div>
-                                 </div>
+                                    <!-- Row 2: Designation and Department -->
+                                    <div class="grid gap-6 grid-cols-1 md:grid-cols-2">
+                                        <div>
+                                            <x-searchable-select label="Designation"
+                                                x-bind:name="`accused[${index}][designation_id]`"
+                                                x-model="acc.designation_id"
+                                                :options="$designations->pluck('designation_name', 'id')->toArray()"
+                                                placeholder="Select Designation" />
+                                        </div>
+                                        <div>
+                                            <x-searchable-select label="Department"
+                                                x-bind:name="`accused[${index}][department_id]`" x-model="acc.department_id"
+                                                :options="$departments->pluck('department_name', 'id')->toArray()"
+                                                placeholder="Select Department" />
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <!-- Nested Addresses -->
                                 <div>
@@ -529,7 +537,8 @@
                         </div>
                     </template>
 
-                    <div class="pt-2 text-center" x-show="accused.length > 0 && accused[accused.length - 1].name.trim() !== ''">
+                    <div class="pt-2 text-center"
+                        x-show="accused.length > 0 && accused[accused.length - 1].name.trim() !== ''">
                         <button type="button" @click="addAccused()"
                             class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 transition-all flex items-center justify-center gap-2 w-full">
                             <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Suspect
