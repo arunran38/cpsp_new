@@ -237,7 +237,7 @@
 
                             <div class="p-6">
                                 <!-- Fields -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                     <div>
                                         <x-input label="Full Name" name="comp_name"
                                             x-bind:name="`complainants[${index}][name]`" x-model="comp.name"
@@ -247,6 +247,11 @@
                                         <x-input label="Phone Number" name="comp_phone"
                                             x-bind:name="`complainants[${index}][phone]`" x-model="comp.phone"
                                             x-bind:required="step === 2" placeholder="10-digit Mobile" />
+                                    </div>
+                                    <div>
+                                        <x-input label="Email (Optional)" name="comp_email"
+                                            x-bind:name="`complainants[${index}][email]`" x-model="comp.email"
+                                            type="email" placeholder="Email Address" />
                                     </div>
                                 </div>
 
@@ -585,7 +590,7 @@
                     description: `{!! addslashes($petition->description) !!}`,
                     proposed_action: `{!! addslashes($petition->proposed_action) !!}`
                 },
-                complainants: {!! json_encode($complainants) !!}.length > 0 ? {!! json_encode($complainants) !!} : [{ id: Date.now(), name: '', phone: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
+                complainants: {!! json_encode($complainants) !!}.length > 0 ? {!! json_encode($complainants) !!} : [{ id: Date.now(), name: '', phone: '', email: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
                 accused: {!! json_encode($accused) !!}.length > 0 ? {!! json_encode($accused) !!} : [{ id: Date.now() + 1, entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
                 deleted_uploads: [],
 
@@ -644,7 +649,7 @@
                 },
                 addComplainant() {
                     this.complainants.push({
-                        id: Date.now(), name: '', phone: '',
+                        id: Date.now(), name: '', phone: '', email: '',
                         addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }]
                     });
                     this.refreshIcons();

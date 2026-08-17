@@ -23,7 +23,7 @@ class PetitionForwardingController extends Controller
             'action' => 'required|in:Forward_To_Unit,Sent_to_Govt,Close',
             'director_remarks' => 'required|string',
             'to_unit_id' => 'required_if:action,Forward_To_Unit|nullable|exists:units,unit_id',
-            'final_order_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,webp|max:10240',
+            'final_order_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'forwarded_date' => 'required|date|before_or_equal:today',
         ]);
 
@@ -80,7 +80,7 @@ class PetitionForwardingController extends Controller
             'vr_date' => 'required|date|before_or_equal:today',
             'vr_received_at_cpsp_date' => 'nullable|date|before_or_equal:today',
             'vr_remarks' => 'nullable|string',
-            'vr_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
+            'vr_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ], [
             'vr_date.before_or_equal' => 'Date cannot be in the future.',
             'vr_received_at_cpsp_date.before_or_equal' => 'Date cannot be in the future.',

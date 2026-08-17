@@ -28,6 +28,7 @@ class StorePetitionRequest extends FormRequest
             'complainants' => 'nullable|array',
             'complainants.*.name' => 'nullable|string',
             'complainants.*.phone' => 'nullable|string',
+            'complainants.*.email' => 'nullable|email',
             'complainants.*.addresses' => 'nullable|array',
             'accused' => 'nullable|array',
             'accused.*.entity_type' => 'required|in:Person,Firm',
@@ -38,6 +39,8 @@ class StorePetitionRequest extends FormRequest
             'accused.*.pen_number' => 'nullable|digits_between:6,7',
             'accused.*.addresses' => 'nullable|array',
             'linked_petition_id' => 'nullable|exists:petitions,petition_id',
+            'evidence_files' => 'nullable|array',
+            'evidence_files.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ];
     }
 

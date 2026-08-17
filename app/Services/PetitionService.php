@@ -110,6 +110,7 @@ class PetitionService
 
             $personName = $person['name'];
             $phone = $person['phone'] ?? null;
+            $email = $person['email'] ?? null;
             $entityType = $person['entity_type'] ?? 'Person';
             $designationId = $person['designation_id'] ?? null;
             $departmentId = $person['department_id'] ?? null;
@@ -133,6 +134,7 @@ class PetitionService
                         'address_type' => $addr['address_type'] ?? 'Temporary',
                         'is_primary' => ($index === 0),
                         'phone' => $phone,
+                        'email' => $email,
                         'pen_number' => $penNumber,
                         'full_address' => $addr['address'],
                         'district_id' => !empty($addr['district_id']) ? $addr['district_id'] : null,
@@ -153,6 +155,7 @@ class PetitionService
                     'address_type' => 'Temporary',
                     'is_primary' => true,
                     'phone' => $phone,
+                    'email' => $email,
                     'pen_number' => $penNumber,
                     'full_address' => 'Not provided',
                     'district_id' => null,

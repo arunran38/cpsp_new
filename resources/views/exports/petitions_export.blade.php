@@ -30,6 +30,7 @@
             <col style="width: 90pt;"> <!-- Nature -->
             <col style="width: 250pt;"> <!-- Description -->
             <col style="width: 60pt;"> <!-- Mode -->
+            <col style="width: 150pt;"> <!-- Proposed Action -->
             <col style="width: 70pt;"> <!-- Present Status -->
             <col style="width: 90pt;"> <!-- Final Recommendation -->
             @if(Auth::user()->role === 'admin' || $tab !== 'all')
@@ -114,6 +115,7 @@
                     <td>{{ $petition->nature_of_petition }}</td>
                     <td>{{ $petition->description }}</td>
                     <td class="text-center">{{ $petition->mode_of_petition_received }}</td>
+                    <td>{{ $petition->proposed_action }}</td>
                     <td class="text-center"><span class="bold">{{ $petition->status }}</span></td>
                     <td class="text-center">{{ $petition->decision->decision_remarks ?? '-' }}</td>
 

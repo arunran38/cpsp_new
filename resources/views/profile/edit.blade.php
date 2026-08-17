@@ -34,7 +34,7 @@
             @csrf
             @method('patch')
 
-            <input type="file" id="photo" name="photo" class="hidden" accept="image/*" onchange="previewImage(this)">
+            <input type="file" id="photo" name="photo" class="hidden" accept=".jpg,.jpeg,.png" onchange="previewImage(this)">
 
             <div class="grid gap-4 sm:grid-cols-2">
                 <div class="space-y-2">

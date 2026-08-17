@@ -17,8 +17,12 @@
             <p class="text-sm text-slate-700 mb-1"><span class="font-semibold text-indigo-600">Browse files</span> or drag and drop</p>
             <p class="text-xs text-slate-500">Supports PDF, JPG, PNG up to 10MB</p>
         </div>
-        <input id="{{ $name }}" name="{{ $name }}" type="file" {{ $multiple ? 'multiple' : '' }} {{ $required ? 'required' : '' }} class="hidden" @change="handleFiles" x-ref="fileInput" />
+        <input id="{{ $name }}" name="{{ $name }}" type="file" accept=".pdf,.jpg,.jpeg,.png" {{ $multiple ? 'multiple' : '' }} {{ $required ? 'required' : '' }} class="hidden" @change="handleFiles" x-ref="fileInput" />
     </label>
+
+    <template x-if="errorMsg">
+        <p class="text-xs font-medium text-rose-500 mt-1" x-text="errorMsg"></p>
+    </template>
 
     <!-- Selected Files Preview -->
     <template x-if="files.length > 0">
@@ -50,6 +54,7 @@
             dragover: false,
             files: [],
             isMultiple: isMultiple,
+            errorMsg: '',
             
             handleFiles(event) {
                 const newFiles = Array.from(event.target.files);
@@ -64,6 +69,26 @@
             },
             
             addFiles(newFiles) {
+                this.errorMsg = '';
+                const allowedExts = ['pdf', 'jpg', 'jpeg', 'png'];
+                let validFiles = [];
+                let hasInvalid = false;
+                
+                for (let f of newFiles) {
+                    const ext = f.name.split('.').pop().toLowerCase();
+                    if (!allowedExts.includes(ext)) {
+                        hasInvalid = true;
+                    } else {
+                        validFiles.push(f);
+                    }
+                }
+                
+                if (hasInvalid) {
+                    this.errorMsg = 'Invalid file type. Only PDF, JPG, and PNG are allowed.';
+                }
+                
+                newFiles = validFiles;
+
                 if (!this.isMultiple) {
                     this.files = newFiles.slice(0, 1);
                 } else {

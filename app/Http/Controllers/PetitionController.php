@@ -125,7 +125,7 @@ class PetitionController extends Controller
         $filename = "petitions_report_" . $tab . "_" . date('Y-m-d') . ".xls";
         
         // Prepare metadata for the export view
-        $columns = ['#', 'Petition No', 'Received Date', 'Complainant Name & Address', 'Suspect Name & Address', 'Nature', 'Description', 'Mode', 'Present Status', 'Final Recommendation'];
+        $columns = ['#', 'Petition No', 'Received Date', 'Complainant Name & Address', 'Suspect Name & Address', 'Nature', 'Description', 'Mode', 'Proposed Action', 'Present Status', 'Final Recommendation'];
         if (Auth::user()->role === 'admin') $columns[] = 'Seat';
         if ($tab === 'forwarded') $columns[] = 'Unit';
         if ($tab === 'vrs') { $columns[] = 'VR Ref No'; $columns[] = 'VR Date'; }

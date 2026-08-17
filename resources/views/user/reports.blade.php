@@ -324,7 +324,7 @@
                     <div class="space-y-5">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Upload Report</label>
-                            <input type="file" name="vr_file"
+                            <input type="file" name="vr_file" accept=".pdf,.jpg,.jpeg,.png"
                                 class="w-full text-sm text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all">
                         </div>
                         <div>

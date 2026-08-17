@@ -188,7 +188,7 @@
 
                             <div class="p-6">
                                 <!-- Fields -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                     <div>
                                         <x-input label="Name" name="comp_name" x-bind:name="`complainants[${index}][name]`"
                                             x-model="comp.name" placeholder="Full Name" />
@@ -197,6 +197,11 @@
                                         <x-input label="Phone Number" name="comp_phone"
                                             x-bind:name="`complainants[${index}][phone]`" x-model="comp.phone"
                                             placeholder="Mobile Number" />
+                                    </div>
+                                    <div>
+                                        <x-input label="Email" name="comp_email"
+                                            x-bind:name="`complainants[${index}][email]`" x-model="comp.email" type="email"
+                                            placeholder="Email Address" />
                                     </div>
                                 </div>
                             </div>
@@ -507,8 +512,8 @@
 
 
                 <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-8">
-                    <x-textarea label="Initial Assessment/Action Note" name="proposed_action"
-                        x-model="petitionDetails.proposed_action" rows="4" placeholder="Enter the remarks/notes here..." />
+                    <x-textarea label="Proposed Action" name="proposed_action" x-model="petitionDetails.proposed_action"
+                        rows="4" placeholder="Enter the remarks/notes here..." />
                 </div>
 
                 <div class="flex gap-4 mb-4">
@@ -668,6 +673,9 @@
                                                     Contact</p>
                                                 <p class="text-sm font-semibold text-slate-900"
                                                     x-text="comp.phone || 'N/A'"></p>
+                                                <p class="text-xs text-slate-500 font-medium">Email</p>
+                                                <p class="text-sm font-semibold text-slate-900"
+                                                    x-text="comp.email || 'N/A'"></p>
                                             </div>
 
                                         </div>
@@ -751,13 +759,13 @@
                     </div>
                 </div>
 
-                <!-- 4. Initial Assessment -->
+                <!-- 4. Proposed Action -->
                 <div class="relative">
                     <div class="flex items-center gap-4 mb-6">
                         <div
                             class="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold text-sm shadow-sm border border-emerald-200 ring-4 ring-white z-10">
                             4</div>
-                        <h4 class="text-lg font-bold text-slate-900">Initial Assessment / Action</h4>
+                        <h4 class="text-lg font-bold text-slate-900">Proposed Action</h4>
                         <div class="flex-1 h-px bg-slate-200"></div>
                     </div>
 
@@ -897,7 +905,7 @@
                     description: `{!! addslashes(old('description')) !!}`,
                     proposed_action: `{!! addslashes(old('proposed_action')) !!}`
                 },
-                complainants: @json(old('complainants')) || [{ id: Date.now(), name: '', phone: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
+                complainants: @json(old('complainants')) || [{ id: Date.now(), name: '', phone: '', email: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
                 accused: @json(old('accused')) || [{ id: Date.now() + 1, entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
 
                 // Duplicate Checking State
@@ -1122,14 +1130,18 @@
                     if (stepContainer) {
                         // For Step 2 and Step 3, only validate format if field has a value
                         if (fieldValue) {
-                            // Custom validation rules by field
                             if (fieldName.includes('[phone]') || fieldName === 'comp_phone' || fieldName === 'acc_phone') {
-                                if (!/^\d{10}$/.test(fieldValue.replace(/\D/g, ''))) {
+                                if (fieldValue && !/^\d{10}$/.test(fieldValue.replace(/\D/g, ''))) {
                                     this.formErrors[fieldName] = 'Phone number must be 10 digits.';
                                 } else {
                                     this.formErrors[fieldName] = '';
                                 }
-
+                            } else if (fieldName.includes('[email]') || fieldName === 'comp_email' || fieldName === 'acc_email') {
+                                if (fieldValue && !/^\S+@\S+\.\S+$/.test(fieldValue)) {
+                                    this.formErrors[fieldName] = 'Please enter a valid email address.';
+                                } else {
+                                    this.formErrors[fieldName] = '';
+                                }
                             } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode' || fieldName === 'acc_pincode') {
                                 if (!/^\d{6}$/.test(fieldValue.replace(/\D/g, ''))) {
                                     this.formErrors[fieldName] = 'Pincode must be 6 digits.';
@@ -1163,7 +1175,12 @@
                         } else {
                             this.formErrors[fieldName] = '';
                         }
-
+                    } else if (fieldName.includes('[email]') || fieldName === 'comp_email') {
+                        if (fieldValue && !/^\S+@\S+\.\S+$/.test(fieldValue)) {
+                            this.formErrors[fieldName] = 'Please enter a valid email address.';
+                        } else {
+                            this.formErrors[fieldName] = '';
+                        }
                     } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode') {
                         if (fieldValue && !/^\d{6}$/.test(fieldValue.replace(/\D/g, ''))) {
                             this.formErrors[fieldName] = 'Pincode must be 6 digits.';
@@ -1322,7 +1339,7 @@
                     const last = this.complainants[this.complainants.length - 1];
                     if (last.name.trim() !== '') {
                         this.complainants.push({
-                            id: Date.now(), name: '', phone: '',
+                            id: Date.now(), name: '', phone: '', email: '',
                             addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }]
                         });
                         this.refreshIcons();

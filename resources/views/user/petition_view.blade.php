@@ -182,7 +182,7 @@
 
                         <div x-show="action === 'Close' || action === 'Sent_to_Govt'" x-cloak class="pt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order</label>
-                            <input type="file" name="final_order_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
                                 class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                         </div>
 
@@ -267,7 +267,7 @@
                     <div class="space-y-5">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Upload verification report</label>
-                            <input type="file" name="vr_file"
+                            <input type="file" name="vr_file" accept=".pdf,.jpg,.jpeg,.png"
                                 class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all">
                         </div>
                         <div>
@@ -342,7 +342,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order Document</label>
-                        <input type="file" name="final_order_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
                             class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100">
                     </div>
                     <div class="flex justify-end gap-3 pt-6">

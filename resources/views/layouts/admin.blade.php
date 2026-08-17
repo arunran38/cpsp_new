@@ -571,6 +571,52 @@
                 }
             }
         });
+
+        // Global file type validation
+        document.addEventListener('change', function(e) {
+            if (e.target.tagName === 'INPUT' && e.target.type === 'file') {
+                const input = e.target;
+                const accept = input.getAttribute('accept');
+                if (!accept) return;
+
+                const allowedExtensions = accept.split(',').map(ext => ext.trim().replace('.', '').toLowerCase());
+                const errorId = (input.id || input.name) + '_file_error';
+                let errorElement = document.getElementById(errorId);
+
+                if (!errorElement) {
+                    errorElement = document.createElement('p');
+                    errorElement.id = errorId;
+                    errorElement.className = 'text-xs font-medium text-rose-500 mt-1 file-validation-error';
+                    input.parentNode.appendChild(errorElement);
+                }
+                
+                errorElement.innerText = '';
+                
+                if (input.files.length > 0) {
+                    let hasError = false;
+                    for (let i = 0; i < input.files.length; i++) {
+                        const file = input.files[i];
+                        const ext = file.name.split('.').pop().toLowerCase();
+                        
+                        if (accept.includes('image/*')) {
+                            if (!['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+                                errorElement.innerText = 'Invalid file type. Only image files are allowed.';
+                                hasError = true;
+                                break;
+                            }
+                        } else if (!allowedExtensions.includes(ext)) {
+                            const allowedTypes = allowedExtensions.map(e => e.toUpperCase()).join(', ');
+                            errorElement.innerText = 'Invalid file type. Only ' + allowedTypes + ' are allowed.';
+                            hasError = true;
+                            break;
+                        }
+                    }
+                    if (hasError) {
+                        input.value = '';
+                    }
+                }
+            }
+        });
     </script>
     @yield('scripts')
     @include('sweetalert::alert')

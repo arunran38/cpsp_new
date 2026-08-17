@@ -115,9 +115,11 @@
                                 @php $first = $addresses->first(); @endphp
                                 <div class="bg-white border border-slate-200 rounded-lg p-5">
                                     <h4 class="font-bold text-gray-900 mb-4">{{ $name }}</h4>
-                                    <div class="grid grid-cols-1 gap-2 mb-4">
+                                    <div class="grid grid-cols-2 gap-2 mb-4">
                                         <div class="text-xs"><span class="text-gray-600 block mb-0.5">Phone:</span> <span
                                                 class="font-semibold text-gray-900">{{ $first->phone ?? 'N/A' }}</span></div>
+                                        <div class="text-xs"><span class="text-gray-600 block mb-0.5">Email:</span> <span
+                                                class="font-semibold text-gray-900">{{ $first->email ?? 'N/A' }}</span></div>
                                     </div>
 
                                     <div class="space-y-3 pt-3 border-t border-slate-100">
@@ -233,14 +235,13 @@
                     <div>
                         <h3
                             class="text-base font-bold text-gray-900 border-b-2 border-slate-200 pb-2 mb-4 flex items-center gap-2 w-max">
-                            <i data-lucide="clipboard-check" class="w-5 h-5 text-emerald-600"></i> Initial Assessment /
-                            Action
+                            <i data-lucide="clipboard-check" class="w-5 h-5 text-emerald-600"></i> Proposed Action
                         </h3>
                         <div class="bg-emerald-50/50 p-5 rounded-xl border border-emerald-100 shadow-sm">
                             @if($petition->proposed_action)
                                 <p class="font-medium text-gray-800 leading-relaxed">{{ $petition->proposed_action }}</p>
                             @else
-                                <p class="italic text-gray-500">No initial action proposed recorded.</p>
+                                <p class="italic text-gray-500">No proposed action recorded.</p>
                             @endif
                         </div>
                     </div>
@@ -316,7 +317,7 @@
                                     <div id="final-doc-div-fwd" style="display: none;">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Upload Final Order
                                             Document</label>
-                                        <input type="file" name="final_order_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                        <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
                                             class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                                     </div>
 
@@ -524,7 +525,7 @@
                                             <div>
                                                 <label class="block text-sm font-medium text-gray-700 mb-1">Upload verification
                                                     report</label>
-                                                <input type="file" name="vr_file"
+                                                <input type="file" name="vr_file" accept=".pdf,.jpg,.jpeg,.png"
                                                     class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 transition-all">
                                             </div>
                                             <div>
@@ -630,7 +631,7 @@
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Upload Final Order
                                                 Document</label>
-                                            <input type="file" name="final_order_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                            <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
                                                 class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100">
                                         </div>
 

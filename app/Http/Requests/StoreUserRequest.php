@@ -23,7 +23,7 @@ class StoreUserRequest extends FormRequest
             'email' => 'required|string|email|max:255|unique:users,email',
             'mobile_number' => 'required|string|max:10|regex:/^[0-9]{10}$/',
             'role' => 'required|string|max:255',
-            'user_photo' => 'nullable|image|mimes:jpeg,jpg|max:2048',
+            'user_photo' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
             'designation' => 'required|string|max:255',
             'other_designation' => 'required_if:designation,Others|nullable|string|max:255',
             'password' => 'required|string|min:8',

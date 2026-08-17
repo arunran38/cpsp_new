@@ -29,6 +29,7 @@ class UpdatePetitionRequest extends FormRequest
             'complainants' => 'nullable|array',
             'complainants.*.name' => 'nullable|string',
             'complainants.*.phone' => 'nullable|string',
+            'complainants.*.email' => 'nullable|email',
             'complainants.*.addresses' => 'nullable|array',
             'accused' => 'nullable|array',
             'accused.*.entity_type' => 'required|in:Person,Firm',
@@ -39,7 +40,9 @@ class UpdatePetitionRequest extends FormRequest
             'accused.*.pen_number' => 'nullable|digits_between:6,7',
             'accused.*.addresses' => 'nullable|array',
             'deleted_attachments' => 'nullable|array',
-            'deleted_attachments.*' => 'exists:uploads,upload_id'
+            'deleted_attachments.*' => 'exists:uploads,upload_id',
+            'evidence_files' => 'nullable|array',
+            'evidence_files.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240'
         ];
     }
 

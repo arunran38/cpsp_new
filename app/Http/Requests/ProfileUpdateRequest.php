@@ -29,7 +29,7 @@ class ProfileUpdateRequest extends FormRequest
             'mobile_number' => ['nullable', 'string', 'max:15'],
             'designation' => ['nullable', 'string', 'max:255'],
             'other_designation' => ['nullable', 'string', 'max:255'],
-            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ];
     }
 }
