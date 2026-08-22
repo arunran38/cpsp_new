@@ -30,7 +30,7 @@ class PetitionService
             }
 
             $petition = Petition::create([
-                'petition_no' => $data['petition_no'],
+                'receipt_no' => $data['receipt_no'],
                 'date_of_petition_received' => $data['date_of_petition_received'],
                 'nature_of_petition' => $data['nature_of_petition'],
                 'mode_of_petition_received' => $data['mode_of_petition_received'],
@@ -66,7 +66,7 @@ class PetitionService
     {
         return DB::transaction(function () use ($petition, $data, $files, $deletedAttachments) {
             $petition->update([
-                'petition_no' => $data['petition_no'],
+                'receipt_no' => $data['receipt_no'],
                 'date_of_petition_received' => $data['date_of_petition_received'],
                 'nature_of_petition' => $data['nature_of_petition'],
                 'mode_of_petition_received' => $data['mode_of_petition_received'],

@@ -25,6 +25,8 @@ class PetitionForwardingController extends Controller
             'to_unit_id' => 'required_if:action,Forward_To_Unit|nullable|exists:units,unit_id',
             'final_order_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'forwarded_date' => 'required|date|before_or_equal:today',
+            'file_no' => 'required|string|unique:petitions,file_no,' . $request->petition_id . ',petition_id',
+            'file_created_date' => 'nullable|date|before_or_equal:today',
         ]);
 
         return DB::transaction(function () use ($request) {
@@ -43,7 +45,7 @@ class PetitionForwardingController extends Controller
                         'forwarded_date' => $request->forwarded_date,
                         'processed_by_user_id' => Auth::id(),
                     ]);
-                    $petition->update(['status' => Petition::STATUS_FORWARDED]);
+                    $status = Petition::STATUS_FORWARDED;
                 } else {
                     $status = $request->action === 'Sent_to_Govt' ? Petition::STATUS_SENT_TO_GOVT : Petition::STATUS_CLOSED;
                     $decisionRemarks = $request->action === 'Sent_to_Govt' ? 'Sent to Govt' : 'Closed'; 
@@ -56,12 +58,17 @@ class PetitionForwardingController extends Controller
                         'decision_date' => $request->forwarded_date,
                         'processed_by_user_id' => Auth::id(),
                     ]);
-                    $petition->update(['status' => $status]);
 
                     if ($request->hasFile('final_order_file')) {
                         $this->handleFinalOrderUpload($petition, $request->file('final_order_file'));
                     }
                 }
+
+                $petition->update([
+                    'status' => $status,
+                    'file_no' => $request->file_no,
+                    'file_created_date' => $request->file_created_date,
+                ]);
 
                 return back()->with('success', 'Petition processed successfully.');
             } catch (\Exception $e) {
@@ -139,6 +146,10 @@ class PetitionForwardingController extends Controller
             return back()->with('error', 'Cannot pull back. VR Report already submitted.');
         }
 
+        if ($forwarding->petition->decision()->exists() && Auth::user()->role !== 'admin') {
+            return back()->with('error', 'Cannot pull back. Final decision already made.');
+        }
+
         return DB::transaction(function () use ($forwarding) {
             try {
                 $petition = $forwarding->petition;
@@ -160,7 +171,7 @@ class PetitionForwardingController extends Controller
         $forwarding = PetitionForwarding::findOrFail($id);
         $petition = $forwarding->petition;
 
-        if (Decision::where('petition_id', $petition->petition_id)->exists()) {
+        if (Decision::where('petition_id', $petition->petition_id)->exists() && Auth::user()->role !== 'admin') {
             return back()->with('error', 'Cannot pull back VR. Final decision already made.');
         }
 

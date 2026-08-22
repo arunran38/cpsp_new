@@ -23,7 +23,7 @@
                 <label class="block text-xs font-medium text-slate-700 mb-1">Search Petitions</label>
                 <div class="relative flex items-center">
                     <i data-lucide="search" class="w-4 h-4 absolute left-3 text-slate-400"></i>
-                    <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-9 pr-3 py-[9px] rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black" placeholder="Petition No, Petitioner, Accused, Firm/Project, Phone, or PEN...">
+                    <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-9 pr-3 py-[9px] rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black" placeholder="Receipt No, Petitioner, Accused, Firm/Project, Phone, or PEN...">
                 </div>
             </div>
             <div class="flex-1 min-w-[150px]">
@@ -49,7 +49,7 @@
                 <thead>
                     <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
                         <th class="px-6 py-4 font-bold w-12 text-center">#</th>
-                        <th class="px-6 py-4 font-bold">Petition No</th>
+                        <th class="px-6 py-4 font-bold">Receipt No</th>
                         <th class="px-6 py-4 font-bold">Petitioner</th>
                         <th class="px-6 py-4 font-bold">Suspect</th>
                         <th class="px-6 py-4 font-bold">Unit</th>
@@ -65,7 +65,7 @@
                                 {{ ($petitions->currentPage() - 1) * $petitions->perPage() + $loop->iteration }}
                             </td>
                             <td class="px-6 py-4">
-                                <span class="font-bold text-slate-800">{{ $petition->petition_no }}</span>
+                                <span class="font-bold text-slate-800">{{ $petition->receipt_no }}</span>
                                 <span class="block text-[10px] text-slate-400 mt-1">{{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}</span>
                             </td>
                             <td class="px-6 py-4 text-slate-600">

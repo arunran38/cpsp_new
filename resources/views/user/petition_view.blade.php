@@ -112,15 +112,15 @@
                     </div>
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Date From</label>
-                        <input type="date" id="date_from" placeholder="DD-MM-YYYY" name="date_from" value="{{ request('date_from') }}"
-                            max="{{ \Carbon\Carbon::yesterday()->format('Y-m-d') }}"
+                        <input type="date" id="date_from" placeholder="DD-MM-YYYY" name="date_from"
+                            value="{{ request('date_from') }}" max="{{ \Carbon\Carbon::yesterday()->format('Y-m-d') }}"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                             style="color: #1e40af !important;">
                     </div>
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Date To</label>
-                        <input type="date" id="date_to" placeholder="DD-MM-YYYY" name="date_to" value="{{ request('date_to') }}"
-                            max="{{ \Carbon\Carbon::yesterday()->format('Y-m-d') }}"
+                        <input type="date" id="date_to" placeholder="DD-MM-YYYY" name="date_to"
+                            value="{{ request('date_to') }}" max="{{ \Carbon\Carbon::yesterday()->format('Y-m-d') }}"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                             style="color: #1e40af !important;">
                         <p id="dateRangeError" class="mt-1 text-xs text-rose-600 hidden" aria-live="polite"></p>
@@ -161,16 +161,71 @@
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 
-                    <div x-data="{ action: '' }" class="space-y-4">
+                    <div x-data="{ 
+                                action: '', 
+                                fileNo: '', 
+                                fileNoError: '',
+                                checkEmpty() {
+                                    if (!this.fileNo.trim()) {
+                                        this.fileNoError = 'this field is required';
+                                    } else {
+                                        this.fileNoError = '';
+                                    }
+                                },
+                                async checkFileNoUniqueness() {
+                                    if (!this.fileNo.trim()) {
+                                        this.fileNoError = 'this field is required';
+                                        return;
+                                    }
+                                    try {
+                                        const response = await fetch('/petitions/check-file-no', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
+                                            },
+                                            body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
+                                        });
+                                        const data = await response.json();
+                                        if (data.exists) {
+                                            this.fileNoError = 'File number already exists';
+                                        } else {
+                                            this.fileNoError = '';
+                                        }
+                                    } catch (error) {
+                                        console.error(error);
+                                    }
+                                }
+                            }" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">File Number <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" name="file_no" required x-model="fileNo" @blur="checkFileNoUniqueness"
+                                    @input="fileNoError = ''"
+                                    class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900"
+                                    placeholder="Enter File Number">
+                                <p x-show="fileNoError" x-text="fileNoError" x-cloak class="mt-1 text-sm text-red-600"></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">File Date</label>
+                                <input type="date" name="file_created_date" max="{{ date('Y-m-d') }}"
+                                    placeholder="DD-MM-YYYY"
+                                    class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
+                                    style="color: #1e40af !important;">
+                            </div>
+                        </div>
+
                         @php
                             $actionOptions = [
                                 'Forward_To_Unit' => 'Forward to Unit',
                                 'Sent_to_Govt' => 'Send to Govt (Decision)',
-                                'Close' => 'Close Petition (Decision)'
+                                'Close' => 'Close Petition (Decision)',
                             ];
                         @endphp
                         <x-select label="Action" name="action" :options="$actionOptions" x-model="action"
                             placeholder="Select Action..." required />
+
 
                         <div x-show="action === 'Forward_To_Unit'" x-cloak class="pt-2">
                             @php
@@ -180,17 +235,17 @@
                                 placeholder="Select Unit..." x-bind:required="action === 'Forward_To_Unit'" />
                         </div>
 
-                        <div x-show="action === 'Close' || action === 'Sent_to_Govt'" x-cloak class="pt-2">
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order</label>
-                            <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
-                                class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                        </div>
-
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Action Date</label>
                             <input type="date" name="forwarded_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                                 style="color: #1e40af !important;" required>
+                        </div>
+
+                        <div x-show="action === 'Close' || action === 'Sent_to_Govt'" x-cloak class="pt-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order</label>
+                            <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
+                                class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                         </div>
 
                         <div class="pt-2 border-t border-slate-100 mt-2">
@@ -203,8 +258,8 @@
                         <div class="flex justify-end gap-3 pt-6">
                             <button type="button" @click="showForwardModal = false"
                                 class="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-transparent rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>
-                            <button type="submit"
-                                class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 shadow-sm transition-colors flex items-center gap-2">
+                            <button type="submit" :disabled="fileNoError !== ''"
+                                class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                                 Submit Action <i data-lucide="arrow-right" class="w-4 h-4"></i>
                             </button>
                         </div>
@@ -243,8 +298,7 @@
                             <label class="block text-sm font-medium text-slate-700 mb-1">VR Date</label>
                             <input type="date" placeholder="DD-MM-YYYY" name="vr_date"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
-                                style="color: #1e40af !important;"
-                                required
+                                style="color: #1e40af !important;" required
                                 max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                         </div>
                     </div>

@@ -38,31 +38,34 @@ Route::middleware(['auth'])->group(function () {
 
     Route::resource("users", UserController::class);
     Route::patch('/users/{id}/status', [UserController::class, 'updateStatus'])->name('users.updateStatus');
-    // Unified Reports and Export
-    Route::get('/petitions/reports', [PetitionController::class, 'reports'])->name('petitions.reports');
-    Route::get('/petitions/export', [PetitionController::class, 'export'])->name('petitions.export');
+    Route::middleware(['seat'])->group(function () {
+        // Unified Reports and Export
+        Route::get('/petitions/reports', [PetitionController::class, 'reports'])->name('petitions.reports');
+        Route::get('/petitions/export', [PetitionController::class, 'export'])->name('petitions.export');
 
-    // Custom Petition Routes (MUST be before resource route)
-    Route::post('/petitions/check-petition-no', [PetitionController::class, 'checkPetitionNo'])->name('petitions.checkPetitionNo');
-    Route::post('/petitions/check-duplicates', [PetitionController::class, 'checkDuplicates'])->name('petitions.checkDuplicates');
-    Route::get('/petitions/search-duplicates', [PetitionController::class, 'searchDuplicates'])->name('petitions.searchDuplicates');
-    Route::post('/petitions/{id}/link-duplicate', [PetitionController::class, 'linkDuplicate'])->name('petitions.linkDuplicate');
-    Route::post('/petitions/{id}/unlink-duplicate', [PetitionController::class, 'unlinkDuplicate'])->name('petitions.unlinkDuplicate');
-    Route::get('/petitions/download/{upload_id}', [PetitionController::class, 'downloadAttachment'])->name('petitions.download');
+        // Custom Petition Routes (MUST be before resource route)
+        Route::post('/petitions/check-petition-no', [PetitionController::class, 'checkPetitionNo'])->name('petitions.checkPetitionNo');
+        Route::post('/petitions/check-file-no', [PetitionController::class, 'checkFileNo'])->name('petitions.checkFileNo');
+        Route::post('/petitions/check-duplicates', [PetitionController::class, 'checkDuplicates'])->name('petitions.checkDuplicates');
+        Route::get('/petitions/search-duplicates', [PetitionController::class, 'searchDuplicates'])->name('petitions.searchDuplicates');
+        Route::post('/petitions/{id}/link-duplicate', [PetitionController::class, 'linkDuplicate'])->name('petitions.linkDuplicate');
+        Route::post('/petitions/{id}/unlink-duplicate', [PetitionController::class, 'unlinkDuplicate'])->name('petitions.unlinkDuplicate');
+        Route::get('/petitions/download/{upload_id}', [PetitionController::class, 'downloadAttachment'])->name('petitions.download');
 
-    Route::resource("petitions", PetitionController::class);
+        Route::resource("petitions", PetitionController::class);
 
-    // Petition Workflow Routes
-    Route::post('/forwardings', [PetitionForwardingController::class, 'store'])->name('forwardings.store');
-    Route::put('/forwardings/{id}/vr', [PetitionForwardingController::class, 'updateVr'])->name('forwardings.updateVr');
-    Route::patch('/forwardings/{id}/receive-vr', [PetitionForwardingController::class, 'receiveVr'])->name('forwardings.receiveVr');
-    
-    Route::post('/decisions', [DecisionController::class, 'store'])->name('decisions.store');
+        // Petition Workflow Routes
+        Route::post('/forwardings', [PetitionForwardingController::class, 'store'])->name('forwardings.store');
+        Route::put('/forwardings/{id}/vr', [PetitionForwardingController::class, 'updateVr'])->name('forwardings.updateVr');
+        Route::patch('/forwardings/{id}/receive-vr', [PetitionForwardingController::class, 'receiveVr'])->name('forwardings.receiveVr');
+        
+        Route::post('/decisions', [DecisionController::class, 'store'])->name('decisions.store');
 
-    // Pull Back Routes
-    Route::delete('/forwardings/{id}/pullback', [PetitionForwardingController::class, 'pullbackForwarding'])->name('forwardings.pullback');
-    Route::patch('/forwardings/{id}/pullback-vr', [PetitionForwardingController::class, 'pullbackVr'])->name('forwardings.pullbackVr');
-    Route::delete('/decisions/{id}/pullback', [DecisionController::class, 'pullbackDecision'])->name('decisions.pullback');
+        // Pull Back Routes
+        Route::delete('/forwardings/{id}/pullback', [PetitionForwardingController::class, 'pullbackForwarding'])->name('forwardings.pullback');
+        Route::patch('/forwardings/{id}/pullback-vr', [PetitionForwardingController::class, 'pullbackVr'])->name('forwardings.pullbackVr');
+        Route::delete('/decisions/{id}/pullback', [DecisionController::class, 'pullbackDecision'])->name('decisions.pullback');
+    });
 
     Route::resource("units", UnitController::class)->names([
         'index' => 'admin.units.index',

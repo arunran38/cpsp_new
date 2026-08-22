@@ -46,18 +46,18 @@ class PetitionController extends Controller
     {
         try {
             if ($request->filled('duplicate_link_number')) {
-                $originalPetition = Petition::where('petition_no', $request->input('duplicate_link_number'))->first();
+                $originalPetition = Petition::where('receipt_no', $request->input('duplicate_link_number'))->first();
                 
                 if ($originalPetition) {
                     $petition = new Petition();
-                    $petition->petition_no = $request->petition_no;
+                    $petition->receipt_no = $request->receipt_no;
                     $petition->date_of_petition_received = $request->date_of_petition_received;
                     
                     // Set minimal required fields for duplicate stub
                     $petition->mode_of_petition_received = 'others';
                     $petition->mode_of_petition_received_others = 'Duplicate Entry';
                     $petition->nature_of_petition = 'others';
-                    $petition->description = 'Registered as a duplicate of Petition No: ' . $originalPetition->petition_no;
+                    $petition->description = 'Registered as a duplicate of Receipt No: ' . $originalPetition->receipt_no;
                     
                     $petition->linked_petition_id = $originalPetition->petition_id;
                     $petition->user_id = auth()->id();
@@ -175,7 +175,7 @@ class PetitionController extends Controller
         $petition = Petition::with(['addresses', 'uploads'])->findOrFail($id);
         $this->authorize('update', $petition);
 
-        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT])) {
+        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) && Auth::user()->role !== 'admin') {
             return redirect()->route('petitions.index')->with('error', 'Cannot edit a petition once a final decision has been taken.');
         }
 
@@ -219,7 +219,7 @@ class PetitionController extends Controller
         $petition = Petition::findOrFail($id);
         $this->authorize('delete', $petition);
 
-        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT])) {
+        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) && Auth::user()->role !== 'admin') {
             return redirect()->route('petitions.index')->with('error', 'Cannot delete a petition after a final decision has been issued.');
         }
 
@@ -233,7 +233,7 @@ class PetitionController extends Controller
     public function linkDuplicate(Request $request, $id): RedirectResponse
     {
         $request->validate([
-            'original_petition_no' => 'required|string',
+            'original_receipt_no' => 'required|string',
         ]);
 
         $petition = Petition::findOrFail($id);
@@ -243,10 +243,10 @@ class PetitionController extends Controller
             return back()->with('error', 'This petition is already linked as a duplicate.');
         }
 
-        $originalPetition = Petition::where('petition_no', $request->original_petition_no)->first();
+        $originalPetition = Petition::where('receipt_no', $request->original_receipt_no)->first();
 
         if (!$originalPetition) {
-            return back()->with('error', 'Original petition not found. Please check the petition number.');
+            return back()->with('error', 'Original petition not found. Please check the receipt number.');
         }
 
         if ($originalPetition->petition_id === $petition->petition_id) {
@@ -281,7 +281,7 @@ class PetitionController extends Controller
             $newUpload->save();
         }
 
-        return redirect()->route('petitions.show', $petition->petition_id)->with('success', 'Petition successfully linked as a duplicate of ' . $originalPetition->petition_no . '. The suspects and attachments have been copied to the original petition.');
+        return redirect()->route('petitions.show', $petition->petition_id)->with('success', 'Petition successfully linked as a duplicate of ' . $originalPetition->receipt_no . '. The suspects and attachments have been copied to the original petition.');
     }
 
     /**
@@ -324,7 +324,7 @@ class PetitionController extends Controller
         }
 
         $petitions = Petition::where(function($q) use ($query) {
-            $q->where('petition_no', 'LIKE', "%{$query}%")
+            $q->where('receipt_no', 'LIKE', "%{$query}%")
               ->orWhere('nature_of_petition', 'LIKE', "%{$query}%")
               ->orWhereHas('addresses', function ($q2) use ($query) {
                   $q2->where('person_name', 'LIKE', "%{$query}%");
@@ -341,8 +341,8 @@ class PetitionController extends Controller
             $complainant = $petition->addresses->where('person_type', 'Complainant')->first();
             $name = $complainant ? $complainant->person_name : 'No Name';
             return [
-                'id' => $petition->petition_no, // We return petition_no as id because the form submits original_petition_no
-                'text' => "{$petition->petition_no} - {$petition->nature_of_petition} ({$name})"
+                'id' => $petition->receipt_no, // We return receipt_no as id because the form submits original_receipt_no
+                'text' => "{$petition->receipt_no} - {$petition->nature_of_petition} ({$name})"
             ];
         });
 
@@ -375,8 +375,24 @@ class PetitionController extends Controller
      */
     public function checkPetitionNo(Request $request)
     {
-        $request->validate(['petition_no' => 'required|string|max:255']);
-        return response()->json(['exists' => Petition::where('petition_no', $request->petition_no)->exists()]);
+        $request->validate(['receipt_no' => 'required|string|max:255']);
+        $exists = Petition::where('receipt_no', $request->receipt_no);
+        if ($request->filled('petition_id')) {
+            $exists->where('petition_id', '!=', $request->petition_id);
+        }
+        return response()->json(['exists' => $exists->exists()]);
+    }
+
+    /**
+     * Check if a file number exists.
+     */
+    public function checkFileNo(Request $request)
+    {
+        $request->validate([
+            'file_no' => 'required|string|max:255',
+            'petition_id' => 'required|integer'
+        ]);
+        return response()->json(['exists' => Petition::where('file_no', $request->file_no)->where('petition_id', '!=', $request->petition_id)->exists()]);
     }
 
     /**
@@ -455,7 +471,7 @@ class PetitionController extends Controller
 
             return [
                 'petition_id' => $p->petition_id,
-                'petition_no' => $p->petition_no,
+                'receipt_no' => $p->receipt_no,
                 'date' => date('d-m-Y', strtotime($p->date_of_petition_received)),
                 'complainant' => $complainantText,
                 'accused' => $accusedText,
@@ -493,13 +509,13 @@ class PetitionController extends Controller
               ->filterDates($request->date_from, $request->date_to, $request->status, $request->get('tab', 'all'));
 
         // Hide duplicate (linked) petitions from general list, unless explicitly searched
-        if (!$request->filled('petition_no') && !$request->filled('search')) {
+        if (!$request->filled('receipt_no') && !$request->filled('search')) {
             $query->whereNull('linked_petition_id');
         }
 
         // Additional field filters
-        if ($request->filled('petition_no')) {
-            $query->where('petition_no', 'like', '%' . $request->petition_no . '%');
+        if ($request->filled('receipt_no')) {
+            $query->where('receipt_no', 'like', '%' . $request->receipt_no . '%');
         }
         if ($request->filled('nature_of_petition')) {
             $query->where('nature_of_petition', 'like', '%' . $request->nature_of_petition . '%');

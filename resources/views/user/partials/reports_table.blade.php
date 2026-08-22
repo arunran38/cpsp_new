@@ -3,7 +3,7 @@
         <thead>
             <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
                 <th class="px-6 py-4 font-bold w-12 text-center">#</th>
-                <th class="px-6 py-4 font-bold">Petition No & Received Date</th>
+                <th class="px-6 py-4 font-bold">Receipt No & File No</th>
                 <th class="px-6 py-4 font-bold">Petitioner Name</th>
                 <th class="px-6 py-4 font-bold">Suspect Name <br> Nature of petition</th>
                 <th class="px-6 py-4 font-bold">Mode of Receipt</th>
@@ -23,7 +23,12 @@
                         {{ ($petitions->currentPage() - 1) * $petitions->perPage() + $loop->iteration }}
                     </td>
                     <td class="px-6 py-4">
-                        <span class="font-bold text-slate-800">{{ $petition->petition_no }}</span>
+                        <span class="font-bold text-slate-800">{{ $petition->receipt_no }}</span>
+                        @if($petition->file_no)
+                            <span class="block text-[11px] font-bold text-amber-600 mt-0.5" title="File No">
+                                <i class="fa-regular fa-folder-open text-[10px]"></i> {{ $petition->file_no }}
+                            </span>
+                        @endif
                         @if($petition->originalPetition)
                             <span class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-orange-100 text-orange-700 border border-orange-200">
                                 <i data-lucide="link" class="w-3 h-3"></i> Linked

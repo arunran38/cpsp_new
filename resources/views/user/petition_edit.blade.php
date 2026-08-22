@@ -16,7 +16,7 @@
                 </div>
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight text-slate-900">Edit Petition</h1>
-                    <p class="text-sm font-medium text-slate-500 mt-0.5">Ref No: {{ $petition->petition_no }}</p>
+                    <p class="text-sm font-medium text-slate-500 mt-0.5">Ref No: {{ $petition->receipt_no }}</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
@@ -124,7 +124,7 @@
                 <div class="space-y-8">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="lg:col-span-1">
-                            <x-input label="Petition No *" name="petition_no" x-model="petitionDetails.petition_no" required
+                            <x-input label="Receipt No *" name="receipt_no" x-model="petitionDetails.receipt_no" required
                                 placeholder="Ex. PT-2026-001" />
                         </div>
                         <div class="lg:col-span-1">
@@ -135,7 +135,7 @@
                         <div class="lg:col-span-1">
                             <x-select label="Nature of Petition *" name="nature_of_petition"
                                 x-model="petitionDetails.nature" required
-                                :options="['' => 'Select Category', 'Bribery' => 'Bribery', 'Misuse of authority' => 'Misuse of authority', 'Fraud / financial irregularities' => 'Fraud / financial irregularities', 'Serious negligence' => 'Serious negligence', 'others' => 'Others']" />
+                                :options="['' => 'Select Category', 'Amassment of Wealth' => 'Amassment of Wealth', 'Bribery' => 'Bribery', 'Misuse of authority' => 'Misuse of authority', 'Fraud / financial irregularities' => 'Fraud / financial irregularities', 'Serious negligence' => 'Serious negligence', 'others' => 'Others']" />
                         </div>
                         <div class="lg:col-span-1">
                             <x-select label="Mode of Petition *" name="mode_of_petition_received"
@@ -591,7 +591,7 @@
             return {
                 step: 1,
                 petitionDetails: {
-                    petition_no: '{!! addslashes($petition->petition_no) !!}',
+                    receipt_no: '{!! addslashes($petition->receipt_no) !!}',
                     date: '{{ $petition->date_of_petition_received }}',
                     nature: '{{ $petition->nature_of_petition }}',
                     mode: '{{ $petition->mode_of_petition_received }}',
@@ -625,7 +625,7 @@
                 },
                 validateStep(step) {
                     if (step === 1) {
-                        if (!this.petitionDetails.petition_no || !this.petitionDetails.date || !this.petitionDetails.nature || !this.petitionDetails.mode || !this.petitionDetails.description) {
+                        if (!this.petitionDetails.receipt_no || !this.petitionDetails.date || !this.petitionDetails.nature || !this.petitionDetails.mode || !this.petitionDetails.description) {
                             alert("Please fill all required petition details.");
                             return false;
                         }

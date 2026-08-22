@@ -111,9 +111,9 @@
                 <div class="space-y-8">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="lg:col-span-1">
-                            <x-input label="Petition No *" name="petition_no" x-model="petitionDetails.petition_no" required
+                            <x-input label="Receipt No *" name="receipt_no" x-model="petitionDetails.receipt_no" required
                                 placeholder="Ex. 12/DVACB/2026-CPSP 5" @input="count = $event.target.value.length"
-                                @blur="validateField($event)" />
+                                @blur="validateField($event); checkPetitionNumberUniqueness($event.target.value)" />
                         </div>
                         <div class="lg:col-span-1">
                             <x-input type="date" placeholder="DD-MM-YYYY" label="Date of Receipt *"
@@ -123,7 +123,7 @@
                         <div class="lg:col-span-1">
                             <x-select label="Nature of Petition *" name="nature_of_petition"
                                 x-model="petitionDetails.nature" required
-                                :options="['' => 'Select Category', 'Bribery' => 'Bribery', 'Misuse of authority' => 'Misuse of authority', 'Fraud / financial irregularities' => 'Fraud / financial irregularities', 'Serious negligence' => 'Serious negligence', 'others' => 'Others']" />
+                                :options="['' => 'Select Category', 'Amassment of Wealth' => 'Amassment of Wealth', 'Bribery' => 'Bribery', 'Misuse of authority' => 'Misuse of authority', 'Fraud / financial irregularities' => 'Fraud / financial irregularities', 'Serious negligence' => 'Serious negligence', 'others' => 'Others']" />
                         </div>
                         <div class="lg:col-span-1">
                             <x-select label="Mode of Petition *" name="mode_of_petition_received"
@@ -593,7 +593,7 @@
                                     <i data-lucide="hash" class="w-3.5 h-3.5"></i> Record Number
                                 </p>
                                 <p class="text-base font-bold text-slate-900 font-mono bg-slate-50 inline-block px-2 py-1 rounded"
-                                    x-text="petitionDetails.petition_no || 'Pending...'"></p>
+                                    x-text="petitionDetails.receipt_no || 'Pending...'"></p>
                             </div>
                             <div class="p-5">
                                 <p
@@ -822,14 +822,14 @@
                             class="bg-white border border-slate-200 hover:border-indigo-300 rounded-2xl p-5 flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between shadow-sm hover:shadow-md transition-all duration-300">
                             <div class="flex-1 w-full">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mb-4">
-                                    <!-- Petition No -->
+                                    <!-- Receipt No -->
                                     <div class="flex items-center gap-3">
                                         <span
                                             class="text-xs font-bold text-slate-500 uppercase tracking-wider w-24">Petition
                                             No:</span>
                                         <span
                                             class="inline-flex text-sm font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100"
-                                            x-text="dup.petition_no"></span>
+                                            x-text="dup.receipt_no"></span>
                                     </div>
                                     <!-- Date -->
                                     <div class="flex items-center gap-3">
@@ -874,7 +874,7 @@
                                     </template>
                                 </div>
                             </div>
-                            <button type="button" @click="linkPetition(dup.petition_id, dup.petition_no)"
+                            <button type="button" @click="linkPetition(dup.petition_id, dup.receipt_no)"
                                 style="background-color: #10b981; color: white;"
                                 class="w-full sm:w-auto px-6 py-2.5 text-sm font-bold rounded-xl shadow-md shrink-0 flex justify-center items-center gap-2 hover:opacity-90 transition-opacity border border-transparent">
                                 <i data-lucide="link" class="w-4 h-4"></i> Link Petition
@@ -897,7 +897,7 @@
 
                 showPreview: false,
                 petitionDetails: {
-                    petition_no: '{{ old('petition_no') }}',
+                    receipt_no: '{{ old('receipt_no') }}',
                     date: '{{ old('date_of_petition_received') }}',
                     nature: '{{ old('nature_of_petition') }}',
                     mode: '{{ old('mode_of_petition_received') }}',
@@ -1115,13 +1115,8 @@
                     const fieldName = el.name;
                     const fieldValue = el.value.trim();
 
-                    // Special handling for petition number - check uniqueness
-                    if (fieldName === 'petition_no') {
-                        if (!fieldValue) {
-                            this.formErrors[fieldName] = 'Petition number is required.';
-                        } else {
-                            this.checkPetitionNumberUniqueness(fieldValue);
-                        }
+                    if (fieldName === 'receipt_no') {
+                        this.formErrors[fieldName] = '';
                         return;
                     }
 
@@ -1236,15 +1231,15 @@
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             },
-                            body: JSON.stringify({ petition_no: petitionNo })
+                            body: JSON.stringify({ receipt_no: petitionNo })
                         });
 
                         const data = await response.json();
 
                         if (data.exists) {
-                            this.formErrors['petition_no'] = 'The petition number has already been taken.';
+                            this.formErrors['receipt_no'] = 'Receipt number already exists';
                         } else {
-                            this.formErrors['petition_no'] = '';
+                            this.formErrors['receipt_no'] = '';
                         }
                     } catch (error) {
                         console.error('Error checking petition number uniqueness:', error);
@@ -1260,7 +1255,7 @@
                     const fieldValue = el.value.trim();
 
                     // Special handling for petition number - don't clear server-side validation errors
-                    if (fieldName === 'petition_no') {
+                    if (fieldName === 'receipt_no') {
                         return; // Don't clear errors for petition number on input
                     }
 

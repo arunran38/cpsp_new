@@ -67,7 +67,7 @@
                                 <i data-lucide="search" class="w-4 h-4 absolute left-3 text-blue-600"></i>
                                 <input type="text" name="search" value="{{ request('search') }}"
                                     class="w-full pl-9 pr-3 py-2 rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm transition-all bg-white text-black font-semibold"
-                                    placeholder="Petition No, Petitioner, Accused, Firm/Project, Phone, or PEN..."
+                                    placeholder="Receipt No, File No, Petitioner, Accused, Firm/Project, Phone, or PEN..."
                                     style="color: #000000 !important;">
                             </div>
                         </div>
@@ -130,7 +130,7 @@
                                 class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white appearance-none pr-10"
                                 style="background-image: none !important;">
                                 <option value="" class="font-medium text-slate-800 bg-white py-1">All Natures</option>
-                                @foreach(['Bribery', 'Misuse of authority', 'Fraud / financial irregularities', 'Serious negligence', 'others'] as $nature)
+                                @foreach(['Amassment of Wealth', 'Bribery', 'Misuse of authority', 'Fraud / financial irregularities', 'Serious negligence', 'others'] as $nature)
                                     <option value="{{ $nature }}" {{ request('nature_of_petition') == $nature ? 'selected' : '' }}
                                         class="font-medium text-slate-800 bg-white py-1">{{ $nature }}</option>
                                 @endforeach
@@ -218,6 +218,21 @@
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
                     <div x-data="{ action: '' }" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">File Number <span class="text-red-500">*</span></label>
+                                <input type="text" name="file_no" required
+                                    class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900"
+                                    placeholder="Enter File Number">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">File Date</label>
+                                <input type="date" name="file_created_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                                    class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
+                                    style="color: #1e40af !important;">
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Action</label>
                             <div class="relative flex items-center">
@@ -233,6 +248,8 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
                             </div>
                         </div>
+
+
                         <div x-show="action === 'Forward_To_Unit'" x-cloak class="pt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Select Unit</label>
                             <div class="relative flex items-center">
@@ -254,6 +271,12 @@
                             <input type="date" name="forwarded_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                                 style="color: #1e40af !important;" required>
+                        </div>
+
+                        <div x-show="action === 'Close' || action === 'Sent_to_Govt'" x-cloak class="pt-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order</label>
+                            <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
+                                class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                         </div>
 
                         <div class="pt-2 border-t border-slate-100 mt-2">

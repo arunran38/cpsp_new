@@ -26,7 +26,9 @@ class Petition extends Model
     protected $primaryKey = 'petition_id';
 
     protected $fillable = [
-        'petition_no',
+        'receipt_no',
+        'file_no',
+        'file_created_date',
         'date_of_petition_received',
         'nature_of_petition',
         'mode_of_petition_received',
@@ -163,10 +165,13 @@ class Petition extends Model
         if (empty($search)) return $query;
 
         return $query->where(function ($q) use ($search, $searchType) {
-            // Only search petition_no if searchType is empty/all or 'petition_no'
-            $matchPetitionNo = empty($searchType) || $searchType === 'petition_no';
+            // Search receipt_no or file_no if searchType is empty/all or explicitly receipt_no/petition_no
+            $matchPetitionNo = empty($searchType) || in_array($searchType, ['petition_no', 'receipt_no', 'file_no']);
             if ($matchPetitionNo) {
-                $q->where('petition_no', 'like', "%{$search}%");
+                $q->where(function ($qNo) use ($search) {
+                    $qNo->where('receipt_no', 'like', "%{$search}%")
+                        ->orWhere('file_no', 'like', "%{$search}%");
+                });
             }
 
             $orWhereHas = $matchPetitionNo ? 'orWhereHas' : 'whereHas';

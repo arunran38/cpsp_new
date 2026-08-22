@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \RealRashid\SweetAlert\ToSweetAlert::class,
         ]);
+        $middleware->alias([
+            'seat' => \App\Http\Middleware\EnsureUserHasSeat::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

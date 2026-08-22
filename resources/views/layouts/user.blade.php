@@ -235,6 +235,7 @@
                     <p class="px-4 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Management</p>
                 </div>
 
+                @if(Auth::check() && Auth::user()->currentSeatUser())
                 <!-- Petitions Dropdown with Hover & Click -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -279,13 +280,16 @@
                         </a>
                     </div>
                 </div>
+                @endif
 
+                @if(Auth::check() && Auth::user()->currentSeatUser())
                 <!-- Reports -->
                 <a href="{{ route('petitions.reports') }}" 
                    class="nav-item-transition flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl group {{ request()->routeIs('petitions.reports') ? 'active-nav' : 'inactive-nav' }}">
                     <i data-lucide="bar-chart-3" class="w-5 h-5 icon-bounce"></i>
                     <span>Reports</span>
                 </a>
+                @endif
 
             </nav>
 

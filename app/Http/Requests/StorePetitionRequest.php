@@ -18,7 +18,7 @@ class StorePetitionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'petition_no' => 'required|unique:petitions,petition_no',
+            'receipt_no' => 'required|unique:petitions,receipt_no',
             'date_of_petition_received' => 'required|date|before_or_equal:today',
             'nature_of_petition' => 'required_without:duplicate_link_number',
             'mode_of_petition_received' => 'required_without:duplicate_link_number',

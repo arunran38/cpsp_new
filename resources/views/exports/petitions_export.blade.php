@@ -24,7 +24,7 @@
         <colgroup>
             @foreach ($columns as $column)
                 @if($column === '#') <col style="width: 30pt;">
-                @elseif($column === 'Petition No') <col style="width: 80pt;">
+                @elseif($column === 'Receipt No') <col style="width: 80pt;">
                 @elseif($column === 'Description' || str_contains($column, 'Address')) <col style="width: 220pt;">
                 @elseif(in_array($column, ['VR Remarks', 'Decision', 'Final Recommendation'])) <col style="width: 150pt;">
                 @else <col style="width: 100pt;">
@@ -84,7 +84,7 @@
 
                     $rowData = [
                         '#' => '<td class="text-center">' . ($index + 1) . '</td>',
-                        'Petition No' => '<td style="mso-number-format:\'\@\';" class="bold">' . $petition->petition_no . '</td>',
+                        'Receipt No' => '<td style="mso-number-format:\'\@\';" class="bold">' . $petition->receipt_no . '</td>',
                         'Received Date' => '<td class="text-center">' . date('d-m-Y', strtotime($petition->date_of_petition_received)) . '</td>',
                         'Complainant Name & Address' => '<td>' . $getNameAndAddress($complainants) . '</td>',
                         'Suspect Name & Address' => '<td>' . $getNameAndAddress($accused) . '</td>',

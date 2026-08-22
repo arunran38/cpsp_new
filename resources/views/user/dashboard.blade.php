@@ -287,7 +287,7 @@
                             @foreach($recentPetitions as $petition)
                                 <tr class="hover:bg-slate-50 transition-colors group">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{{ $petition->petition_no }}</div>
+                                        <div class="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{{ $petition->receipt_no }}</div>
                                     </td>
                                     <td class="px-6 py-4 min-w-[200px]">
                                         <span class="text-slate-600 font-medium truncate line-clamp-1 w-64" title="{{ $petition->nature_of_petition }}">{{ $petition->nature_of_petition }}</span>

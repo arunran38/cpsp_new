@@ -19,7 +19,7 @@ class UpdatePetitionRequest extends FormRequest
     {
         $petitionId = $this->route('petition');
         return [
-            'petition_no' => 'required|unique:petitions,petition_no,' . $petitionId . ',petition_id',
+            'receipt_no' => 'required|unique:petitions,receipt_no,' . $petitionId . ',petition_id',
             'date_of_petition_received' => 'required|date|before_or_equal:today',
             'nature_of_petition' => 'required',
             'mode_of_petition_received' => 'required',

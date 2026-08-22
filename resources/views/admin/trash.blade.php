@@ -34,7 +34,7 @@
                     <thead>
                         <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
                             <th class="px-6 py-4 font-bold w-12 text-center">#</th>
-                            <th class="px-6 py-4 font-bold">Petition No</th>
+                            <th class="px-6 py-4 font-bold">Receipt No</th>
                             <th class="px-6 py-4 font-bold">Deleted Object Info</th>
                             <th class="px-6 py-4 font-bold">Deleted At</th>
                             <th class="px-6 py-4 font-bold text-right">Actions</th>
@@ -47,7 +47,7 @@
                                     {{ ($trashedPetitions->currentPage() - 1) * $trashedPetitions->perPage() + $loop->iteration }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="font-bold text-slate-800">{{ $petition->petition_no }}</span>
+                                    <span class="font-bold text-slate-800">{{ $petition->receipt_no }}</span>
                                     <span
                                         class="block text-xs text-slate-500 mt-1 w-max px-2 py-0.5 rounded bg-slate-100 border border-slate-200">{{ $petition->nature_of_petition }}</span>
                                 </td>

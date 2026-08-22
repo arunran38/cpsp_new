@@ -15,15 +15,24 @@
                 </div>
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight text-gray-900">Petition Details:
-                        {{ $petition->petition_no }}
+                        {{ $petition->receipt_no }}
                     </h1>
                     <p class="text-sm font-medium text-gray-600 mt-0.5">Submitted on
                         {{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}
                     </p>
+                    @if($petition->file_no)
+                    <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-md">
+                        <i data-lucide="folder-open" class="w-4 h-4 text-amber-600"></i>
+                        <span class="text-sm font-bold text-amber-800">File No: {{ $petition->file_no }}</span>
+                        @if($petition->file_created_date)
+                            <span class="text-xs text-amber-600 font-medium ml-2 border-l border-amber-200 pl-2">Created on {{ \Carbon\Carbon::parse($petition->file_created_date)->format('d M, Y') }}</span>
+                        @endif
+                    </div>
+                    @endif
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                @if(auth()->user()->role === 'user' || auth()->user()->role === 'admin')
+                @if(auth()->user()->role === 'admin' || (auth()->user()->role === 'user' && !in_array($petition->status, ['Closed', 'Sent_to_Govt'])))
                     <a href="{{ route('petitions.edit', $petition->petition_id) }}"
                         class="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2">
                         <i data-lucide="edit" class="w-4 h-4"></i> Edit Details
@@ -294,6 +303,21 @@
                                     @csrf
                                     <input type="hidden" name="petition_id" value="{{ $petition->petition_id }}">
 
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">File Number <span class="text-red-500">*</span></label>
+                                            <input type="text" name="file_no" required
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900"
+                                                placeholder="Enter File Number">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">File Date</label>
+                                            <input type="date" name="file_created_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
+                                                style="color: #1e40af !important;">
+                                        </div>
+                                    </div>
+
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
                                         <div class="relative flex items-center">
@@ -314,11 +338,12 @@
                                             </svg>
                                         </div>
                                     </div>
-                                    <div id="final-doc-div-fwd" style="display: none;">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Final Order
-                                            Document</label>
-                                        <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
-                                            class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Action Date</label>
+                                        <input type="date" name="forwarded_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
+                                            style="color: #1e40af !important;" required>
                                     </div>
 
                                     <div id="unit-select-div" style="display: none;">
@@ -341,11 +366,11 @@
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Action Date</label>
-                                        <input type="date" name="forwarded_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
-                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
-                                            style="color: #1e40af !important;" required>
+                                    <div id="final-doc-div-fwd" style="display: none;">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Final Order
+                                            Document</label>
+                                        <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
+                                            class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                                     </div>
 
                                     <div>
@@ -390,7 +415,7 @@
                                             <span
                                                 class="text-gray-800 block mt-1">{{ $petition->latestForwarding->director_remarks }}</span>
                                         </div>
-                                        @if(!$petition->latestForwarding->vr_ref_no)
+                                        @if(!$petition->latestForwarding->vr_ref_no && (auth()->user()->role === 'admin' || !$petition->decision))
                                             <div class="md:col-span-2 pt-2">
                                                 <form action="{{ route('forwardings.pullback', $petition->latestForwarding->petition_forwarding_id) }}" method="POST" class="inline pullback-form" data-message="Are you sure you want to pull back this forwarding?">
                                                     @csrf
@@ -457,7 +482,7 @@
                                             </div>
                                         @endif
 
-                                        @if(!$petition->decision)
+                                        @if(!$petition->decision || auth()->user()->role === 'admin')
                                             <div class="md:col-span-2 pt-4 border-t border-amber-200/50">
                                                 <form action="{{ route('forwardings.pullbackVr', $petition->latestForwarding->petition_forwarding_id) }}" method="POST" class="inline pullback-form" data-message="Are you sure you want to pull back this VR Report?">
                                                     @csrf
@@ -685,6 +710,7 @@
                                                 </div>
                                             @endif
 
+                                            @if(auth()->user()->role === 'admin')
                                             <div class="md:col-span-2 pt-4 border-t border-slate-200/50">
                                                 <form action="{{ route('decisions.pullback', $petition->decision->decision_id) }}" method="POST" class="inline pullback-form" data-message="Are you sure you want to pull back this Final Decision?">
                                                     @csrf
@@ -694,6 +720,7 @@
                                                     </button>
                                                 </form>
                                             </div>
+                                            @endif
                                         </div>
                                     </div>
                                 @endif
@@ -733,7 +760,7 @@
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="px-6 py-4 font-bold">
                                 <a href="{{ route('petitions.show', $petition->originalPetition->petition_id) }}" class="text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1">
-                                    {{ $petition->originalPetition->petition_no }}
+                                    {{ $petition->originalPetition->receipt_no }}
                                     <i data-lucide="external-link" class="w-3 h-3"></i>
                                 </a>
                             </td>
@@ -764,7 +791,7 @@
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="px-6 py-4 font-bold">
                                 <a href="{{ route('petitions.show', $dup->petition_id) }}" class="text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1">
-                                    {{ $dup->petition_no }}
+                                    {{ $dup->receipt_no }}
                                     <i data-lucide="external-link" class="w-3 h-3"></i>
                                 </a>
                             </td>
@@ -894,9 +921,9 @@
                                     }
                                 </style>
                                 <div class="mb-6 max-w-sm mx-auto relative">
-                                    <label for="original_petition_no" class="block text-sm font-bold text-gray-700 mb-2">Search Petition</label>
-                                    
-                                    <input type="hidden" name="original_petition_no" x-model="selectedPetition">
+                                    <label for="original_receipt_no" class="block text-sm font-bold text-gray-700 mb-2">Search Petition</label>
+                                    <select name="original_receipt_no" id="petition-search" class="w-full" required></select>
+                                    <input type="hidden" name="original_receipt_no" x-model="selectedPetition">
                                     
                                     <div class="relative">
                                         <input type="text" x-model="searchQuery" 

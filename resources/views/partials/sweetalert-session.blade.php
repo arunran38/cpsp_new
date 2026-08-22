@@ -75,14 +75,18 @@
 
             {{-- Handle Validation Errors bag --}}
             @if($errors->any())
-                @foreach($errors->all() as $error)
-                    showToast(
-                        'error',
-                        'Validation Error',
-                        "{!! addslashes($error) !!}",
-                        'linear-gradient(135deg, #ef4444, #b91c1c)',
-                        6000
-                    );
+                @foreach($errors->messages() as $field => $messages)
+                    @foreach($messages as $error)
+                        @if($field !== 'receipt_no' && !str_contains(strtolower($error), 'file no') )
+                            showToast(
+                                'error',
+                                'Validation Error',
+                                "{!! addslashes($error) !!}",
+                                'linear-gradient(135deg, #ef4444, #b91c1c)',
+                                6000
+                            );
+                        @endif
+                    @endforeach
                 @endforeach
             @endif
 
