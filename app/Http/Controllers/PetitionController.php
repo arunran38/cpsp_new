@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response as HttpResponse;
@@ -33,9 +34,9 @@ class PetitionController extends Controller
      */
     public function create(): View
     {
-        $districts = \App\Models\District::orderBy('district_id')->get();
-        $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
-        $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
+        $districts = Cache::remember('districts_list', 86400, fn() => \App\Models\District::orderBy('district_id')->get());
+        $designations = Cache::remember('designations_list', 86400, fn() => \App\Models\DesignationList::orderBy('designation_name')->get());
+        $departments = Cache::remember('departments_list', 86400, fn() => \App\Models\DepartmentList::orderBy('department_name')->get());
         return view('user.petition_add', compact('districts', 'designations', 'departments'));
     }
 
@@ -102,10 +103,10 @@ class PetitionController extends Controller
 
         $seats = [];
         if (Auth::user()->role === 'admin') {
-            $seats = Seat::where('is_active', true)->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+            $seats = Cache::remember('active_seats', 86400, fn() => Seat::where('is_active', true)->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE));
         }
 
-        $departments = \App\Models\DepartmentList::orderBy('department_name')->pluck('department_name', 'id')->toArray();
+        $departments = Cache::remember('departments_pluck', 86400, fn() => \App\Models\DepartmentList::orderBy('department_name')->pluck('department_name', 'id')->toArray());
 
         if ($request->ajax()) {
             return view('user.partials.reports_table', compact('petitions', 'tab'))->render();
@@ -183,9 +184,9 @@ class PetitionController extends Controller
         $complainants = $this->formatAddressesForAlpine($petition, 'Complainant');
         $accused = $this->formatAddressesForAlpine($petition, 'Accused');
 
-        $districts = \App\Models\District::orderBy('district_id')->get();
-        $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
-        $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
+        $districts = Cache::remember('districts_list', 86400, fn() => \App\Models\District::orderBy('district_id')->get());
+        $designations = Cache::remember('designations_list', 86400, fn() => \App\Models\DesignationList::orderBy('designation_name')->get());
+        $departments = Cache::remember('departments_list', 86400, fn() => \App\Models\DepartmentList::orderBy('department_name')->get());
         return view('user.petition_edit', compact('petition', 'complainants', 'accused', 'districts', 'designations', 'departments'));
     }
 
@@ -489,7 +490,7 @@ class PetitionController extends Controller
      */
     private function getPetitionsQuery(Request $request)
     {
-        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'decision', 'user', 'seat', 'originalPetition.addresses']);
+        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user', 'seat', 'originalPetition.addresses']);
         $user = Auth::user();
 
         // Security: Filter by user/seat if not unrestricted admin
