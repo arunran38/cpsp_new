@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('petitions', function (Blueprint $table) {
             $table->renameColumn('petition_no', 'receipt_no');
-            $table->string('file_no')->nullable()->unique()->after('status');
+            $table->string('file_no')->nullable()->unique()->after('date_of_petition_received');
             $table->date('file_created_date')->nullable()->after('file_no');
         });
     }
