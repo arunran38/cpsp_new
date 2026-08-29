@@ -23,6 +23,7 @@ return new class extends Migration
             $table->index('person_name');
             $table->index('phone');
             $table->index('person_type');
+            $table->index('department_id');
         });
     }
 
@@ -35,6 +36,7 @@ return new class extends Migration
             $table->dropIndex(['person_name']);
             $table->dropIndex(['phone']);
             $table->dropIndex(['person_type']);
+            $table->dropIndex(['department_id']);
         });
 
         Schema::table('petitions', function (Blueprint $table) {
