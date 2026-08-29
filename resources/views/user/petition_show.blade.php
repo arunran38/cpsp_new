@@ -96,10 +96,10 @@
         : $petition->mode_of_petition_received }}
                             </span>
                         </div>
-                        <div class="lg:col-span-4 bg-slate-50 p-5 rounded-xl border border-slate-200 mt-2">
-                            <span class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-2">Detailed
+                        <div class="lg:col-span-4 bg-slate-50/80 p-5 rounded-xl border border-slate-200 mt-2">
+                            <span class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Detailed
                                 Description</span>
-                            <p class="font-medium text-gray-800 leading-relaxed">
+                            <p class="text-base sm:text-[16.5px] font-normal text-slate-800 leading-relaxed sm:leading-loose whitespace-pre-line tracking-normal">
                                 {{ $petition->description ?: 'No description provided.' }}
                             </p>
                         </div>
