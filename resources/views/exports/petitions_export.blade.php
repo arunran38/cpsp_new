@@ -86,6 +86,8 @@
                         '#' => '<td class="text-center">' . ($index + 1) . '</td>',
                         'Receipt No' => '<td style="mso-number-format:\'\@\';" class="bold">' . $petition->receipt_no . '</td>',
                         'Received Date' => '<td class="text-center">' . date('d-m-Y', strtotime($petition->date_of_petition_received)) . '</td>',
+                        'File No' => '<td class="text-center">' . ($petition->file_no ?? 'N/A') . '</td>',
+                        'File Date' => '<td class="text-center">' . ($petition->file_created_date ? date('d-m-Y', strtotime($petition->file_created_date)) : 'N/A') . '</td>',
                         'Complainant Name & Address' => '<td>' . $getNameAndAddress($complainants) . '</td>',
                         'Suspect Name & Address' => '<td>' . $getNameAndAddress($accused) . '</td>',
                         'Complainant Name' => '<td>' . $getNames($complainants) . '</td>',

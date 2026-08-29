@@ -474,8 +474,10 @@
                             @php
                                 $availableColumns = [
                                     '#' => 'Sl No',
-                                    'Petition No' => 'Petition No',
+                                    'Receipt No' => 'Receipt No',
                                     'Received Date' => 'Received Date',
+                                    'File No' => 'File No',
+                                    'File Date' => 'File Date',
                                     'Complainant Name' => 'Complainant Name',
                                     'Complainant Phone' => 'Complainant Phone',
                                     'Complainant Email' => 'Complainant Email',
