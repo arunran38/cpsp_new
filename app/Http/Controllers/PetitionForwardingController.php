@@ -6,6 +6,8 @@ use App\Models\Petition;
 use App\Models\PetitionForwarding;
 use App\Models\Decision;
 use App\Models\Upload;
+use App\Http\Requests\StoreForwardingRequest;
+use App\Http\Requests\UpdateVrRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -16,19 +18,8 @@ class PetitionForwardingController extends Controller
     /**
      * Director Forwarding a Petition or making a final decision.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreForwardingRequest $request): RedirectResponse
     {
-        $request->validate([
-            'petition_id' => 'required|exists:petitions,petition_id',
-            'action' => 'required|in:Forward_To_Unit,Sent_to_Govt,Close',
-            'director_remarks' => 'required|string',
-            'to_unit_id' => 'required_if:action,Forward_To_Unit|nullable|exists:units,unit_id',
-            'final_order_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'forwarded_date' => 'required|date|before_or_equal:today',
-            'file_no' => 'required|string|unique:petitions,file_no,' . $request->petition_id . ',petition_id',
-            'file_created_date' => 'nullable|date|before_or_equal:today',
-        ]);
-
         return DB::transaction(function () use ($request) {
             try {
                 $petition = Petition::findOrFail($request->petition_id);
@@ -80,18 +71,8 @@ class PetitionForwardingController extends Controller
     /**
      * Unit Submitting Verification Report.
      */
-    public function updateVr(Request $request, int $id): RedirectResponse
+    public function updateVr(UpdateVrRequest $request, int $id): RedirectResponse
     {
-        $request->validate([
-            'vr_ref_no' => 'required|string|max:255',
-            'vr_date' => 'required|date|before_or_equal:today',
-            'vr_received_at_cpsp_date' => 'nullable|date|before_or_equal:today',
-            'vr_remarks' => 'nullable|string',
-            'vr_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-        ], [
-            'vr_date.before_or_equal' => 'Date cannot be in the future.',
-            'vr_received_at_cpsp_date.before_or_equal' => 'Date cannot be in the future.',
-        ]);
 
         return DB::transaction(function () use ($request, $id) {
             try {

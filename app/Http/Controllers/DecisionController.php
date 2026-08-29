@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Petition;
 use App\Models\Decision;
 use App\Models\Upload;
+use App\Http\Requests\StoreDecisionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -15,16 +16,8 @@ class DecisionController extends Controller
     /**
      * Final Decision by Director after VR is received.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreDecisionRequest $request): RedirectResponse
     {
-        $request->validate([
-            'petition_id' => 'required|exists:petitions,petition_id',
-            'decision_remarks' => 'required|in:VC,VE,PE,SC,CV,Closed,Sent to Govt,ICell',
-            'final_remarks' => 'nullable|string',
-            'final_order_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'decision_date' => 'required|date|before_or_equal:today',
-        ]);
-
         return DB::transaction(function () use ($request) {
             try {
                 $petition = Petition::findOrFail($request->petition_id);

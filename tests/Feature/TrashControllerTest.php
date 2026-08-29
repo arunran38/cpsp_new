@@ -31,7 +31,7 @@ class TrashControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.trash.index'));
 
         $response->assertStatus(200);
-        $response->assertSee($petition->petition_no);
+        $response->assertSee($petition->receipt_no);
     }
 
     public function test_admin_can_restore_petition(): void

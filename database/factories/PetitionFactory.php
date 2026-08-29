@@ -20,7 +20,7 @@ class PetitionFactory extends Factory
         return [
             'user_id' => \App\Models\User::factory(),
             'seat_id' => \App\Models\Seat::factory(),
-            'petition_no' => $this->faker->unique()->bothify('PET-####-????'),
+            'receipt_no' => $this->faker->unique()->bothify('REC-####-????'),
             'date_of_petition_received' => $this->faker->date(),
             'mode_of_petition_received' => $this->faker->randomElement(['Email', 'Whatsapp', 'Tollfree', 'Direct', 'Unit', 'Tapal','iaps','others']),
             'nature_of_petition' => $this->faker->randomElement(['Bribery', 'Misuse of authority', 'Fraud / financial irregularities', 'Serious negligence','others']),

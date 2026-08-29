@@ -53,7 +53,7 @@ class PetitionControllerTest extends TestCase
         Storage::fake('public');
 
         $data = [
-            'petition_no' => 'PET-2024-0001',
+            'receipt_no' => 'REC-2024-0001',
             'date_of_petition_received' => '2024-01-01',
             'nature_of_petition' => 'Bribery',
             'mode_of_petition_received' => 'Direct',
@@ -66,7 +66,6 @@ class PetitionControllerTest extends TestCase
                         [
                             'address_type' => 'Permanent',
                             'address' => '123 Main St',
-                            'district' => 'Test District',
                             'pincode' => '123456'
                         ]
                     ]
@@ -75,11 +74,11 @@ class PetitionControllerTest extends TestCase
             'accused' => [
                 [
                     'name' => 'Jane Smith',
+                    'entity_type' => 'Person',
                     'addresses' => [
                         [
                             'address_type' => 'Office',
-                            'address' => '456 Office Way',
-                            'district' => 'Off District'
+                            'address' => '456 Office Way'
                         ]
                     ]
                 ]
@@ -92,11 +91,11 @@ class PetitionControllerTest extends TestCase
         $response = $this->actingAs($this->user)->post(route('petitions.store'), $data);
 
         $response->assertRedirect(route('petitions.index'));
-        $this->assertDatabaseHas('petitions', ['petition_no' => 'PET-2024-0001', 'seat_id' => $this->seat->seat_id]);
+        $this->assertDatabaseHas('petitions', ['receipt_no' => 'REC-2024-0001', 'seat_id' => $this->seat->seat_id]);
         $this->assertDatabaseHas('addresses', ['person_name' => 'John Doe', 'person_type' => 'Complainant']);
         $this->assertDatabaseHas('addresses', ['person_name' => 'Jane Smith', 'person_type' => 'Accused']);
         
-        $petition = Petition::where('petition_no', 'PET-2024-0001')->first();
+        $petition = Petition::where('receipt_no', 'REC-2024-0001')->first();
         $this->assertCount(1, $petition->uploads);
         Storage::disk('public')->assertExists($petition->uploads->first()->file_path);
     }
@@ -137,7 +136,7 @@ class PetitionControllerTest extends TestCase
         $petition = Petition::factory()->create(['user_id' => $this->user->user_id, 'seat_id' => $this->seat->seat_id]);
         
         $updateData = [
-            'petition_no' => 'UPDATED-NO-1',
+            'receipt_no' => 'UPDATED-NO-1',
             'date_of_petition_received' => '2024-02-02',
             'nature_of_petition' => 'Misuse of authority',
             'mode_of_petition_received' => 'Email',
@@ -149,7 +148,7 @@ class PetitionControllerTest extends TestCase
         $response->assertRedirect(route('petitions.index'));
         $this->assertDatabaseHas('petitions', [
             'petition_id' => $petition->petition_id,
-            'petition_no' => 'UPDATED-NO-1',
+            'receipt_no' => 'UPDATED-NO-1',
             'nature_of_petition' => 'Misuse of authority'
         ]);
     }
@@ -166,12 +165,12 @@ class PetitionControllerTest extends TestCase
 
     public function test_check_petition_no_endpoint(): void
     {
-        Petition::factory()->create(['petition_no' => 'EXIST-123']);
+        Petition::factory()->create(['receipt_no' => 'EXIST-123']);
 
-        $response = $this->actingAs($this->user)->post(route('petitions.checkPetitionNo'), ['petition_no' => 'EXIST-123']);
+        $response = $this->actingAs($this->user)->post(route('petitions.checkPetitionNo'), ['receipt_no' => 'EXIST-123']);
         $response->assertJson(['exists' => true]);
 
-        $response = $this->actingAs($this->user)->post(route('petitions.checkPetitionNo'), ['petition_no' => 'NEW-999']);
+        $response = $this->actingAs($this->user)->post(route('petitions.checkPetitionNo'), ['receipt_no' => 'NEW-999']);
         $response->assertJson(['exists' => false]);
     }
 

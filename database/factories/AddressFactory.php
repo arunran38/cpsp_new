@@ -25,7 +25,7 @@ class AddressFactory extends Factory
             'is_primary' => false,
             'phone' => $this->faker->phoneNumber(),
             'full_address' => $this->faker->address(),
-            'district' => $this->faker->city(),
+            'district_id' => null,
             'pincode' => $this->faker->numerify('######'),
         ];
     }
