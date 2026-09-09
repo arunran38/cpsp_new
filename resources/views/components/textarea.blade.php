@@ -3,10 +3,11 @@
     'name' => null,
     'value' => '',
     'placeholder' => '',
-    'rows' => 4
+    'rows' => 4,
+    'max' => 5000
 ])
 
-<div class="space-y-1.5" x-data="{ count: 0, max: 500 }" x-init="count = $refs.textarea.value.length">
+<div class="space-y-1.5" x-data="{ count: 0, max: {{ $max }} }" x-init="count = $refs.textarea.value ? $refs.textarea.value.length : 0">
     @if($label)
         <label @if($name) for="{{ $name }}" @endif class="flex items-center justify-between text-sm font-semibold text-slate-700">
             {{ $label }}

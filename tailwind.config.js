@@ -13,7 +13,7 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Inter', 'Manjari', 'Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Inter', '"Noto Sans Malayalam"', 'Figtree', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 primary: '#4361ee',
