@@ -37,12 +37,23 @@ class Seat extends Model
     }
 
     /**
-     * Relationship: Current Active Assignment
+     * Relationship: Current Active Primary Assignment
      */
     public function activeAssignment(): HasOne
     {
         return $this->hasOne(SeatUser::class, 'seat_id', 'seat_id')
-            ->where('is_active', true);
+            ->where('is_active', true)
+            ->where('is_additional', false);
+    }
+
+    /**
+     * Relationship: All Current Active Assignments (Primary and Additional)
+     */
+    public function activeAssignments(): HasMany
+    {
+        return $this->hasMany(SeatUser::class, 'seat_id', 'seat_id')
+            ->where('is_active', true)
+            ->orderBy('is_additional', 'asc');
     }
 
     /**

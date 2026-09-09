@@ -49,7 +49,7 @@ class SeatUserControllerTest extends TestCase
         ]);
     }
 
-    public function test_assign_revokes_previous_occupant(): void
+    public function test_assign_primary_revokes_previous_primary(): void
     {
         $oldUser = User::factory()->create();
         $newUser = User::factory()->create();
@@ -58,7 +58,38 @@ class SeatUserControllerTest extends TestCase
         $oldAssignment = SeatUser::factory()->create([
             'user_id' => $oldUser->user_id,
             'seat_id' => $seat->seat_id,
-            'is_active' => true
+            'is_active' => true,
+            'is_additional' => false
+        ]);
+
+        $response = $this->actingAs($this->admin)->post(route('admin.seatuser.store'), [
+            'user_id' => $newUser->user_id,
+            'seat_id' => $seat->seat_id,
+            'is_additional' => false,
+        ]);
+
+        $response->assertRedirect(route('admin.seatuser.index'));
+        $this->assertFalse($oldAssignment->fresh()->is_active);
+        $this->assertNotNull($oldAssignment->fresh()->revoked_at);
+        $this->assertDatabaseHas('seat_users', [
+            'user_id' => $newUser->user_id,
+            'seat_id' => $seat->seat_id,
+            'is_active' => true,
+            'is_additional' => false
+        ]);
+    }
+
+    public function test_assign_additional_does_not_revoke_primary(): void
+    {
+        $oldUser = User::factory()->create();
+        $newUser = User::factory()->create();
+        $seat = Seat::factory()->create();
+        
+        $oldAssignment = SeatUser::factory()->create([
+            'user_id' => $oldUser->user_id,
+            'seat_id' => $seat->seat_id,
+            'is_active' => true,
+            'is_additional' => false
         ]);
 
         $response = $this->actingAs($this->admin)->post(route('admin.seatuser.store'), [
@@ -68,12 +99,13 @@ class SeatUserControllerTest extends TestCase
         ]);
 
         $response->assertRedirect(route('admin.seatuser.index'));
-        $this->assertFalse($oldAssignment->fresh()->is_active);
-        $this->assertNotNull($oldAssignment->fresh()->revoked_at);
+        $this->assertTrue($oldAssignment->fresh()->is_active);
+        $this->assertNull($oldAssignment->fresh()->revoked_at);
         $this->assertDatabaseHas('seat_users', [
             'user_id' => $newUser->user_id,
             'seat_id' => $seat->seat_id,
-            'is_active' => true
+            'is_active' => true,
+            'is_additional' => true
         ]);
     }
 
@@ -100,7 +132,7 @@ class SeatUserControllerTest extends TestCase
         $response->assertSessionHas('error');
     }
 
-    public function test_revoking_additional_charge_reactivates_previous_primary(): void
+    public function test_revoking_additional_charge_does_not_affect_primary(): void
     {
         $primaryUser = User::factory()->create();
         $additionalUser = User::factory()->create();
@@ -109,7 +141,7 @@ class SeatUserControllerTest extends TestCase
         $primaryAssignment = SeatUser::factory()->create([
             'user_id' => $primaryUser->user_id,
             'seat_id' => $seat->seat_id,
-            'is_active' => false, // Initially active, then revoked by additional charge
+            'is_active' => true,
             'is_additional' => false,
             'created_at' => now()->subDay()
         ]);

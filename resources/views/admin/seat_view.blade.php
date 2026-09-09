@@ -26,8 +26,8 @@
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-12 text-center">#</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Seat Name</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Unit</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Current Occupant</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Primary Occupant</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Additional Charges</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
                     </tr>
                 </thead>
@@ -64,21 +64,35 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                @if($seat->activeAssignment)
+                                @php
+                                    $primary = $seat->activeAssignments->where('is_additional', false)->first();
+                                @endphp
+                                @if($primary)
                                     <div class="flex items-center gap-3">
-                                        @if($seat->activeAssignment->user && $seat->activeAssignment->user->profilePhoto)
+                                        @if($primary->user && $primary->user->profilePhoto)
                                             <img class="w-8 h-8 rounded-full object-cover ring-2 ring-slate-100" 
-                                                 src="{{ asset('storage/' . $seat->activeAssignment->user->profilePhoto->file_path) }}" alt="">
+                                                 src="{{ asset('storage/' . $primary->user->profilePhoto->file_path) }}" alt="">
                                         @else
                                             <img class="w-8 h-8 rounded-full ring-2 ring-slate-100" 
-                                                 src="https://ui-avatars.com/api/?name={{ urlencode($seat->activeAssignment->user->name ?? 'Deleted') }}&background=f8fafc&color=4361ee" alt="">
+                                                 src="https://ui-avatars.com/api/?name={{ urlencode($primary->user->name ?? 'Deleted') }}&background=f8fafc&color=4361ee" alt="">
                                         @endif
                                         <div>
-                                            <p class="text-sm font-bold text-slate-900">{{ $seat->activeAssignment->user->name ?? 'Deleted User' }}</p>
                                             <div class="flex items-center gap-2">
-                                                <span class="text-[9px] text-slate-500 uppercase font-bold tracking-wider">{{ $seat->activeAssignment->user->pen ?? 'N/A' }}</span>
+                                                <p class="text-sm font-bold text-slate-900">{{ $primary->user->name ?? 'Deleted User' }}</p>
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-600 uppercase tracking-wider">Primary</span>
                                             </div>
+                                            <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">{{ $primary->user->pen ?? 'N/A' }}</p>
                                         </div>
+                                        <form method="POST" action="{{ route('admin.seatuser.destroy', $primary->seat_user_id) }}" class="ml-2">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" 
+                                                    class="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                                                    onclick="return confirm('Are you sure you want to revoke the primary assignment for {{ $primary->user->name ?? 'this user' }}?')"
+                                                    title="Revoke Primary Assignment">
+                                                <i class="fa-solid fa-xmark text-xs"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 @else
                                     <a href="{{ route('admin.seatuser.create', ['seat_id' => $seat->seat_id]) }}" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-primary transition-colors italic">
@@ -88,18 +102,39 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                @if($seat->activeAssignment)
-                                    @if($seat->activeAssignment->is_additional)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100 uppercase">
-                                            Additional Charge
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-600 border border-slate-100 uppercase">
-                                            Primary
-                                        </span>
-                                    @endif
+                                @php
+                                    $additionals = $seat->activeAssignments->where('is_additional', true);
+                                @endphp
+                                @if($additionals->isNotEmpty())
+                                    <div class="flex flex-wrap gap-2">
+                                        @foreach($additionals as $additional)
+                                            <div class="flex items-center gap-1.5 bg-amber-50 border border-amber-100 rounded-full pr-1.5 pl-1 py-1" title="Additional Charge: {{ $additional->user->pen ?? 'N/A' }}">
+                                                @if($additional->user && $additional->user->profilePhoto)
+                                                    <img class="w-5 h-5 rounded-full object-cover" 
+                                                         src="{{ asset('storage/' . $additional->user->profilePhoto->file_path) }}" alt="">
+                                                @else
+                                                    <img class="w-5 h-5 rounded-full" 
+                                                         src="https://ui-avatars.com/api/?name={{ urlencode($additional->user->name ?? 'Deleted') }}&background=fde68a&color=92400e" alt="">
+                                                @endif
+                                                <span class="text-[11px] font-bold text-amber-800 ml-0.5 mr-1">
+                                                    {{ $additional->user->name ?? 'Deleted' }}
+                                                    <span class="text-[9px] opacity-75 font-normal ml-0.5 tracking-wider">({{ $additional->user->pen ?? 'N/A' }})</span>
+                                                </span>
+                                                <form method="POST" action="{{ route('admin.seatuser.destroy', $additional->seat_user_id) }}" class="flex items-center justify-center">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" 
+                                                            class="text-amber-400 hover:text-rose-600 hover:bg-rose-100/50 rounded-full w-4 h-4 flex items-center justify-center transition-colors"
+                                                            onclick="return confirm('Are you sure you want to revoke the additional charge for {{ $additional->user->name ?? 'this user' }}?')"
+                                                            title="Revoke Additional Charge">
+                                                        <i class="fa-solid fa-xmark text-[10px]"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 @else
-                                    <span class="text-[10px] text-slate-300 italic">None</span>
+                                    <span class="text-[10px] text-slate-300 italic inline-block">None</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-right">
@@ -109,17 +144,13 @@
                                        title="Assignment History">
                                         <i class="fa-solid fa-history"></i>
                                     </a>
-                                    
-                                    @if($seat->activeAssignment)
-                                        <form method="POST" action="{{ route('admin.seats.revoke', $seat->seat_id) }}" class="inline-block">
-                                            @csrf
-                                            <button type="submit" 
-                                                    class="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors border border-transparent hover:border-amber-100"
-                                                    onclick="return confirm('Are you sure you want to revoke the current assignment?')"
-                                                    title="Revoke Assignment">
-                                                <i class="fa-solid fa-user-minus"></i>
-                                            </button>
-                                        </form>
+
+                                    @if($seat->activeAssignments->isNotEmpty())
+                                        <a href="{{ route('admin.seatuser.create', ['seat_id' => $seat->seat_id, 'is_additional' => 1]) }}" 
+                                           class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-transparent hover:border-emerald-100"
+                                           title="Add Additional Charge">
+                                            <i class="fa-solid fa-user-plus"></i>
+                                        </a>
                                     @endif
 
                                     <a href="{{ route('admin.seats.edit', $seat->seat_id) }}" 
@@ -132,8 +163,8 @@
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
-                                                class="p-2 text-slate-400 {{ $seat->activeAssignment ? 'opacity-30 cursor-not-allowed' : 'hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100' }} rounded-lg transition-colors"
-                                                @if($seat->activeAssignment) disabled title="Cannot delete occupied seat" @else onclick="return confirm('Are you sure you want to delete this seat?')" title="Delete Seat" @endif>
+                                                class="p-2 text-slate-400 {{ $seat->activeAssignments->isNotEmpty() ? 'opacity-30 cursor-not-allowed' : 'hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100' }} rounded-lg transition-colors"
+                                                @if($seat->activeAssignments->isNotEmpty()) disabled title="Cannot delete occupied seat" @else onclick="return confirm('Are you sure you want to delete this seat?')" title="Delete Seat" @endif>
                                             <i class="fa-solid fa-trash-can"></i>
                                         </button>
                                     </form>
@@ -142,7 +173,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-12 text-center text-slate-500">
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-500">
                                 <div class="flex flex-col items-center">
                                     <i data-lucide="layout" class="w-12 h-12 text-slate-200 mb-4"></i>
                                     <p class="text-base font-semibold text-slate-900">No seats found</p>

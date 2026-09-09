@@ -64,7 +64,10 @@ class User extends Authenticatable
             }
         }
 
-        $defaultSeatUser = $this->seatUsers()->where('is_active', true)->first();
+        $defaultSeatUser = $this->seatUsers()
+            ->where('is_active', true)
+            ->orderBy('is_additional', 'asc')
+            ->first();
         if ($defaultSeatUser) {
             session(['current_seat_id' => $defaultSeatUser->seat_id]);
             return $defaultSeatUser;

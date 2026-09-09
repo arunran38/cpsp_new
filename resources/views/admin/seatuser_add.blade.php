@@ -74,7 +74,7 @@
                 <label class="relative flex items-start cursor-pointer">
                     <div class="relative flex items-center h-5 mt-1">
                         <input type="checkbox" name="is_additional" value="1" 
-                               {{ old('is_additional') ? 'checked' : '' }}
+                               {{ old('is_additional') || request('is_additional') ? 'checked' : '' }}
                                class="w-5 h-5 text-primary border-slate-300 rounded focus:ring-4 focus:ring-primary/10 transition-all">
                     </div>
                     <div class="ml-4">

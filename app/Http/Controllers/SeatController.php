@@ -21,7 +21,7 @@ class SeatController extends Controller
      */
     public function index(): View
     {
-        $seats = Seat::with(['units', 'activeAssignment.user.profilePhoto'])->paginate(10);
+        $seats = Seat::with(['units', 'activeAssignments.user.profilePhoto'])->paginate(10);
         return view('admin.seat_view', compact('seats'));
     }
 

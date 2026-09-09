@@ -17,8 +17,12 @@
                     <h1 class="text-2xl font-bold tracking-tight text-gray-900">Petition Details:
                         {{ $petition->receipt_no }}
                     </h1>
-                    <p class="text-sm font-medium text-gray-600 mt-0.5">Submitted on
-                        {{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}
+                    <p class="text-sm font-medium text-gray-600 mt-0.5 flex flex-wrap items-center gap-2">
+                        <span>Submitted on {{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}</span>
+                        @if($petition->user)
+                            <span class="inline-block w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
+                            <span>Created By: <span class="font-bold text-slate-800">{{ $petition->user->name }}</span></span>
+                        @endif
                     </p>
                     @if($petition->file_no)
                     <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-md">
@@ -137,7 +141,7 @@
                                             <div
                                                 class="flex items-start gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
                                                 <span
-                                                    class="bg-blue-100 text-blue-800 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded tracking-widest w-16 text-center shrink-0">{{ $addr->address_type }}</span>
+                                                    class="bg-blue-100 text-blue-800 text-[9px] font-bold uppercase px-2 py-0.5 rounded tracking-widest w-20 text-center shrink-0">{{ $addr->address_type }}</span>
                                                 <span class="text-xs font-medium text-gray-800 leading-snug">
                                                     {{ $addr->full_address }}
                                                     @if(!empty($addr->district->district_name))
@@ -218,7 +222,7 @@
                                             <div
                                                 class="flex items-start gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
                                                 <span
-                                                    class="bg-rose-100 text-rose-800 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded tracking-widest w-16 text-center shrink-0">{{ $addr->address_type }}</span>
+                                                    class="bg-rose-100 text-rose-800 text-[9px] font-bold uppercase px-2 py-0.5 rounded tracking-widest w-20 text-center shrink-0">{{ $addr->address_type }}</span>
                                                 <span class="text-xs font-medium text-gray-800 leading-snug">
                                                     {{ $addr->full_address }}
                                                     @if(!empty($addr->district->district_name))

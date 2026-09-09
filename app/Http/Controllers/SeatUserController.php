@@ -71,10 +71,14 @@ class SeatUserController extends Controller
                     }
                 }
 
-                // 3. Revoke current occupant (Seat can only have one active user)
-                SeatUser::where('seat_id', $seatId)
-                    ->where('is_active', true)
-                    ->update(['is_active' => false, 'revoked_at' => now()]);
+                // 3. Handle previous occupants based on charge type
+                if (!$isAdditional) {
+                    // Revoke only the previous PRIMARY occupant
+                    SeatUser::where('seat_id', $seatId)
+                        ->where('is_active', true)
+                        ->where('is_additional', false)
+                        ->update(['is_active' => false, 'revoked_at' => now()]);
+                }
 
                 // 4. Create new assignment
                 SeatUser::create([
@@ -106,17 +110,7 @@ class SeatUserController extends Controller
 
                 $assignment->update(['is_active' => false, 'revoked_at' => now()]);
 
-                // Fallback logic for additional charges
-                if ($wasAdditional) {
-                    $previousPrimary = SeatUser::where('seat_id', $seatId)
-                        ->where('is_additional', false)
-                        ->orderBy('created_at', 'desc')
-                        ->first();
-
-                    if ($previousPrimary) {
-                        $previousPrimary->update(['is_active' => true, 'revoked_at' => null]);
-                    }
-                }
+                // Fallback logic removed as primary charges are no longer revoked when assigning additional charges.
 
                 return redirect()->route('admin.seatuser.index')->with('success', 'Seat assignment revoked successfully.');
             } catch (\Exception $e) {
