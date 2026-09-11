@@ -1003,10 +1003,24 @@
                     formElements.forEach(el => {
                         const stepContainer = el.closest(`[x-show="step === ${step}"]`);
                         if (stepContainer && el.name && !el.disabled) {
+                            let customError = '';
+                            if (el.value) {
+                                if ((el.name.includes('[pincode]') || el.name === 'comp_pincode' || el.name === 'acc_pincode') && !/^\d{6}$/.test(el.value)) {
+                                    customError = 'Pincode must be 6 digits.';
+                                } else if ((el.name.includes('[phone]') || el.name === 'comp_phone' || el.name === 'acc_phone') && !/^\d{10}$/.test(el.value)) {
+                                    customError = 'Phone number must be 10 digits.';
+                                } else if ((el.name.includes('[pen_number]') || el.name === 'acc_pen_number') && !/^\d{6,7}$/.test(el.value)) {
+                                    customError = 'PEN must be 6 or 7 digits.';
+                                }
+                            }
+
                             // For Step 2 and Step 3, skip required validation but still check format
                             if (step === 2 || step === 3) {
                                 // Only validate format, not required status
-                                if (el.value && !el.checkValidity()) {
+                                if (customError) {
+                                    isValid = false;
+                                    this.formErrors[el.name] = customError;
+                                } else if (el.value && !el.checkValidity()) {
                                     isValid = false;
                                     if (el.validity.patternMismatch) {
                                         this.formErrors[el.name] = 'Invalid format.';
@@ -1020,7 +1034,10 @@
                                 }
                             } else {
                                 // For other steps, validate normally
-                                if (!el.checkValidity()) {
+                                if (customError) {
+                                    isValid = false;
+                                    this.formErrors[el.name] = customError;
+                                } else if (!el.checkValidity()) {
                                     isValid = false;
                                     if (el.validity.valueMissing) {
                                         this.formErrors[el.name] = 'This field is required.';
@@ -1126,7 +1143,7 @@
                         // For Step 2 and Step 3, only validate format if field has a value
                         if (fieldValue) {
                             if (fieldName.includes('[phone]') || fieldName === 'comp_phone' || fieldName === 'acc_phone') {
-                                if (fieldValue && !/^\d{10}$/.test(fieldValue.replace(/\D/g, ''))) {
+                                if (fieldValue && !/^\d{10}$/.test(fieldValue)) {
                                     this.formErrors[fieldName] = 'Phone number must be 10 digits.';
                                 } else {
                                     this.formErrors[fieldName] = '';
@@ -1138,13 +1155,13 @@
                                     this.formErrors[fieldName] = '';
                                 }
                             } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode' || fieldName === 'acc_pincode') {
-                                if (!/^\d{6}$/.test(fieldValue.replace(/\D/g, ''))) {
+                                if (!/^\d{6}$/.test(fieldValue)) {
                                     this.formErrors[fieldName] = 'Pincode must be 6 digits.';
                                 } else {
                                     this.formErrors[fieldName] = '';
                                 }
                             } else if (fieldName.includes('[pen_number]') || fieldName === 'acc_pen_number') {
-                                if (!/^\d{6,7}$/.test(fieldValue.replace(/\D/g, ''))) {
+                                if (!/^\d{6,7}$/.test(fieldValue)) {
                                     this.formErrors[fieldName] = 'PEN must be 6 or 7 digits.';
                                 } else {
                                     this.formErrors[fieldName] = '';
@@ -1165,7 +1182,7 @@
                     if (fieldName.includes('[phone]') || fieldName === 'comp_phone') {
                         if (el.hasAttribute('required') && !fieldValue) {
                             this.formErrors[fieldName] = 'Phone number is required.';
-                        } else if (fieldValue && !/^\d{10}$/.test(fieldValue.replace(/\D/g, ''))) {
+                        } else if (fieldValue && !/^\d{10}$/.test(fieldValue)) {
                             this.formErrors[fieldName] = 'Phone number must be 10 digits.';
                         } else {
                             this.formErrors[fieldName] = '';
@@ -1177,7 +1194,7 @@
                             this.formErrors[fieldName] = '';
                         }
                     } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode') {
-                        if (fieldValue && !/^\d{6}$/.test(fieldValue.replace(/\D/g, ''))) {
+                        if (fieldValue && !/^\d{6}$/.test(fieldValue)) {
                             this.formErrors[fieldName] = 'Pincode must be 6 digits.';
                         } else {
                             this.formErrors[fieldName] = '';
@@ -1264,16 +1281,18 @@
                     if (stepContainer) {
                         // Only clear format validation errors for Step 2 and 3
                         if (fieldName.includes('[phone]') || fieldName === 'comp_phone') {
-                            if (fieldValue && /^\d{10}$/.test(fieldValue.replace(/\D/g, ''))) {
+                            if (fieldValue && /^\d{10}$/.test(fieldValue)) {
                                 this.formErrors[fieldName] = '';
                             }
 
-                        } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode') {
-                            if (!fieldValue || /^\d{6}$/.test(fieldValue.replace(/\D/g, ''))) {
+                        } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode' || fieldName === 'acc_pincode') {
+                            if (!fieldValue || /^\d{6}$/.test(fieldValue)) {
                                 this.formErrors[fieldName] = '';
+                            } else {
+                                this.formErrors[fieldName] = 'Pincode must be 6 digits.';
                             }
                         } else if (fieldName.includes('[pen_number]') || fieldName === 'acc_pen_number') {
-                            if (!fieldValue || /^\d{6,7}$/.test(fieldValue.replace(/\D/g, ''))) {
+                            if (!fieldValue || /^\d{6,7}$/.test(fieldValue)) {
                                 this.formErrors[fieldName] = '';
                             }
                         } else if (fieldName.includes('[name]') || fieldName === 'comp_name') {
@@ -1289,15 +1308,17 @@
                     } else {
                         // For Step 1 and other steps, normal clearing logic
                         if (fieldName.includes('[phone]') || fieldName === 'comp_phone') {
-                            if (fieldValue && /^\d{10}$/.test(fieldValue.replace(/\D/g, ''))) {
+                            if (fieldValue && /^\d{10}$/.test(fieldValue)) {
                                 this.formErrors[fieldName] = '';
                             } else if (!fieldValue && !el.hasAttribute('required')) {
                                 this.formErrors[fieldName] = '';
                             }
 
-                        } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode') {
-                            if (!fieldValue || /^\d{6}$/.test(fieldValue.replace(/\D/g, ''))) {
+                        } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode' || fieldName === 'acc_pincode') {
+                            if (!fieldValue || /^\d{6}$/.test(fieldValue)) {
                                 this.formErrors[fieldName] = '';
+                            } else {
+                                this.formErrors[fieldName] = 'Pincode must be 6 digits.';
                             }
                         } else if (fieldName.includes('[name]') || fieldName === 'comp_name') {
                             if (fieldValue) {

@@ -138,7 +138,7 @@ class PetitionService
                         'pen_number' => $penNumber,
                         'full_address' => $addr['address'],
                         'district_id' => !empty($addr['district_id']) ? $addr['district_id'] : null,
-                        'pincode' => $addr['pincode'] ?? null,
+                        'pincode' => !empty($addr['pincode']) ? substr((string) $addr['pincode'], 0, 6) : null,
                     ]);
                 }
             }
