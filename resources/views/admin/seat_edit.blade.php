@@ -49,6 +49,24 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
                     </div>
                 </div>
+
+                <!-- Role Assignment -->
+                <div class="space-y-2.5">
+                    <label for="role" class="text-sm font-bold text-slate-700">Assign Role (Optional)</label>
+                    <div class="relative">
+                        <select name="role" id="role" 
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium text-slate-900 appearance-none !bg-none"
+                                style="background-image: none !important;">
+                            <option value="">-- No Role --</option>
+                            @foreach($roles as $r)
+                                <option value="{{ $r->name }}" {{ old('role', $seat->roles->first()?->name) == $r->name ? 'selected' : '' }}>
+                                    {{ ucfirst($r->name) }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                    </div>
+                </div>
             </div>
 
             <!-- Unit Assignment -->

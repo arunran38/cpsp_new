@@ -66,7 +66,7 @@
         <!-- Header alert (Premium Amber Style) -->
 
         <!-- Header alert (Premium Amber Style) -->
-        @if($vacantSeats->count() > 0)
+        @if(Auth::user()->canAccess('view seats') && $vacantSeats->count() > 0)
             <div
                 class="p-6 bg-amber-50 border border-amber-100 rounded-3xl shadow-sm transition-all hover:shadow-md relative overflow-hidden group">
                 <div
@@ -99,6 +99,7 @@
         @endif
 
         <!-- 4 High-End Stat Cards -->
+        @if(Auth::user()->canAccess('view master reports'))
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <!-- Card 1: Total Petitions -->
             <a href="{{ route('petitions.reports', ['tab' => 'all']) }}"
@@ -192,8 +193,10 @@
                 </div>
             </a>
         </div>
+        @endif
 
         <!-- Charts Section -->
+        @if(Auth::user()->canAccess('view seat diagnostics'))
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div
                 class="lg:col-span-1 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden flex flex-col">
@@ -245,6 +248,7 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 @endsection
 

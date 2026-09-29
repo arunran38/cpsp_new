@@ -3,6 +3,7 @@
 
 @section('content')
     <div class="space-y-12">
+        @if(Auth::user()->canAccess('create units'))
         <!-- Add Unit Form Section -->
         <div class="space-y-6">
             <div class="flex flex-col gap-1">
@@ -29,6 +30,7 @@
                 </form>
             </div>
         </div>
+        @endif
 
         <!-- Units List Section -->
         <div class="space-y-6">
@@ -73,11 +75,14 @@
                                     </td>
                                     <td class="px-6 py-4 text-right">
                                         <div class="flex items-center justify-end gap-1">
+                                            @if(Auth::user()->canAccess('update units'))
                                             <a href="{{ route('admin.units.edit', $unit->unit_id) }}"
                                                 class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
                                                 title="Edit Unit">
                                                 <i data-lucide="edit-3" class="w-4 h-4"></i>
                                             </a>
+                                            @endif
+                                            @if(Auth::user()->canAccess('delete units'))
                                             <form method="POST" action="{{ route('admin.units.destroy', $unit->unit_id) }}"
                                                 class="inline-block">
                                                 @csrf
@@ -89,6 +94,7 @@
                                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                                 </button>
                                             </form>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

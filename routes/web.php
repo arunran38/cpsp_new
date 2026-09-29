@@ -12,6 +12,8 @@ use App\Http\Controllers\DecisionController;
 use App\Http\Controllers\PetitionForwardingController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\PermissionController;
 Route::get('/dashboard', function () {
     $user = Auth::user();
     if ($user->role === 'admin' && !session('is_impersonating_seat')) {
@@ -113,6 +115,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile/password', [ProfileController::class, 'passwordEdit'])->name('profile.password.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Roles and Permissions Routes
+    Route::resource('admin/roles', RoleController::class)->names('admin.roles');
+    Route::resource('admin/permissions', PermissionController::class)->names('admin.permissions');
 
     // Seat Switcher
     Route::post('/switch-seat/{seatId}', [SeatController::class, 'switchSeat'])->name('seat.switch');

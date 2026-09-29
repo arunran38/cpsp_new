@@ -9,11 +9,13 @@
             <h1 class="text-2xl font-bold tracking-tight text-white">Seats Management</h1>
            
         </div>
+        @if(Auth::user()->canAccess('create seats'))
         <a href="{{ route('admin.seats.create') }}" 
            class="inline-flex items-center justify-center px-4 py-2 text-sm font-bold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-lg shadow-primary/20 transition-all">
             <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
             Add New Seat
         </a>
+        @endif
     </div>
 
 
@@ -25,6 +27,7 @@
                     <tr class="bg-slate-50">
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider w-12 text-center">#</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Seat Name</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Unit</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Primary Occupant</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Additional Charges</th>
@@ -41,6 +44,19 @@
                                 <span class="text-sm font-bold text-slate-900">{{ $seat->seat_name }}</span>
                                 @if(!$seat->is_active)
                                     <span class="block text-[10px] text-rose-500 font-bold uppercase mt-0.5 italic">Disabled</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4">
+                                @if($seat->roles->isNotEmpty())
+                                    <div class="flex flex-wrap gap-1">
+                                        @foreach($seat->roles as $role)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-100 uppercase tracking-wider">
+                                                {{ $role->name }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <span class="text-[10px] text-slate-300 italic">None</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4">
@@ -82,7 +98,7 @@
                                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 text-slate-600 uppercase tracking-wider">Primary</span>
                                             </div>
                                             <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">{{ $primary->user->pen ?? 'N/A' }}</p>
-                                        </div>
+                                            @if(Auth::user()->canAccess('update seats'))
                                         <form method="POST" action="{{ route('admin.seatuser.destroy', $primary->seat_user_id) }}" class="ml-2">
                                             @csrf
                                             @method('DELETE')
@@ -93,12 +109,17 @@
                                                 <i class="fa-solid fa-xmark text-xs"></i>
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 @else
+                                    @if(Auth::user()->canAccess('update seats'))
                                     <a href="{{ route('admin.seatuser.create', ['seat_id' => $seat->seat_id]) }}" class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-primary transition-colors italic">
                                         <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
                                         Vacant - Assign Now
                                     </a>
+                                    @else
+                                    <span class="text-[10px] text-slate-300 italic inline-block">Vacant</span>
+                                    @endif
                                 @endif
                             </td>
                             <td class="px-6 py-4">
@@ -120,6 +141,7 @@
                                                     {{ $additional->user->name ?? 'Deleted' }}
                                                     <span class="text-[9px] opacity-75 font-normal ml-0.5 tracking-wider">({{ $additional->user->pen ?? 'N/A' }})</span>
                                                 </span>
+                                                @if(Auth::user()->canAccess('update seats'))
                                                 <form method="POST" action="{{ route('admin.seatuser.destroy', $additional->seat_user_id) }}" class="flex items-center justify-center">
                                                     @csrf
                                                     @method('DELETE')
@@ -130,6 +152,7 @@
                                                         <i class="fa-solid fa-xmark text-[10px]"></i>
                                                     </button>
                                                 </form>
+                                                @endif
                                             </div>
                                         @endforeach
                                     </div>
@@ -145,7 +168,7 @@
                                         <i class="fa-solid fa-history"></i>
                                     </a>
 
-                                    @if($seat->activeAssignments->isNotEmpty())
+                                    @if(Auth::user()->canAccess('update seats') && $seat->activeAssignments->isNotEmpty())
                                         <a href="{{ route('admin.seatuser.create', ['seat_id' => $seat->seat_id, 'is_additional' => 1]) }}" 
                                            class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors border border-transparent hover:border-emerald-100"
                                            title="Add Additional Charge">
@@ -153,12 +176,15 @@
                                         </a>
                                     @endif
 
+                                    @if(Auth::user()->canAccess('update seats'))
                                     <a href="{{ route('admin.seats.edit', $seat->seat_id) }}" 
                                        class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
                                        title="Edit Seat">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </a>
+                                    @endif
                                     
+                                    @if(Auth::user()->canAccess('delete seats'))
                                     <form method="POST" action="{{ route('admin.seats.destroy', $seat->seat_id) }}" class="inline-block">
                                         @csrf
                                         @method('DELETE')
@@ -168,6 +194,7 @@
                                             <i class="fa-solid fa-trash-can"></i>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

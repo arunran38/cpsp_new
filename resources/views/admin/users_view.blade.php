@@ -10,9 +10,11 @@
                 <h1 class="text-2xl font-bold tracking-tight text-white">Users List</h1>
 
             </div>
+            @if(Auth::user()->canAccess('create users'))
             <x-button variant="primary" size="md" icon="user-plus" onclick="window.location='{{ route('users.create') }}'">
                 Add New User
             </x-button>
+            @endif
         </div>
 
         <!-- Stats Summary (Small) -->
@@ -92,6 +94,7 @@
                                     {{ $user->mobile_number }}
                                 </td>
                                 <td class="px-6 py-4">
+                                    @if(Auth::user()->canAccess('update users'))
                                     <form method="POST" action="{{ route('users.updateStatus', encrypt($user->user_id)) }}">
                                         @csrf
                                         @method('PATCH')
@@ -108,14 +111,22 @@
                                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3 text-slate-400 absolute right-2 pointer-events-none group-hover/status:text-slate-600 transition-colors"><path d="m6 9 6 6 6-6"/></svg>
                                         </div>
                                     </form>
+                                    @else
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-lg {{ $user->status === 'Active' ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800' }}">
+                                            {{ $user->status }}
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
+                                        @if(Auth::user()->canAccess('update users'))
                                         <a href="{{ route('users.edit', encrypt($user->user_id)) }}"
                                             class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                             title="Edit Profile">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </a>
+                                        @endif
+                                        @if(Auth::user()->canAccess('delete users'))
                                         <form method="POST" action="{{ route('users.destroy', encrypt($user->user_id)) }}"
                                             class="inline-block">
                                             @csrf
@@ -127,6 +138,7 @@
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

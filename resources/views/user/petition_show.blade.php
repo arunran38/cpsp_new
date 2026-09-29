@@ -36,7 +36,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                @if(auth()->user()->role === 'admin' || (auth()->user()->role === 'user' && !in_array($petition->status, ['Closed', 'Sent_to_Govt'])))
+                @if(Auth::user()->canAccess('update petitions') && (Auth::user()->role === 'admin' || !in_array($petition->status, ['Closed', 'Sent_to_Govt'])))
                     <a href="{{ route('petitions.edit', $petition->petition_id) }}"
                         class="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2">
                         <i data-lucide="edit" class="w-4 h-4"></i> Edit Details
@@ -297,7 +297,7 @@
                         <i data-lucide="git-merge" class="w-5 h-5 text-indigo-600"></i> Petition Workflow Actions
                     </h3>
 
-                    @if(auth()->user()->role === 'user' || auth()->user()->role === 'admin')
+                    @if(Auth::user()->canAccess('update petitions'))
                         @if($petition->status === 'Received')
                             <!-- Director Forwarding Form -->
                             <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-6">

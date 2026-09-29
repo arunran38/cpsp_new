@@ -19,6 +19,7 @@ class UpdateSeatRequest extends FormRequest
             'unit_ids.*' => 'exists:units,unit_id',
             'seat_name' => 'required|string|max:255|unique:seats,seat_name,' . $seatId . ',seat_id',
             'is_active' => 'boolean',
+            'role' => 'nullable|string|exists:roles,name',
         ];
     }
 }

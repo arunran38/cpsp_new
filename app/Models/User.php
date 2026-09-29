@@ -8,10 +8,11 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, Notifiable, SoftDeletes, HasRoles;
 
     protected $primaryKey = 'user_id';
 
@@ -94,4 +95,27 @@ class User extends Authenticatable
     {
         return self::where('role', 'user')->count();
     }   
+
+    /**
+     * Check if the user can access a permission based on their active seat.
+     */
+    public function canAccess(string $permission): bool
+    {
+        if ($this->role === 'admin') {
+            return true;
+        }
+
+        $currentSeatUser = $this->currentSeatUser();
+        $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
+
+        if (!$currentSeat) {
+            return false;
+        }
+
+        try {
+            return $currentSeat->hasPermissionTo($permission);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
 }

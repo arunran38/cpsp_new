@@ -97,7 +97,7 @@
                         <div class="flex flex-col items-center justify-center gap-2">
                             @php $role = auth()->user()->role; @endphp
                             
-                            @if($role === 'admin' || $role === 'user')
+                            @if(Auth::user()->canAccess('update petitions'))
                                 @if(!$petition->linked_petition_id)
                                     @if($petition->status === 'Received')
                                         <button @click="showForwardModal = true; activePetitionId = {{ $petition->petition_id }}"
@@ -164,13 +164,17 @@
                                 title="View Details">
                                 <i class="fa-solid fa-eye text-indigo-500"></i>
                             </a>
-                            @if(auth()->user()->role === 'user')
+                            @if(Auth::user()->canAccess('update petitions'))
                                 @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt']))
                                     <a href="{{ route('petitions.edit', $petition->petition_id) }}"
                                         class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                                         title="Edit Record">
                                         <i class="fa-solid fa-pen-to-square text-emerald-500"></i>
                                     </a>
+                                @endif
+                            @endif
+                            @if(Auth::user()->canAccess('delete petitions'))
+                                @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt']))
                                     <form action="{{ route('petitions.destroy', $petition->petition_id) }}" method="POST"
                                         class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
                                         @csrf

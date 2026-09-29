@@ -68,6 +68,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2">
+                                        @if(Auth::user()->canAccess('update recycle bin'))
                                         <form action="{{ route('admin.trash.restore', $petition->petition_id) }}" method="POST">
                                             @csrf
                                             <button type="submit"
@@ -76,7 +77,9 @@
                                                 <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Restore
                                             </button>
                                         </form>
+                                        @endif
 
+                                        @if(Auth::user()->canAccess('delete recycle bin'))
                                         <form action="{{ route('admin.trash.forceDelete', $petition->petition_id) }}"
                                             method="POST"
                                             onsubmit="return confirm('WARNING: This will permanently delete the petition and all associated physical files from the server. This cannot be undone. Area you absolutely sure?');">
@@ -88,6 +91,7 @@
                                                 <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Delete Forever
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

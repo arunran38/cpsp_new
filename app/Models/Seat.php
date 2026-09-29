@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Builder;
+use Spatie\Permission\Traits\HasRoles;
 
 class Seat extends Model
 {
-    use HasFactory;
+    use HasFactory, HasRoles;
 
+    protected $guard_name = 'web'; // Required by Spatie for non-User models
     protected $primaryKey = 'seat_id';
 
     protected $fillable = [

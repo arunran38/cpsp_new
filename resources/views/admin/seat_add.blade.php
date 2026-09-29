@@ -40,6 +40,14 @@
                     :options="['1' => 'Active', '0' => 'Inactive']" 
                     :selected="old('is_active', '1')"
                 />
+                
+                <!-- Role Assignment -->
+                <x-select 
+                    label="Assign Role (Optional)" 
+                    name="role" 
+                    :options="array_merge(['' => '-- No Role --'], $roles->pluck('name', 'name')->map(fn($name) => ucfirst($name))->toArray())" 
+                    :selected="old('role', '')"
+                />
             </div>
 
             <!-- Unit Assignment -->

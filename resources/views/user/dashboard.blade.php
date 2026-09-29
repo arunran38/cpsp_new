@@ -120,7 +120,7 @@
             </div>
         </div>
         <div class="flex items-center gap-3 z-10 hidden sm:flex">
-            @if(auth()->user()->role === 'user')
+            @if(Auth::user()->canAccess('create petitions'))
                 <a href="{{ route('petitions.create') }}" class="flex items-center gap-2 px-6 py-3 text-sm font-bold text-white transition-all rounded-xl shadow-lg shadow-indigo-500/30 bg-indigo-600 hover:bg-indigo-700 hover:-translate-y-0.5 focus:ring-4 focus:ring-indigo-500/20 active:translate-y-0">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     New Petition
@@ -131,7 +131,7 @@
 
     <!-- Stats Grid -->
    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 p-6">
-    <a href="{{ route('petitions.reports', ['tab' => 'all']) }}" 
+    <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'all']) }}" @endif
        class="group relative block p-8 transition-all duration-500 bg-blue-50 border border-blue-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(59,130,246,0.2)] hover:-translate-y-2">
         <div class="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
         
@@ -150,7 +150,7 @@
         </div>
     </a>
 
-    <a href="{{ route('petitions.reports', ['tab' => 'forwarded']) }}" 
+    <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'forwarded']) }}" @endif
        class="group relative block p-8 transition-all duration-500 bg-amber-50 border border-amber-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(245,158,11,0.2)] hover:-translate-y-2">
         <div class="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all duration-500"></div>
         
@@ -169,7 +169,7 @@
         </div>
     </a>
 
-    <a href="{{ route('petitions.reports', ['tab' => 'vrs']) }}" 
+    <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'vrs']) }}" @endif
        class="group relative block p-8 transition-all duration-500 bg-purple-50 border border-purple-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(147,51,234,0.2)] hover:-translate-y-2">
         <div class="absolute -top-12 -right-12 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all duration-500"></div>
         
@@ -188,7 +188,7 @@
         </div>
     </a>
 
-    <a href="{{ route('petitions.reports', ['tab' => 'decisions']) }}" 
+    <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'decisions']) }}" @endif
        class="group relative block p-8 transition-all duration-500 bg-emerald-50 border border-emerald-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(16,185,129,0.2)] hover:-translate-y-2">
         <div class="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all duration-500"></div>
         
