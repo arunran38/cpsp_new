@@ -20,7 +20,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'master reports',
             'petitions',
             'seat diagnostics',
-            'recycle bin'
+            'recycle bin',
+            'seat distribution chart',
+            'petition status chart',
+            'petition trends chart',
+            'petition nature chart',
+            'roles',
+            'permissions'
         ];
 
         // പ്രവർത്തനങ്ങൾ (Actions)
@@ -33,6 +39,10 @@ class RolesAndPermissionsSeeder extends Seeder
                 \Spatie\Permission\Models\Permission::firstOrCreate(['name' => $permissionName]);
             }
         }
+
+        // പെർമിഷനുകൾ ഉണ്ടാക്കുന്നു (Scoped Permissions)
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view own petitions']);
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view all petitions']);
 
         // റോളുകൾ ഉണ്ടാക്കുന്നു (Create Roles)
         Role::firstOrCreate(['name' => 'super admin']);

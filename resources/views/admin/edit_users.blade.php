@@ -89,7 +89,7 @@
                     label="Access Role" 
                     name="role" 
                     :options="['user' => 'Standard User', 'admin' => 'Administrator']" 
-                    :selected="$user->role" 
+                    :selected="$user->getRoleNames()->first()" 
                     required
                 />
 

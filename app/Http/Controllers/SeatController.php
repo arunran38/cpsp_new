@@ -208,7 +208,7 @@ class SeatController extends Controller
         }
 
         session(['current_seat_id' => $seatId]);
-        if ($user->role === 'admin') {
+        if ($user->canAccess('access admin dashboard')) {
             session(['is_impersonating_seat' => true]);
         } else {
             session()->forget('is_impersonating_seat');
@@ -224,7 +224,8 @@ class SeatController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->role !== 'admin') {
+        // Check direct permissions, ignoring the impersonated seat
+        if (!$user->hasPermissionTo('access admin dashboard')) {
             return redirect()->route('dashboard')->with('error', 'Only admins can switch back.');
         }
 

@@ -196,8 +196,8 @@
         @endif
 
         <!-- Charts Section -->
-        @if(Auth::user()->canAccess('view seat diagnostics'))
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            @if(Auth::user()->canAccess('view seat distribution chart'))
             <div
                 class="lg:col-span-1 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden flex flex-col">
                 <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6 relative z-10">
@@ -232,7 +232,9 @@
                     <canvas id="seatPetitionChart"></canvas>
                 </div>
             </div>
+            @endif
 
+            @if(Auth::user()->canAccess('view petition status chart'))
             <div
                 class="col-span-full lg:col-span-1 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden">
                 <div class="flex items-center justify-between mb-6 relative z-10">
@@ -247,8 +249,8 @@
                     <canvas id="statusDoughnutChart"></canvas>
                 </div>
             </div>
+            @endif
         </div>
-        @endif
     </div>
 @endsection
 

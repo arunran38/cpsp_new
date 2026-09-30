@@ -10,7 +10,7 @@
                 <th class="px-6 py-4 font-bold">Brief of the Petition</th>
                 <th class="px-6 py-4 font-bold text-center">Status</th>
                 <th class="px-6 py-4 font-bold text-center">Processing</th>
-                @if(auth()->user()->role === 'admin')
+                @if(auth()->user()->canAccess('access admin dashboard'))
                     <th class="px-6 py-4 font-bold text-center w-32">Seat & User</th>
                 @endif
                 <th class="px-6 py-4 font-bold text-center">Actions</th>
@@ -95,7 +95,7 @@
                     </td>
                     <td class="px-6 py-4 text-center">
                         <div class="flex flex-col items-center justify-center gap-2">
-                            @php $role = auth()->user()->role; @endphp
+                            @php $role = auth()->user()->getRoleNames()->first(); @endphp
                             
                             @if(Auth::user()->canAccess('update petitions'))
                                 @if(!$petition->linked_petition_id)
@@ -149,7 +149,7 @@
                             @endif
                         </div>
                     </td>
-                    @if(auth()->user()->role === 'admin')
+                    @if(auth()->user()->canAccess('access admin dashboard'))
                     <td class="px-6 py-4 text-center">
                         <div class="flex flex-col items-center gap-1">
                             <span class="font-bold text-slate-800 text-xs">{{ $petition->seat->seat_name ?? 'N/A' }}</span>
@@ -192,7 +192,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="{{ auth()->user()->role === 'admin' ? '10' : '9' }}" class="px-4 py-8 text-center text-slate-500">
+                    <td colspan="{{ auth()->user()->canAccess('access admin dashboard') ? '10' : '9' }}" class="px-4 py-8 text-center text-slate-500">
                         No petitions found.
                     </td>
                 </tr>

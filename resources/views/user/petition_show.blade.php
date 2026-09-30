@@ -1,4 +1,4 @@
-@extends(auth()->user()->role === 'admin' && !session('is_impersonating_seat') ? 'layouts.admin' : 'layouts.user')
+@extends(auth()->user()->canAccess('access admin dashboard') && !session('is_impersonating_seat') ? 'layouts.admin' : 'layouts.user')
 @section('container_width', 'max-w-full')
 
 @section('content')
@@ -36,7 +36,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                @if(Auth::user()->canAccess('update petitions') && (Auth::user()->role === 'admin' || !in_array($petition->status, ['Closed', 'Sent_to_Govt'])))
+                @if(Auth::user()->canAccess('update petitions') && (Auth::user()->canAccess('access admin dashboard') || !in_array($petition->status, ['Closed', 'Sent_to_Govt'])))
                     <a href="{{ route('petitions.edit', $petition->petition_id) }}"
                         class="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2">
                         <i data-lucide="edit" class="w-4 h-4"></i> Edit Details
@@ -419,7 +419,7 @@
                                             <span
                                                 class="text-gray-800 block mt-1">{{ $petition->latestForwarding->director_remarks }}</span>
                                         </div>
-                                        @if(!$petition->latestForwarding->vr_ref_no && (auth()->user()->role === 'admin' || !$petition->decision))
+                                        @if(!$petition->latestForwarding->vr_ref_no && (auth()->user()->canAccess('access admin dashboard') || !$petition->decision))
                                             <div class="md:col-span-2 pt-2">
                                                 <form action="{{ route('forwardings.pullback', $petition->latestForwarding->petition_forwarding_id) }}" method="POST" class="inline pullback-form" data-message="Are you sure you want to pull back this forwarding?">
                                                     @csrf
@@ -486,7 +486,7 @@
                                             </div>
                                         @endif
 
-                                        @if(!$petition->decision || auth()->user()->role === 'admin')
+                                        @if(!$petition->decision || auth()->user()->canAccess('access admin dashboard'))
                                             <div class="md:col-span-2 pt-4 border-t border-amber-200/50">
                                                 <form action="{{ route('forwardings.pullbackVr', $petition->latestForwarding->petition_forwarding_id) }}" method="POST" class="inline pullback-form" data-message="Are you sure you want to pull back this VR Report?">
                                                     @csrf
@@ -714,7 +714,7 @@
                                                 </div>
                                             @endif
 
-                                            @if(auth()->user()->role === 'admin')
+                                            @if(auth()->user()->canAccess('access admin dashboard'))
                                             <div class="md:col-span-2 pt-4 border-t border-slate-200/50">
                                                 <form action="{{ route('decisions.pullback', $petition->decision->decision_id) }}" method="POST" class="inline pullback-form" data-message="Are you sure you want to pull back this Final Decision?">
                                                     @csrf

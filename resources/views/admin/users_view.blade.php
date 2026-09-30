@@ -77,7 +77,7 @@
                                         </div>
                                         <div class="flex flex-col">
                                             <span class="font-black text-slate-900 text-sm leading-tight group-hover:text-primary transition-colors">{{ $user->name }}</span>
-                                            <span class="text-[11px] font-medium text-slate-400 mt-0.5 tracking-tight uppercase">{{ $user->role }}</span>
+                                            <span class="text-[11px] font-medium text-slate-400 mt-0.5 tracking-tight uppercase">{{ $user->getRoleNames()->first() ?? 'User' }}</span>
                                         </div>
                                     </div>
                                 </td>

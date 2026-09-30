@@ -53,7 +53,7 @@ class DecisionController extends Controller
      */
     public function pullbackDecision(int $id): RedirectResponse
     {
-        if (Auth::user()->role !== 'admin') {
+        if (!Auth::user()->canAccess('access admin dashboard')) {
             return back()->with('error', 'Only administrators can pull back a final decision.');
         }
 

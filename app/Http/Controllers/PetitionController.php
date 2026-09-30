@@ -102,7 +102,7 @@ class PetitionController extends Controller
         $tab = $request->get('tab', 'all');
 
         $seats = [];
-        if (Auth::user()->role === 'admin') {
+        if (Auth::user()->canAccess('access admin dashboard')) {
             $seats = Seat::where('is_active', true)->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         }
 
@@ -131,7 +131,7 @@ class PetitionController extends Controller
             $columns = $requestedColumns;
         } else {
             $columns = ['#', 'Receipt No', 'Received Date', 'Complainant Name & Address', 'Suspect Name & Address', 'Nature', 'Description', 'Mode', 'Proposed Action', 'Present Status', 'Final Recommendation'];
-            if (Auth::user()->role === 'admin') $columns[] = 'Seat';
+            if (Auth::user()->canAccess('access admin dashboard')) $columns[] = 'Seat';
             if ($tab === 'forwarded') $columns[] = 'Unit';
             if ($tab === 'vrs') { $columns[] = 'VR Ref No'; $columns[] = 'VR Date'; }
             if ($tab === 'decisions') $columns[] = 'Decision';
@@ -176,7 +176,7 @@ class PetitionController extends Controller
         $petition = Petition::with(['addresses', 'uploads'])->findOrFail($id);
         $this->authorize('update', $petition);
 
-        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) && Auth::user()->role !== 'admin') {
+        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) && !Auth::user()->canAccess('access admin dashboard')) {
             return redirect()->route('petitions.index')->with('error', 'Cannot edit a petition once a final decision has been taken.');
         }
 
@@ -220,7 +220,7 @@ class PetitionController extends Controller
         $petition = Petition::findOrFail($id);
         $this->authorize('delete', $petition);
 
-        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) && Auth::user()->role !== 'admin') {
+        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) && !Auth::user()->canAccess('access admin dashboard')) {
             return redirect()->route('petitions.index')->with('error', 'Cannot delete a petition after a final decision has been issued.');
         }
 
@@ -360,7 +360,7 @@ class PetitionController extends Controller
         if ($upload->petition_id) {
             $petition = Petition::findOrFail($upload->petition_id);
             $this->authorize('view', $petition);
-        } elseif (Auth::user()->role !== 'admin' && $upload->uploaded_by !== Auth::id()) {
+        } elseif (!Auth::user()->canAccess('access admin dashboard') && $upload->uploaded_by !== Auth::id()) {
             abort(403);
         }
 
@@ -494,7 +494,7 @@ class PetitionController extends Controller
         $user = Auth::user();
 
         // Security: Filter by user/seat if not unrestricted admin
-        if ($user->role !== 'admin' || session('is_impersonating_seat')) {
+        if (!$user->canAccess('access admin dashboard') || session('is_impersonating_seat')) {
             $currentSeat = $user->currentSeatUser();
             if ($currentSeat) {
                 $query->where('seat_id', $currentSeat->seat_id);

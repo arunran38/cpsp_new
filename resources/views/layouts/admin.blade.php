@@ -258,9 +258,11 @@
             <nav class="flex-1 px-4 py-6 overflow-y-auto custom-scrollbar space-y-1.5">
                 
                 <!-- Management Section -->
+                @if(Auth::user()->canAccess('view units') || Auth::user()->canAccess('view users') || Auth::user()->canAccess('access admin dashboard') || Auth::user()->canAccess('view seats'))
                 <div class="pt-2 pb-2">
                     <p class="px-4 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">System Control</p>
                 </div>
+                @endif
 
                 @if(Auth::user()->canAccess('view units'))
                 <!-- Units Link -->
@@ -318,7 +320,7 @@
                 </div>
                 @endif
 
-                @if(Auth::user()->role === 'admin')
+                @if(Auth::user()->canAccess('access admin dashboard'))
                 <!-- Roles & Permissions Dropdown -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -413,9 +415,11 @@
                 </div>
                 @endif
 
+                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view master reports') || Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin'))
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Operations</p>
                 </div>
+                @endif
 
                 @if(Auth::user()->canAccess('view petitions'))
                 <!-- View Petitions - Direct Link -->
@@ -482,11 +486,11 @@
 
                     <div class="flex items-center gap-x-4 ml-auto">
                         @php
-                            $myActiveSeats = Auth::user()->seatUsers()->where('is_active', true)->with('seat')->get();
+                            $myAdditionalSeats = Auth::user()->seatUsers()->where('is_active', true)->where('is_additional', true)->with('seat')->get();
                         @endphp
-                        @if($myActiveSeats->count() > 0)
+                        @if($myAdditionalSeats->count() > 0)
                             <div class="mr-2">
-                                <form method="POST" action="{{ route('seat.switch', $myActiveSeats->first()->seat_id) }}">
+                                <form method="POST" action="{{ route('seat.switch', $myAdditionalSeats->first()->seat_id) }}">
                                     @csrf
                                     <button type="submit" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 transition-all text-xs font-bold shadow-lg shadow-indigo-500/20 group">
                                         <i data-lucide="user-cog" class="w-4 h-4 group-hover:rotate-12 transition-transform"></i>
@@ -535,7 +539,7 @@
                                     $currentSeatId = Auth::user()->currentSeatUser()?->seat_id;
                                 @endphp
 
-                                @if(Auth::user()->role !== 'admin' && $activeSeats->count() > 1)
+                                @if(!Auth::user()->canAccess('access admin dashboard') && $activeSeats->count() > 1)
                                 <div class="py-1 border-b border-slate-700 bg-slate-800/50">
                                     <div class="px-4 py-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">
                                         Switch Seat

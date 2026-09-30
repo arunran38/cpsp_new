@@ -21,7 +21,6 @@ class User extends Authenticatable
         'email',
         'password',
         'mobile_number',
-        'role',
         'designation',
         'other_designation',
         'pen',
@@ -93,7 +92,7 @@ class User extends Authenticatable
      */
     public static function countUser(): int
     {
-        return self::where('role', 'user')->count();
+        return self::role('user')->count();
     }   
 
     /**
@@ -101,8 +100,15 @@ class User extends Authenticatable
      */
     public function canAccess(string $permission): bool
     {
-        if ($this->role === 'admin') {
-            return true;
+        // If they are NOT impersonating a seat, check their personal User permissions first
+        if (!session('is_impersonating_seat')) {
+            try {
+                if ($this->hasPermissionTo($permission)) {
+                    return true;
+                }
+            } catch (\Exception $e) {
+                // Log or ignore
+            }
         }
 
         $currentSeatUser = $this->currentSeatUser();

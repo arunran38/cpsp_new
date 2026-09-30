@@ -1,4 +1,4 @@
-@extends(auth()->user()->role === 'admin' && !session('is_impersonating_seat') ? 'layouts.admin' : 'layouts.user')
+@extends(auth()->user()->canAccess('access admin dashboard') && !session('is_impersonating_seat') ? 'layouts.admin' : 'layouts.user')
 @section('container_width', 'max-w-full')
 
 @section('content')
@@ -156,7 +156,7 @@
                         </div>
                     </div>
 
-                    @if(auth()->user()->role === 'admin' && !session('is_impersonating_seat') && isset($seats))
+                    @if(auth()->user()->canAccess('access admin dashboard') && !session('is_impersonating_seat') && isset($seats))
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Filter by
                                 Seat</label>

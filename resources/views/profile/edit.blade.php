@@ -1,4 +1,4 @@
-@extends(auth()->user()->role === 'admin' && !session('is_impersonating_seat') ? 'layouts.admin' : 'layouts.user')
+@extends(auth()->user()->canAccess('access admin dashboard') && !session('is_impersonating_seat') ? 'layouts.admin' : 'layouts.user')
 
 @section('page-title', 'My Profile')
 
@@ -46,7 +46,7 @@
 
                     <div>
                         <h2 class="text-xl font-bold text-slate-800">{{ $user->name }}</h2>
-                        <p class="mt-1 text-sm uppercase tracking-[0.2em] text-blue-600 font-semibold">{{ $user->role }}</p>
+                        <p class="mt-1 text-sm uppercase tracking-[0.2em] text-blue-600 font-semibold">{{ $user->getRoleNames()->first() ?? 'User' }}</p>
                         <p class="mt-1 text-xs text-slate-500 uppercase tracking-[0.1em]">PEN: {{ $user->pen ?? 'N/A' }}</p>
                     </div>
                 </div>

@@ -231,9 +231,11 @@
 
 
                 <!-- System Control Section -->
+                @if(Auth::check() && Auth::user()->currentSeatUser() && (Auth::user()->canAccess('view units') || Auth::user()->canAccess('view seats')))
                 <div class="pt-2 pb-2">
                     <p class="px-4 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">System Control</p>
                 </div>
+                @endif
 
                 @if(Auth::check() && Auth::user()->currentSeatUser() && Auth::user()->canAccess('view units'))
                 <!-- Units Link -->
@@ -296,9 +298,11 @@
                 @endif
 
                 <!-- Management Section -->
+                @if(Auth::check() && Auth::user()->currentSeatUser() && (Auth::user()->canAccess('view users') || Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('view master reports')))
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Management</p>
                 </div>
+                @endif
 
                 @if(Auth::check() && Auth::user()->currentSeatUser() && Auth::user()->canAccess('view users'))
                 <!-- Users Dropdown -->
@@ -413,9 +417,11 @@
                 </a>
                 @endif
                 
+                @if(Auth::check() && Auth::user()->currentSeatUser() && (Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin')))
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Operations</p>
                 </div>
+                @endif
 
                 @if(Auth::check() && Auth::user()->currentSeatUser() && Auth::user()->canAccess('view seat diagnostics'))
                 <!-- Seat Statistics -->
@@ -519,7 +525,7 @@
                                     $currentSeatId = Auth::user()->currentSeatUser()?->seat_id;
                                 @endphp
 
-                                @if(Auth::user()->role !== 'admin' && $activeSeats->count() > 1)
+                                @if(!Auth::user()->canAccess('access admin dashboard') && $activeSeats->count() > 1)
                                 <div class="py-1 border-b border-slate-700 bg-slate-800/50">
                                     <div class="px-4 py-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">
                                         Switch Seat

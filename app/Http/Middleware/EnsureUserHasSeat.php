@@ -19,7 +19,7 @@ class EnsureUserHasSeat
         $user = \Illuminate\Support\Facades\Auth::user();
 
         // If admin and not impersonating a specific seat, grant unrestricted access
-        if ($user && $user->role === 'admin' && !session('is_impersonating_seat')) {
+        if ($user && $user->canAccess('access admin dashboard') && !session('is_impersonating_seat')) {
             return $next($request);
         }
 

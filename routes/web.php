@@ -16,7 +16,7 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
 Route::get('/dashboard', function () {
     $user = Auth::user();
-    if ($user->role === 'admin' && !session('is_impersonating_seat')) {
+    if ($user->canAccess('access admin dashboard') && !session('is_impersonating_seat')) {
         return redirect()->route('admin.dashboard');
     }
     return redirect()->route('user.dashboard');

@@ -54,7 +54,7 @@ class PetitionPolicy
     private function authorize(User $user, Petition $petition): bool
     {
         // 1. Admin can access everything unless impersonating
-        if ($user->role === 'admin' && !session('is_impersonating_seat')) {
+        if ($user->canAccess('access admin dashboard') && !session('is_impersonating_seat')) {
             return true;
         }
 

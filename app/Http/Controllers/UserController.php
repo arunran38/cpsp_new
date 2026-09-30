@@ -50,11 +50,14 @@ class UserController extends Controller
                     'pen' => $request->pen,
                     'email' => $request->email,
                     'mobile_number' => $request->mobile_number,
-                    'role' => $request->role,
                     'designation' => $request->designation,
                     'other_designation' => $request->other_designation,
                     'password' => Hash::make($request->password),
                 ]);
+
+                if ($request->role) {
+                    $user->assignRole($request->role);
+                }
 
                 if ($request->hasFile('user_photo')) {
                     $this->handleProfilePhoto($user, $request->file('user_photo'));
@@ -90,7 +93,7 @@ class UserController extends Controller
                 $user = User::findOrFail(decrypt($id));
 
                 $userData = $request->only([
-                    'name', 'pen', 'email', 'mobile_number', 'role', 
+                    'name', 'pen', 'email', 'mobile_number', 
                     'designation', 'other_designation', 'status'
                 ]);
 
@@ -99,6 +102,10 @@ class UserController extends Controller
                 }
 
                 $user->update($userData);
+
+                if ($request->role) {
+                    $user->syncRoles([$request->role]);
+                }
 
                 if ($request->has('remove_photo') && $request->remove_photo == '1') {
                     if ($user->profilePhoto) {

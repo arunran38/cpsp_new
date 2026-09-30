@@ -10,7 +10,7 @@
     
     if ($currentSeat) {
         $petitions = \App\Models\Petition::where('seat_id', $currentSeat->seat_id)->whereNull('linked_petition_id')->get();
-    } elseif ($user->role === 'admin') {
+    } elseif ($user->canAccess('access admin dashboard')) {
         $petitions = \App\Models\Petition::whereNull('linked_petition_id')->get();
     } else {
         $petitions = \App\Models\Petition::where('user_id', $user->user_id)->whereNull('linked_petition_id')->get();
@@ -75,7 +75,7 @@
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
-    } elseif ($user->role === 'admin') {
+    } elseif ($user->canAccess('access admin dashboard')) {
         $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
             ->orderBy('created_at', 'desc')
             ->take(5)
@@ -209,6 +209,7 @@
 </div>
     <!-- Visualizations Grid -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+        @if(Auth::user()->canAccess('view petition trends chart'))
         <!-- Monthly Trends Chart (Spans 2 columns on wide screens) -->
         <div class="xl:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden flex flex-col">
             <div class="flex items-center justify-between mb-6 relative z-10">
@@ -241,7 +242,9 @@
                 <canvas id="trendChart"></canvas>
             </div>
         </div>
+        @endif
 
+        @if(Auth::user()->canAccess('view petition nature chart'))
         <!-- Petition Natures Breakdown -->
         <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between mb-6 relative z-10">
@@ -256,6 +259,7 @@
                 <canvas id="natureChart"></canvas>
             </div>
         </div>
+        @endif
     </div>
 
     <!-- Recent Petitions Activity -->
