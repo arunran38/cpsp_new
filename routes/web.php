@@ -46,6 +46,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/petitions/export', [PetitionController::class, 'export'])->name('petitions.export');
 
         // Custom Petition Routes (MUST be before resource route)
+        Route::get('/inward/enter-petition', [PetitionController::class, 'inwardCreate'])->name('inward.enter_petition');
+        Route::get('/inward/create', [PetitionController::class, 'inwardCreate'])->name('inward.create');
         Route::post('/petitions/check-petition-no', [PetitionController::class, 'checkPetitionNo'])->name('petitions.checkPetitionNo');
         Route::post('/petitions/check-file-no', [PetitionController::class, 'checkFileNo'])->name('petitions.checkFileNo');
         Route::post('/petitions/check-duplicates', [PetitionController::class, 'checkDuplicates'])->name('petitions.checkDuplicates');

@@ -390,6 +390,11 @@
                          class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
                         
                         @if(Auth::user()->canAccess('create petitions'))
+                        <a href="{{ route('inward.enter_petition') }}" 
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.*') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator"></span>
+                           Inward Petition Entry
+                        </a>
                         <a href="{{ route('petitions.create') }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.create') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator"></span>

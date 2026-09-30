@@ -12,6 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        DB::statement("ALTER TABLE decisions MODIFY COLUMN decision_remarks VARCHAR(50) DEFAULT NULL");
         DB::table('decisions')->where('decision_remarks', 'QV')->update(['decision_remarks' => 'CV']);
     }
 

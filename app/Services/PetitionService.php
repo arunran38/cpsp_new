@@ -23,20 +23,33 @@ class PetitionService
                 throw new Exception("User not authenticated.");
             }
 
-            $seatId = null;
-            $activeSeat = $user->currentSeatUser();
-            if ($activeSeat) {
-                $seatId = $activeSeat->seat_id;
+            $seatId = $data['seat_id'] ?? null;
+            if (!$seatId) {
+                $activeSeat = $user->currentSeatUser();
+                if ($activeSeat) {
+                    $seatId = $activeSeat->seat_id;
+                }
+            }
+
+            $proposedAction = $data['proposed_action'] ?? ($data['transfer_remarks'] ?? null);
+            $natureOfPetition = $data['nature_of_petition'] ?? 'General Inward';
+            $description = $data['description'] ?? 'Inward petition entry';
+
+            if (!empty($data['unit_id'])) {
+                $unit = \App\Models\Unit::find($data['unit_id']);
+                if ($unit) {
+                    $description .= ' (Unit: ' . $unit->unit_name . ')';
+                }
             }
 
             $petition = Petition::create([
                 'receipt_no' => $data['receipt_no'],
                 'date_of_petition_received' => $data['date_of_petition_received'],
-                'nature_of_petition' => $data['nature_of_petition'],
+                'nature_of_petition' => $natureOfPetition,
                 'mode_of_petition_received' => $data['mode_of_petition_received'],
                 'mode_of_petition_received_others' => $data['mode_others'] ?? null,
-                'description' => $data['description'],
-                'proposed_action' => $data['proposed_action'] ?? null,
+                'description' => $description,
+                'proposed_action' => $proposedAction,
                 'status' => Petition::STATUS_RECEIVED,
                 'user_id' => Auth::id(),
                 'seat_id' => $seatId,

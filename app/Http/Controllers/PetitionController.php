@@ -41,6 +41,19 @@ class PetitionController extends Controller
     }
 
     /**
+     * Show the inward petition registration form with seat transfer.
+     */
+    public function inwardCreate(): View
+    {
+        $seats = Seat::where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+        $units = \App\Models\Unit::orderBy('unit_name')->get();
+        $districts = \App\Models\District::orderBy('district_id')->get();
+        $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
+        $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
+        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments'));
+    }
+
+    /**
      * Store a newly created petition in storage.
      */
     public function store(StorePetitionRequest $request): RedirectResponse
