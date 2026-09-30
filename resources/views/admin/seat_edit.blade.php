@@ -52,12 +52,12 @@
 
                 <!-- Role Assignment -->
                 <div class="space-y-2.5">
-                    <label for="role" class="text-sm font-bold text-slate-700">Assign Role (Optional)</label>
+                    <label for="role" class="text-sm font-bold text-slate-700">Assign Role <span class="text-rose-500">*</span></label>
                     <div class="relative">
-                        <select name="role" id="role" 
+                        <select name="role" id="role" required
                                 class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium text-slate-900 appearance-none !bg-none"
                                 style="background-image: none !important;">
-                            <option value="">-- No Role --</option>
+                            <option value="">-- Select Role --</option>
                             @foreach($roles as $r)
                                 <option value="{{ $r->name }}" {{ old('role', $seat->roles->first()?->name) == $r->name ? 'selected' : '' }}>
                                     {{ ucfirst($r->name) }}

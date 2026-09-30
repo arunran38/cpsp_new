@@ -5,22 +5,23 @@
 
 @section('content')
     <div class="space-y-6">
-        <!-- Header -->
-        <div
-            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white px-8 py-6 rounded-2xl border border-rose-200 shadow-sm relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-rose-500"></div>
-            <div
-                class="absolute -top-10 -right-10 w-32 h-32 bg-rose-100 rounded-full blur-2xl opacity-50 pointer-events-none">
+        <!-- Premium Header Section -->
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
+            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+                <div class="w-72 h-72 bg-rose-500/20 rounded-full blur-[60px]"></div>
             </div>
-
-            <div class="flex items-center gap-4 z-10">
-                <div
-                    class="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600 border border-rose-100">
-                    <i data-lucide="trash-2" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Recycle Bin</h1>
-                    <p class="text-sm text-slate-500 mt-1">Manage deleted petitions and securely restore them if needed.</p>
+            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+                <div class="w-72 h-72 bg-rose-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            
+            <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-center sm:text-left">
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                        Recycle Bin
+                    </h1>
+                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
+                        Manage deleted petitions and securely restore them if needed.
+                    </p>
                 </div>
             </div>
         </div>

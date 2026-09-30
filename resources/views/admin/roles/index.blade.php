@@ -3,14 +3,31 @@
 
 @section('content')
     <div class="space-y-8">
-        <!-- Page Header -->
-        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white">Roles List</h1>
+        <!-- Premium Header Section -->
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
+            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+                <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
             </div>
-            <x-button variant="primary" size="md" icon="shield" onclick="window.location='{{ route('admin.roles.create') }}'">
-                Add New Role
-            </x-button>
+            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+                <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            
+            <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-center sm:text-left z-10">
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                        Roles List
+                    </h1>
+                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
+                        Manage user roles and define their capabilities within the system.
+                    </p>
+                </div>
+                <div class="shrink-0 z-10">
+                    <a href="{{ route('admin.roles.create') }}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all text-sm">
+                        <i data-lucide="shield" class="w-4 h-4"></i>
+                        <span>Add New Role</span>
+                    </a>
+                </div>
+            </div>
         </div>
 
         @if(session('success'))
@@ -26,8 +43,8 @@
                     <thead>
                         <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
                             <th class="px-6 py-4 font-bold text-center">#</th>
-                            <th class="px-6 py-4 font-bold">Role Name</th>
-                            <th class="px-6 py-4 font-bold w-1/2">Assigned Permissions</th>
+                            <th class="px-6 py-4 font-bold w-48 whitespace-nowrap">Role Name</th>
+                            <th class="px-6 py-4 font-bold">Assigned Permissions</th>
                             <th class="px-6 py-4 font-bold text-center">Actions</th>
                         </tr>
                     </thead>
@@ -35,15 +52,10 @@
                         @forelse($roles as $role)
                             <tr class="hover:bg-slate-50/50 transition-colors">
                                 <td class="px-6 py-4 font-medium text-slate-500 text-center">
-                                    {{ $role->id }}
+                                    {{ $loop->iteration }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 border border-indigo-100">
-                                            <i data-lucide="shield" class="w-5 h-5"></i>
-                                        </div>
-                                        <span class="font-black text-slate-900 text-sm leading-tight capitalize">{{ $role->name }}</span>
-                                    </div>
+                                    <span class="font-black text-slate-900 text-sm leading-tight capitalize">{{ $role->name }}</span>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex flex-wrap gap-2">
