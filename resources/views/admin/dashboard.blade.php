@@ -63,6 +63,27 @@
 
     <div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
+        <!-- Premium Header Section -->
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
+            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+                <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+                <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            
+            <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-center sm:text-left">
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                        System Dashboard
+                    </h1>
+                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
+                        Overview of system metrics, active users, and global petitions.
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <!-- Header alert (Premium Amber Style) -->
 
         <!-- Header alert (Premium Amber Style) -->

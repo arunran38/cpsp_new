@@ -55,9 +55,7 @@ class UserController extends Controller
                     'password' => Hash::make($request->password),
                 ]);
 
-                if ($request->role) {
-                    $user->assignRole($request->role);
-                }
+
 
                 if ($request->hasFile('user_photo')) {
                     $this->handleProfilePhoto($user, $request->file('user_photo'));
@@ -103,9 +101,7 @@ class UserController extends Controller
 
                 $user->update($userData);
 
-                if ($request->role) {
-                    $user->syncRoles([$request->role]);
-                }
+
 
                 if ($request->has('remove_photo') && $request->remove_photo == '1') {
                     if ($user->profilePhoto) {

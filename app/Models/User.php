@@ -92,7 +92,11 @@ class User extends Authenticatable
      */
     public static function countUser(): int
     {
-        return self::role('user')->count();
+        try {
+            return self::role('user')->count();
+        } catch (\Spatie\Permission\Exceptions\RoleDoesNotExist $e) {
+            return 0;
+        }
     }   
 
     /**

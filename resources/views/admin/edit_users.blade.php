@@ -84,14 +84,7 @@
                     }
                 </script>
 
-                <!-- Role -->
-                <x-select 
-                    label="Access Role" 
-                    name="role" 
-                    :options="['user' => 'Standard User', 'admin' => 'Administrator']" 
-                    :selected="$user->getRoleNames()->first()" 
-                    required
-                />
+
 
                 <!-- Status -->
                 <x-select 

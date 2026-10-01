@@ -5,14 +5,27 @@
 @section('content')
 <div class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4 py-12">
     <div class="w-full max-w-4xl">
-        <!-- Header -->
-        <div class="flex items-center gap-4 mb-6">
-            <a href="{{ route('dashboard') }}" class="flex items-center justify-center w-10 h-10 bg-white rounded-xl shadow hover:bg-slate-50 transition">
-                <i data-lucide="arrow-left" class="w-5 h-5 text-slate-600"></i>
-            </a>
-            <div>
-                <h1 class="text-2xl font-bold text-white">Edit Profile</h1>
-                <p class="text-slate-400 text-sm">Update your personal account information.</p>
+        <!-- Premium Header Section -->
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
+            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+                <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+                <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            
+            <div class="relative px-6 py-6 sm:px-8 flex items-center gap-4">
+                <a href="{{ route('dashboard') }}" class="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-white rounded-xl shadow hover:bg-slate-50 transition z-10">
+                    <i data-lucide="arrow-left" class="w-5 h-5 text-slate-600"></i>
+                </a>
+                <div class="text-left z-10">
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                        Edit Profile
+                    </h1>
+                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
+                        Update your personal account information.
+                    </p>
+                </div>
             </div>
         </div>
 

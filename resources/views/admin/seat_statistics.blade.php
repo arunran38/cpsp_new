@@ -8,47 +8,41 @@
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden print-hide">
             <div class="flex flex-col lg:flex-row">
 
-                <!-- Left Section: Header info -->
-                <div
-                    class="flex-1 p-6 lg:p-8 flex items-center relative overflow-hidden bg-gradient-to-br from-indigo-50/50 to-white">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-indigo-600"></div>
-
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-5 w-full">
-                        <div
-                            class="w-14 h-14 bg-white rounded-2xl shadow-sm border border-indigo-100 flex shrink-0 items-center justify-center text-indigo-600 relative group">
-                            <div
-                                class="absolute inset-0 bg-indigo-600 rounded-2xl opacity-0 group-hover:opacity-5 transition-opacity">
-                            </div>
-                            <i data-lucide="bar-chart-2" class="w-7 h-7"></i>
+                <!-- Premium Header Section -->
+                <div class="relative overflow-hidden bg-gradient-to-r from-[#1e293b] to-[#0f172a] flex-1 flex flex-col sm:flex-row items-center justify-between p-5 lg:p-6 gap-4">
+                    <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+                        <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
+                    </div>
+                    <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+                        <div class="w-72 h-72 bg-blue-500/20 rounded-full blur-[60px]"></div>
+                    </div>
+                    
+                    <div class="relative text-center sm:text-left z-10">
+                        <div class="flex flex-wrap justify-center sm:justify-start items-center gap-2 mb-1">
+                            <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
+                                Diagnostics
+                            </h1>
+                            <span class="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/30">
+                                Seat-wise
+                            </span>
                         </div>
-                        <div class="flex-1">
-                            <div class="flex flex-wrap items-center gap-3">
-                                <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-                                    Diagnostics
-                                </h1>
-                                <span
-                                    class="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-wider border border-indigo-200/50">
-                                    Seat-wise
-                                </span>
-                            </div>
-                            <p class="text-sm font-medium text-slate-500 mt-1">
-                                Comprehensive view of office performance per unit/seat.
-                            </p>
-                        </div>
-                        <div class="mt-4 sm:mt-0">
-                            <a href="{{ route('admin.seats.statistics.export', ['date_from' => $dateFrom, 'date_to' => $dateTo]) }}"
-                                class="w-full sm:w-auto px-4 py-2.5 text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 hover:border-emerald-300 shadow-sm flex items-center justify-center gap-2 transition-all group">
-                                <i data-lucide="file-spreadsheet"
-                                    class="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform"></i>
-                                Excel Export
-                            </a>
-                        </div>
+                        <p class="text-slate-300 font-medium max-w-2xl text-sm">
+                            Comprehensive view of office performance per unit/seat.
+                        </p>
+                    </div>
+                    
+                    <div class="relative shrink-0 z-10">
+                        <a href="{{ route('admin.seats.statistics.export', ['date_from' => $dateFrom, 'date_to' => $dateTo]) }}"
+                           class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all text-sm">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                            <span>Excel Export</span>
+                        </a>
                     </div>
                 </div>
 
                 <!-- Right Section: Filters -->
                 <div
-                    class="bg-slate-50/50 border-t lg:border-t-0 lg:border-l border-slate-200 p-6 lg:p-8 flex items-center justify-center relative">
+                    class="bg-slate-50/50 border-t lg:border-t-0 lg:border-l border-slate-200 p-5 lg:p-6 flex items-center justify-center relative">
                     <form method="GET" action="{{ route('admin.seats.statistics') }}" class="w-full">
                         <div class="flex flex-col sm:flex-row items-end gap-4 w-full">
                             <div class="w-full sm:w-auto flex-1 space-y-1.5">
