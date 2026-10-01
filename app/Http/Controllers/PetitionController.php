@@ -103,7 +103,10 @@ class PetitionController extends Controller
 
         $seats = [];
         if (Auth::user()->canAccess('access admin dashboard')) {
-            $seats = Seat::where('is_active', true)->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+            $seats = Seat::where('is_active', true)
+                         ->where('seat_name', 'like', 'CPSP%')
+                         ->get()
+                         ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         }
 
         $departments = \App\Models\DepartmentList::orderBy('department_name')->pluck('department_name', 'id')->toArray();
