@@ -156,6 +156,44 @@
                                   ]" />
                     </div>
 
+                    <!-- NESTED DROPDOWN: Appears ONLY if Mode of Receipt is "Unit" -->
+                    <div x-show="modeOfPetition && modeOfPetition.toLowerCase() === 'unit'" 
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 -translate-y-2"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         style="display: none;"
+                         class="md:col-span-2 lg:col-span-3 bg-indigo-50/60 p-4 rounded-xl border border-indigo-100 space-y-1.5">
+                        <label for="unit_id" class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
+                            <i data-lucide="building-2" class="w-4 h-4 text-indigo-600"></i>
+                            Select Concerned Unit (യൂണിറ്റ് സെലക്ട് ചെയ്യുക) <span class="text-rose-500">*</span>
+                        </label>
+                        <select name="unit_id" 
+                                id="unit_id" 
+                                x-model="selectedUnitId"
+                                x-bind:required="modeOfPetition && modeOfPetition.toLowerCase() === 'unit'"
+                                class="block w-full px-4 py-2.5 text-sm font-medium bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                            <option value="">-- Select Unit --</option>
+                            @foreach($unitsList as $unitItem)
+                                <option value="{{ $unitItem->unit_id }}" {{ old('unit_id') == $unitItem->unit_id ? 'selected' : '' }}>
+                                    {{ $unitItem->unit_name }} ({{ $unitItem->unit_code }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Mode Others Conditional Input -->
+                    <div x-show="modeOfPetition === 'others'" 
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 -translate-y-2"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         style="display: none;"
+                         class="md:col-span-2 lg:col-span-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <x-input label="Specify Mode of Receipt *" 
+                                 name="mode_others" 
+                                 placeholder="Enter custom mode of receipt..." 
+                                 x-bind:required="modeOfPetition === 'others'" />
+                    </div>
+
                     <!-- Complainant Name -->
                     <div>
                         <x-input label="Complainant Name *" 
@@ -187,43 +225,6 @@
                             @endforeach
                         </select>
                     </div>
-                </div>
-
-                <!-- NESTED DROPDOWN: Appears ONLY if Mode of Receipt is "Unit" -->
-                <div x-show="modeOfPetition && modeOfPetition.toLowerCase() === 'unit'" 
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0 -translate-y-2"
-                     x-transition:enter-end="opacity-100 translate-y-0"
-                     style="display: none;"
-                     class="bg-indigo-50/60 p-4 rounded-xl border border-indigo-100 space-y-1.5">
-                    <label for="unit_id" class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
-                        <i data-lucide="building-2" class="w-4 h-4 text-indigo-600"></i>
-                        Select Concerned Unit (യൂണിറ്റ് സെലക്ട് ചെയ്യുക) <span class="text-rose-500">*</span>
-                    </label>
-                    <select name="unit_id" 
-                            id="unit_id" 
-                            x-bind:required="modeOfPetition && modeOfPetition.toLowerCase() === 'unit'"
-                            class="block w-full px-4 py-2.5 text-sm font-medium bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
-                        <option value="">-- Select Unit --</option>
-                        @foreach($unitsList as $unitItem)
-                            <option value="{{ $unitItem->unit_id }}" {{ old('unit_id') == $unitItem->unit_id ? 'selected' : '' }}>
-                                {{ $unitItem->unit_name }} ({{ $unitItem->unit_code }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <!-- Mode Others Conditional Input -->
-                <div x-show="modeOfPetition === 'others'" 
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0 -translate-y-2"
-                     x-transition:enter-end="opacity-100 translate-y-0"
-                     style="display: none;"
-                     class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <x-input label="Specify Mode of Receipt *" 
-                             name="mode_others" 
-                             placeholder="Enter custom mode of receipt..." 
-                             x-bind:required="modeOfPetition === 'others'" />
                 </div>
             </div>
 
@@ -288,7 +289,8 @@
                 </div>
                 <div class="flex justify-between items-center border-b border-slate-200/60 pb-2">
                     <span class="text-slate-500 font-medium">Mode of Receipt:</span>
-                    <span class="font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100" x-text="modeOfPetition || 'Direct'"></span>
+                    <span class="font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100" 
+                          x-text="modeOfPetition && modeOfPetition.toLowerCase() === 'unit' && getSelectedUnitName() ? 'Unit (' + getSelectedUnitName() + ')' : (modeOfPetition || 'Direct')"></span>
                 </div>
                 <div class="flex justify-between items-center pt-0.5">
                     <span class="text-slate-500 font-medium">Target Concerned Seat:</span>
@@ -324,14 +326,33 @@
             receiptChecking: false,
             modeOfPetition: '{{ old('mode_of_petition_received', '') }}',
             selectedSeatId: '{{ old('seat_id', '') }}',
+            selectedUnitId: '{{ old('unit_id', '') }}',
             showConfirmModal: false,
 
             getSelectedSeatName() {
+                // Reading this.selectedSeatId registers reactivity dependency in Alpine
+                const id = this.selectedSeatId;
                 const select = document.getElementById('seat_id');
                 if (select && select.selectedIndex >= 0) {
-                    return select.options[select.selectedIndex].text || 'Selected Seat';
+                    const selectedOpt = select.options[select.selectedIndex];
+                    if (selectedOpt && selectedOpt.value !== "") {
+                        return selectedOpt.text;
+                    }
                 }
-                return 'Selected Seat';
+                return 'Not specified';
+            },
+
+            getSelectedUnitName() {
+                // Reading this.selectedUnitId registers reactivity dependency in Alpine
+                const id = this.selectedUnitId;
+                const select = document.getElementById('unit_id');
+                if (select && select.selectedIndex >= 0) {
+                    const selectedOpt = select.options[select.selectedIndex];
+                    if (selectedOpt && selectedOpt.value !== "") {
+                        return selectedOpt.text;
+                    }
+                }
+                return '';
             },
 
             openConfirmationModal() {
