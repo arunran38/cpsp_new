@@ -15,7 +15,7 @@
     @endif
     <div class="relative flex items-center group">
         @if($icon)
-            <div class="absolute left-4 pointer-events-none text-slate-400 group-hover:text-slate-600 transition-colors">
+            <div class="absolute z-10 left-4 pointer-events-none text-slate-400 group-hover:text-slate-600 transition-colors">
                 <i data-lucide="{{ $icon }}" class="w-4 h-4"></i>
             </div>
         @endif

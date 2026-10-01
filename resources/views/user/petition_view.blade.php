@@ -113,14 +113,14 @@
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Date From</label>
                         <input type="date" id="date_from" placeholder="DD-MM-YYYY" name="date_from"
-                            value="{{ request('date_from') }}" max="{{ \Carbon\Carbon::yesterday()->format('Y-m-d') }}"
+                            value="{{ request('date_from') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                             style="color: #1e40af !important;">
                     </div>
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Date To</label>
                         <input type="date" id="date_to" placeholder="DD-MM-YYYY" name="date_to"
-                            value="{{ request('date_to') }}" max="{{ \Carbon\Carbon::yesterday()->format('Y-m-d') }}"
+                            value="{{ request('date_to') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                             style="color: #1e40af !important;">
                         <p id="dateRangeError" class="mt-1 text-xs text-rose-600 hidden" aria-live="polite"></p>

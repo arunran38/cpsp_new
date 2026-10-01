@@ -74,7 +74,7 @@
                     </div>
 
                     <!-- Upload Photo -->
-                    <div class="sm:col-span-2">
+                    <div class="sm:col-span-1">
                         <x-input label="Upload Photo" name="user_photo" type="file" icon="image" accept=".jpg,.jpeg,.png" />
                     </div>
 
