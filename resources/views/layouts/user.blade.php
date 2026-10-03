@@ -416,6 +416,15 @@
                     <span>Master Reports</span>
                 </a>
                 @endif
+
+                @if(Auth::check() && Auth::user()->canAccess('view compliances'))
+                <!-- Pending Compliances -->
+                <a href="{{ route('compliances.index') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl group {{ request()->routeIs('compliances.*') ? 'active-nav' : 'inactive-nav' }}">
+                    <i data-lucide="check-square" class="w-5 h-5 icon-bounce text-emerald-400 group-hover:text-emerald-300 transition-colors"></i>
+                    <span>Petition Compliances</span>
+                </a>
+                @endif
                 
                 @if(Auth::check() && Auth::user()->currentSeatUser() && (Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin')))
                 <div class="pt-6 pb-2">

@@ -265,6 +265,11 @@ class Petition extends Model
         return self::where('status', self::STATUS_CLOSED_BY_GOVT)->count();
     }
 
+    public function compliance(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Compliance::class, 'petition_id', 'petition_id');
+    }
+
     protected static function booted(): void
     {
         static::deleting(function ($petition) {

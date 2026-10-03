@@ -297,8 +297,7 @@
                         <i data-lucide="git-merge" class="w-5 h-5 text-indigo-600"></i> Petition Workflow Actions
                     </h3>
 
-                    @if(Auth::user()->canAccess('update petitions'))
-                        @if($petition->status === 'Received')
+                    @if($petition->status === 'Received' && Auth::user()->canAccess('update petitions'))
                             <!-- Director Forwarding Form -->
                             <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-6">
                                 <h4 class="font-bold text-indigo-900 mb-4">Initial Decision / Forwarding</h4>
@@ -328,7 +327,7 @@
                                             <select name="action"
                                                 class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
                                                 style="background-image: none !important;" required
-                                                onchange="document.getElementById('unit-select-div').style.display = this.value === 'Forward_To_Unit' ? 'block' : 'none'; document.getElementById('final-doc-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt') ? 'block' : 'none';">
+                                                onchange="document.getElementById('unit-select-div').style.display = this.value === 'Forward_To_Unit' ? 'block' : 'none'; document.getElementById('final-doc-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt') ? 'block' : 'none'; document.getElementById('fwd_order_number').required = (this.value === 'Close' || this.value === 'Sent_to_Govt');">
                                                 <option value="">Select Action...</option>
                                                 <option value="Forward_To_Unit">Forward to Unit</option>
                                                 <option value="Sent_to_Govt">Send to Govt</option>
@@ -371,8 +370,12 @@
                                     </div>
 
                                     <div id="final-doc-div-fwd" style="display: none;">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Final Order
-                                            Document</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Directorate Order Number</label>
+                                        <input type="text" name="directorate_order_number" id="fwd_order_number"
+                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 mb-3"
+                                            placeholder="Enter Order Number">
+                                            
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Final Order Document</label>
                                         <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
                                             class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                                     </div>
@@ -502,7 +505,7 @@
                             @endif
 
                             <!-- Unit VR Submission (Only if Forwarded) -->
-                            @if($petition->status === 'Forwarded')
+                            @if($petition->status === 'Forwarded' && Auth::user()->canAccess('update petitions'))
                                 <div class="bg-amber-50 border border-amber-100 rounded-xl p-6 mb-6">
                                     <h4 class="font-bold text-amber-900 mb-4">Submit Verification Report (Unit Action)</h4>
                                     <form
@@ -575,7 +578,7 @@
                             @endif
 
                             <!-- CPSP Receive VR -->
-                            @if($petition->status === 'VR_Received' && $petition->latestForwarding && !$petition->latestForwarding->vr_received_at_cpsp_date)
+                            @if($petition->status === 'VR_Received' && $petition->latestForwarding && !$petition->latestForwarding->vr_received_at_cpsp_date && Auth::user()->canAccess('update petitions'))
                                 <div class="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
                                     <h4 class="font-bold text-blue-900 mb-4">Acknowledge VR Receipt (CPSP Action)</h4>
                                     <div class="mb-4 text-sm grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -612,7 +615,7 @@
                             @endif
 
                             <!-- Final Decision -->
-                            @if($petition->status === 'VR_Received' && $petition->latestForwarding && $petition->latestForwarding->vr_received_at_cpsp_date)
+                            @if($petition->status === 'VR_Received' && $petition->latestForwarding && $petition->latestForwarding->vr_received_at_cpsp_date && Auth::user()->canAccess('update petitions'))
                                 <div class="bg-rose-50 border border-rose-100 rounded-xl p-6 mb-6">
                                     <h4 class="font-bold text-rose-900 mb-4">Final Decision</h4>
                                     <form action="{{ route('decisions.store') }}" method="POST" enctype="multipart/form-data"
@@ -652,6 +655,13 @@
                                         </div>
 
                                         <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Directorate Order Number</label>
+                                            <input type="text" name="directorate_order_number" placeholder="Enter Order Number"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm py-[9px] text-slate-800"
+                                                required>
+                                        </div>
+
+                                        <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Final Remarks</label>
                                             <textarea name="final_remarks" rows="3"
                                                 class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-gray-900"></textarea>
@@ -685,6 +695,11 @@
                                                 <span class="text-gray-600 font-semibold">Decided On:</span>
                                                 <span
                                                     class="text-gray-900 block mt-1">{{ \Carbon\Carbon::parse($petition->decision->decision_date)->format('d M, Y') }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-600 font-semibold">Directorate Order Number:</span>
+                                                <span
+                                                    class="text-gray-900 block mt-1 font-mono text-xs">{{ $petition->decision->directorate_order_number ?? 'N/A' }}</span>
                                             </div>
                                             @if($petition->decision->processedBy)
                                                 <div>
@@ -727,10 +742,37 @@
                                             @endif
                                         </div>
                                     </div>
+
+                                    @if($petition->compliance)
+                                    <div class="mt-4 bg-emerald-50/50 border border-emerald-100 rounded-xl p-5 lg:col-span-2">
+                                        <h4 class="font-bold text-emerald-900 mb-3 flex items-center gap-2">
+                                            <i data-lucide="check-square" class="w-4 h-4 text-emerald-600"></i> Compliance Details
+                                        </h4>
+                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                                            <div>
+                                                <span class="text-emerald-700/80 font-semibold block text-xs uppercase tracking-wider">Action Taken</span>
+                                                <span class="text-slate-900 font-bold mt-1 block">{{ $petition->compliance->action_number }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-emerald-700/80 font-semibold block text-xs uppercase tracking-wider">Date</span>
+                                                <span class="text-slate-900 font-medium mt-1 block">{{ \Carbon\Carbon::parse($petition->compliance->action_date)->format('d M, Y') }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-emerald-700/80 font-semibold block text-xs uppercase tracking-wider">Unit</span>
+                                                <span class="text-slate-900 font-medium mt-1 block">{{ $petition->compliance->unit->unit_name ?? 'N/A' }}</span>
+                                            </div>
+                                            @if($petition->compliance->remarks)
+                                            <div class="sm:col-span-3 pt-2">
+                                                <span class="text-emerald-700/80 font-semibold block text-xs uppercase tracking-wider mb-1">Remarks</span>
+                                                <span class="text-slate-700 italic">{{ $petition->compliance->remarks }}</span>
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    @endif
                                 @endif
                             @endif
                         </div> <!-- End of workflow details grid -->
-                    @endif
                 </div>
 
             </div>

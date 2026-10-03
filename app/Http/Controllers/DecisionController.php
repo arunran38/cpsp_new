@@ -29,6 +29,7 @@ class DecisionController extends Controller
                     'petition_id' => $petition->petition_id,
                     'decided_by_seat_id' => $currentSeatId,
                     'final_decision' => $request->final_decision,
+                    'directorate_order_number' => $request->directorate_order_number,
                     'final_remarks' => $request->final_remarks,
                     'decision_date' => $request->decision_date,
                     'processed_by_user_id' => Auth::id(),

@@ -26,7 +26,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'petition trends chart',
             'petition nature chart',
             'roles',
-            'permissions'
+            'permissions',
+            'compliances'
         ];
 
         // പ്രവർത്തനങ്ങൾ (Actions)
@@ -48,6 +49,15 @@ class RolesAndPermissionsSeeder extends Seeder
         Role::firstOrCreate(['name' => 'super admin']);
         Role::firstOrCreate(['name' => 'admin']);
         Role::firstOrCreate(['name' => 'CPSP']);
-        Role::firstOrCreate(['name' => 'IOP HQ']);
+        $iopHq = Role::firstOrCreate(['name' => 'IOP HQ']);
+
+        // IOP HQ-നുള്ള പെർമിഷനുകൾ
+        $iopHq->givePermissionTo([
+            'view petitions',
+            'view all petitions',
+            'view compliances',
+            'create compliances',
+            'update compliances'
+        ]);
     }
 }

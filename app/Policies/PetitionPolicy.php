@@ -58,6 +58,10 @@ class PetitionPolicy
             return true;
         }
 
+        if ($user->canAccess('view all petitions')) {
+            return true;
+        }
+
         // 2. Check if user is the creator
         if ($petition->user_id === $user->id) {
             return true;

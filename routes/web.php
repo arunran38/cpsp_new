@@ -14,6 +14,8 @@ use App\Http\Controllers\TrashController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\ComplianceController;
+
 Route::get('/dashboard', function () {
     $user = Auth::user();
     if ($user->canAccess('access admin dashboard') && !session('is_impersonating_seat')) {
@@ -119,6 +121,13 @@ Route::middleware(['auth'])->group(function () {
     // Roles and Permissions Routes
     Route::resource('admin/roles', RoleController::class)->names('admin.roles');
     Route::resource('admin/permissions', PermissionController::class)->names('admin.permissions');
+
+    // Compliances (IOP HQ workflow)
+    Route::get('/compliances/reports', [ComplianceController::class, 'reports'])->name('compliances.reports');
+    Route::get('/compliances/reports/export', [ComplianceController::class, 'exportReports'])->name('compliances.reports.export');
+    Route::get('/compliances/export', [ComplianceController::class, 'export'])->name('compliances.export');
+    Route::get('/compliances', [ComplianceController::class, 'index'])->name('compliances.index');
+    Route::post('/compliances', [ComplianceController::class, 'store'])->name('compliances.store');
 
     // Seat Switcher
     Route::post('/switch-seat/{seatId}', [SeatController::class, 'switchSeat'])->name('seat.switch');
