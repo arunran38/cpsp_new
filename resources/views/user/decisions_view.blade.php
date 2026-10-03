@@ -93,7 +93,7 @@
                             </td>
                             <td class="px-6 py-4 text-center">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-700 border border-emerald-200">
-                                    {{ $petition->decision->decision_remarks ?? $petition->status }}
+                                    {{ $petition->decision->final_decision ?? $petition->status }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 max-w-xs">
@@ -209,4 +209,5 @@
     });
 </script>
 @endsection
+
 

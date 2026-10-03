@@ -33,6 +33,7 @@
             <col style="width: 40pt;"> <!-- PE -->
             <col style="width: 40pt;"> <!-- SC -->
             <col style="width: 40pt;"> <!-- CV -->
+            <col style="width: 45pt;"> <!-- Internal Vigilance -->
             <col style="width: 40pt;"> <!-- ICell -->
             <col style="width: 50pt;"> <!-- Closed -->
             <col style="width: 60pt;"> <!-- Sent Govt -->
@@ -53,6 +54,7 @@
                 <th>PE</th>
                 <th>SC</th>
                 <th>CV</th>
+                <th>Internal Vigilance</th>
                 <th>ICell</th>
                 <th>Closed</th>
                 <th>Sent Govt</th>
@@ -72,6 +74,7 @@
                     <td>{{ $seat->decisions_pe_count }}</td>
                     <td>{{ $seat->decisions_sc_count }}</td>
                     <td>{{ $seat->decisions_cv_count }}</td>
+                    <td>{{ $seat->decisions_internal_vigilance_count }}</td>
                     <td>{{ $seat->decisions_icell_count }}</td>
                     <td>{{ $seat->decisions_closed_count }}</td>
                     <td>{{ $seat->decisions_sent_count }}</td>
@@ -91,6 +94,7 @@
                     <td>{{ $seats->sum('decisions_pe_count') }}</td>
                     <td>{{ $seats->sum('decisions_sc_count') }}</td>
                     <td>{{ $seats->sum('decisions_cv_count') }}</td>
+                    <td>{{ $seats->sum('decisions_internal_vigilance_count') }}</td>
                     <td>{{ $seats->sum('decisions_icell_count') }}</td>
                     <td>{{ $seats->sum('decisions_closed_count') }}</td>
                     <td>{{ $seats->sum('decisions_sent_count') }}</td>

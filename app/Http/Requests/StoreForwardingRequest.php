@@ -23,9 +23,10 @@ class StoreForwardingRequest extends FormRequest
     {
         return [
             'petition_id' => 'required|exists:petitions,petition_id',
-            'action' => 'required|in:Forward_To_Unit,Sent_to_Govt,Close',
+            'action' => 'required|in:Forward_To_Unit,Sent_to_Govt,Close,Internal_Vigilance',
             'director_remarks' => 'required|string',
             'to_unit_id' => 'required_if:action,Forward_To_Unit|nullable|exists:units,unit_id',
+            'directorate_order_number' => 'nullable|string|max:255',
             'final_order_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'forwarded_date' => 'required|date|before_or_equal:today',
             'file_no' => 'required|string|unique:petitions,file_no,' . $this->petition_id . ',petition_id',

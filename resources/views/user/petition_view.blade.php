@@ -162,41 +162,41 @@
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 
                     <div x-data="{ 
-                                action: '', 
-                                fileNo: '', 
-                                fileNoError: '',
-                                checkEmpty() {
-                                    if (!this.fileNo.trim()) {
-                                        this.fileNoError = 'this field is required';
-                                    } else {
-                                        this.fileNoError = '';
-                                    }
-                                },
-                                async checkFileNoUniqueness() {
-                                    if (!this.fileNo.trim()) {
-                                        this.fileNoError = 'this field is required';
-                                        return;
-                                    }
-                                    try {
-                                        const response = await fetch('/petitions/check-file-no', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
-                                            },
-                                            body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
-                                        });
-                                        const data = await response.json();
-                                        if (data.exists) {
-                                            this.fileNoError = 'File number already exists';
+                                    action: '', 
+                                    fileNo: '', 
+                                    fileNoError: '',
+                                    checkEmpty() {
+                                        if (!this.fileNo.trim()) {
+                                            this.fileNoError = 'this field is required';
                                         } else {
                                             this.fileNoError = '';
                                         }
-                                    } catch (error) {
-                                        console.error(error);
+                                    },
+                                    async checkFileNoUniqueness() {
+                                        if (!this.fileNo.trim()) {
+                                            this.fileNoError = 'this field is required';
+                                            return;
+                                        }
+                                        try {
+                                            const response = await fetch('/petitions/check-file-no', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
+                                                },
+                                                body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
+                                            });
+                                            const data = await response.json();
+                                            if (data.exists) {
+                                                this.fileNoError = 'File number already exists';
+                                            } else {
+                                                this.fileNoError = '';
+                                            }
+                                        } catch (error) {
+                                            console.error(error);
+                                        }
                                     }
-                                }
-                            }" class="space-y-4">
+                                }" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1">File Number <span
@@ -378,7 +378,7 @@
                                 'Sent to Govt' => 'Sent to Govt'
                             ];
                         @endphp
-                        <x-select label="Final Decision" name="decision_remarks" :options="$decisionOptions"
+                        <x-select label="Final Decision" name="final_decision" :options="$decisionOptions"
                             placeholder="Select..." required />
 
                         <div>

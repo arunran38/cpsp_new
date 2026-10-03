@@ -101,6 +101,7 @@ class SeatController extends Controller
         $to = $dateTo ? Carbon::parse($dateTo)->endOfDay() : null;
 
         $seats = Seat::with('activeAssignment.user')
+                     ->where('seat_name', 'like', '%CPSP%')
                      ->withStatistics($from, $to)
                      ->get()
                      ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
@@ -120,6 +121,7 @@ class SeatController extends Controller
         $to = $dateTo ? Carbon::parse($dateTo)->endOfDay() : null;
 
         $seats = Seat::with('activeAssignment.user')
+                     ->where('seat_name', 'like', '%CPSP%')
                      ->withStatistics($from, $to)
                      ->get()
                      ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);

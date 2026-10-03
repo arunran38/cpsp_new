@@ -115,7 +115,7 @@ class PetitionForwardingControllerTest extends TestCase
         $this->assertDatabaseHas('petitions', ['petition_id' => $petition->petition_id, 'status' => 'Closed']);
         $this->assertDatabaseHas('decisions', [
             'petition_id' => $petition->petition_id,
-            'decision_remarks' => 'Closed'
+            'final_decision' => 'Closed'
         ]);
     }
 
@@ -162,3 +162,4 @@ class PetitionForwardingControllerTest extends TestCase
         $this->assertDatabaseHas('petitions', ['petition_id' => $petition->petition_id, 'status' => 'Forwarded']);
     }
 }
+

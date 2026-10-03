@@ -38,13 +38,22 @@ class PetitionForwardingController extends Controller
                     ]);
                     $status = Petition::STATUS_FORWARDED;
                 } else {
-                    $status = $request->action === 'Sent_to_Govt' ? Petition::STATUS_SENT_TO_GOVT : Petition::STATUS_CLOSED;
-                    $decisionRemarks = $request->action === 'Sent_to_Govt' ? 'Sent to Govt' : 'Closed'; 
+                    if ($request->action === 'Sent_to_Govt') {
+                        $status = Petition::STATUS_SENT_TO_GOVT;
+                        $decisionRemarks = 'Sent to Govt';
+                    } elseif ($request->action === 'Internal_Vigilance') {
+                        $status = Petition::STATUS_INTERNAL_VIGILANCE;
+                        $decisionRemarks = 'Internal Vigilance';
+                    } else {
+                        $status = Petition::STATUS_CLOSED;
+                        $decisionRemarks = 'Closed';
+                    }
 
                     Decision::create([
                         'petition_id' => $petition->petition_id,
                         'decided_by_seat_id' => $currentSeatId,
-                        'decision_remarks' => $decisionRemarks,
+                        'final_decision' => $decisionRemarks,
+                        'directorate_order_number' => $request->directorate_order_number,
                         'final_remarks' => $request->director_remarks,
                         'decision_date' => $request->forwarded_date,
                         'processed_by_user_id' => Auth::id(),
@@ -202,3 +211,4 @@ class PetitionForwardingController extends Controller
         ]);
     }
 }
+

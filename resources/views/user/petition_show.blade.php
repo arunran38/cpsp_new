@@ -36,12 +36,12 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                @if(Auth::user()->canAccess('update petitions') && (Auth::user()->canAccess('access admin dashboard') || !in_array($petition->status, ['Closed', 'Sent_to_Govt'])))
+                @if(Auth::user()->canAccess('update petitions') && (Auth::user()->canAccess('access admin dashboard') || !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance'])))
                     <a href="{{ route('petitions.edit', $petition->petition_id) }}"
                         class="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2">
                         <i data-lucide="edit" class="w-4 h-4"></i> Edit Details
                     </a>
-                    @if(!$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Duplicate']))
+                    @if(!$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance', 'Duplicate']))
                         <button type="button" @click="showLinkModal = true"
                             class="px-4 py-2.5 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-all shadow-sm flex items-center gap-2">
                             <i data-lucide="link" class="w-4 h-4"></i> Link Petition
@@ -80,11 +80,11 @@
                             <span
                                 class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1">Status</span>
                             <span
-                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
-                                @if($petition->decision)
-                                    Final : {{ \App\Models\Decision::getDecisionLabel($petition->decision->decision_remarks) }}
+                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Internal_Vigilance') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                @if(in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance']) && $petition->decision)
+                                    Final : {{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}
                                 @else
-                                    {{ $petition->status }}
+                                    {{ str_replace('_', ' ', $petition->status) }}
                                 @endif
                             </span>
                         </div>
@@ -328,9 +328,10 @@
                                             <select name="action"
                                                 class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
                                                 style="background-image: none !important;" required
-                                                onchange="document.getElementById('unit-select-div').style.display = this.value === 'Forward_To_Unit' ? 'block' : 'none'; document.getElementById('final-doc-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt') ? 'block' : 'none';">
+                                                onchange="document.getElementById('unit-select-div').style.display = this.value === 'Forward_To_Unit' ? 'block' : 'none'; document.getElementById('final-doc-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Internal_Vigilance') ? 'block' : 'none'; document.getElementById('directorate-order-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Internal_Vigilance') ? 'block' : 'none';">
                                                 <option value="">Select Action...</option>
                                                 <option value="Forward_To_Unit">Forward to Unit</option>
+                                                <option value="Internal_Vigilance">Internal Vigilance</option>
                                                 <option value="Sent_to_Govt">Send to Govt</option>
                                                 <option value="Close">Close Petition</option>
                                             </select>
@@ -341,6 +342,13 @@
                                                 <path d="m6 9 6 6 6-6" />
                                             </svg>
                                         </div>
+                                    </div>
+
+                                    <div id="directorate-order-div-fwd" style="display: none;">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Directorate order number</label>
+                                        <input type="text" name="directorate_order_number"
+                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900"
+                                            placeholder="Order Number">
                                     </div>
 
                                     <div>
@@ -539,6 +547,7 @@
                                                     <option value="SC">Surprise Check (SC)</option>
                                                     <option value="CV">Confidential Verification (CV)</option>
                                                     <option value="ICell">Intelligence Cell (I Cell)</option>
+                                                    <option value="Internal Vigilance">Internal Vigilance</option>
                                                     <option value="Closed">Closed</option>
                                                     <option value="Sent to Govt">Sent to Govt</option>
                                                 </select>
@@ -623,7 +632,7 @@
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Final Decision</label>
                                             <div class="relative flex items-center">
-                                                <select name="decision_remarks"
+                                                <select name="final_decision"
                                                     class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 appearance-none pr-10 py-2 text-sm text-gray-900"
                                                     style="background-image: none !important;" required>
                                                     <option value="">Select...</option>
@@ -633,6 +642,7 @@
                                                     <option value="SC">Surprise Check (SC)</option>
                                                     <option value="CV">Confidential Verification (CV)</option>
                                                     <option value="ICell">Intelligence Cell (I Cell)</option>
+                                                    <option value="Internal Vigilance">Internal Vigilance</option>
                                                     <option value="Closed">Closed</option>
                                                     <option value="Sent to Govt">Sent to Govt</option>
                                                 </select>
@@ -643,6 +653,12 @@
                                                     <path d="m6 9 6 6 6-6" />
                                                 </svg>
                                             </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Directorate order number</label>
+                                            <input type="text" name="directorate_order_number"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-gray-900"
+                                                placeholder="Order Number">
                                         </div>
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Decision Date</label>
@@ -671,7 +687,7 @@
                                 </div>
                             @endif
 
-                            @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt')
+                            @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Internal_Vigilance')
                                 @if($petition->decision)
                                     <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 lg:col-span-2">
                                         <h4 class="font-bold text-gray-800 mb-4 border-b border-slate-200 pb-2">Decision Details</h4>
@@ -679,13 +695,19 @@
                                             <div>
                                                 <span class="text-gray-600 font-semibold">Final Decision:</span>
                                                 <span
-                                                    class="text-gray-900 block mt-1">{{ \App\Models\Decision::getDecisionLabel($petition->decision->decision_remarks) }}</span>
+                                                    class="text-gray-900 block mt-1">{{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}</span>
                                             </div>
                                             <div>
                                                 <span class="text-gray-600 font-semibold">Decided On:</span>
                                                 <span
                                                     class="text-gray-900 block mt-1">{{ \Carbon\Carbon::parse($petition->decision->decision_date)->format('d M, Y') }}</span>
                                             </div>
+                                            @if($petition->decision->directorate_order_number)
+                                                <div>
+                                                    <span class="text-gray-600 font-semibold">Directorate Order No:</span>
+                                                    <span class="text-gray-900 block mt-1">{{ $petition->decision->directorate_order_number }}</span>
+                                                </div>
+                                            @endif
                                             @if($petition->decision->processedBy)
                                                 <div>
                                                     <span class="text-gray-600 font-semibold">Decision Taken By:</span>
@@ -771,9 +793,9 @@
                             <td class="px-6 py-4 text-slate-600">{{ \Carbon\Carbon::parse($petition->originalPetition->date_of_petition_received)->format('d M, Y') }}</td>
                             <td class="px-6 py-4 text-slate-600">{{ $petition->originalPetition->mode_of_petition_received === 'others' ? $petition->originalPetition->mode_of_petition_received_others : $petition->originalPetition->mode_of_petition_received }}</td>
                             <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($petition->originalPetition->status === 'Closed' || $petition->originalPetition->status === 'Sent_to_Govt') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($petition->originalPetition->status === 'Closed' || $petition->originalPetition->status === 'Sent_to_Govt' || $petition->originalPetition->status === 'Internal_Vigilance') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
                                     @if($petition->originalPetition->decision)
-                                        Final : {{ \App\Models\Decision::getDecisionLabel($petition->originalPetition->decision->decision_remarks) }}
+                                        Final : {{ \App\Models\Decision::getDecisionLabel($petition->originalPetition->decision->final_decision) }}
                                     @else
                                         {{ $petition->originalPetition->status }}
                                     @endif
@@ -802,9 +824,9 @@
                             <td class="px-6 py-4 text-slate-600">{{ \Carbon\Carbon::parse($dup->date_of_petition_received)->format('d M, Y') }}</td>
                             <td class="px-6 py-4 text-slate-600">{{ $dup->mode_of_petition_received === 'others' ? $dup->mode_of_petition_received_others : $dup->mode_of_petition_received }}</td>
                             <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($dup->status === 'Closed' || $dup->status === 'Sent_to_Govt') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($dup->status === 'Closed' || $dup->status === 'Sent_to_Govt' || $dup->status === 'Internal_Vigilance') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
                                     @if($dup->decision)
-                                        Final : {{ \App\Models\Decision::getDecisionLabel($dup->decision->decision_remarks) }}
+                                        Final : {{ \App\Models\Decision::getDecisionLabel($dup->decision->final_decision) }}
                                     @else
                                         {{ $dup->status }}
                                     @endif
@@ -1075,3 +1097,4 @@
     });
 </script>
 @endsection
+

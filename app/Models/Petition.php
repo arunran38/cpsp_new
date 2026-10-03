@@ -19,6 +19,7 @@ class Petition extends Model
     public const STATUS_FORWARDED = 'Forwarded';
     public const STATUS_VR_RECEIVED = 'VR_Received';
     public const STATUS_SENT_TO_GOVT = 'Sent_to_Govt';
+    public const STATUS_INTERNAL_VIGILANCE = 'Internal_Vigilance';
     public const STATUS_CLOSED = 'Closed';
     public const STATUS_CLOSED_BY_GOVT = 'Closed_by_Govt';
     public const STATUS_DUPLICATE = 'Duplicate';
@@ -154,7 +155,7 @@ class Petition extends Model
         }
 
         if (in_array($status, $finalDecisionStatuses)) {
-            return $query->whereHas('decision', fn($q) => $q->where('decision_remarks', $status));
+            return $query->whereHas('decision', fn($q) => $q->where('final_decision', $status));
         }
 
         return $query->where('status', $status);
@@ -288,3 +289,4 @@ class Petition extends Model
         });
     }
 }
+

@@ -481,7 +481,7 @@ class PetitionController extends Controller
                 'accused' => $accusedText,
                 'description' => \Illuminate\Support\Str::limit(strip_tags($p->description), 100),
                 'status' => $p->status,
-                'decision' => $p->decision ? $p->decision->decision_remarks : null,
+                'decision' => $p->decision ? $p->decision->final_decision : null,
             ];
         });
 
@@ -571,3 +571,4 @@ class PetitionController extends Controller
             })->values()->all();
     }
 }
+

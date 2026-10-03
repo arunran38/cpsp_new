@@ -116,56 +116,58 @@
                 <table class="w-full text-sm text-slate-600">
                     <thead class="bg-slate-50 border-b text-xs font-bold text-slate-500 uppercase text-center">
                         <tr>
-                            <th class="px-6 py-4 text-left align-middle border-r border-slate-200" rowspan="2">Seat</th>
-                            <th class="px-6 py-4 align-middle border-r border-slate-200" rowspan="2"
-                                title="Total Petitions">Total Petitions</th>
-                            <th class="px-6 py-4 align-middle border-r border-slate-200" rowspan="2" title="New Petitions">
-                                New Petitions</th>
-                            <th class="px-6 py-4 align-middle border-r border-slate-200" rowspan="2"
-                                title="Forwarded Petitions">Forwarded Petitions</th>
-                            <th class="px-6 py-4 align-middle border-r border-slate-200" rowspan="2"
-                                title="Verification Reports">Verification Reports Received</th>
-                            <th class="px-6 py-2 border-b border-slate-200 bg-slate-100/50" colspan="9">Final Decisions
+                            <th class="px-4 py-3 text-left align-middle border-r border-slate-200" rowspan="2">Seat</th>
+                            <th class="px-4 py-3 align-middle border-r border-slate-200" rowspan="2"
+                                title="Total Petitions">Total<br>Petitions</th>
+                            <th class="px-4 py-3 align-middle border-r border-slate-200" rowspan="2" title="New Petitions">
+                                New<br>Petitions</th>
+                            <th class="px-4 py-3 align-middle border-r border-slate-200" rowspan="2"
+                                title="Forwarded Petitions">Forwarded<br>Petitions</th>
+                            <th class="px-4 py-3 align-middle border-r border-slate-200" rowspan="2"
+                                title="Verification Reports">VR<br>Received</th>
+                            <th class="px-4 py-2 border-b border-slate-200 bg-slate-100/50" colspan="10">Final Decisions
                             </th>
                         </tr>
                         <tr class="bg-slate-50">
-                            <th class="px-4 py-2 border-r border-slate-200 bg-slate-100/50" title="Total Final Decisions">
-                                Final Decisions</th>
-                            <th class="px-3 py-2 border-r border-slate-200">VC</th>
-                            <th class="px-3 py-2 border-r border-slate-200">VE</th>
-                            <th class="px-3 py-2 border-r border-slate-200">PE</th>
-                            <th class="px-3 py-2 border-r border-slate-200">SC</th>
-                            <th class="px-3 py-2 border-r border-slate-200">CV</th>
-                            <th class="px-3 py-2 border-r border-slate-200">ICell</th>
-                            <th class="px-3 py-2 border-r border-slate-200">Closed</th>
-                            <th class="px-3 py-2">Sent to Govt</th>
+                            <th class="px-3 py-2 border-r border-slate-200 bg-slate-100/50" title="Total Final Decisions">
+                                Final<br>Decisions</th>
+                            <th class="px-2 py-2 border-r border-slate-200 w-20">VC</th>
+                            <th class="px-2 py-2 border-r border-slate-200 w-20">VE</th>
+                            <th class="px-2 py-2 border-r border-slate-200 w-20">PE</th>
+                            <th class="px-2 py-2 border-r border-slate-200 w-20">SC</th>
+                            <th class="px-2 py-2 border-r border-slate-200 w-20">CV</th>
+                            <th class="px-2 py-2 border-r border-slate-200 w-20">Internal<br>Vigilance</th>
+                            <th class="px-2 py-2 border-r border-slate-200 w-20">ICell</th>
+                            <th class="px-2 py-2 border-r border-slate-200 w-20">Closed</th>
+                            <th class="px-2 py-2 w-20">Sent to<br>Govt</th>
                         </tr>
                     </thead>
 
                     <tbody class="divide-y">
                         @forelse($seats as $seat)
                             <tr class="hover:bg-slate-50">
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-3">
                                     <div class="font-bold text-slate-900">{{ $seat->seat_name }}</div>
-                                    <div class="text-xs text-slate-500">
+                                    <div class="text-[11px] text-slate-500">
                                         {{ $seat->activeAssignment?->user?->name ?? 'Unassigned' }}
                                     </div>
                                 </td>
 
-                                <td class="px-6 py-4 text-center">{{ $seat->petitions_all_count }}</td>
-                                <td class="px-6 py-4 text-center">{{ $seat->petitions_received_count }}</td>
-                                <td class="px-6 py-4 text-center">{{ $seat->forwardings_out_count }}</td>
-                                <td class="px-6 py-4 text-center">{{ $seat->vr_received_count }}</td>
-                                <td class="px-6 py-4 text-center font-bold bg-slate-50">{{ $seat->decisions_made_count }}
+                                <td class="px-4 py-3 text-center">{{ $seat->petitions_all_count }}</td>
+                                <td class="px-4 py-3 text-center">{{ $seat->petitions_received_count }}</td>
+                                <td class="px-4 py-3 text-center">{{ $seat->forwardings_out_count }}</td>
+                                <td class="px-4 py-3 text-center">{{ $seat->vr_received_count }}</td>
+                                <td class="px-4 py-3 text-center font-bold bg-slate-50">{{ $seat->decisions_made_count }}
                                 </td>
-                                <td class="px-6 py-4 text-center">{{ $seat->decisions_vc_count }}</td>
-                                <td class="px-6 py-4 text-center">{{ $seat->decisions_ve_count }}</td>
-                                <td class="px-6 py-4 text-center">{{ $seat->decisions_pe_count }}</td>
-                                <td class="px-6 py-4 text-center">{{ $seat->decisions_sc_count }}</td>
-                                <td class="px-6 py-4 text-center">{{ $seat->decisions_cv_count }}</td>
-                                <td class="px-6 py-4 text-center">{{ $seat->decisions_icell_count }}</td>
-                                <td class="px-6 py-4 text-center">{{ $seat->decisions_closed_count }}</td>
-                                <td class="px-6 py-4 text-center">{{ $seat->decisions_sent_count }}</td>
+                                <td class="px-2 py-3 text-center">{{ $seat->decisions_vc_count }}</td>
+                                <td class="px-2 py-3 text-center">{{ $seat->decisions_ve_count }}</td>
+                                <td class="px-2 py-3 text-center">{{ $seat->decisions_pe_count }}</td>
+                                <td class="px-2 py-3 text-center">{{ $seat->decisions_sc_count }}</td>
+                                <td class="px-2 py-3 text-center">{{ $seat->decisions_cv_count }}</td>
+                                <td class="px-2 py-3 text-center">{{ $seat->decisions_internal_vigilance_count }}</td>
+                                <td class="px-2 py-3 text-center">{{ $seat->decisions_icell_count }}</td>
+                                <td class="px-2 py-3 text-center">{{ $seat->decisions_closed_count }}</td>
+                                <td class="px-2 py-3 text-center">{{ $seat->decisions_sent_count }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -180,7 +182,7 @@
                         <tfoot class="bg-indigo-50 font-bold text-indigo-900">
                             <tr>
                                 <!-- FIXED HERE -->
-                                <td class="px-6 py-4 text-right">TOTAL</td>
+                                <td class="px-4 py-3 text-right">TOTAL</td>
 
                                 <td class="text-center">{{ $seats->sum('petitions_all_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('petitions_received_count') }}</td>
@@ -193,6 +195,7 @@
                                 <td class="text-center">{{ $seats->sum('decisions_pe_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('decisions_sc_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('decisions_cv_count') }}</td>
+                                <td class="text-center">{{ $seats->sum('decisions_internal_vigilance_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('decisions_icell_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('decisions_closed_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('decisions_sent_count') }}</td>

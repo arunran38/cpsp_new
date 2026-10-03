@@ -16,7 +16,8 @@ class Decision extends Model
     protected $fillable = [
         'petition_id',
         'decided_by_seat_id',
-        'decision_remarks',
+        'final_decision',
+        'directorate_order_number',
         'final_remarks',
         'decision_date',
         'processed_by_user_id',
@@ -60,8 +61,10 @@ class Decision extends Model
             'CV' => 'Confidential Verification (CV)',
             'ICell' => 'Intelligence Cell (I Cell)',
             'Closed' => 'Closed',
+            'Internal Vigilance' => 'Internal Vigilance',
             'Sent to Govt' => 'Sent to Govt'
         ];
         return $labels[$code] ?? $code;
     }
 }
+
