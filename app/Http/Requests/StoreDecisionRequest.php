@@ -23,8 +23,7 @@ class StoreDecisionRequest extends FormRequest
     {
         return [
             'petition_id' => 'required|exists:petitions,petition_id',
-            'final_decision' => 'required|in:VC,VE,PE,SC,CV,Closed,Sent to Govt,ICell,Internal Vigilance',
-            'directorate_order_number' => 'nullable|string|max:255',
+            'final_decision' => 'required|in:VC,VE,PE,SC,CV,Closed,Sent to Govt,ICell',
             'final_remarks' => 'nullable|string',
             'final_order_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'decision_date' => 'required|date|before_or_equal:today',

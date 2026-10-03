@@ -48,5 +48,6 @@ class RolesAndPermissionsSeeder extends Seeder
         Role::firstOrCreate(['name' => 'super admin']);
         Role::firstOrCreate(['name' => 'admin']);
         Role::firstOrCreate(['name' => 'CPSP']);
+        Role::firstOrCreate(['name' => 'IOP HQ']);
     }
 }

@@ -45,20 +45,24 @@
                     $accused = $petition->addresses->where('person_type', 'Accused');
                     
                     // Helpers to extract specific fields
-                    $getNames = fn($list) => implode('<br><br>', $list->pluck('person_name')->toArray());
-                    $getPhones = fn($list) => implode('<br><br>', $list->pluck('phone')->filter()->toArray());
-                    $getEmails = fn($list) => implode('<br><br>', $list->pluck('email')->filter()->toArray());
+                    $getNames = fn($list) => implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $list->pluck('person_name')->toArray());
+                    $getPhones = fn($list) => implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $list->pluck('phone')->filter()->toArray());
+                    $getEmails = fn($list) => implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $list->pluck('email')->filter()->toArray());
                     
                     $getAddresses = function($list) {
                         $details = [];
                         foreach ($list as $addr) {
-                            $addrParts = [];
-                            if (!empty($addr->full_address)) $addrParts[] = e($addr->full_address);
-                            if ($addr->district && !empty($addr->district->district_name)) $addrParts[] = e($addr->district->district_name);
-                            if (!empty($addr->pincode)) $addrParts[] = e($addr->pincode);
-                            $details[] = implode(', ', $addrParts);
+                            $cleanPart = fn($val) => !empty(trim($val ?? '', ", \t\n\r")) ? e(trim($val, ", \t\n\r")) : null;
+                            $addrParts = array_filter([
+                                $cleanPart($addr->full_address),
+                                $cleanPart($addr->district?->district_name),
+                                $cleanPart($addr->pincode)
+                            ]);
+                            if (!empty($addrParts)) {
+                                $details[] = implode(', ', $addrParts);
+                            }
                         }
-                        return implode('<br><br>', $details);
+                        return implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $details);
                     };
 
                     $getNameAndAddress = function($list) {
@@ -69,17 +73,19 @@
                                 $detail .= " (Contact: " . e($addr->contact_person) . ")";
                             }
                             
-                            $addrParts = [];
-                            if (!empty($addr->full_address)) $addrParts[] = e($addr->full_address);
-                            if ($addr->district && !empty($addr->district->district_name)) $addrParts[] = e($addr->district->district_name);
-                            if (!empty($addr->pincode)) $addrParts[] = e($addr->pincode);
-                            if (!empty($addr->phone)) $addrParts[] = "Ph: " . e($addr->phone);
-                            if (!empty($addr->email)) $addrParts[] = "Email: " . e($addr->email);
+                            $cleanPart = fn($val) => !empty(trim($val ?? '', ", \t\n\r")) ? e(trim($val, ", \t\n\r")) : null;
+                            $addrParts = array_filter([
+                                $cleanPart($addr->full_address),
+                                $cleanPart($addr->district?->district_name),
+                                $cleanPart($addr->pincode),
+                                !empty($addr->phone) ? "Ph: " . $cleanPart($addr->phone) : null,
+                                !empty($addr->email) ? "Email: " . $cleanPart($addr->email) : null
+                            ]);
                             
-                            if (count($addrParts) > 0) $detail .= "<br>" . implode(', ', $addrParts);
+                            if (count($addrParts) > 0) $detail .= "<br style=\"mso-data-placement:same-cell;\">" . implode(', ', $addrParts);
                             $details[] = $detail;
                         }
-                        return implode('<br><br>', $details);
+                        return implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $details);
                     };
 
                     $rowData = [
@@ -113,6 +119,7 @@
                         'Decision' => '<td>' . ($petition->decision->final_decision ?? 'N/A') . '</td>',
                         'Final Decision Date' => '<td class="text-center">' . ($petition->decision?->decision_date ? date('d-m-Y', strtotime($petition->decision->decision_date)) : 'N/A') . '</td>',
                         'Final Recommendation' => '<td>' . ($petition->decision->final_decision ?? 'N/A') . '</td>',
+                        'Directorate Order No' => '<td>' . ($petition->decision->directorate_order_number ?? 'N/A') . '</td>',
                     ];
                 @endphp
                 <tr>

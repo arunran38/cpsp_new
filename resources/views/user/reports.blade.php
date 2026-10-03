@@ -114,7 +114,6 @@
                                     <option value="SC" {{ request('status') == 'SC' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Surprise Check (SC)</option>
                                     <option value="CV" {{ request('status') == 'CV' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Confidential Verification (CV)</option>
                                     <option value="ICell" {{ request('status') == 'ICell' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Intelligence Cell (I Cell)</option>
-                                    <option value="Internal Vigilance" {{ request('status') == 'Internal Vigilance' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Internal Vigilance</option>
                                     <option value="Closed" {{ request('status') == 'Closed' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Closed</option>
                                     <option value="Sent to Govt" {{ request('status') == 'Sent to Govt' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Sent to Govt</option>
                                 </optgroup>
@@ -344,7 +343,6 @@
                                 <option value="SC">Surprise Check (SC)</option>
                                 <option value="CV">Confidential Verification (CV)</option>
                                 <option value="ICell">Intelligence Cell (I Cell)</option>
-                                <option value="Internal Vigilance">Internal Vigilance</option>
                                 <option value="Closed">Closed</option>
                                 <option value="Sent to Govt">Sent to Govt</option>
                             </select>
@@ -407,16 +405,9 @@
                             <option value="SC">Surprise Check (SC)</option>
                             <option value="CV">Confidential Verification (CV)</option>
                             <option value="ICell">Intelligence Cell (I Cell)</option>
-                            <option value="Internal Vigilance">Internal Vigilance</option>
                             <option value="Closed">Closed</option>
                             <option value="Sent to Govt">Sent to Govt</option>
                         </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Directorate order number</label>
-                        <input type="text" name="directorate_order_number"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-slate-800"
-                            placeholder="Order Number">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Decision Date</label>
