@@ -124,7 +124,14 @@ class PetitionController extends Controller
     public function export(Request $request): HttpResponse
     {
         $tab = $request->get('tab', 'all');
-        $petitions = $this->getPetitionsQuery($request)->get();
+        $query = $this->getPetitionsQuery($request);
+
+        // Filter by user_id so users only export their own created petitions, unless they are admin viewing all
+        if (!Auth::user()->canAccess('access admin dashboard') || session('is_impersonating_seat')) {
+            $query->where('petitions.user_id', Auth::id());
+        }
+
+        $petitions = $query->get();
 
         $filename = "petitions_report_" . $tab . "_" . date('Y-m-d') . ".xls";
         
