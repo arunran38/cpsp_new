@@ -90,7 +90,7 @@
 
             <!-- Card Body -->
             <div class="p-6 sm:p-8 space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Receipt Number -->
                     <div class="space-y-1.5">
                         <label for="receipt_no" class="block text-sm font-semibold text-slate-700">
@@ -162,7 +162,7 @@
                          x-transition:enter-start="opacity-0 -translate-y-2"
                          x-transition:enter-end="opacity-100 translate-y-0"
                          style="display: none;"
-                         class="md:col-span-2 lg:col-span-3 bg-indigo-50/60 p-4 rounded-xl border border-indigo-100 space-y-1.5">
+                         class="bg-indigo-50/60 p-3.5 rounded-xl border border-indigo-100 space-y-1.5">
                         <label for="unit_id" class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
                             <i data-lucide="building-2" class="w-4 h-4 text-indigo-600"></i>
                             Select Concerned Unit (യൂണിറ്റ് സെലക്ട് ചെയ്യുക) <span class="text-rose-500">*</span>
@@ -187,7 +187,7 @@
                          x-transition:enter-start="opacity-0 -translate-y-2"
                          x-transition:enter-end="opacity-100 translate-y-0"
                          style="display: none;"
-                         class="md:col-span-2 lg:col-span-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                         class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                         <x-input label="Specify Mode of Receipt *" 
                                  name="mode_others" 
                                  placeholder="Enter custom mode of receipt..." 
@@ -205,7 +205,7 @@
                     </div>
 
                     <!-- Target Concerned Seat Dropdown -->
-                    <div class="space-y-1.5 md:col-span-2 lg:col-span-2">
+                    <div class="space-y-1.5" :class="(modeOfPetition && (modeOfPetition.toLowerCase() === 'unit' || modeOfPetition === 'others')) ? 'col-span-1' : 'md:col-span-1'">
                         <label for="seat_id" class="block text-sm font-semibold text-slate-700">
                             Target Concerned Seat (ബന്ധപ്പെട്ട സീറ്റ്) <span class="text-rose-500">*</span>
                         </label>

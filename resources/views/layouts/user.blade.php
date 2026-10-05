@@ -356,6 +356,58 @@
                 </div>
                 @endif
 
+                @if(Auth::check() && Auth::user()->currentSeatUser() && (Auth::user()->canAccess('inward_form') || Auth::user()->canAccess('inward form') || Auth::user()->canAccess('view_file_transfer') || Auth::user()->canAccess('view file transfer') || Auth::user()->hasRole('inward') || Auth::user()->hasRole('Inward')))
+                <!-- Inward Dropdown with Hover & Click -->
+                <div x-data="{ 
+                        hoverOpen: false,
+                        clickOpen: {{ request()->routeIs('inward.*') ? 'true' : 'false' }},
+                        hoverTimeout: null,
+                        toggle() { this.clickOpen = !this.clickOpen }
+                    }" 
+                    @mouseenter="hoverOpen = true; clearTimeout(hoverTimeout)"
+                    @mouseleave="hoverTimeout = setTimeout(() => { hoverOpen = false }, 200)"
+                    class="relative">
+                    
+                    <button @click="toggle()" 
+                            class="nav-item-transition flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-xl group"
+                            :class="(hoverOpen || clickOpen) ? 'bg-white/5 text-white' : 'inactive-nav'">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="file-input" class="w-5 h-5 icon-bounce" :class="(hoverOpen || clickOpen) ? 'text-indigo-400' : ''"></i>
+                            <span>Inward</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': hoverOpen || clickOpen }"></i>
+                    </button>
+                    
+                    <!-- Submenu with slide-down animation -->
+                    <div x-show="hoverOpen || clickOpen" 
+                         x-cloak
+                         x-transition:enter="slide-down-enter-active"
+                         x-transition:enter-start="slide-down-enter-from"
+                         x-transition:enter-end="slide-down-enter-to"
+                         x-transition:leave="slide-down-enter-active"
+                         x-transition:leave-start="slide-down-enter-to"
+                         x-transition:leave-end="slide-down-enter-from"
+                         class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
+                        
+                        @if(Auth::user()->canAccess('inward_form') || Auth::user()->canAccess('inward form') || Auth::user()->hasRole('inward') || Auth::user()->hasRole('Inward'))
+                        <a href="{{ route('inward.enter_petition') }}" 
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.enter_petition') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator"></span>
+                           Inward Petition Entry
+                        </a>
+                        @endif
+
+                        @if(Auth::user()->canAccess('view_file_transfer') || Auth::user()->canAccess('view file transfer') || Auth::user()->hasRole('inward') || Auth::user()->canAccess('access admin dashboard'))
+                        <a href="{{ route('inward.transfers') }}" 
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.transfers') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator"></span>
+                           Inward Transferred Petitions
+                        </a>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
                 @if(Auth::check() && Auth::user()->currentSeatUser() && (Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('create petitions')))
                 <!-- Petitions Dropdown with Hover & Click -->
                 <div x-data="{ 
@@ -390,11 +442,6 @@
                          class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
                         
                         @if(Auth::user()->canAccess('create petitions'))
-                        <a href="{{ route('inward.enter_petition') }}" 
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.*') ? 'active-submenu' : 'submenu-link' }}">
-                           <span class="submenu-indicator"></span>
-                           Inward Petition Entry
-                        </a>
                         <a href="{{ route('petitions.create') }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.create') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator"></span>

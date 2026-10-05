@@ -45,12 +45,76 @@ class PetitionController extends Controller
      */
     public function inwardCreate(): View
     {
+        $user = Auth::user();
+
+        // Permission Check: Must have 'inward_form' or 'inward form' or 'Inward'/'inward' role
+        if (!$user->canAccess('inward_form') && 
+            !$user->canAccess('inward form') && 
+            !$user->hasRole('inward') && 
+            !$user->hasRole('Inward') && 
+            !$user->canAccess('access admin dashboard')) {
+            abort(403, 'Unauthorized. Permission inward_form required to access Inward Petition Registration Form.');
+        }
+
         $seats = Seat::where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $units = \App\Models\Unit::orderBy('unit_name')->get();
         $districts = \App\Models\District::orderBy('district_id')->get();
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
         return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments'));
+    }
+
+    /**
+     * Display table of transferred inward petitions.
+     * Accessible only if user has 'view_file_transfer' permission or 'inward' role.
+     */
+    public function inwardTransfers(Request $request): View
+    {
+        $user = Auth::user();
+        
+        // Permission Check: Must have 'view_file_transfer' or 'view file transfer' or 'inward' role
+        if (!$user->canAccess('view_file_transfer') && 
+            !$user->canAccess('view file transfer') && 
+            !$user->hasRole('inward') && 
+            !$user->canAccess('access admin dashboard')) {
+            abort(403, 'Unauthorized. Permission view_file_transfer required.');
+        }
+
+        $query = Petition::with(['seat.activeAssignment.user', 'user', 'addresses'])
+            ->whereNull('linked_petition_id')
+            ->orderBy('created_at', 'desc');
+
+        // Apply search filter if present
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('receipt_no', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('seat', function ($sq) use ($search) {
+                      $sq->where('seat_name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('addresses', function ($aq) use ($search) {
+                      $aq->where('person_type', 'Complainant')
+                        ->where('person_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('date_of_petition_received', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('date_of_petition_received', '<=', $request->date_to);
+        }
+
+        $petitions = $query->paginate(15)->appends($request->query());
+
+        return view('inward.transfers', compact('petitions'));
     }
 
     /**
