@@ -16,7 +16,7 @@ class Decision extends Model
     protected $fillable = [
         'petition_id',
         'decided_by_seat_id',
-        'decision_remarks',
+        'final_decision',
         'final_remarks',
         'decision_date',
         'processed_by_user_id',
@@ -65,3 +65,4 @@ class Decision extends Model
         return $labels[$code] ?? $code;
     }
 }
+

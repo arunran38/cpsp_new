@@ -81,10 +81,10 @@
                         </span>
                     </td>
                     <td class="px-6 py-4 text-center">
-                        @if($targetPetition->status === 'Closed' || $targetPetition->status === 'Sent_to_Govt')
+                        @if($targetPetition->status === 'Closed' || $targetPetition->status === 'Sent_to_Govt' || $targetPetition->status === 'Internal_Vigilance')
                             <span
                                 class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-700">
-                                Final : {{ $targetPetition->decision->decision_remarks ?? $targetPetition->status }}
+                                Final : {{ $targetPetition->decision ? \App\Models\Decision::getDecisionLabel($targetPetition->decision->final_decision) : $targetPetition->status }}
                             </span>
                         @else
                             <span
@@ -121,7 +121,7 @@
                                         </button>
                                     @endif
                                     
-                                    @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt')
+                                    @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Internal_Vigilance')
                                         <a href="{{ route('petitions.show', $petition->petition_id) }}#decision"
                                             class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline flex items-center gap-1">
                                             <i class="fa-solid fa-circle-check"></i> Finalized
@@ -139,7 +139,7 @@
                                     $procBy = null;
                                     if($petition->status === 'Forwarded' || $petition->status === 'VR_Received') {
                                         $procBy = $petition->latestForwarding?->processedBy?->name;
-                                    } elseif($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt') {
+                                    } elseif($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Internal_Vigilance') {
                                         $procBy = $petition->decision?->processedBy?->name;
                                     }
                                 @endphp
@@ -165,7 +165,7 @@
                                 <i class="fa-solid fa-eye text-indigo-500"></i>
                             </a>
                             @if(Auth::user()->canAccess('update petitions'))
-                                @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt']))
+                                @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance']))
                                     <a href="{{ route('petitions.edit', $petition->petition_id) }}"
                                         class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                                         title="Edit Record">
@@ -174,7 +174,7 @@
                                 @endif
                             @endif
                             @if(Auth::user()->canAccess('delete petitions'))
-                                @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt']))
+                                @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance']))
                                     <form action="{{ route('petitions.destroy', $petition->petition_id) }}" method="POST"
                                         class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
                                         @csrf
@@ -203,3 +203,4 @@
 <div class="px-4 py-3 border-t border-slate-200">
     {{ $petitions->links() }}
 </div>
+

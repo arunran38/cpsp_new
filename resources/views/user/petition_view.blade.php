@@ -162,41 +162,41 @@
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 
                     <div x-data="{ 
-                                action: '', 
-                                fileNo: '', 
-                                fileNoError: '',
-                                checkEmpty() {
-                                    if (!this.fileNo.trim()) {
-                                        this.fileNoError = 'this field is required';
-                                    } else {
-                                        this.fileNoError = '';
-                                    }
-                                },
-                                async checkFileNoUniqueness() {
-                                    if (!this.fileNo.trim()) {
-                                        this.fileNoError = 'this field is required';
-                                        return;
-                                    }
-                                    try {
-                                        const response = await fetch('/petitions/check-file-no', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
-                                            },
-                                            body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
-                                        });
-                                        const data = await response.json();
-                                        if (data.exists) {
-                                            this.fileNoError = 'File number already exists';
+                                    action: '', 
+                                    fileNo: '', 
+                                    fileNoError: '',
+                                    checkEmpty() {
+                                        if (!this.fileNo.trim()) {
+                                            this.fileNoError = 'this field is required';
                                         } else {
                                             this.fileNoError = '';
                                         }
-                                    } catch (error) {
-                                        console.error(error);
+                                    },
+                                    async checkFileNoUniqueness() {
+                                        if (!this.fileNo.trim()) {
+                                            this.fileNoError = 'this field is required';
+                                            return;
+                                        }
+                                        try {
+                                            const response = await fetch('/petitions/check-file-no', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
+                                                },
+                                                body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
+                                            });
+                                            const data = await response.json();
+                                            if (data.exists) {
+                                                this.fileNoError = 'File number already exists';
+                                            } else {
+                                                this.fileNoError = '';
+                                            }
+                                        } catch (error) {
+                                            console.error(error);
+                                        }
                                     }
-                                }
-                            }" class="space-y-4">
+                                }" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1">File Number <span
@@ -243,6 +243,11 @@
                         </div>
 
                         <div x-show="action === 'Close' || action === 'Sent_to_Govt'" x-cloak class="pt-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Directorate Order Number</label>
+                            <input type="text" name="directorate_order_number" 
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 mb-3"
+                                placeholder="Order Number" x-bind:required="action === 'Close' || action === 'Sent_to_Govt'">
+                                
                             <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order</label>
                             <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
                                 class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
@@ -378,7 +383,7 @@
                                 'Sent to Govt' => 'Sent to Govt'
                             ];
                         @endphp
-                        <x-select label="Final Decision" name="decision_remarks" :options="$decisionOptions"
+                        <x-select label="Final Decision" name="final_decision" :options="$decisionOptions"
                             placeholder="Select..." required />
 
                         <div>
@@ -386,6 +391,14 @@
                             <input type="date" name="decision_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-slate-800 font-semibold"
                                 style="color: #1e40af !important;" required>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Directorate Order Number</label>
+                            <input type="text" name="directorate_order_number" 
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-slate-800"
+                                placeholder="Order Number" required>
                         </div>
                     </div>
                     <div>

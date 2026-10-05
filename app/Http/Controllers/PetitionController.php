@@ -180,7 +180,10 @@ class PetitionController extends Controller
 
         $seats = [];
         if (Auth::user()->canAccess('access admin dashboard')) {
-            $seats = Seat::where('is_active', true)->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+            $seats = Seat::where('is_active', true)
+                         ->where('seat_name', 'like', 'CPSP%')
+                         ->get()
+                         ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         }
 
         $departments = \App\Models\DepartmentList::orderBy('department_name')->pluck('department_name', 'id')->toArray();
@@ -555,7 +558,7 @@ class PetitionController extends Controller
                 'accused' => $accusedText,
                 'description' => \Illuminate\Support\Str::limit(strip_tags($p->description), 100),
                 'status' => $p->status,
-                'decision' => $p->decision ? $p->decision->decision_remarks : null,
+                'decision' => $p->decision ? $p->decision->final_decision : null,
             ];
         });
 
@@ -645,3 +648,4 @@ class PetitionController extends Controller
             })->values()->all();
     }
 }
+

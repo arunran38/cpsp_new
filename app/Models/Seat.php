@@ -130,6 +130,7 @@ class Seat extends Model
             'petitionsReceived as decisions_pe_count' => fn($q) => $this->filterDecisionType($q, 'PE', $from, $to),
             'petitionsReceived as decisions_sc_count' => fn($q) => $this->filterDecisionType($q, 'SC', $from, $to),
             'petitionsReceived as decisions_cv_count' => fn($q) => $this->filterDecisionType($q, 'CV', $from, $to),
+            'petitionsReceived as decisions_internal_vigilance_count' => fn($q) => $this->filterDecisionType($q, 'Internal Vigilance', $from, $to),
             'petitionsReceived as decisions_icell_count' => fn($q) => $this->filterDecisionType($q, 'ICell', $from, $to),
             'petitionsReceived as decisions_closed_count' => fn($q) => $this->filterDecisionType($q, 'Closed', $from, $to),
             'petitionsReceived as decisions_sent_count' => fn($q) => $this->filterDecisionType($q, 'Sent to Govt', $from, $to),
@@ -147,7 +148,7 @@ class Seat extends Model
     {
         $query->whereIn('status', [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]);
         return $query->whereHas('decision', function($q) use ($type, $from, $to) {
-            $q->where('decision_remarks', $type);
+            $q->where('final_decision', $type);
             $this->filterDates($q, $from, $to, 'decision_date');
         });
     }
@@ -168,3 +169,4 @@ class Seat extends Model
             ->get();
     }
 }
+

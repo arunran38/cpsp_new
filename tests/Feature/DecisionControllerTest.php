@@ -40,7 +40,7 @@ class DecisionControllerTest extends TestCase
 
         $decisionData = [
             'petition_id' => $petition->petition_id,
-            'decision_remarks' => 'SC',
+            'final_decision' => 'SC',
             'final_remarks' => 'Suggesting SC action.',
             'final_order_file' => UploadedFile::fake()->create('final_order.pdf', 1000),
             'decision_date' => '2024-03-01',
@@ -51,7 +51,7 @@ class DecisionControllerTest extends TestCase
         $response->assertStatus(302);
         $this->assertDatabaseHas('decisions', [
             'petition_id' => $petition->petition_id,
-            'decision_remarks' => 'SC',
+            'final_decision' => 'SC',
             'final_remarks' => 'Suggesting SC action.'
         ]);
         $this->assertDatabaseHas('petitions', ['petition_id' => $petition->petition_id, 'status' => 'Closed']);
@@ -67,7 +67,7 @@ class DecisionControllerTest extends TestCase
 
         $response = $this->actingAs($this->admin)->post(route('decisions.store'), [
             'petition_id' => $petition->petition_id,
-            'decision_remarks' => 'Sent to Govt',
+            'final_decision' => 'Sent to Govt',
             'final_remarks' => 'Sent to higher authorities.',
             'decision_date' => '2024-03-01',
         ]);
@@ -80,10 +80,10 @@ class DecisionControllerTest extends TestCase
     {
         $response = $this->actingAs($this->admin)->post(route('decisions.store'), [
             'petition_id' => 99999, // Invalid ID
-            'decision_remarks' => 'INVALID_REMARK',
+            'final_decision' => 'INVALID_REMARK',
         ]);
 
-        $response->assertSessionHasErrors(['petition_id', 'decision_remarks']);
+        $response->assertSessionHasErrors(['petition_id', 'final_decision']);
     }
 
     public function test_admin_can_pullback_decision(): void
@@ -104,3 +104,4 @@ class DecisionControllerTest extends TestCase
         $this->assertDatabaseHas('petitions', ['petition_id' => $petition->petition_id, 'status' => 'VR_Received']);
     }
 }
+

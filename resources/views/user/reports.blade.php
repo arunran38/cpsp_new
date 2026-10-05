@@ -395,7 +395,7 @@
                     <input type="hidden" name="petition_id" :value="activePetitionId">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Final Decision</label>
-                        <select name="decision_remarks"
+                        <select name="final_decision"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-black"
                             required>
                             <option value="">Select...</option>
@@ -601,3 +601,4 @@
         });
     </script>
 @endsection
+

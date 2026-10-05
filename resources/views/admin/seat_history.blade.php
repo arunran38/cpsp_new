@@ -2,15 +2,31 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto space-y-6">
-    <!-- Page Header -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-2xl font-bold tracking-tight text-white">Seat History: {{ $seat->seat_name }}</h1>
-            <p class="text-sm text-slate-500">List of all officers assigned to this seat over time.</p>
+    <!-- Premium Header Section -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
+        <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+            <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
         </div>
-        <a href="{{ route('admin.seats.index') }}" class="px-4 py-2 text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">
-            Back to List
-        </a>
+        <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+            <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
+        </div>
+        
+        <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="text-center sm:text-left z-10">
+                <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                    Seat History: {{ $seat->seat_name }}
+                </h1>
+                <p class="text-slate-300 font-medium max-w-2xl text-sm">
+                    List of all officers assigned to this seat over time.
+                </p>
+            </div>
+            
+            <div class="shrink-0 z-10">
+                <a href="{{ route('admin.seats.index') }}" class="px-4 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm">
+                    Back to List
+                </a>
+            </div>
+        </div>
     </div>
 
     <!-- History List -->

@@ -44,7 +44,8 @@ class PetitionForwardingController extends Controller
                     Decision::create([
                         'petition_id' => $petition->petition_id,
                         'decided_by_seat_id' => $currentSeatId,
-                        'decision_remarks' => $decisionRemarks,
+                        'final_decision' => $decisionRemarks,
+                        'directorate_order_number' => $request->directorate_order_number,
                         'final_remarks' => $request->director_remarks,
                         'decision_date' => $request->forwarded_date,
                         'processed_by_user_id' => Auth::id(),
@@ -202,3 +203,4 @@ class PetitionForwardingController extends Controller
         ]);
     }
 }
+
