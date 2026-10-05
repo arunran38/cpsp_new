@@ -320,6 +320,24 @@
                 </a>
                 @endif
 
+                @if(Auth::user()->canAccess('view departments'))
+                <!-- Departments Link -->
+                <a href="{{ route('admin.departments.index') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('admin.departments.*') ? 'active-nav' : 'inactive-nav' }}">
+                    <i data-lucide="building" class="w-5 h-5 icon-bounce {{ request()->routeIs('admin.departments.*') ? 'text-indigo-400' : '' }}"></i>
+                    <span>Departments</span>
+                </a>
+                @endif
+
+                @if(Auth::user()->canAccess('view designations'))
+                <!-- Designations Link -->
+                <a href="{{ route('admin.designations.index') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('admin.designations.*') ? 'active-nav' : 'inactive-nav' }}">
+                    <i data-lucide="briefcase" class="w-5 h-5 icon-bounce {{ request()->routeIs('admin.designations.*') ? 'text-indigo-400' : '' }}"></i>
+                    <span>Designations</span>
+                </a>
+                @endif
+
                 @if(Auth::user()->canAccess('view users'))
                 <!-- Users Dropdown -->
                 <div x-data="{ 

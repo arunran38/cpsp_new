@@ -16,6 +16,8 @@ class RolesAndPermissionsSeeder extends Seeder
         $categories = [
             'users',
             'units',
+            'departments',
+            'designations',
             'seats',
             'master reports',
             'petitions',
@@ -46,7 +48,9 @@ class RolesAndPermissionsSeeder extends Seeder
         \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view all petitions']);
 
         // റോളുകൾ ഉണ്ടാക്കുന്നു (Create Roles)
-        Role::firstOrCreate(['name' => 'super admin']);
+        $superAdmin = Role::firstOrCreate(['name' => 'super admin']);
+        $superAdmin->syncPermissions(\Spatie\Permission\Models\Permission::all());
+
         Role::firstOrCreate(['name' => 'admin']);
         Role::firstOrCreate(['name' => 'CPSP']);
         $iopHq = Role::firstOrCreate(['name' => 'IOP HQ']);

@@ -15,6 +15,8 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\ComplianceController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DesignationController;
 
 Route::get('/dashboard', function () {
     $user = Auth::user();
@@ -78,6 +80,22 @@ Route::middleware(['auth'])->group(function () {
         'edit' => 'admin.units.edit',
         'update' => 'admin.units.update',
         'destroy' => 'admin.units.destroy',
+    ]);
+    Route::resource("departments", DepartmentController::class)->names([
+        'index' => 'admin.departments.index',
+        'create' => 'admin.departments.create',
+        'store' => 'admin.departments.store',
+        'edit' => 'admin.departments.edit',
+        'update' => 'admin.departments.update',
+        'destroy' => 'admin.departments.destroy',
+    ]);
+    Route::resource("designations", DesignationController::class)->names([
+        'index' => 'admin.designations.index',
+        'create' => 'admin.designations.create',
+        'store' => 'admin.designations.store',
+        'edit' => 'admin.designations.edit',
+        'update' => 'admin.designations.update',
+        'destroy' => 'admin.designations.destroy',
     ]);
     Route::post('/admin/units/check-code', [UnitController::class, 'checkUnitCode'])->name('admin.units.checkCode');
     Route::post('/users/check-unique', [UserController::class, 'checkUnique'])->name('users.checkUnique');

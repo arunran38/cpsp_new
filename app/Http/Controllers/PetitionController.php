@@ -102,11 +102,18 @@ class PetitionController extends Controller
         $tab = $request->get('tab', 'all');
 
         $seats = [];
+        $users = [];
         if (Auth::user()->canAccess('access admin dashboard')) {
             $seats = Seat::where('is_active', true)
                          ->where('seat_name', 'like', 'CPSP%')
                          ->get()
                          ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+            $users = \App\Models\User::whereHas('seatUsers', function ($query) {
+                $query->where('is_active', true)
+                    ->whereHas('seat', fn($seatQuery) => $seatQuery
+                        ->where('is_active', true)
+                        ->role('CPSP'));
+            })->orderBy('name')->get();
         }
 
         $departments = \App\Models\DepartmentList::orderBy('department_name')->pluck('department_name', 'id')->toArray();
@@ -115,7 +122,7 @@ class PetitionController extends Controller
             return view('user.partials.reports_table', compact('petitions', 'tab'))->render();
         }
 
-        return view('user.reports', compact('petitions', 'tab', 'seats', 'departments'));
+        return view('user.reports', compact('petitions', 'tab', 'seats', 'users', 'departments'));
     }
 
     /**
@@ -500,6 +507,11 @@ class PetitionController extends Controller
      */
     private function getPetitionsQuery(Request $request)
     {
+        $request->validate([
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+        ]);
+
         $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user', 'seat', 'originalPetition.addresses']);
         $user = Auth::user();
 
@@ -509,7 +521,7 @@ class PetitionController extends Controller
             if ($currentSeat) {
                 $query->where('seat_id', $currentSeat->seat_id);
             } else {
-                $query->where('user_id', $user->id);
+                $query->where('petitions.user_id', $user->id);
             }
         }
 
@@ -536,6 +548,11 @@ class PetitionController extends Controller
         }
         if ($request->filled('seat_id')) {
             $query->where('seat_id', $request->seat_id);
+        }
+        if ($request->filled('user_id')) {
+            $query->whereHas('user', function($q) use ($request) {
+                $q->where('user_id', $request->user_id);
+            });
         }
         if ($request->filled('department_id')) {
             $query->whereHas('addresses', fn($q) => $q->where('department_id', $request->department_id));

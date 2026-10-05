@@ -21,6 +21,8 @@ class ComplianceController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
+        $this->validateDateRange($request);
+
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
         $search = $request->get('search');
@@ -120,6 +122,8 @@ class ComplianceController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
+        $this->validateDateRange($request);
+
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
 
@@ -166,6 +170,8 @@ class ComplianceController extends Controller
         if (!Auth::user()->canAccess('view compliances')) {
             abort(403, 'Unauthorized access.');
         }
+
+        $this->validateDateRange($request);
 
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
@@ -218,6 +224,8 @@ class ComplianceController extends Controller
         if (!Auth::user()->canAccess('view compliances')) {
             abort(403, 'Unauthorized access.');
         }
+
+        $this->validateDateRange($request);
 
         $tab = $request->get('tab', 'pending');
         $filterDecision = $request->get('filter_decision', '');
@@ -298,5 +306,13 @@ class ComplianceController extends Controller
             DB::rollBack();
             return back()->with('error', 'Error updating compliance: ' . $e->getMessage());
         }
+    }
+
+    private function validateDateRange(Request $request): void
+    {
+        $request->validate([
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+        ]);
     }
 }

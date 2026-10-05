@@ -111,6 +111,30 @@ class PetitionControllerTest extends TestCase
         $response->assertViewHas('petitions');
     }
 
+    public function test_admin_can_filter_reports_by_petition_creator(): void
+    {
+        $permission = \Spatie\Permission\Models\Permission::firstOrCreate([
+            'name' => 'access admin dashboard',
+            'guard_name' => 'web',
+        ]);
+        $this->admin->givePermissionTo($permission);
+
+        $selectedUser = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $selectedPetition = Petition::factory()->create(['user_id' => $selectedUser->user_id]);
+        Petition::factory()->create(['user_id' => $otherUser->user_id]);
+
+        $response = $this->actingAs($this->admin)->get(route('petitions.reports', [
+            'user_id' => $selectedUser->user_id,
+        ]));
+
+        $response->assertOk();
+        $response->assertViewHas('petitions', function ($petitions) use ($selectedPetition) {
+            return $petitions->total() === 1
+                && $petitions->first()->petition_id === $selectedPetition->petition_id;
+        });
+    }
+
     public function test_user_cannot_view_others_petition(): void
     {
         $otherUser = User::factory()->create();
