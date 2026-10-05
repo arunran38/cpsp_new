@@ -15,43 +15,100 @@ class ComplianceController extends Controller
     /**
      * Display a listing of pending compliances.
      */
-    public function index()
+    public function index(Request $request)
     {
         if (!Auth::user()->canAccess('view compliances')) {
             abort(403, 'Unauthorized access.');
         }
 
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $search = $request->get('search');
+        $unitId = $request->get('unit_id');
+        $filterDecision = $request->get('filter_decision');
+
         // Get final decisions that are PE, VC, VE, CV, SC but have no compliance record yet
-        $pendingDecisions = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
+        $pendingQuery = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
             ->has('petition')
             ->whereDoesntHave('petition.compliance')
-            ->with(['petition', 'decidedBySeat'])
-            ->orderBy('decision_date', 'asc')
-            ->get();
+            ->with(['petition', 'decidedBySeat']);
+
+        if ($dateFrom) {
+            $pendingQuery->whereDate('decision_date', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $pendingQuery->whereDate('decision_date', '<=', $dateTo);
+        }
+        if ($search) {
+            $pendingQuery->where(function($q) use ($search) {
+                $q->where('directorate_order_number', 'like', "%{$search}%")
+                  ->orWhereHas('petition', function($pq) use ($search) {
+                      $pq->where('file_no', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Clone for counts before pagination and filter_decision
+        $basePendingQuery = clone $pendingQuery;
             
         // Get final decisions that are PE, VC, VE, CV, SC AND have a compliance record
-        $compliedDecisions = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
+        $compliedQuery = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
             ->has('petition')
             ->whereHas('petition.compliance')
-            ->with(['petition.compliance', 'decidedBySeat'])
-            ->orderBy('decision_date', 'desc')
-            ->get();
-            
-        // For the modal dropdown
-        $units = Unit::orderBy('unit_name')->get();
+            ->with(['petition.compliance.createdBy.seatUsers.seat', 'decidedBySeat']);
 
-        // Calculate individual counts
+        if ($dateFrom) {
+            $compliedQuery->whereDate('decision_date', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $compliedQuery->whereDate('decision_date', '<=', $dateTo);
+        }
+        if ($search) {
+            $compliedQuery->where(function($q) use ($search) {
+                $q->where('directorate_order_number', 'like', "%{$search}%")
+                  ->orWhereHas('petition', function($pq) use ($search) {
+                      $pq->where('file_no', 'like', "%{$search}%");
+                  });
+            });
+        }
+        if ($unitId) {
+            $compliedQuery->whereHas('petition.compliance', function($cq) use ($unitId) {
+                $cq->where('unit_id', $unitId);
+            });
+        }
+
+        $baseCompliedQuery = clone $compliedQuery;
+        $totalCompliedCount = $baseCompliedQuery->count();
+            
+        // Keep all units available in the action modal, ordered by unit ID.
+        $units = Unit::orderBy('unit_id')->get();
+        $filterUnits = Unit::query()
+            ->whereRaw('LOWER(unit_name) NOT LIKE ?', ['%vigilance directorate%'])
+            ->whereRaw('LOWER(unit_name) NOT LIKE ?', ['%tollfree%'])
+            ->orderBy('unit_id')
+            ->get();
+
+        $pendingDecisionsAll = $basePendingQuery->get();
         $pendingCounts = [
-            'VC' => $pendingDecisions->where('final_decision', 'VC')->count(),
-            'VE' => $pendingDecisions->where('final_decision', 'VE')->count(),
-            'PE' => $pendingDecisions->where('final_decision', 'PE')->count(),
-            'CV' => $pendingDecisions->where('final_decision', 'CV')->count(),
-            'SC' => $pendingDecisions->where('final_decision', 'SC')->count(),
-            'Total' => $pendingDecisions->count(),
-            'Overdue' => $pendingDecisions->filter(fn($d) => \Carbon\Carbon::parse($d->decision_date)->diffInDays(now()) > 30)->count(),
+            'VC' => $pendingDecisionsAll->where('final_decision', 'VC')->count(),
+            'VE' => $pendingDecisionsAll->where('final_decision', 'VE')->count(),
+            'PE' => $pendingDecisionsAll->where('final_decision', 'PE')->count(),
+            'CV' => $pendingDecisionsAll->where('final_decision', 'CV')->count(),
+            'SC' => $pendingDecisionsAll->where('final_decision', 'SC')->count(),
+            'Total' => $pendingDecisionsAll->count(),
+            'Overdue' => $pendingDecisionsAll->filter(fn($d) => \Carbon\Carbon::parse($d->decision_date)->diffInDays(now()) > 10)->count(),
         ];
 
-        return view('user.compliances_index', compact('pendingDecisions', 'compliedDecisions', 'units', 'pendingCounts'));
+        // Apply filterDecision
+        if ($filterDecision) {
+            $pendingQuery->where('final_decision', $filterDecision);
+            $compliedQuery->where('final_decision', $filterDecision);
+        }
+
+        $pendingDecisions = $pendingQuery->orderBy('decision_date', 'asc')->paginate(25, ['*'], 'pending_page')->withQueryString();
+        $compliedDecisions = $compliedQuery->orderBy('decision_date', 'desc')->paginate(25, ['*'], 'complied_page')->withQueryString();
+
+        return view('user.compliances_index', compact('pendingDecisions', 'compliedDecisions', 'totalCompliedCount', 'units', 'filterUnits', 'pendingCounts', 'dateFrom', 'dateTo', 'search', 'unitId'));
     }
 
     /**
@@ -164,10 +221,19 @@ class ComplianceController extends Controller
 
         $tab = $request->get('tab', 'pending');
         $filterDecision = $request->get('filter_decision', '');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
 
         $query = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
             ->has('petition')
             ->with(['petition.compliance.unit', 'decidedBySeat']);
+
+        if ($dateFrom) {
+            $query->whereDate('decision_date', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->whereDate('decision_date', '<=', $dateTo);
+        }
 
         if ($tab === 'pending') {
             $query->whereDoesntHave('petition.compliance');

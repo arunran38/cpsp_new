@@ -57,7 +57,7 @@
                         </form>
                     @endif
                 @endif
-                <a href="{{ route('petitions.index') }}"
+                <a href="{{ url()->previous() }}"
                     class="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to List
                 </a>

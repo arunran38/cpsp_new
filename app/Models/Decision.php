@@ -17,6 +17,7 @@ class Decision extends Model
         'petition_id',
         'decided_by_seat_id',
         'final_decision',
+        'directorate_order_number',
         'final_remarks',
         'decision_date',
         'processed_by_user_id',
