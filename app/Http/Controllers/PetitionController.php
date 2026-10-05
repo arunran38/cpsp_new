@@ -43,7 +43,7 @@ class PetitionController extends Controller
     /**
      * Show the inward petition registration form with seat transfer.
      */
-    public function inwardCreate(): View
+    public function inwardCreate(Request $request): View
     {
         $user = Auth::user();
 
@@ -61,7 +61,39 @@ class PetitionController extends Controller
         $districts = \App\Models\District::orderBy('district_id')->get();
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
-        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments'));
+
+        // Inward transactions list on the same page
+        $transfersQuery = Petition::with(['seat.activeAssignment.user', 'user', 'addresses', 'cpspOpenedByUser', 'cpspOpenedBySeat', 'returnedByUser'])
+            ->whereNull('linked_petition_id');
+
+        if (!$user->canAccess('access admin dashboard') || session('is_impersonating_seat')) {
+            $currentSeat = $user->currentSeatUser();
+            $transfersQuery->where(function($q) use ($user, $currentSeat) {
+                $q->where('user_id', $user->user_id);
+                if ($currentSeat) {
+                    $q->orWhere('seat_id', $currentSeat->seat_id);
+                }
+            });
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $transfersQuery->where(function ($q) use ($search) {
+                $q->where('receipt_no', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('seat', function ($sq) use ($search) {
+                      $sq->where('seat_name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('addresses', function ($aq) use ($search) {
+                      $aq->where('person_type', 'Complainant')
+                        ->where('person_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $transfers = $transfersQuery->latest('created_at')->paginate(10)->appends($request->query());
+
+        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments', 'transfers'));
     }
 
     /**
@@ -80,9 +112,27 @@ class PetitionController extends Controller
             abort(403, 'Unauthorized. Permission view_file_transfer required.');
         }
 
-        $query = Petition::with(['seat.activeAssignment.user', 'user', 'addresses'])
-            ->whereNull('linked_petition_id')
-            ->orderBy('created_at', 'desc');
+        $query = Petition::with(['seat.activeAssignment.user', 'user', 'addresses', 'cpspOpenedByUser', 'cpspOpenedBySeat', 'returnedByUser'])
+            ->whereNull('linked_petition_id');
+
+        // Security: Filter by user's corresponding Concerned Seat
+        if (!$user->canAccess('access admin dashboard') || session('is_impersonating_seat')) {
+            $currentSeat = $user->currentSeatUser();
+            if ($currentSeat) {
+                $query->where('seat_id', $currentSeat->seat_id);
+            } else {
+                $query->where('user_id', $user->user_id);
+            }
+        }
+
+        $query->orderBy('created_at', 'desc');
+
+        // Filter by returned status if selected
+        if ($request->get('filter') === 'returned') {
+            $query->where('is_returned_to_inward', true);
+        } elseif ($request->get('filter') === 'active') {
+            $query->where('is_returned_to_inward', false);
+        }
 
         // Apply search filter if present
         if ($request->filled('search')) {
@@ -90,6 +140,7 @@ class PetitionController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('receipt_no', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('return_reason', 'like', "%{$search}%")
                   ->orWhereHas('seat', function ($sq) use ($search) {
                       $sq->where('seat_name', 'like', "%{$search}%");
                   })
@@ -113,8 +164,175 @@ class PetitionController extends Controller
         }
 
         $petitions = $query->paginate(15)->appends($request->query());
+        $seatsList = Seat::where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
 
-        return view('inward.transfers', compact('petitions'));
+        return view('inward.transfers', compact('petitions', 'seatsList'));
+    }
+
+    /**
+     * Pull back / return an Inward petition to Inward.
+     */
+    public function returnToInward(Request $request, $id): RedirectResponse
+    {
+        $petition = Petition::findOrFail($id);
+        $user = Auth::user();
+        $currentSeat = $user->currentSeatUser();
+
+        // Security check: Must belong to current seat or user is admin
+        if (!$user->canAccess('access admin dashboard') && !session('is_impersonating_seat')) {
+            if ($currentSeat && $petition->seat_id !== $currentSeat->seat_id) {
+                abort(403, 'Unauthorized. This petition is not assigned to your seat.');
+            }
+        }
+
+        // Cannot return if already finalized
+        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_INTERNAL_VIGILANCE])) {
+            return back()->with('error', 'Cannot return a petition that has been finalized.');
+        }
+
+        $request->validate([
+            'return_reason' => 'required|string|min:3|max:1000',
+        ]);
+
+        $petition->update([
+            'is_returned_to_inward' => true,
+            'return_reason' => $request->return_reason,
+            'returned_by' => $user->user_id,
+            'returned_at' => now(),
+            'is_cpsp_processed' => false,
+        ]);
+
+        return redirect()->route('petitions.index', ['tab' => 'inward'])->with('success', 'ഹർജി വിജയകരമായി Inward-ലേക്ക് തിരിച്ചയച്ചു (Petition returned to Inward successfully).');
+    }
+
+    /**
+     * Reassign a returned inward petition to another seat.
+     */
+    public function reassignInward(Request $request, $id): RedirectResponse
+    {
+        $user = Auth::user();
+        $hasInwardAccess = $user->canAccess('view_file_transfer') || 
+            $user->canAccess('view file transfer') || 
+            $user->hasRole('inward') || 
+            $user->hasRole('Inward') || 
+            $user->canAccess('access admin dashboard');
+
+        if (!$hasInwardAccess) {
+            abort(403, 'Unauthorized to reassign inward petitions.');
+        }
+
+        $petition = Petition::findOrFail($id);
+
+        $request->validate([
+            'seat_id' => 'required|exists:seats,seat_id',
+        ]);
+
+        $newSeat = Seat::findOrFail($request->seat_id);
+
+        $petition->update([
+            'seat_id' => $newSeat->seat_id,
+            'is_returned_to_inward' => false,
+            // Reset opened tracking so new seat user's open time is recorded
+            'cpsp_opened_at' => null,
+            'cpsp_opened_by_user_id' => null,
+            'cpsp_opened_by_seat_id' => null,
+            'is_cpsp_processed' => false,
+        ]);
+
+        return back()->with('success', "ഹർജി {$newSeat->seat_name} എന്ന സീറ്റിലേക്ക് മാറ്റി നൽകി (Reassigned successfully).");
+    }
+
+    /**
+     * Display Inward Statistics / Seat-wise Data Sheet page.
+     */
+    public function inwardStatistics(Request $request): View
+    {
+        $user = Auth::user();
+        
+        $hasInwardRole = $user->hasRole('inward') || 
+            $user->hasRole('Inward') || 
+            ($user->currentSeatUser()?->seat && (
+                $user->currentSeatUser()->seat->hasRole('inward') || 
+                $user->currentSeatUser()->seat->hasRole('Inward') || 
+                str_contains(strtolower($user->currentSeatUser()->seat->seat_name), 'inward')
+            )) ||
+            $user->canAccess('access admin dashboard');
+
+        if (!$hasInwardRole) {
+            abort(403, 'Unauthorized access to Inward Statistics.');
+        }
+
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+
+        // Fetch all active seats (prioritizing CPSP seats)
+        $seats = Seat::with(['activeAssignment.user'])
+            ->where('is_active', true)
+            ->get()
+            ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+
+        // Fetch petition data
+        $petitionsQuery = Petition::whereNull('linked_petition_id');
+
+        if ($dateFrom) {
+            $petitionsQuery->whereDate('date_of_petition_received', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $petitionsQuery->whereDate('date_of_petition_received', '<=', $dateTo);
+        }
+
+        $petitions = $petitionsQuery->get();
+
+        // Calculate statistics per seat
+        $seatStats = [];
+        $totalReceived = 0;
+        $totalForwarded = 0;
+        $totalVrs = 0;
+        $totalDecisions = 0;
+        $totalAllPetitions = $petitions->count();
+
+        foreach ($seats as $seat) {
+            $seatPetitions = $petitions->where('seat_id', $seat->seat_id);
+            $totalCount = $seatPetitions->count();
+
+            if ($totalCount > 0 || $request->filled('show_all') || str_contains(strtolower($seat->seat_name), 'cpsp')) {
+                $received = $seatPetitions->where('status', Petition::STATUS_RECEIVED)->count();
+                $forwarded = $seatPetitions->where('status', Petition::STATUS_FORWARDED)->count();
+                $vrs = $seatPetitions->where('status', Petition::STATUS_VR_RECEIVED)->count();
+                $decisions = $seatPetitions->whereIn('status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_CLOSED])->count();
+
+                $totalReceived += $received;
+                $totalForwarded += $forwarded;
+                $totalVrs += $vrs;
+                $totalDecisions += $decisions;
+
+                $seatStats[] = [
+                    'seat_id' => $seat->seat_id,
+                    'seat_name' => $seat->seat_name,
+                    'occupant' => $seat->activeAssignment?->user?->name ?? 'Vacant',
+                    'total' => $totalCount,
+                    'received' => $received,
+                    'forwarded' => $forwarded,
+                    'vrs' => $vrs,
+                    'decisions' => $decisions,
+                ];
+            }
+        }
+
+        $summaryTotals = [
+            'total' => $totalAllPetitions,
+            'received' => $totalReceived,
+            'forwarded' => $totalForwarded,
+            'vrs' => $totalVrs,
+            'decisions' => $totalDecisions,
+        ];
+
+        return view('inward.statistics', compact(
+            'seatStats', 
+            'dateFrom', 
+            'dateTo', 
+            'summaryTotals'
+        ));
     }
 
     /**
@@ -146,8 +364,12 @@ class PetitionController extends Controller
                 return redirect()->route('petitions.create');
             }
 
-            $this->petitionService->store($request->validated(), $request->file('evidence_files') ?? []);
+            $petition = $this->petitionService->store($request->validated(), $request->file('evidence_files') ?? []);
             
+            if ($request->boolean('is_inward_entry') || $request->filled('seat_id')) {
+                return redirect()->route('inward.enter_petition')->with('success', "Inward Petition (Receipt No: {$petition->receipt_no}) registered and transferred successfully.");
+            }
+
             return redirect()->route('petitions.index')->with('success', 'Petition submitted successfully.');
         } catch (\Exception $e) {
             Log::error('Petition Store Exception: ' . $e->getMessage());
@@ -242,9 +464,18 @@ class PetitionController extends Controller
             'uploads', 
             'originalPetition.addresses.designation', 
             'originalPetition.addresses.department', 
-            'duplicates'
+            'duplicates',
+            'cpspOpenedByUser',
+            'cpspOpenedBySeat',
         ])->findOrFail($id);
         $this->authorize('view', $petition);
+
+        // Audit: Track when CPSP user opens this petition for the first time
+        $user = Auth::user();
+        if ($user) {
+            $petition->markAsOpenedByCpsp($user, $user->currentSeatUser());
+        }
+
         return view('user.petition_show', compact('petition'));
     }
 
@@ -255,6 +486,12 @@ class PetitionController extends Controller
     {
         $petition = Petition::with(['addresses', 'uploads'])->findOrFail($id);
         $this->authorize('update', $petition);
+
+        // Audit: Track when CPSP user opens/edits this petition for the first time
+        $user = Auth::user();
+        if ($user) {
+            $petition->markAsOpenedByCpsp($user, $user->currentSeatUser());
+        }
 
         if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) && !Auth::user()->canAccess('access admin dashboard')) {
             return redirect()->route('petitions.index')->with('error', 'Cannot edit a petition once a final decision has been taken.');
@@ -298,6 +535,11 @@ class PetitionController extends Controller
     public function destroy($id): RedirectResponse
     {
         $petition = Petition::findOrFail($id);
+
+        if ($petition->isFromInward() && !Auth::user()->canAccess('access admin dashboard')) {
+            return redirect()->route('petitions.index')->with('error', 'CPSP seats are not permitted to delete petitions received from Inward.');
+        }
+
         $this->authorize('delete', $petition);
 
         if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) && !Auth::user()->canAccess('access admin dashboard')) {

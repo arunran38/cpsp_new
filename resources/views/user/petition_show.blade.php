@@ -2,7 +2,7 @@
 @section('container_width', 'max-w-full')
 
 @section('content')
-    <div class="space-y-6" x-data="{ showLinkModal: false }">
+    <div class="space-y-6" x-data="{ showLinkModal: false, showReturnModal: false, returnPetitionId: {{ $petition->petition_id }}, returnReceiptNo: '{{ $petition->receipt_no }}' }">
         <!-- Page Header -->
         <div
             class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white px-8 py-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
@@ -33,6 +33,21 @@
                         @endif
                     </div>
                     @endif
+
+                    @if($petition->isFromInward())
+                    <div class="mt-2.5 flex flex-wrap items-center gap-2">
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold {{ $petition->cpsp_opened_at ? 'bg-indigo-50 border-indigo-200 text-indigo-800' : 'bg-amber-50 border-amber-200 text-amber-800' }}">
+                            <i data-lucide="{{ $petition->cpsp_opened_at ? 'eye' : 'clock' }}" class="w-4 h-4 {{ $petition->cpsp_opened_at ? 'text-indigo-600' : 'text-amber-600' }}"></i>
+                            <span>
+                                @if($petition->cpsp_opened_at)
+                                    First Opened by CPSP: <strong class="font-bold">{{ $petition->cpspOpenedBySeat->seat_name ?? 'CPSP Seat' }}</strong> ({{ $petition->cpspOpenedByUser->name ?? 'User' }}) on {{ $petition->cpsp_opened_at->format('d-m-Y h:i A') }}
+                                @else
+                                    Status: Not Opened by CPSP Seat Yet
+                                @endif
+                            </span>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
             <div class="flex items-center gap-3">
@@ -45,6 +60,12 @@
                         <button type="button" @click="showLinkModal = true"
                             class="px-4 py-2.5 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-all shadow-sm flex items-center gap-2">
                             <i data-lucide="link" class="w-4 h-4"></i> Link Petition
+                        </button>
+                    @endif
+                    @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
+                        <button type="button" @click="showReturnModal = true"
+                            class="px-4 py-2.5 text-sm font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-all shadow-sm flex items-center gap-2">
+                            <i data-lucide="corner-up-left" class="w-4 h-4 text-rose-600"></i> Return to Inward
                         </button>
                     @endif
                     @if($petition->linked_petition_id)
@@ -63,6 +84,22 @@
                 </a>
             </div>
         </div>
+
+        @if($petition->is_returned_to_inward)
+        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-3">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-rose-600 shrink-0"></i>
+                <div>
+                    <span class="font-bold text-rose-900 text-sm">Returned to Inward (Inward-ലേക്ക് തിരിച്ചയച്ച ഹർജി)</span>
+                    <p class="text-rose-700 mt-0.5">
+                        Returned on {{ $petition->returned_at?->format('d-m-Y h:i A') }} by {{ $petition->returnedByUser?->name ?? 'CPSP User' }}. 
+                        Reason: <strong class="font-semibold">{{ $petition->return_reason }}</strong>
+                    </p>
+                </div>
+            </div>
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200 uppercase tracking-wider shrink-0">Returned to Inward</span>
+        </div>
+        @endif
 
 
         <!-- Data Layout -->
@@ -104,7 +141,10 @@
                             <span class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Detailed
                                 Description</span>
                             <p class="text-base sm:text-[16.5px] font-normal text-slate-800 leading-relaxed sm:leading-loose whitespace-pre-line tracking-normal" style="text-align: justify;">
-                                {{ $petition->description ?: 'No description provided.' }}
+                                @php
+                                    $showDesc = trim(str_ireplace(['Inward petition entry', 'Inward petition'], '', $petition->description ?? ''));
+                                @endphp
+                                {{ $showDesc ?: 'No description provided.' }}
                             </p>
                         </div>
                     </div>
@@ -1029,6 +1069,7 @@
                 </div>
             </div>
         </div>
+        @include('user.partials.return_to_inward_modal')
     </div>
 @endsection
 

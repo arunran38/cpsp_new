@@ -194,7 +194,7 @@
                                             x-model="comp.name" placeholder="Full Name" />
                                     </div>
                                     <div>
-                                        <x-input label="Phone Number" name="comp_phone"
+                                        <x-input label="Phone Number (Optional)" name="comp_phone"
                                             x-bind:name="`complainants[${index}][phone]`" x-model="comp.phone"
                                             placeholder="Mobile Number" />
                                     </div>

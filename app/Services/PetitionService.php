@@ -33,18 +33,27 @@ class PetitionService
 
             $proposedAction = $data['proposed_action'] ?? ($data['transfer_remarks'] ?? null);
             $natureOfPetition = $data['nature_of_petition'] ?? 'General Inward';
-            $description = $data['description'] ?? 'Inward petition entry';
+            $description = $data['description'] ?? '';
 
-            if (!empty($data['unit_id'])) {
-                $unit = \App\Models\Unit::find($data['unit_id']);
-                if ($unit) {
-                    $description .= ' (Unit: ' . $unit->unit_name . ')';
-                }
+            $unitId = null;
+            $unitReceivedDate = null;
+            if (!empty($data['mode_of_petition_received']) && strtolower($data['mode_of_petition_received']) === 'unit') {
+                $unitId = $data['unit_id'] ?? null;
+                $unitReceivedDate = $data['date_of_petition_received_at_unit'] ?? null;
             }
+
+            $isInwardUser = $user->hasRole('inward') || 
+                $user->hasRole('Inward') || 
+                ($user->currentSeatUser()?->seat && (
+                    $user->currentSeatUser()->seat->hasRole('inward') || 
+                    $user->currentSeatUser()->seat->hasRole('Inward') || 
+                    str_contains(strtolower($user->currentSeatUser()->seat->seat_name), 'inward')
+                ));
 
             $petition = Petition::create([
                 'receipt_no' => $data['receipt_no'],
                 'date_of_petition_received' => $data['date_of_petition_received'],
+                'date_of_petition_received_at_unit' => $unitReceivedDate,
                 'nature_of_petition' => $natureOfPetition,
                 'mode_of_petition_received' => $data['mode_of_petition_received'],
                 'mode_of_petition_received_others' => $data['mode_others'] ?? null,
@@ -53,8 +62,13 @@ class PetitionService
                 'status' => Petition::STATUS_RECEIVED,
                 'user_id' => Auth::id(),
                 'seat_id' => $seatId,
+                'unit_id' => $unitId,
                 'linked_petition_id' => $data['linked_petition_id'] ?? null,
+                'is_cpsp_processed' => !$isInwardUser,
             ]);
+
+            // Clear any preexisting/orphaned addresses for this ID before adding
+            Address::where('petition_id', $petition->petition_id)->delete();
 
             if (isset($data['complainants'])) {
                 $this->processPersons($data['complainants'], 'Complainant', $petition->petition_id);
@@ -86,6 +100,7 @@ class PetitionService
                 'mode_of_petition_received_others' => $data['mode_others'] ?? null,
                 'description' => $data['description'],
                 'proposed_action' => $data['proposed_action'] ?? $petition->proposed_action,
+                'is_cpsp_processed' => true,
             ]);
 
             // Rebuild addresses

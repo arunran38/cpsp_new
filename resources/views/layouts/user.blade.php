@@ -356,7 +356,19 @@
                 </div>
                 @endif
 
-                @if(Auth::check() && Auth::user()->currentSeatUser() && (Auth::user()->canAccess('inward_form') || Auth::user()->canAccess('inward form') || Auth::user()->canAccess('view_file_transfer') || Auth::user()->canAccess('view file transfer') || Auth::user()->hasRole('inward') || Auth::user()->hasRole('Inward')))
+                @php
+                    $hasInwardRole = Auth::check() && Auth::user()->currentSeatUser() && (
+                        Auth::user()->hasRole('inward') || 
+                        Auth::user()->hasRole('Inward') || 
+                        (Auth::user()->currentSeatUser()?->seat && (
+                            Auth::user()->currentSeatUser()->seat->hasRole('inward') || 
+                            Auth::user()->currentSeatUser()->seat->hasRole('Inward') || 
+                            str_contains(strtolower(Auth::user()->currentSeatUser()->seat->seat_name), 'inward')
+                        ))
+                    );
+                @endphp
+
+                @if($hasInwardRole)
                 <!-- Inward Dropdown with Hover & Click -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -389,7 +401,7 @@
                          x-transition:leave-end="slide-down-enter-from"
                          class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
                         
-                        @if(Auth::user()->canAccess('inward_form') || Auth::user()->canAccess('inward form') || Auth::user()->hasRole('inward') || Auth::user()->hasRole('Inward'))
+                        @if($hasInwardRole)
                         <a href="{{ route('inward.enter_petition') }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.enter_petition') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator"></span>
@@ -397,11 +409,19 @@
                         </a>
                         @endif
 
-                        @if(Auth::user()->canAccess('view_file_transfer') || Auth::user()->canAccess('view file transfer') || Auth::user()->hasRole('inward') || Auth::user()->canAccess('access admin dashboard'))
+                        @if($hasInwardRole)
                         <a href="{{ route('inward.transfers') }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.transfers') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator"></span>
                            Inward Transferred Petitions
+                        </a>
+                        @endif
+
+                        @if($hasInwardRole)
+                        <a href="{{ route('inward.statistics') }}" 
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator"></span>
+                           Inward Statistics
                         </a>
                         @endif
                     </div>

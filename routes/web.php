@@ -51,12 +51,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/inward/enter-petition', [PetitionController::class, 'inwardCreate'])->name('inward.enter_petition');
         Route::get('/inward/create', [PetitionController::class, 'inwardCreate'])->name('inward.create');
         Route::get('/inward/transfers', [PetitionController::class, 'inwardTransfers'])->name('inward.transfers');
+        Route::get('/inward/statistics', [PetitionController::class, 'inwardStatistics'])->name('inward.statistics');
         Route::post('/petitions/check-petition-no', [PetitionController::class, 'checkPetitionNo'])->name('petitions.checkPetitionNo');
         Route::post('/petitions/check-file-no', [PetitionController::class, 'checkFileNo'])->name('petitions.checkFileNo');
         Route::post('/petitions/check-duplicates', [PetitionController::class, 'checkDuplicates'])->name('petitions.checkDuplicates');
         Route::get('/petitions/search-duplicates', [PetitionController::class, 'searchDuplicates'])->name('petitions.searchDuplicates');
         Route::post('/petitions/{id}/link-duplicate', [PetitionController::class, 'linkDuplicate'])->name('petitions.linkDuplicate');
         Route::post('/petitions/{id}/unlink-duplicate', [PetitionController::class, 'unlinkDuplicate'])->name('petitions.unlinkDuplicate');
+        Route::post('/petitions/{id}/return-to-inward', [PetitionController::class, 'returnToInward'])->name('petitions.returnToInward');
+        Route::post('/inward/petitions/{id}/reassign', [PetitionController::class, 'reassignInward'])->name('inward.petitions.reassign');
         Route::get('/petitions/download/{upload_id}', [PetitionController::class, 'downloadAttachment'])->name('petitions.download');
 
         Route::resource("petitions", PetitionController::class);

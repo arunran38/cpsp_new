@@ -2,7 +2,8 @@
 @section('container_width', 'max-w-full')
 
 @section('content')
-    <div x-data="{ showForwardModal: false, showVrModal: false, showDecisionModal: false, activePetitionId: null, activeForwardingId: null, showExportModal: false }"
+    <div x-data="{ showForwardModal: false, showVrModal: false, showDecisionModal: false, activePetitionId: null, activeForwardingId: null, showExportModal: false, showReturnModal: false, returnPetitionId: null, returnReceiptNo: '' }"
+        @open-return-modal.window="returnPetitionId = $event.detail.id; returnReceiptNo = $event.detail.receipt; showReturnModal = true"
         class="space-y-4">
         <!-- Page Header -->
         <div
@@ -526,6 +527,7 @@
                 </form>
             </div>
         </div>
+        @include('user.partials.return_to_inward_modal')
     </div>
 @endsection
 
