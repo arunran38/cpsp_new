@@ -12,8 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE decisions MODIFY COLUMN decision_remarks VARCHAR(50) DEFAULT NULL");
-        DB::table('decisions')->where('decision_remarks', 'QV')->update(['decision_remarks' => 'CV']);
+        DB::statement("ALTER TABLE petitions MODIFY COLUMN nature_of_petition VARCHAR(255) NULL");
     }
 
     /**
@@ -21,6 +20,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::table('decisions')->where('decision_remarks', 'CV')->update(['decision_remarks' => 'QV']);
+        DB::statement("ALTER TABLE petitions MODIFY COLUMN nature_of_petition ENUM('Bribery', 'Misuse of authority', 'Fraud / financial irregularities', 'Serious negligence', 'Amassment of Wealth', 'others') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL");
     }
 };

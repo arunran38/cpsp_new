@@ -40,7 +40,25 @@ class Petition extends Model
         'previous_status',
         'user_id',
         'seat_id',
+        'unit_id',
+        'date_of_petition_received_at_unit',
         'linked_petition_id',
+        'is_cpsp_processed',
+        'is_returned_to_inward',
+        'return_reason',
+        'returned_by',
+        'returned_at',
+        'cpsp_opened_at',
+        'cpsp_opened_by_user_id',
+        'cpsp_opened_by_seat_id',
+    ];
+
+    protected $casts = [
+        'is_cpsp_processed' => 'boolean',
+        'is_returned_to_inward' => 'boolean',
+        'returned_at' => 'datetime',
+        'cpsp_opened_at' => 'datetime',
+        'date_of_petition_received_at_unit' => 'date',
     ];
 
     /**
@@ -115,16 +133,99 @@ class Petition extends Model
         return $this->hasOne(Decision::class, 'petition_id', 'petition_id');
     }
 
+    /**
+     * Relationship: Unit
+     */
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class, 'unit_id', 'unit_id');
+    }
+
+    /**
+     * Relationship: User who first opened this Inward petition at CPSP
+     */
+    public function cpspOpenedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'cpsp_opened_by_user_id', 'user_id');
+    }
+
+    /**
+     * Relationship: Seat from which this Inward petition was first opened
+     */
+    public function cpspOpenedBySeat(): BelongsTo
+    {
+        return $this->belongsTo(Seat::class, 'cpsp_opened_by_seat_id', 'seat_id');
+    }
+
+    /**
+     * Track when a CPSP user opens/views an Inward petition for the first time.
+     */
+    public function markAsOpenedByCpsp(User $user, ?SeatUser $seatUser): void
+    {
+        if ($this->cpsp_opened_at !== null) {
+            return;
+        }
+
+        // Only mark if it's an Inward petition being opened by a CPSP seat user (or non-inward seat user)
+        $isCpspSeat = $seatUser && $seatUser->seat && !str_contains(strtolower($seatUser->seat->seat_name), 'inward');
+        $isInwardUser = $user->hasRole('inward') || $user->hasRole('Inward');
+
+        if (($isCpspSeat || !$isInwardUser) && $this->isFromInward()) {
+            $this->forceFill([
+                'cpsp_opened_at' => now(),
+                'cpsp_opened_by_user_id' => $user->user_id,
+                'cpsp_opened_by_seat_id' => $seatUser?->seat_id,
+            ])->save();
+        }
+    }
+
+    /**
+     * Check if the petition originated from Inward registration.
+     */
+    public function isFromInward(): bool
+    {
+        if (!$this->is_cpsp_processed) {
+            return true;
+        }
+
+        if ($this->user) {
+            if ($this->user->hasRole('inward') || $this->user->hasRole('Inward')) {
+                return true;
+            }
+        }
+
+        if ($this->user_id) {
+            $hasInwardSeat = \App\Models\SeatUser::where('user_id', $this->user_id)
+                ->whereHas('seat', fn($q) => $q->where('seat_name', 'like', '%Inward%'))
+                ->exists();
+            if ($hasInwardSeat) {
+                return true;
+            }
+        }
+
+        return $this->nature_of_petition === 'General Inward' || str_contains(strtolower($this->description ?? ''), 'inward');
+    }
+
+    /**
+     * Relationship: User who returned this petition to Inward
+     */
+    public function returnedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'returned_by', 'user_id');
+    }
+
     // --- Scopes ---
 
     public function scopeFilterByTab(Builder $query, string $tab): Builder
     {
         return match ($tab) {
-            'received' => $query->where('status', self::STATUS_RECEIVED),
+            'inward' => $query->where('is_cpsp_processed', false)->where('is_returned_to_inward', false),
+            'received' => $query->where('status', self::STATUS_RECEIVED)->where('is_cpsp_processed', true),
             'forwarded' => $query->where('status', self::STATUS_FORWARDED),
             'vrs' => $query->where('status', self::STATUS_VR_RECEIVED),
             'decisions' => $query->whereIn('status', [self::STATUS_SENT_TO_GOVT, self::STATUS_CLOSED]),
-            default => $query,
+            'all' => $query->where('is_cpsp_processed', true),
+            default => $query->where('is_cpsp_processed', true),
         };
     }
 

@@ -20,6 +20,12 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
+                @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
+                    <button type="button" @click="showReturnModal = true"
+                        class="px-4 py-2 text-sm font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-all flex items-center gap-2">
+                        <i data-lucide="corner-up-left" class="w-4 h-4 text-rose-600"></i> Return to Inward
+                    </button>
+                @endif
                 <a href="{{ route('petitions.index') }}"
                     class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-slate-900 focus:outline-none transition-all">
                     Cancel
@@ -30,6 +36,22 @@
                 </a>
             </div>
         </div>
+
+        @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-3">
+                <i data-lucide="help-circle" class="w-5 h-5 text-amber-600 shrink-0"></i>
+                <div>
+                    <span class="font-bold text-amber-900 text-sm">ഇത് നിങ്ങളുടെ സീറ്റിലെ ഹർജിയല്ലേ? (Not your seat?)</span>
+                    <p class="text-amber-700 mt-0.5">ഈ ഇൻവേർഡ് ഹർജി നിങ്ങളുടെ സീറ്റുമായി ബന്ധപ്പെട്ടതല്ലെങ്കിൽ, എഡിറ്റ് ചെയ്യാതെ Inward-ലേക്ക് തിരിച്ചയക്കാവുന്നതാണ്.</p>
+                </div>
+            </div>
+            <button type="button" @click="showReturnModal = true" class="px-4 py-2 text-xs font-bold text-rose-700 bg-rose-100 hover:bg-rose-200 border border-rose-300 rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap">
+                <i data-lucide="corner-up-left" class="w-4 h-4"></i>
+                Return to Inward
+            </button>
+        </div>
+        @endif
 
         @if ($errors->any())
             <div
@@ -112,7 +134,7 @@
 
         <!-- Form Sections (Minimalist Cards) -->
         <form method="POST" action="{{ route('petitions.update', $petition->petition_id) }}" enctype="multipart/form-data"
-            class="bg-white rounded-2xl shadow-sm border border-slate-200" id="petitionFormElement">
+            class="bg-white rounded-2xl shadow-sm border border-slate-200" id="petitionFormElement" novalidate>
             @csrf
             @method('PUT')
 
@@ -246,9 +268,9 @@
                                             x-bind:required="step === 2" placeholder="Legal Name" />
                                     </div>
                                     <div>
-                                        <x-input label="Phone Number" name="comp_phone"
+                                        <x-input label="Phone Number (Optional)" name="comp_phone"
                                             x-bind:name="`complainants[${index}][phone]`" x-model="comp.phone"
-                                            x-bind:required="step === 2" placeholder="10-digit Mobile" />
+                                            placeholder="10-digit Mobile" />
                                     </div>
                                     <div>
                                         <x-input label="Email" name="comp_email"
@@ -716,19 +738,23 @@
             </div>
         </div>
         </form>
+        @include('user.partials.return_to_inward_modal')
     </div>
 
     <script>
         function petitionForm() {
             return {
                 step: 1,
+                showReturnModal: false,
+                returnPetitionId: {{ $petition->petition_id }},
+                returnReceiptNo: '{!! addslashes($petition->receipt_no) !!}',
                 petitionDetails: {
                     receipt_no: '{!! addslashes($petition->receipt_no) !!}',
                     date: '{{ $petition->date_of_petition_received }}',
                     nature: '{{ $petition->nature_of_petition }}',
                     mode: '{{ $petition->mode_of_petition_received }}',
                     mode_others: '{!! addslashes($petition->mode_of_petition_received_others) !!}',
-                    description: `{!! addslashes($petition->description) !!}`,
+                    description: `{!! addslashes($petition->description ?? '') !!}`,
                     proposed_action: `{!! addslashes($petition->proposed_action) !!}`
                 },
                 complainants: {!! json_encode($complainants) !!}.length > 0 ? {!! json_encode($complainants) !!} : [{ id: Date.now(), name: '', phone: '', email: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
@@ -846,17 +872,13 @@
                             return false;
                         }
                     } else if (step === 2) {
-                        const validComp = this.complainants.every(c => c.name.trim() !== '' && c.phone.trim() !== '');
+                        const validComp = this.complainants.every(c => c && c.name && c.name.trim() !== '');
                         if (!validComp) {
-                            alert("Please provide at least Name and Phone for all complainants.");
+                            alert("Please provide at least Name for all complainants.");
                             return false;
                         }
                     } else if (step === 3) {
-                        const validAcc = this.accused.every(a => a.name.trim() !== '');
-                        if (!validAcc) {
-                            alert("Please provide the name of the suspect.");
-                            return false;
-                        }
+                        // Suspect can be unknown or optional for initial inward petitions
                     }
                     return true;
                 },

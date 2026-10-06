@@ -23,25 +23,52 @@ class PetitionService
                 throw new Exception("User not authenticated.");
             }
 
-            $seatId = null;
-            $activeSeat = $user->currentSeatUser();
-            if ($activeSeat) {
-                $seatId = $activeSeat->seat_id;
+            $seatId = $data['seat_id'] ?? null;
+            if (!$seatId) {
+                $activeSeat = $user->currentSeatUser();
+                if ($activeSeat) {
+                    $seatId = $activeSeat->seat_id;
+                }
             }
+
+            $proposedAction = $data['proposed_action'] ?? ($data['transfer_remarks'] ?? null);
+            $natureOfPetition = $data['nature_of_petition'] ?? 'General Inward';
+            $description = $data['description'] ?? '';
+
+            $unitId = null;
+            $unitReceivedDate = null;
+            if (!empty($data['mode_of_petition_received']) && strtolower($data['mode_of_petition_received']) === 'unit') {
+                $unitId = $data['unit_id'] ?? null;
+                $unitReceivedDate = $data['date_of_petition_received_at_unit'] ?? null;
+            }
+
+            $isInwardUser = $user->hasRole('inward') || 
+                $user->hasRole('Inward') || 
+                ($user->currentSeatUser()?->seat && (
+                    $user->currentSeatUser()->seat->hasRole('inward') || 
+                    $user->currentSeatUser()->seat->hasRole('Inward') || 
+                    str_contains(strtolower($user->currentSeatUser()->seat->seat_name), 'inward')
+                ));
 
             $petition = Petition::create([
                 'receipt_no' => $data['receipt_no'],
                 'date_of_petition_received' => $data['date_of_petition_received'],
-                'nature_of_petition' => $data['nature_of_petition'],
+                'date_of_petition_received_at_unit' => $unitReceivedDate,
+                'nature_of_petition' => $natureOfPetition,
                 'mode_of_petition_received' => $data['mode_of_petition_received'],
                 'mode_of_petition_received_others' => $data['mode_others'] ?? null,
-                'description' => $data['description'],
-                'proposed_action' => $data['proposed_action'] ?? null,
+                'description' => $description,
+                'proposed_action' => $proposedAction,
                 'status' => Petition::STATUS_RECEIVED,
                 'user_id' => Auth::id(),
                 'seat_id' => $seatId,
+                'unit_id' => $unitId,
                 'linked_petition_id' => $data['linked_petition_id'] ?? null,
+                'is_cpsp_processed' => !$isInwardUser,
             ]);
+
+            // Clear any preexisting/orphaned addresses for this ID before adding
+            Address::where('petition_id', $petition->petition_id)->delete();
 
             if (isset($data['complainants'])) {
                 $this->processPersons($data['complainants'], 'Complainant', $petition->petition_id);
@@ -73,6 +100,7 @@ class PetitionService
                 'mode_of_petition_received_others' => $data['mode_others'] ?? null,
                 'description' => $data['description'],
                 'proposed_action' => $data['proposed_action'] ?? $petition->proposed_action,
+                'is_cpsp_processed' => true,
             ]);
 
             // Rebuild addresses

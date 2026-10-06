@@ -489,7 +489,7 @@
 
                 @if(Auth::user()->canAccess('view petitions'))
                 <!-- View Petitions - Direct Link -->
-                <a href="{{ route('petitions.index') }}" 
+                <a href="{{ route('petitions.index', ['tab' => 'inward']) }}" 
                    class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('petitions.index') ? 'active-nav' : 'inactive-nav' }}">
                     <i data-lucide="file-text" class="w-5 h-5 icon-bounce {{ request()->routeIs('petitions.index') ? 'text-indigo-400' : '' }}"></i>
                     <span>View Petitions</span>

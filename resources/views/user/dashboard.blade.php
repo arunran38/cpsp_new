@@ -18,6 +18,7 @@
 
     // Stat Metrics
     $totalPetitions = $petitions->count();
+    $inwardCount = $petitions->filter(fn($p) => !$p->is_cpsp_processed && !$p->is_returned_to_inward)->count();
     $forwarded = $petitions->filter(fn($p) => $p->status === 'Forwarded')->count();
     $vrsReceived = $petitions->filter(fn($p) => $p->status === 'VR_Received')->count();
     $finalDecisions = $petitions->filter(fn($p) => in_array($p->status, ['Closed', 'Sent_to_Govt']))->count();
@@ -130,80 +131,99 @@
     </div>
 
     <!-- Stats Grid -->
-   <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 p-6">
-    <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'all']) }}" @endif
-       class="group relative block p-8 transition-all duration-500 bg-blue-50 border border-blue-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(59,130,246,0.2)] hover:-translate-y-2">
-        <div class="absolute -top-12 -right-12 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
+   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 p-4">
+    <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'all']) }}" @else href="{{ route('petitions.index', ['tab' => 'all']) }}" @endif
+       class="group relative block p-5 transition-all duration-500 bg-blue-50 border border-blue-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(59,130,246,0.15)] hover:-translate-y-1">
+        <div class="absolute -top-10 -right-10 w-28 h-28 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
         
         <div class="flex items-center justify-between relative z-10">
-            <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm group-hover:scale-110 transition-transform duration-500">
-                <i data-lucide="file-text" class="w-6 h-6"></i>
+            <div class="w-11 h-11 flex items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm group-hover:scale-105 transition-transform duration-500">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
             </div>
-            <span class="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-700 bg-white/50 backdrop-blur-md rounded-full border border-blue-200">
+            <span class="px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-blue-700 bg-white/60 backdrop-blur-md rounded-full border border-blue-200/60">
                 Total
             </span>
         </div>
 
-        <div class="mt-8 relative z-10">
-            <p class="text-5xl font-black text-blue-900 tracking-tight">{{ $totalPetitions }}</p>
-            <h3 class="text-sm font-bold text-blue-700/60 uppercase tracking-widest mt-2">Total Petitions</h3>
+        <div class="mt-5 relative z-10">
+            <p class="text-3xl sm:text-4xl font-black text-blue-900 tracking-tight">{{ $totalPetitions }}</p>
+            <h3 class="text-xs font-bold text-blue-700/70 uppercase tracking-wider mt-1.5 truncate" title="Total Petitions">Total Petitions</h3>
+        </div>
+    </a>
+
+    <a href="{{ route('petitions.index', ['tab' => 'inward']) }}"
+       class="group relative block p-5 transition-all duration-500 bg-teal-50 border border-teal-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(20,184,166,0.15)] hover:-translate-y-1">
+        <div class="absolute -top-10 -right-10 w-28 h-28 bg-teal-500/10 rounded-full blur-xl group-hover:bg-teal-500/20 transition-all duration-500"></div>
+        
+        <div class="flex items-center justify-between relative z-10">
+            <div class="w-11 h-11 flex items-center justify-center rounded-xl bg-white text-teal-600 shadow-sm group-hover:scale-105 transition-transform duration-500">
+                <i data-lucide="inbox" class="w-5 h-5"></i>
+            </div>
+            <span class="px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-teal-700 bg-white/60 backdrop-blur-md rounded-full border border-teal-200/60">
+                Inward
+            </span>
+        </div>
+
+        <div class="mt-5 relative z-10">
+            <p class="text-3xl sm:text-4xl font-black text-teal-900 tracking-tight">{{ $inwardCount }}</p>
+            <h3 class="text-xs font-bold text-teal-700/70 uppercase tracking-wider mt-1.5 truncate" title="Inward Petitions">Inward Petitions</h3>
         </div>
     </a>
 
     <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'forwarded']) }}" @endif
-       class="group relative block p-8 transition-all duration-500 bg-amber-50 border border-amber-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(245,158,11,0.2)] hover:-translate-y-2">
-        <div class="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all duration-500"></div>
+       class="group relative block p-5 transition-all duration-500 bg-amber-50 border border-amber-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(245,158,11,0.15)] hover:-translate-y-1">
+        <div class="absolute -top-10 -right-10 w-28 h-28 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/20 transition-all duration-500"></div>
         
         <div class="flex items-center justify-between relative z-10">
-            <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-white text-amber-600 shadow-sm group-hover:scale-110 transition-transform duration-500">
-                <i data-lucide="send" class="w-6 h-6"></i>
+            <div class="w-11 h-11 flex items-center justify-center rounded-xl bg-white text-amber-600 shadow-sm group-hover:scale-105 transition-transform duration-500">
+                <i data-lucide="send" class="w-5 h-5"></i>
             </div>
-            <span class="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700 bg-white/50 backdrop-blur-md rounded-full border border-amber-200">
+            <span class="px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-700 bg-white/60 backdrop-blur-md rounded-full border border-amber-200/60">
                 In Prog
             </span>
         </div>
 
-        <div class="mt-8 relative z-10">
-            <p class="text-5xl font-black text-amber-900 tracking-tight">{{ $forwarded }}</p>
-            <h3 class="text-sm font-bold text-amber-700/60 uppercase tracking-widest mt-2">Forwarded Units</h3>
+        <div class="mt-5 relative z-10">
+            <p class="text-3xl sm:text-4xl font-black text-amber-900 tracking-tight">{{ $forwarded }}</p>
+            <h3 class="text-xs font-bold text-amber-700/70 uppercase tracking-wider mt-1.5 truncate" title="Forwarded Units">Forwarded Units</h3>
         </div>
     </a>
 
     <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'vrs']) }}" @endif
-       class="group relative block p-8 transition-all duration-500 bg-purple-50 border border-purple-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(147,51,234,0.2)] hover:-translate-y-2">
-        <div class="absolute -top-12 -right-12 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all duration-500"></div>
+       class="group relative block p-5 transition-all duration-500 bg-purple-50 border border-purple-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(147,51,234,0.15)] hover:-translate-y-1">
+        <div class="absolute -top-10 -right-10 w-28 h-28 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-all duration-500"></div>
         
         <div class="flex items-center justify-between relative z-10">
-            <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-white text-purple-600 shadow-sm group-hover:scale-110 transition-transform duration-500">
-                <i data-lucide="file-check" class="w-6 h-6"></i>
+            <div class="w-11 h-11 flex items-center justify-center rounded-xl bg-white text-purple-600 shadow-sm group-hover:scale-105 transition-transform duration-500">
+                <i data-lucide="file-check" class="w-5 h-5"></i>
             </div>
-            <span class="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-purple-700 bg-white/50 backdrop-blur-md rounded-full border border-purple-200">
+            <span class="px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-purple-700 bg-white/60 backdrop-blur-md rounded-full border border-purple-200/60">
                 Reported
             </span>
         </div>
 
-        <div class="mt-8 relative z-10">
-            <p class="text-5xl font-black text-purple-900 tracking-tight">{{ $vrsReceived }}</p>
-            <h3 class="text-sm font-bold text-purple-700/60 uppercase tracking-widest mt-2">Verification Reports Received</h3>
+        <div class="mt-5 relative z-10">
+            <p class="text-3xl sm:text-4xl font-black text-purple-900 tracking-tight">{{ $vrsReceived }}</p>
+            <h3 class="text-xs font-bold text-purple-700/70 uppercase tracking-wider mt-1.5 truncate" title="Verification Reports Received">VR Received</h3>
         </div>
     </a>
 
     <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'decisions']) }}" @endif
-       class="group relative block p-8 transition-all duration-500 bg-emerald-50 border border-emerald-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_20px_50px_rgba(16,185,129,0.2)] hover:-translate-y-2">
-        <div class="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all duration-500"></div>
+       class="group relative block p-5 transition-all duration-500 bg-emerald-50 border border-emerald-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(16,185,129,0.15)] hover:-translate-y-1">
+        <div class="absolute -top-10 -right-10 w-28 h-28 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-all duration-500"></div>
         
         <div class="flex items-center justify-between relative z-10">
-            <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm group-hover:scale-110 transition-transform duration-500">
-                <i data-lucide="check-square" class="w-6 h-6"></i>
+            <div class="w-11 h-11 flex items-center justify-center rounded-xl bg-white text-emerald-600 shadow-sm group-hover:scale-105 transition-transform duration-500">
+                <i data-lucide="check-square" class="w-5 h-5"></i>
             </div>
-            <span class="px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-white/50 backdrop-blur-md rounded-full border border-emerald-200">
+            <span class="px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-emerald-700 bg-white/60 backdrop-blur-md rounded-full border border-emerald-200/60">
                 Completed
             </span>
         </div>
 
-        <div class="mt-8 relative z-10">
-            <p class="text-5xl font-black text-emerald-900 tracking-tight">{{ $finalDecisions }}</p>
-            <h3 class="text-sm font-bold text-emerald-700/60 uppercase tracking-widest mt-2">Final Decisions</h3>
+        <div class="mt-5 relative z-10">
+            <p class="text-3xl sm:text-4xl font-black text-emerald-900 tracking-tight">{{ $finalDecisions }}</p>
+            <h3 class="text-xs font-bold text-emerald-700/70 uppercase tracking-wider mt-1.5 truncate" title="Final Decisions">Final Decisions</h3>
         </div>
     </a>
 </div>
@@ -271,7 +291,7 @@
                 </div>
                 <h2 class="text-base font-bold text-slate-900">Recent Petitions</h2>
             </div>
-            <a href="{{ route('petitions.index') }}" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-colors uppercase tracking-wider">View Full List</a>
+            <a href="{{ route('petitions.index', ['tab' => 'inward']) }}" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-colors uppercase tracking-wider">View Full List</a>
         </div>
         
         <div class="p-0">

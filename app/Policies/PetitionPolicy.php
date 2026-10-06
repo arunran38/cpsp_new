@@ -45,6 +45,11 @@ class PetitionPolicy
      */
     public function delete(User $user, Petition $petition): bool
     {
+        // CPSP users / non-admin users cannot delete petitions forwarded from Inward
+        if ($petition->isFromInward() && !$user->canAccess('access admin dashboard')) {
+            return false;
+        }
+
         return $this->authorize($user, $petition);
     }
 

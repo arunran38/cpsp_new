@@ -5,6 +5,8 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+use Illuminate\Validation\Rule;
+
 class UpdatePetitionRequest extends FormRequest
 {
     /**
@@ -17,9 +19,14 @@ class UpdatePetitionRequest extends FormRequest
 
     public function rules(): array
     {
-        $petitionId = $this->route('petition');
+        $petition = $this->route('petition');
+        $petitionId = $petition instanceof \App\Models\Petition ? $petition->petition_id : $petition;
+
         return [
-            'receipt_no' => 'required|unique:petitions,receipt_no,' . $petitionId . ',petition_id',
+            'receipt_no' => [
+                'required',
+                Rule::unique('petitions', 'receipt_no')->ignore($petitionId, 'petition_id'),
+            ],
             'date_of_petition_received' => 'required|date|before_or_equal:today',
             'nature_of_petition' => 'required',
             'mode_of_petition_received' => 'required',
@@ -32,8 +39,8 @@ class UpdatePetitionRequest extends FormRequest
             'complainants.*.email' => 'nullable|email',
             'complainants.*.addresses' => 'nullable|array',
             'accused' => 'nullable|array',
-            'accused.*.entity_type' => 'required|in:Person,Firm',
-            'accused.*.name' => 'required|string',
+            'accused.*.entity_type' => 'nullable|in:Person,Firm',
+            'accused.*.name' => 'nullable|string',
             'accused.*.designation_id' => 'nullable|exists:designation_lists,id',
             'accused.*.department_id' => 'nullable|exists:department_lists,id',
             'accused.*.phone' => 'nullable|string',

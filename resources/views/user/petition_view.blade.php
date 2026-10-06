@@ -2,7 +2,8 @@
 @section('container_width', 'max-w-full')
 
 @section('content')
-    <div x-data="{ showForwardModal: false, showVrModal: false, showDecisionModal: false, activePetitionId: null, activeForwardingId: null }"
+    <div x-data="{ showForwardModal: false, showVrModal: false, showDecisionModal: false, activePetitionId: null, activeForwardingId: null, showReturnModal: false, returnPetitionId: null, returnReceiptNo: '' }"
+        @open-return-modal.window="returnPetitionId = $event.detail.id; returnReceiptNo = $event.detail.receipt; showReturnModal = true"
         class="space-y-6">
         <!-- Page Header -->
         <div
@@ -31,6 +32,10 @@
 
         <!-- Unified Tabs -->
         <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl mb-6 w-fit border border-slate-200 shadow-sm">
+            <a href="{{ route('petitions.index', ['tab' => 'inward']) }}"
+                class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'inward' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
+                Inward Petition
+            </a>
             <a href="{{ route('petitions.index', ['tab' => 'all']) }}"
                 class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'all' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
                 All Petitions
@@ -425,6 +430,7 @@
         </div>
     </div>
 
+    @include('user.partials.return_to_inward_modal')
 @endsection
 
 @section('scripts')

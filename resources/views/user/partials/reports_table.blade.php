@@ -74,10 +74,13 @@
                         </span>
                     </td>
                     <td class="px-6 py-4 text-slate-600">
+                        @php
+                            $cleanDesc = trim(str_ireplace(['Inward petition entry', 'Inward petition'], '', $targetPetition->description ?? ''));
+                        @endphp
                         <span
                             class="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 max-w-[150px] truncate"
-                            title="{{ $targetPetition->description }}">
-                            {{ $targetPetition->description }}
+                            title="{{ $cleanDesc ?: '-' }}">
+                            {{ $cleanDesc ?: '-' }}
                         </span>
                     </td>
                     <td class="px-6 py-4 text-center">
@@ -173,8 +176,16 @@
                                     </a>
                                 @endif
                             @endif
+                            @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
+                                <button type="button"
+                                    @click="$dispatch('open-return-modal', { id: {{ $petition->petition_id }}, receipt: '{{ $petition->receipt_no }}' })"
+                                    class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                    title="Return to Inward (Inward-ലേക്ക് തിരിച്ചയക്കുക)">
+                                    <i class="fa-solid fa-arrow-rotate-left text-rose-500"></i>
+                                </button>
+                            @endif
                             @if(Auth::user()->canAccess('delete petitions'))
-                                @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance']))
+                                @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance']) && (!$petition->isFromInward() || Auth::user()->canAccess('access admin dashboard')))
                                     <form action="{{ route('petitions.destroy', $petition->petition_id) }}" method="POST"
                                         class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
                                         @csrf
