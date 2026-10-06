@@ -18,9 +18,107 @@ class DepartmentController extends Controller
 
     public function create(): View
     {
-        $departments = Department::paginate(10);
-        return view('admin.department_add', compact('departments'));
+        return view('admin.department_create');
     }
+
+    public function analysis(Request $request)
+    {
+        $search = $request->input('search');
+        $date_from = $request->input('date_from');
+        $date_to = $request->input('date_to');
+
+        $query = \Illuminate\Support\Facades\DB::table('department_lists')
+            ->select(
+                'department_lists.id as department_id',
+                'department_lists.department_name',
+                \Illuminate\Support\Facades\DB::raw('COUNT(DISTINCT petitions.petition_id) as total_petitions')
+            )
+            ->join('addresses', 'department_lists.id', '=', 'addresses.department_id')
+            ->join('petitions', 'addresses.petition_id', '=', 'petitions.petition_id')
+            ->where('addresses.person_type', 'Accused')
+            ->whereNull('petitions.deleted_at')
+            ->whereNull('addresses.deleted_at')
+            ->whereNull('department_lists.deleted_at')
+            ->when($search, function ($q) use ($search) {
+                $q->where('department_lists.department_name', 'like', "%{$search}%");
+            })
+            ->when($date_from, function ($q) use ($date_from) {
+                $q->whereDate('petitions.date_of_petition_received', '>=', $date_from);
+            })
+            ->when($date_to, function ($q) use ($date_to) {
+                $q->whereDate('petitions.date_of_petition_received', '<=', $date_to);
+            })
+            ->groupBy('department_lists.id', 'department_lists.department_name')
+            ->orderBy('total_petitions', 'desc');
+
+        $analysis = $query->paginate(10)->withQueryString();
+        
+        $all_data = $query->get();
+        $total_sum = $all_data->sum('total_petitions');
+
+        if ($request->ajax()) {
+            return view('admin.partials.department_table', compact('analysis', 'search', 'date_from', 'date_to', 'total_sum'))->render();
+        }
+
+        return view('admin.department_analysis', compact('analysis', 'search', 'date_from', 'date_to', 'total_sum'));
+    }
+
+    public function exportAnalysis(Request $request)
+    {
+        $search = $request->input('search');
+        $date_from = $request->input('date_from');
+        $date_to = $request->input('date_to');
+
+        $query = \Illuminate\Support\Facades\DB::table('department_lists')
+            ->select(
+                'department_lists.id as department_id',
+                'department_lists.department_name',
+                \Illuminate\Support\Facades\DB::raw('COUNT(DISTINCT petitions.petition_id) as total_petitions')
+            )
+            ->join('addresses', 'department_lists.id', '=', 'addresses.department_id')
+            ->join('petitions', 'addresses.petition_id', '=', 'petitions.petition_id')
+            ->where('addresses.person_type', 'Accused')
+            ->whereNull('petitions.deleted_at')
+            ->whereNull('addresses.deleted_at')
+            ->whereNull('department_lists.deleted_at')
+            ->when($search, function ($q) use ($search) {
+                $q->where('department_lists.department_name', 'like', "%{$search}%");
+            })
+            ->when($date_from, function ($q) use ($date_from) {
+                $q->whereDate('petitions.date_of_petition_received', '>=', $date_from);
+            })
+            ->when($date_to, function ($q) use ($date_to) {
+                $q->whereDate('petitions.date_of_petition_received', '<=', $date_to);
+            })
+            ->groupBy('department_lists.id', 'department_lists.department_name')
+            ->orderBy('total_petitions', 'desc');
+
+        $data = $query->get();
+
+        $dFrom = $date_from ? date('d/m/Y', strtotime($date_from)) : '';
+        $dTo = $date_to ? date('d/m/Y', strtotime($date_to)) : '';
+        $mainHeading = match (true) {
+            (bool)$date_from && (bool)$date_to => "DEPARTMENT WISE ANALYSIS OF PETITIONS from $dFrom to $dTo",
+            (bool)$date_from => "DEPARTMENT WISE ANALYSIS OF PETITIONS from $dFrom onwards",
+            (bool)$date_to => "DEPARTMENT WISE ANALYSIS OF PETITIONS up to $dTo",
+            default => "DEPARTMENT WISE ANALYSIS OF PETITIONS (All Time)",
+        };
+
+        if ($search) {
+            $mainHeading .= " (Filtered by: $search)";
+        }
+
+        $filenameDateText = $date_from && $date_to ? "{$date_from}_to_{$date_to}" : ($date_from ? "from_{$date_from}" : ($date_to ? "up_to_{$date_to}" : "all_time"));
+        $filename = "department_analysis_" . $filenameDateText . ".xls";
+
+        $content = view('exports.department_analysis_export', compact('data', 'mainHeading'))->render();
+
+        return response($content)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->header('Cache-Control', 'max-age=0');
+    }
+
 
     public function store(Request $request): RedirectResponse
     {

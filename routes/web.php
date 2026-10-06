@@ -81,6 +81,10 @@ Route::middleware(['auth'])->group(function () {
         'update' => 'admin.units.update',
         'destroy' => 'admin.units.destroy',
     ]);
+    // Department Analysis
+    Route::get('/departments/analysis', [App\Http\Controllers\DepartmentController::class, 'analysis'])->name('admin.departments.analysis');
+    Route::get('/departments/analysis/export', [App\Http\Controllers\DepartmentController::class, 'exportAnalysis'])->name('admin.departments.analysis.export');
+
     Route::resource("departments", DepartmentController::class)->names([
         'index' => 'admin.departments.index',
         'create' => 'admin.departments.create',
@@ -102,6 +106,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/seats/statistics', [SeatController::class, 'statistics'])->name('admin.seats.statistics');
     Route::get('/seats/statistics/export', [SeatController::class, 'exportStatistics'])->name('admin.seats.statistics.export');
+
 
     Route::resource("seats", SeatController::class)->names([
         'index' => 'admin.seats.index',

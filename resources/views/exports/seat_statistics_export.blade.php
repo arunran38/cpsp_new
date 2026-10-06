@@ -3,10 +3,9 @@
     <meta http-equiv="Content-type" content="text/html;charset=utf-8" />
     <style>
         table { border-collapse: collapse; width: 100%; border: 1pt solid #000; }
-        th { background-color: #cbd5e1; font-weight: bold; border: 1pt solid #000; padding: 10px 5px; font-size: 11pt; font-family: Arial, sans-serif; text-align: center; }
-        td { border: 1pt solid #cbd5e1; padding: 8px 5px; vertical-align: top; font-size: 10pt; font-family: Arial, sans-serif; text-align: center; }
-        td.text-left { text-align: left; }
-        .header-title { font-size: 16pt; font-weight: bold; text-align: center; font-family: Arial, sans-serif; text-decoration: underline; }
+        th { background-color: #cbd5e1; font-weight: bold; border: 1pt solid #000; padding: 10px 5px; font-size: 11pt; font-family: Arial, sans-serif; text-align: center; vertical-align: middle; }
+        td { border: 1pt solid #cbd5e1; padding: 8px 5px; vertical-align: middle; font-size: 10pt; font-family: Arial, sans-serif; text-align: center; }
+        .header-title { font-size: 16pt; font-weight: bold; text-align: center; font-family: Arial, sans-serif; }
         .bold { font-weight: bold; }
         @page {
             margin: 0.5in;

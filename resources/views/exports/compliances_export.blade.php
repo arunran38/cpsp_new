@@ -10,7 +10,8 @@
         th, td {
             border: 1px solid #000000;
             padding: 5px;
-            text-align: left;
+            text-align: center;
+            vertical-align: middle;
         }
         th {
             background-color: #f3f4f6;
