@@ -20,6 +20,7 @@
         </div>
 
         <div class="flex items-center gap-3">
+            @if(Auth::user()->canAccess('export_statistics') || Auth::user()->canAccess('export statistics') || Auth::user()->canAccess('access admin dashboard'))
             <a href="{{ route('inward.statistics.export', request()->query()) }}" 
                class="px-4 py-2.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-all flex items-center gap-2 shadow-sm">
                 <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
@@ -30,6 +31,7 @@
                 <i data-lucide="printer" class="w-4 h-4"></i>
                 Print Data Sheet
             </button>
+            @endif
             <a href="{{ route('petitions.index', ['tab' => 'inward']) }}" 
                class="px-4 py-2.5 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-all flex items-center gap-2 shadow-sm">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>

@@ -366,9 +366,22 @@
                             str_contains(strtolower(Auth::user()->currentSeatUser()->seat->seat_name), 'inward')
                         ))
                     );
+
+                    $canAccessInwardEntry = Auth::check() && (
+                        $hasInwardRole ||
+                        Auth::user()->canAccess('inward_form') || 
+                        Auth::user()->canAccess('inward form') || 
+                        Auth::user()->canAccess('access admin dashboard')
+                    );
+
+                    $canAccessInwardStats = Auth::check() && (
+                        Auth::user()->canAccess('inward_statistics') || 
+                        Auth::user()->canAccess('inward statistics') || 
+                        Auth::user()->canAccess('access admin dashboard')
+                    );
                 @endphp
 
-                @if($hasInwardRole)
+                @if($canAccessInwardEntry || $canAccessInwardStats)
                 <!-- Inward Dropdown with Hover & Click -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -401,7 +414,7 @@
                          x-transition:leave-end="slide-down-enter-from"
                          class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
                         
-                        @if($hasInwardRole)
+                        @if($canAccessInwardEntry)
                         <a href="{{ route('inward.enter_petition') }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.enter_petition') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator"></span>
@@ -409,7 +422,7 @@
                         </a>
                         @endif
 
-                        @if($hasInwardRole)
+                        @if($canAccessInwardStats)
                         <a href="{{ route('inward.statistics') }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator"></span>

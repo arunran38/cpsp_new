@@ -49,16 +49,50 @@ class RolesAndPermissionsSeeder extends Seeder
         $inwardFormPermission = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'inward_form']);
         \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'inward form']);
 
+        $inwardStats = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'inward_statistics']);
+        $inwardStatsSpaced = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'inward statistics']);
+        $exportStats = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'export_statistics']);
+        $exportStatsSpaced = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'export statistics']);
+        $filterTransfer = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'filter_transfer']);
+        $filterTransferSpaced = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'filter transfer']);
+
         // റോളുകൾ ഉണ്ടാക്കുന്നു (Create Roles) & Assign Permissions
         $superAdminRole = Role::firstOrCreate(['name' => 'super admin']);
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $cpspRole = Role::firstOrCreate(['name' => 'CPSP']);
         $inwardRole = Role::firstOrCreate(['name' => 'Inward']);
 
-        $inwardRole->givePermissionTo([$viewFileTransfer, $inwardFormPermission]);
+        $inwardRole->givePermissionTo([
+            $viewFileTransfer, 
+            $inwardFormPermission,
+            $inwardStats,
+            $inwardStatsSpaced,
+            $exportStats,
+            $exportStatsSpaced,
+            $filterTransfer,
+            $filterTransferSpaced,
+        ]);
         $cpspRole->givePermissionTo([$viewFileTransfer, $inwardFormPermission]);
-        $adminRole->givePermissionTo([$viewFileTransfer, $inwardFormPermission]);
-        $superAdminRole->givePermissionTo([$viewFileTransfer, $inwardFormPermission]);
+        $adminRole->givePermissionTo([
+            $viewFileTransfer, 
+            $inwardFormPermission,
+            $inwardStats,
+            $inwardStatsSpaced,
+            $exportStats,
+            $exportStatsSpaced,
+            $filterTransfer,
+            $filterTransferSpaced,
+        ]);
+        $superAdminRole->givePermissionTo([
+            $viewFileTransfer, 
+            $inwardFormPermission,
+            $inwardStats,
+            $inwardStatsSpaced,
+            $exportStats,
+            $exportStatsSpaced,
+            $filterTransfer,
+            $filterTransferSpaced,
+        ]);
         // റോളുകൾ ഉണ്ടാക്കുന്നു (Create Roles)
         Role::firstOrCreate(['name' => 'super admin']);
         Role::firstOrCreate(['name' => 'admin']);

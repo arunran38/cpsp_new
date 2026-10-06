@@ -319,24 +319,20 @@
             <!-- Row 2: Three buttons on the left (below title) aligned with Search & Dates on the right -->
             @php
                 $currentUser = Auth::user();
-                $isInwardUser = $currentUser && (
-                    $currentUser->hasRole('inward') || 
-                    $currentUser->hasRole('Inward') || 
-                    ($currentUser->currentSeatUser()?->seat && (
-                        $currentUser->currentSeatUser()->seat->hasRole('inward') || 
-                        $currentUser->currentSeatUser()->seat->hasRole('Inward') || 
-                        str_contains(strtolower($currentUser->currentSeatUser()->seat->seat_name), 'inward')
-                    )) ||
+                $canFilterTransfer = $currentUser && (
+                    $currentUser->canAccess('filter_transfer') || 
+                    $currentUser->canAccess('filter transfer') || 
                     $currentUser->canAccess('access admin dashboard')
                 );
 
-                $filterButtons = ['all' => 'All Petitions'];
-                if ($isInwardUser) {
-                    $filterButtons['transferred'] = 'Transferred';
-                    $filterButtons['returned'] = 'Returned from CPSP';
-                }
+                $filterButtons = [
+                    'all' => 'All Petitions',
+                    'transferred' => 'Transferred',
+                    'returned' => 'Returned from CPSP',
+                ];
             @endphp
             <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pt-1">
+                @if($canFilterTransfer)
                 <!-- Filter Pills: All Petitions, Transferred, Returned from CPSP -->
                 <nav class="flex flex-wrap items-center gap-2" aria-label="Filter inward transactions">
                     @foreach($filterButtons as $filterKey => $filterLabel)
@@ -350,6 +346,9 @@
                         </a>
                     @endforeach
                 </nav>
+                @else
+                <div></div>
+                @endif
 
                 <!-- Search and Transfer-Date Filters (Aligned with Buttons) -->
                 <form method="GET" action="{{ route('inward.enter_petition') }}" class="flex flex-wrap items-end gap-2.5">

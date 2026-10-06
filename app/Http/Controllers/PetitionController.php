@@ -64,6 +64,12 @@ class PetitionController extends Controller
         ]);
         $filter = $filters['filter'] ?? 'all';
 
+        if (!$user->canAccess('filter_transfer') && 
+            !$user->canAccess('filter transfer') && 
+            !$user->canAccess('access admin dashboard')) {
+            $filter = 'all';
+        }
+
         $seats = Seat::where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $units = \App\Models\Unit::orderBy('unit_name')->get();
         $districts = \App\Models\District::orderBy('district_id')->get();
@@ -207,16 +213,11 @@ class PetitionController extends Controller
     {
         $user = Auth::user();
         
-        $hasInwardRole = $user->hasRole('inward') || 
-            $user->hasRole('Inward') || 
-            ($user->currentSeatUser()?->seat && (
-                $user->currentSeatUser()->seat->hasRole('inward') || 
-                $user->currentSeatUser()->seat->hasRole('Inward') || 
-                str_contains(strtolower($user->currentSeatUser()->seat->seat_name), 'inward')
-            )) ||
-            $user->canAccess('access admin dashboard');
+        $canAccessStats = $user->canAccess('inward_statistics') || 
+                          $user->canAccess('inward statistics') || 
+                          $user->canAccess('access admin dashboard');
 
-        if (!$hasInwardRole) {
+        if (!$canAccessStats) {
             abort(403, 'Unauthorized access to Inward Statistics.');
         }
 
@@ -287,6 +288,11 @@ class PetitionController extends Controller
 
         // Handle CSV Export
         if ($request->get('export') === 'csv') {
+            if (!$user->canAccess('export_statistics') && 
+                !$user->canAccess('export statistics') && 
+                !$user->canAccess('access admin dashboard')) {
+                abort(403, 'Unauthorized. Permission export_statistics required to export statistics.');
+            }
             $periodSuffix = '';
             if ($dateFrom && $dateTo) {
                 $periodSuffix = "_{$dateFrom}_to_{$dateTo}";
@@ -356,6 +362,13 @@ class PetitionController extends Controller
      */
     public function inwardStatisticsExport(Request $request): StreamedResponse|View
     {
+        $user = Auth::user();
+        if (!$user->canAccess('export_statistics') && 
+            !$user->canAccess('export statistics') && 
+            !$user->canAccess('access admin dashboard')) {
+            abort(403, 'Unauthorized. Permission export_statistics required to export statistics.');
+        }
+
         $request->merge(['export' => 'csv']);
         return $this->inwardStatistics($request);
     }
