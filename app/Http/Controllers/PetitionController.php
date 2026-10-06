@@ -357,10 +357,19 @@ class PetitionController extends Controller
 
         $results = $petitions->take(10)->get()->map(function ($petition) {
             $complainant = $petition->addresses->where('person_type', 'Complainant')->first();
-            $name = $complainant ? $complainant->person_name : 'No Name';
+            $accused = $petition->addresses->where('person_type', 'Accused')->first();
+            
+            $complainantName = $complainant ? $complainant->person_name : 'N/A';
+            $accusedName = $accused ? $accused->person_name : 'N/A';
+            
             return [
-                'id' => $petition->receipt_no, // We return receipt_no as id because the form submits original_receipt_no
-                'text' => "{$petition->receipt_no} - {$petition->nature_of_petition} ({$name})"
+                'id' => $petition->receipt_no, 
+                'text' => "{$petition->receipt_no} - {$petition->nature_of_petition} ({$complainantName})",
+                'receipt_no' => $petition->receipt_no,
+                'date' => $petition->date_of_petition_received ? date('d-m-Y', strtotime($petition->date_of_petition_received)) : 'N/A',
+                'complainant' => $complainantName,
+                'accused' => $accusedName,
+                'nature' => $petition->nature_of_petition
             ];
         });
 
@@ -434,42 +443,71 @@ class PetitionController extends Controller
         }
 
         $query = Petition::query()->with(['decision', 'addresses.district']);
-
-        // Must match a complainant
-        $query->whereHas('addresses', function ($q) use ($c_phones, $c_names) {
-            $q->where('person_type', 'Complainant');
-            $q->where(function ($sub) use ($c_phones, $c_names) {
-                if (!empty($c_phones)) {
-                    $sub->orWhereIn('phone', $c_phones);
+        
+        $description = $request->input('description');
+        $nature = $request->input('nature_of_petition');
+        
+        $query->where(function ($q) use ($c_phones, $c_names, $a_phones, $a_pens, $a_names, $description, $nature) {
+            
+            // Subquery for Person Matches
+            $q->orWhere(function ($subQ) use ($c_phones, $c_names, $a_phones, $a_pens, $a_names) {
+                // Must match a complainant
+                if (!empty($c_phones) || !empty($c_names)) {
+                    $subQ->whereHas('addresses', function ($q) use ($c_phones, $c_names) {
+                        $q->where('person_type', 'Complainant');
+                        $q->where(function ($sub) use ($c_phones, $c_names) {
+                            if (!empty($c_phones)) {
+                                $sub->orWhereIn('phone', $c_phones);
+                            }
+                            if (!empty($c_names)) {
+                                foreach ($c_names as $name) {
+                                    if (strlen($name) > 3) {
+                                        $sub->orWhere('person_name', 'LIKE', '%' . $name . '%');
+                                    }
+                                }
+                            }
+                        });
+                    });
+                } else {
+                    // If no complainant info provided, force fail this block to prevent matching ALL
+                    $subQ->whereRaw('1 = 0');
                 }
-                if (!empty($c_names)) {
-                    foreach ($c_names as $name) {
-                        if (strlen($name) > 3) {
-                            $sub->orWhere('person_name', 'LIKE', '%' . $name . '%');
-                        }
-                    }
+
+                // Must ALSO match an accused
+                if (!empty($a_phones) || !empty($a_pens) || !empty($a_names)) {
+                    $subQ->whereHas('addresses', function ($q) use ($a_phones, $a_pens, $a_names) {
+                        $q->where('person_type', 'Accused');
+                        $q->where(function ($sub) use ($a_phones, $a_pens, $a_names) {
+                            if (!empty($a_phones)) {
+                                $sub->orWhereIn('phone', $a_phones);
+                            }
+                            if (!empty($a_pens)) {
+                                $sub->orWhereIn('pen_number', $a_pens);
+                            }
+                            if (!empty($a_names)) {
+                                foreach ($a_names as $name) {
+                                    if (strlen($name) > 3) {
+                                        $sub->orWhere('person_name', 'LIKE', '%' . $name . '%');
+                                    }
+                                }
+                            }
+                        });
+                    });
+                } else {
+                    $subQ->whereRaw('1 = 0');
                 }
             });
-        });
 
-        // Must ALSO match an accused
-        $query->whereHas('addresses', function ($q) use ($a_phones, $a_pens, $a_names) {
-            $q->where('person_type', 'Accused');
-            $q->where(function ($sub) use ($a_phones, $a_pens, $a_names) {
-                if (!empty($a_phones)) {
-                    $sub->orWhereIn('phone', $a_phones);
-                }
-                if (!empty($a_pens)) {
-                    $sub->orWhereIn('pen_number', $a_pens);
-                }
-                if (!empty($a_names)) {
-                    foreach ($a_names as $name) {
-                        if (strlen($name) > 3) {
-                            $sub->orWhere('person_name', 'LIKE', '%' . $name . '%');
-                        }
+            // Subquery for AI/Description based Match
+            if (!empty($description) && strlen($description) > 10) {
+                $q->orWhere(function ($subQ) use ($description, $nature) {
+                    $subQ->whereRaw("MATCH(description) AGAINST(? IN NATURAL LANGUAGE MODE)", [$description]);
+                    if (!empty($nature)) {
+                        $subQ->where('nature_of_petition', $nature);
                     }
-                }
-            });
+                });
+            }
+            
         });
 
         $duplicates = $query->orderBy('date_of_petition_received', 'desc')->take(5)->get()->map(function($p) {
@@ -490,6 +528,7 @@ class PetitionController extends Controller
             return [
                 'petition_id' => $p->petition_id,
                 'receipt_no' => $p->receipt_no,
+                'file_no' => $p->file_no,
                 'date' => date('d-m-Y', strtotime($p->date_of_petition_received)),
                 'complainant' => $complainantText,
                 'accused' => $accusedText,

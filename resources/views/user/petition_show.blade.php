@@ -869,163 +869,178 @@
         </div>
         @endif
         
-        <!-- Link Petition Modal -->
+        <!-- Link Petition Modal (Redesigned) -->
         <div x-show="showLinkModal" style="display: none;"
-            class="fixed inset-0 z-50 overflow-y-auto" 
-            aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <!-- Background overlay -->
-                <div x-show="showLinkModal" 
-                    x-transition:enter="ease-out duration-300" 
-                    x-transition:enter-start="opacity-0" 
-                    x-transition:enter-end="opacity-100" 
-                    x-transition:leave="ease-in duration-200" 
-                    x-transition:leave-start="opacity-100" 
-                    x-transition:leave-end="opacity-0" 
-                    class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
-                    @click="showLinkModal = false" aria-hidden="true"></div>
-
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-                <!-- Modal panel -->
-                <div x-show="showLinkModal" 
-                    x-transition:enter="ease-out duration-300" 
-                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
-                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
-                    x-transition:leave="ease-in duration-200" 
-                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
-                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
-                    class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-                    
-                    <div x-data="{
-                            searchQuery: '',
-                            results: [],
-                            isOpen: false,
-                            selectedPetition: '',
-                            isLoading: false,
-                            errorMessage: '',
-                            fetchResults() {
-                                if (this.searchQuery.length < 2) {
-                                    this.results = [];
-                                    this.isOpen = false;
-                                    return;
-                                }
-                                
-                                this.isLoading = true;
-                                this.errorMessage = '';
-                                
-                                fetch(`{{ route('petitions.searchDuplicates') }}?q=${encodeURIComponent(this.searchQuery)}&exclude={{ $petition->petition_id }}`)
-                                    .then(response => {
-                                        if (!response.ok) throw new Error('Network error');
-                                        return response.json();
-                                    })
-                                    .then(data => {
-                                        this.results = data || [];
-                                        this.isOpen = true;
-                                    })
-                                    .catch(error => {
-                                        console.error('Error fetching duplicates:', error);
-                                        this.errorMessage = 'An error occurred while searching.';
-                                        this.results = [];
-                                        this.isOpen = true;
-                                    })
-                                    .finally(() => {
-                                        this.isLoading = false;
-                                    });
-                            },
-                            selectResult(result) {
-                                this.selectedPetition = result.id;
-                                this.searchQuery = result.text;
-                                this.isOpen = false;
-                            },
-                            resetSearch() {
-                                this.selectedPetition = '';
-                                this.searchQuery = '';
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md" 
+            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            
+            <!-- Modal panel -->
+            <div x-show="showLinkModal" @click.stop
+                x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-95 translate-y-4" 
+                class="bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-lg rounded-3xl overflow-visible flex flex-col relative">
+                
+                <div x-data="{
+                        searchQuery: '',
+                        results: [],
+                        isOpen: false,
+                        selectedPetition: '',
+                        isLoading: false,
+                        errorMessage: '',
+                        fetchResults() {
+                            if (this.searchQuery.length < 2) {
                                 this.results = [];
                                 this.isOpen = false;
+                                return;
                             }
-                        }" 
-                        @click.away="isOpen = false"
-                        class="relative w-full text-left"
-                    >
-                        <form action="{{ route('petitions.linkDuplicate', $petition->petition_id) }}" method="POST">
-                            @csrf
-                            <div class="bg-white px-6 pt-8 pb-6 text-center">
-                                
-                                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-6" style="background-color: #ccfbf1;">
-                                    <i data-lucide="link" class="h-8 w-8" style="color: #0f766e;"></i>
-                                </div>
-                                
-                                <h3 class="text-xl font-extrabold text-gray-900 mb-2" id="modal-title">
-                                    Link to Existing Petition
-                                </h3>
-                                
-                                <style>
-                                    .petition-input::placeholder {
-                                        color: #9ca3af !important;
-                                        font-weight: normal;
-                                    }
-                                </style>
-                                <div class="mb-6 max-w-sm mx-auto relative">
-                                    <label for="original_receipt_no" class="block text-sm font-bold text-gray-700 mb-2">Search Petition</label>
-                                    <select name="original_receipt_no" id="petition-search" class="w-full" required></select>
-                                    <input type="hidden" name="original_receipt_no" x-model="selectedPetition">
-                                    
-                                    <div class="relative">
-                                        <input type="text" x-model="searchQuery" 
-                                            @input.debounce.300ms="selectedPetition = ''; fetchResults()" 
-                                            @focus="if(searchQuery.length >= 2 && !selectedPetition) fetchResults()" 
-                                            required autocomplete="off"
-                                            class="focus:ring-2 focus:ring-teal-500 focus:border-teal-500 block w-full shadow-sm sm:text-base border-gray-700 rounded-xl p-3 border text-center transition-shadow text-black petition-input"
-                                            placeholder="Search by Petition No or Name..." style="border-color: #cbd5e1; color: #000000; font-weight: bold;">
-                                        
-                                        <!-- Loading Spinner -->
-                                        <div x-show="isLoading" class="absolute right-3 top-3">
-                                            <svg class="animate-spin h-5 w-5 text-teal-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                        </div>
-                                        
-                                        <!-- Clear Button -->
-                                        <button type="button" x-show="selectedPetition" @click="resetSearch()" class="absolute right-3 top-3 text-gray-400 hover:text-red-500">
-                                            <i data-lucide="x" class="w-5 h-5"></i>
-                                        </button>
-                                    </div>
-                                        
-                                    <!-- Dropdown Results -->
-                                    <div x-show="isOpen && !isLoading" x-transition.opacity
-                                        class="absolute z-50 w-full bg-white border border-gray-300 rounded-xl mt-1 shadow-xl max-h-60 overflow-y-auto text-left" 
-                                        style="display: none;">
-                                        
-                                        <ul x-show="results.length > 0" class="divide-y divide-gray-100">
-                                            <template x-for="result in results" :key="result.id">
-                                                <li @click="selectResult(result)" class="px-4 py-3 hover:bg-teal-50 cursor-pointer transition-colors">
-                                                    <span x-text="result.text" class="text-sm font-semibold text-gray-800 block"></span>
-                                                </li>
-                                            </template>
-                                        </ul>
-                                        
-                                        <div x-show="results.length === 0 && !errorMessage" class="p-4 text-sm text-gray-500 text-center">
-                                            No petitions found.
-                                        </div>
-                                        
-                                        <div x-show="errorMessage" class="p-4 text-sm text-red-500 text-center font-medium" x-text="errorMessage">
-                                        </div>
-                                    </div>
-                                </div>
+                            
+                            this.isLoading = true;
+                            this.errorMessage = '';
+                            
+                            fetch(`{{ route('petitions.searchDuplicates') }}?q=${encodeURIComponent(this.searchQuery)}&exclude={{ $petition->petition_id }}`)
+                                .then(response => {
+                                    if (!response.ok) throw new Error('Network error');
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    this.results = data || [];
+                                    this.isOpen = true;
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching duplicates:', error);
+                                    this.errorMessage = 'An error occurred while searching.';
+                                    this.results = [];
+                                    this.isOpen = true;
+                                })
+                                .finally(() => {
+                                    this.isLoading = false;
+                                });
+                        },
+                        selectResult(result) {
+                            this.selectedPetition = result.id;
+                            this.searchQuery = result.text;
+                            this.isOpen = false;
+                        },
+                        resetSearch() {
+                            this.selectedPetition = '';
+                            this.searchQuery = '';
+                            this.results = [];
+                            this.isOpen = false;
+                        }
+                    }" 
+                    @click.away="isOpen = false"
+                    class="relative w-full text-left"
+                >
+                    <form action="{{ route('petitions.linkDuplicate', $petition->petition_id) }}" method="POST">
+                        @csrf
+                        
+                        <!-- Premium Header -->
+                        <div class="relative overflow-hidden bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 px-8 py-8 rounded-t-3xl text-center">
+                            <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 blur-2xl rounded-full pointer-events-none"></div>
+                            <div class="absolute bottom-0 left-10 w-32 h-32 bg-emerald-400/20 blur-2xl rounded-full pointer-events-none"></div>
+                            
+                            <div class="relative z-10 mx-auto flex items-center justify-center h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-md shadow-inner border border-white/20 mb-4">
+                                <i data-lucide="link" class="h-8 w-8 text-white"></i>
                             </div>
                             
-                            <div class="bg-gray-50/50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-center gap-3 border-t border-gray-100 rounded-b-2xl">
-                                <button type="button" @click="showLinkModal = false; resetSearch()" class="w-full sm:w-auto inline-flex justify-center rounded-xl border shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors" style="border-color: #e2e8f0;">
-                                    Cancel
-                                </button>
-                                <button type="submit" :disabled="!selectedPetition" class="w-full sm:w-auto inline-flex justify-center rounded-xl border border-transparent shadow-md px-6 py-2.5 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" style="background-color: #0d9488;">
-                                    Link Petition
-                                </button>
+                            <h3 class="relative z-10 text-2xl font-black text-white tracking-tight" id="modal-title">
+                                Link to Existing Petition
+                            </h3>
+                            <p class="relative z-10 text-teal-100 text-sm mt-1 font-medium">Search and select the original petition to merge.</p>
+                            
+                            <!-- Close Button -->
+                            <button type="button" @click="showLinkModal = false; resetSearch()" class="absolute top-4 right-4 p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all focus:outline-none">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="bg-white px-8 py-8 text-center">
+                            <style>
+                                .petition-input::placeholder {
+                                    color: #94a3b8 !important;
+                                    font-weight: 500;
+                                }
+                            </style>
+                            <div class="max-w-sm mx-auto relative group">
+                                <label for="original_receipt_no" class="block text-sm font-bold text-slate-700 mb-3 text-left">Search Petition</label>
+                                <input type="hidden" name="original_receipt_no" x-model="selectedPetition">
+                                
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-teal-500 transition-colors"></i>
+                                    </div>
+                                    <input type="text" x-model="searchQuery" 
+                                        @input.debounce.300ms="selectedPetition = ''; fetchResults()" 
+                                        @focus="if(searchQuery.length >= 2 && !selectedPetition) fetchResults()" 
+                                        required autocomplete="off"
+                                        class="pl-11 focus:ring-4 focus:ring-teal-500/20 focus:border-teal-500 block w-full sm:text-base border-slate-300 rounded-xl p-3.5 transition-all text-slate-900 font-semibold petition-input bg-slate-50 hover:bg-white focus:bg-white shadow-sm"
+                                        placeholder="Enter Petition No or Name...">
+                                    
+                                    <!-- Loading Spinner -->
+                                    <div x-show="isLoading" class="absolute right-4 top-3.5">
+                                        <svg class="animate-spin h-5 w-5 text-teal-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </div>
+                                    
+                                    <!-- Clear Button -->
+                                    <button type="button" x-show="selectedPetition" @click="resetSearch()" class="absolute right-4 top-3.5 text-slate-400 hover:text-rose-500 transition-colors bg-white rounded-full">
+                                        <i data-lucide="x-circle" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+                                    
+                                <!-- Dropdown Results -->
+                                <div x-show="isOpen && !isLoading" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-1"
+                                    class="absolute z-50 w-full bg-white border border-slate-200 rounded-xl mt-2 shadow-2xl max-h-64 overflow-y-auto custom-scrollbar text-left" 
+                                    style="display: none;">
+                                    
+                                    <ul x-show="results.length > 0" class="divide-y divide-slate-100 p-1">
+                                        <template x-for="result in results" :key="result.id">
+                                            <li @click="selectResult(result)" class="px-4 py-3 hover:bg-teal-50 rounded-lg cursor-pointer transition-colors group/item flex items-start gap-3 border-b border-slate-50 last:border-0">
+                                                <div class="bg-slate-100 group-hover/item:bg-teal-100 p-1.5 rounded-md text-slate-500 group-hover/item:text-teal-600 transition-colors shrink-0 mt-0.5">
+                                                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex justify-between items-center mb-1">
+                                                        <span class="text-sm font-bold text-slate-800 group-hover/item:text-teal-900" x-text="result.receipt_no"></span>
+                                                        <span class="text-xs font-medium text-slate-500 bg-slate-100 group-hover/item:bg-teal-100/50 px-2 py-0.5 rounded border border-slate-200/60 group-hover/item:border-teal-200/60" x-text="result.date"></span>
+                                                    </div>
+                                                    <div class="text-[13px] text-slate-600 flex flex-col gap-1 mt-1.5">
+                                                        <div class="flex items-start gap-2 truncate">
+                                                            <span class="font-bold text-indigo-700/70 text-[11px] uppercase tracking-wider w-24 shrink-0 mt-0.5">Complainant</span>
+                                                            <span class="font-medium text-slate-700 truncate" x-text="result.complainant"></span>
+                                                        </div>
+                                                        <div class="flex items-start gap-2 truncate">
+                                                            <span class="font-bold text-rose-700/70 text-[11px] uppercase tracking-wider w-24 shrink-0 mt-0.5">Accused</span>
+                                                            <span class="font-medium text-slate-700 truncate" x-text="result.accused"></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                    
+                                    <div x-show="results.length === 0 && !errorMessage" class="p-6 text-sm text-slate-500 text-center flex flex-col items-center gap-2">
+                                        <i data-lucide="search-x" class="w-6 h-6 text-slate-300"></i>
+                                        No petitions found matching your search.
+                                    </div>
+                                    
+                                    <div x-show="errorMessage" class="p-6 text-sm text-rose-500 text-center font-medium bg-rose-50">
+                                        <span x-text="errorMessage"></span>
+                                    </div>
+                                </div>
                             </div>
-                        </form>
-                    </div>
+                        </div>
+                        
+                        <div class="bg-slate-50/80 px-8 py-5 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-slate-100 rounded-b-3xl">
+                            <button type="button" @click="showLinkModal = false; resetSearch()" class="w-full sm:w-auto inline-flex justify-center items-center rounded-xl border border-slate-200 shadow-sm px-6 py-2.5 bg-white text-sm font-bold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 transition-all">
+                                Cancel
+                            </button>
+                            <button type="submit" :disabled="!selectedPetition" class="w-full sm:w-auto inline-flex justify-center items-center gap-2 rounded-xl border border-transparent shadow-md px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 focus:outline-none focus:ring-4 focus:ring-teal-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 hover:-translate-y-0.5 active:translate-y-0">
+                                <i data-lucide="link" class="w-4 h-4"></i> Link Petition
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

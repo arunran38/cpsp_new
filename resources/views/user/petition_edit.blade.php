@@ -363,6 +363,28 @@
             <div x-show="step === 3" x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
                 class="p-8 sm:p-10" style="display: none;">
+                <!-- Duplicate Detection Banner -->
+                <div x-show="duplicates.length > 0 && !linkedPetitionId" x-cloak
+                    class="mb-6 p-4 border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
+                    style="background-color: #fffbeb; border-color: #fde68a;" x-transition>
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5" style="color: #d97706;">
+                            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold" style="color: #92400e;">Potential Duplicates Detected!</h4>
+                            <p class="text-xs mt-1" style="color: #b45309;">We found <span x-text="duplicates.length"
+                                    class="font-bold"></span>
+                                existing petition(s) that look similar to the details you entered.</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="showDuplicateModal = true" style="background-color: #f59e0b; color: white;"
+                        class="whitespace-nowrap text-xs font-bold px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
+                        View & Link Duplicates
+                    </button>
+                </div>
+
+                <input type="hidden" name="linked_petition_id" :value="linkedPetitionId">
 
                 <div class="space-y-8">
                     <template x-for="(acc, index) in accused" :key="acc.id">
@@ -582,7 +604,117 @@
                     </div>
                 </div>
             </div>
+        </div>
 
+        <!-- Duplicate Detection Modal (Redesigned) -->
+        <div x-show="showDuplicateModal" x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div class="bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh]"
+                @click.stop x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-95 translate-y-4">
+                
+                <!-- Premium Header -->
+                <div class="relative overflow-hidden bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 px-8 py-6">
+                    <!-- Background decorative elements -->
+                    <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 blur-2xl rounded-full pointer-events-none"></div>
+                    <div class="absolute bottom-0 left-10 w-32 h-32 bg-indigo-400/20 blur-2xl rounded-full pointer-events-none"></div>
+                    
+                    <div class="relative z-10 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="p-3 bg-white/10 rounded-2xl shadow-inner border border-white/10 backdrop-blur-sm text-indigo-100">
+                                <i data-lucide="copy" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white tracking-tight">Potential Duplicates Found</h3>
+                                <p class="text-indigo-100 text-sm mt-0.5">We found matches based on your recent inputs. Review and link if needed.</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="showDuplicateModal = false"
+                            class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/20">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div class="p-6 sm:p-8 overflow-y-auto custom-scrollbar bg-slate-50/50" style="max-height: calc(90vh - 100px);">
+                    
+                    <div class="grid grid-cols-1 gap-6">
+                        <template x-for="dup in duplicates" :key="dup.petition_id">
+                            <div class="group relative bg-white rounded-2xl border border-slate-200 p-6 flex flex-col xl:flex-row gap-6 items-start xl:items-center justify-between shadow-sm hover:shadow-xl hover:border-indigo-300 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                                <!-- Subtle highlight strip on hover -->
+                                <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                
+                                <div class="flex-1 w-full space-y-5">
+                                    <!-- Top Row: Badges -->
+                                    <div class="flex flex-wrap items-center gap-3">
+                                        <div class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm">
+                                            <i data-lucide="hash" class="w-4 h-4"></i>
+                                            <span class="text-sm font-bold tracking-wide" x-text="dup.receipt_no"></span>
+                                        </div>
+                                        <template x-if="dup.file_no">
+                                            <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm">
+                                                <i data-lucide="folder-open" class="w-4 h-4 text-blue-500"></i>
+                                                <span class="text-sm font-semibold" x-text="dup.file_no"></span>
+                                            </div>
+                                        </template>
+                                        <div class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                                            <i data-lucide="calendar-days" class="w-4 h-4 text-slate-500"></i>
+                                            <span class="text-sm font-semibold" x-text="dup.date"></span>
+                                        </div>
+                                        <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100 shadow-sm">
+                                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Status</span>
+                                            <span class="text-sm font-bold" x-text="dup.status"></span>
+                                        </div>
+                                        <template x-if="dup.decision">
+                                            <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-100 shadow-sm">
+                                                <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Decision</span>
+                                                <span class="text-sm font-bold" x-text="dup.decision"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Middle Row: Complainant and Suspect Details -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="flex items-start gap-3">
+                                            <div class="mt-1 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 border border-blue-200">
+                                                <i data-lucide="user" class="w-4 h-4"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-[11px] font-bold text-blue-500 uppercase tracking-widest">Complainant</p>
+                                                <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.complainant"></p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-start gap-3">
+                                            <div class="mt-1 w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0 border border-rose-200">
+                                                <i data-lucide="user-x" class="w-4 h-4"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-[11px] font-bold text-rose-500 uppercase tracking-widest">Suspect</p>
+                                                <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.accused"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Bottom Row: Description Preview -->
+                                    <div class="bg-gradient-to-r from-slate-50 to-white p-4 rounded-xl border border-slate-100 shadow-inner group-hover:bg-slate-50 transition-colors">
+                                        <p class="text-sm text-slate-600 italic leading-relaxed line-clamp-2">"<span x-text="dup.description"></span>"</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Action Button -->
+                                <div class="w-full xl:w-auto shrink-0 flex items-center">
+                                    <button type="button" @click="linkPetition(dup.petition_id, dup.receipt_no)"
+                                        class="w-full xl:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-teal-600 active:scale-95 transition-all flex justify-center items-center gap-2 group-hover:animate-pulse focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                                        <i data-lucide="link" class="w-4 h-4 transition-transform group-hover:rotate-12"></i> 
+                                        Link & Merge
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
         </form>
     </div>
 
@@ -602,6 +734,90 @@
                 complainants: {!! json_encode($complainants) !!}.length > 0 ? {!! json_encode($complainants) !!} : [{ id: Date.now(), name: '', phone: '', email: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
                 accused: {!! json_encode($accused) !!}.length > 0 ? {!! json_encode($accused) !!} : [{ id: Date.now() + 1, entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
                 deleted_uploads: [],
+
+                // Duplicate Checking State
+                duplicates: [],
+                showDuplicateModal: false,
+                linkedPetitionId: '{{ $petition->linked_petition_id }}' || null,
+                isCheckingDuplicates: false,
+                debounceTimer: null,
+
+                init() {
+                    this.$watch('accused', () => {
+                        if (this.step === 3) this.debouncedCheckDuplicates();
+                    });
+                    this.$watch('complainants', () => {
+                        if (this.step === 3) this.debouncedCheckDuplicates();
+                    });
+                    this.$watch('step', (newStep) => {
+                        if (newStep === 3) this.debouncedCheckDuplicates();
+                    });
+                },
+
+                debouncedCheckDuplicates() {
+                    clearTimeout(this.debounceTimer);
+                    this.debounceTimer = setTimeout(() => {
+                        this.fetchDuplicates();
+                    }, 1000);
+                },
+
+                fetchDuplicates() {
+                    this.isCheckingDuplicates = true;
+                    fetch('{{ route('petitions.checkDuplicates') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            complainants: this.complainants,
+                            accused: this.accused,
+                            description: this.petitionDetails.description,
+                            nature_of_petition: this.petitionDetails.nature
+                        })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            // Filter out the current petition itself from duplicates
+                            this.duplicates = data.filter(d => d.petition_id != {{ $petition->petition_id }});
+                            this.isCheckingDuplicates = false;
+                            
+                            this.$nextTick(() => {
+                                if (typeof lucide !== 'undefined') {
+                                    lucide.createIcons();
+                                }
+                            });
+                        })
+                        .catch(err => {
+                            console.error('Error checking duplicates', err);
+                            this.isCheckingDuplicates = false;
+                        });
+                },
+
+                linkPetition(id, number) {
+                    this.linkedPetitionId = id;
+                    this.showDuplicateModal = false;
+
+                    Swal.fire({
+                        title: 'Petition Linked!',
+                        text: 'Petition is linked to ' + number,
+                        icon: 'success',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#10b981',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            let form = document.getElementById('petitionFormElement');
+                            let redirectInput = document.createElement('input');
+                            redirectInput.type = 'hidden';
+                            redirectInput.name = 'duplicate_link_number';
+                            redirectInput.value = number;
+                            form.appendChild(redirectInput);
+                            form.submit();
+                        }
+                    });
+                },
 
                 removeExistingUpload(id) {
                     if (confirm('Are you sure you want to remove this document? It will be permanently deleted once you update the petition.')) {
