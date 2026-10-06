@@ -1,27 +1,35 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div class="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
-        <div
-            class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
-            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
-                <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
-            </div>
-            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
-                <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
-            </div>
+<div class="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <div class="bg-white px-8 py-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden mb-6">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-600 via-indigo-500 to-teal-500"></div>
 
-            <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
-                <div class="text-center sm:text-left z-10">
-                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
-                        Department Wise Analysis
-                    </h1>
-                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
-                        Statistical overview of petitions grouped by accused departments.
-                    </p>
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100 shadow-sm">
+                <i data-lucide="bar-chart-2" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Department Wise Analysis</h1>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-100 text-teal-800 border border-teal-200">
+                        Admin
+                    </span>
                 </div>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">
+                    Statistical overview of petitions grouped by accused departments.
+                </p>
             </div>
         </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{{ route('admin.dashboard') }}" 
+               class="px-4 py-2.5 text-xs font-semibold text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
 
         <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden mb-6">
             <div class="p-6 bg-slate-50">

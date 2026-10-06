@@ -514,7 +514,7 @@
                 <div x-data="{ 
                         hoverOpen: false,
                         hoverTimeout: null,
-                        reportsOpen: {{ request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') ? 'true' : 'false' }}
+                        reportsOpen: {{ request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') || request()->routeIs('inward.statistics') ? 'true' : 'false' }}
                     }" 
                     @mouseenter="hoverOpen = true; clearTimeout(hoverTimeout)"
                     @mouseleave="hoverTimeout = setTimeout(() => { hoverOpen = false }, 300)"
@@ -524,7 +524,7 @@
                             class="nav-item-transition flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-xl group"
                             :class="(reportsOpen || hoverOpen) ? 'menu-open' : 'inactive-nav'">
                         <div class="flex items-center gap-3">
-                            <i data-lucide="pie-chart" class="w-5 h-5 icon-bounce" :class="(reportsOpen || hoverOpen) || request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') ? 'text-indigo-400' : ''"></i>
+                            <i data-lucide="pie-chart" class="w-5 h-5 icon-bounce" :class="(reportsOpen || hoverOpen) || request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') || request()->routeIs('inward.statistics') ? 'text-indigo-400' : ''"></i>
                             <span>Statistical Reports</span>
                         </div>
                         <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': reportsOpen || hoverOpen }"></i>
@@ -555,6 +555,16 @@
                             <i data-lucide="building-2" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.departments.analysis') ? 'text-teal-400' : '' }}"></i>
                             <span>Department Wise Analysis</span>
                         </a>
+
+                        @if(Auth::user()->canAccess('inward_statistics') || Auth::user()->canAccess('inward statistics') || Auth::user()->canAccess('access admin dashboard'))
+                        <a href="{{ route('inward.statistics') }}" 
+                           @click="reportsOpen = true"
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator"></span>
+                            <i data-lucide="clock" class="w-4 h-4 mr-2 {{ request()->routeIs('inward.statistics') ? 'text-teal-400' : '' }}"></i>
+                            <span>Pendency Details</span>
+                        </a>
+                        @endif
                     </div>
                 </div>
                 @endif

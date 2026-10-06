@@ -44,7 +44,7 @@ class PetitionController extends Controller
     /**
      * Show the inward petition registration form with seat transfer.
      */
-    public function inwardCreate(Request $request): View
+    public function inwardCreate(Request $request): View|string
     {
         $user = Auth::user();
 
@@ -70,7 +70,7 @@ class PetitionController extends Controller
             $filter = 'all';
         }
 
-        $seats = Seat::where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+        $seats = Seat::role('CPSP')->where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $units = \App\Models\Unit::orderBy('unit_name')->get();
         $districts = \App\Models\District::orderBy('district_id')->get();
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
@@ -94,13 +94,99 @@ class PetitionController extends Controller
             $search = trim($request->search);
             $transfersQuery->where(function ($q) use ($search) {
                 $q->where('receipt_no', 'like', "%{$search}%")
+                  ->orWhere('file_no', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
                   ->orWhereHas('seat', function ($sq) use ($search) {
                       $sq->where('seat_name', 'like', "%{$search}%");
                   })
                   ->orWhereHas('addresses', function ($aq) use ($search) {
-                      $aq->where('person_type', 'Complainant')
-                        ->where('person_name', 'like', "%{$search}%");
+                      $aq->where('person_name', 'like', "%{$search}%")
+                         ->orWhere('full_address', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%")
+                         ->orWhere('pen_number', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if (!empty($filters['date_from'])) {
+            $transfersQuery->whereDate('created_at', '>=', $filters['date_from']);
+        }
+
+        if (!empty($filters['date_to'])) {
+            $transfersQuery->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        $countsQuery = clone $transfersQuery;
+        $counts = [
+            'all' => $countsQuery->count(),
+            'transferred' => (clone $countsQuery)->where('is_returned_to_inward', false)->count(),
+            'returned' => (clone $countsQuery)->where('is_returned_to_inward', true)->count(),
+        ];
+
+        if ($filter === 'transferred') {
+            $transfersQuery->where('is_returned_to_inward', false);
+        } elseif ($filter === 'returned') {
+            $transfersQuery->where('is_returned_to_inward', true);
+        }
+
+        $transfers = $transfersQuery->latest('created_at')->paginate(10)->appends($request->query());
+
+        if ($request->ajax()) {
+            return view('inward.partials.inward_table', compact('transfers', 'filter', 'counts'))->render();
+        }
+
+        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments', 'transfers', 'filter', 'counts'));
+    }
+
+    /**
+     * Export inward petitions to Excel.
+     */
+    public function inwardExport(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user->canAccess('inward_form') && 
+            !$user->canAccess('inward form') && 
+            !$user->hasRole('inward') && 
+            !$user->hasRole('Inward') && 
+            !$user->canAccess('access admin dashboard')) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $filters = $request->validate([
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+        ]);
+
+        $filter = $request->query('filter', 'all');
+
+        $transfersQuery = Petition::with(['user', 'seat.activeAssignment.user', 'unit', 'addresses'])
+            ->whereNull('linked_petition_id');
+
+        if (!$user->canAccess('access admin dashboard') || session('is_impersonating_seat')) {
+            $currentSeat = $user->currentSeatUser();
+            $transfersQuery->where(function($q) use ($user, $currentSeat) {
+                $q->where('user_id', $user->user_id);
+                if ($currentSeat) {
+                    $q->orWhere('seat_id', $currentSeat->seat_id);
+                }
+            });
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $transfersQuery->where(function ($q) use ($search) {
+                $q->where('receipt_no', 'like', "%{$search}%")
+                  ->orWhere('file_no', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('seat', function ($sq) use ($search) {
+                      $sq->where('seat_name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('addresses', function ($aq) use ($search) {
+                      $aq->where('person_name', 'like', "%{$search}%")
+                         ->orWhere('full_address', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%")
+                         ->orWhere('pen_number', 'like', "%{$search}%");
                   });
             });
         }
@@ -119,9 +205,18 @@ class PetitionController extends Controller
             $transfersQuery->whereDate('created_at', '<=', $filters['date_to']);
         }
 
-        $transfers = $transfersQuery->latest('created_at')->paginate(10)->appends($request->query());
+        $transfers = $transfersQuery->latest('created_at')->get();
 
-        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments', 'transfers', 'filter'));
+        $filename = 'Inward_Petitions_' . date('Ymd_His') . '.xls';
+        $headers = [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+
+        return response(view('inward.export_excel', compact('transfers'))->render(), 200, $headers);
     }
 
     /**
@@ -253,17 +348,31 @@ class PetitionController extends Controller
         foreach ($seats as $seat) {
             $seatPetitions = $petitions->where('seat_id', $seat->seat_id);
             $totalCount = $seatPetitions->count();
-
-            if ($totalCount > 0 || $request->filled('show_all') || str_contains(strtolower($seat->seat_name), 'cpsp')) {
+            if (str_contains(strtolower($seat->seat_name), 'cpsp')) {
                 $received = $seatPetitions->where('status', Petition::STATUS_RECEIVED)->count();
                 $forwarded = $seatPetitions->where('status', Petition::STATUS_FORWARDED)->count();
                 $vrs = $seatPetitions->where('status', Petition::STATUS_VR_RECEIVED)->count();
                 $decisions = $seatPetitions->whereIn('status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_CLOSED])->count();
+                
+                // Pendency details
+                $totalSent = $totalCount;
+                $processed = $seatPetitions->where('is_cpsp_processed', true)->count();
+                $pending = $seatPetitions->where('is_cpsp_processed', false)->where('is_returned_to_inward', false)->count();
 
                 $totalReceived += $received;
                 $totalForwarded += $forwarded;
                 $totalVrs += $vrs;
                 $totalDecisions += $decisions;
+                
+                // Summary totals for pendency
+                if (!isset($summaryTotals['totalSent'])) {
+                    $summaryTotals['totalSent'] = 0;
+                    $summaryTotals['processed'] = 0;
+                    $summaryTotals['pending'] = 0;
+                }
+                $summaryTotals['totalSent'] += $totalSent;
+                $summaryTotals['processed'] += $processed;
+                $summaryTotals['pending'] += $pending;
 
                 $seatStats[] = [
                     'seat_id' => $seat->seat_id,
@@ -274,17 +383,32 @@ class PetitionController extends Controller
                     'forwarded' => $forwarded,
                     'vrs' => $vrs,
                     'decisions' => $decisions,
+                    // New Pendency Info
+                    'total_sent' => $totalSent,
+                    'processed' => $processed,
+                    'pending' => $pending,
                 ];
             }
         }
 
-        $summaryTotals = [
-            'total' => $totalAllPetitions,
-            'received' => $totalReceived,
-            'forwarded' => $totalForwarded,
-            'vrs' => $totalVrs,
-            'decisions' => $totalDecisions,
-        ];
+        if (!isset($summaryTotals)) {
+            $summaryTotals = [
+                'total' => $totalAllPetitions,
+                'received' => $totalReceived,
+                'forwarded' => $totalForwarded,
+                'vrs' => $totalVrs,
+                'decisions' => $totalDecisions,
+                'totalSent' => 0,
+                'processed' => 0,
+                'pending' => 0,
+            ];
+        } else {
+            $summaryTotals['total'] = $totalAllPetitions;
+            $summaryTotals['received'] = $totalReceived;
+            $summaryTotals['forwarded'] = $totalForwarded;
+            $summaryTotals['vrs'] = $totalVrs;
+            $summaryTotals['decisions'] = $totalDecisions;
+        }
 
         // Handle CSV Export
         if ($request->get('export') === 'csv') {

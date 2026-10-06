@@ -51,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Custom Petition Routes (MUST be before resource route)
         Route::get('/inward/enter-petition', [PetitionController::class, 'inwardCreate'])->name('inward.enter_petition');
+        Route::get('/inward/enter-petition/export', [PetitionController::class, 'inwardExport'])->name('inward.export');
         Route::get('/inward/create', [PetitionController::class, 'inwardCreate'])->name('inward.create');
         Route::get('/inward/transfers', [PetitionController::class, 'inwardTransfers'])->name('inward.transfers');
         Route::get('/inward/statistics', [PetitionController::class, 'inwardStatistics'])->name('inward.statistics');

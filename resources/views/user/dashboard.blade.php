@@ -132,25 +132,6 @@
 
     <!-- Stats Grid -->
    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 p-4">
-    <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'all']) }}" @else href="{{ route('petitions.index', ['tab' => 'all']) }}" @endif
-       class="group relative block p-5 transition-all duration-500 bg-blue-50 border border-blue-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(59,130,246,0.15)] hover:-translate-y-1">
-        <div class="absolute -top-10 -right-10 w-28 h-28 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
-        
-        <div class="flex items-center justify-between relative z-10">
-            <div class="w-11 h-11 flex items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm group-hover:scale-105 transition-transform duration-500">
-                <i data-lucide="file-text" class="w-5 h-5"></i>
-            </div>
-            <span class="px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-blue-700 bg-white/60 backdrop-blur-md rounded-full border border-blue-200/60">
-                Total
-            </span>
-        </div>
-
-        <div class="mt-5 relative z-10">
-            <p class="text-3xl sm:text-4xl font-black text-blue-900 tracking-tight">{{ $totalPetitions }}</p>
-            <h3 class="text-xs font-bold text-blue-700/70 uppercase tracking-wider mt-1.5 truncate" title="Total Petitions">Total Petitions</h3>
-        </div>
-    </a>
-
     <a href="{{ route('petitions.index', ['tab' => 'inward']) }}"
        class="group relative block p-5 transition-all duration-500 bg-teal-50 border border-teal-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(20,184,166,0.15)] hover:-translate-y-1">
         <div class="absolute -top-10 -right-10 w-28 h-28 bg-teal-500/10 rounded-full blur-xl group-hover:bg-teal-500/20 transition-all duration-500"></div>
@@ -167,6 +148,25 @@
         <div class="mt-5 relative z-10">
             <p class="text-3xl sm:text-4xl font-black text-teal-900 tracking-tight">{{ $inwardCount }}</p>
             <h3 class="text-xs font-bold text-teal-700/70 uppercase tracking-wider mt-1.5 truncate" title="Inward Petitions">Inward Petitions</h3>
+        </div>
+    </a>
+
+    <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'all']) }}" @else href="{{ route('petitions.index', ['tab' => 'all']) }}" @endif
+       class="group relative block p-5 transition-all duration-500 bg-blue-50 border border-blue-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(59,130,246,0.15)] hover:-translate-y-1">
+        <div class="absolute -top-10 -right-10 w-28 h-28 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
+        
+        <div class="flex items-center justify-between relative z-10">
+            <div class="w-11 h-11 flex items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm group-hover:scale-105 transition-transform duration-500">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
+            </div>
+            <span class="px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-blue-700 bg-white/60 backdrop-blur-md rounded-full border border-blue-200/60">
+                Processed
+            </span>
+        </div>
+
+        <div class="mt-5 relative z-10">
+            <p class="text-3xl sm:text-4xl font-black text-blue-900 tracking-tight">{{ $totalPetitions }}</p>
+            <h3 class="text-xs font-bold text-blue-700/70 uppercase tracking-wider mt-1.5 truncate" title="Processed Petitions">Processed Petitions</h3>
         </div>
     </a>
 

@@ -42,8 +42,8 @@
             <div class="flex items-center gap-3">
                 <i data-lucide="help-circle" class="w-5 h-5 text-amber-600 shrink-0"></i>
                 <div>
-                    <span class="font-bold text-amber-900 text-sm">ഇത് നിങ്ങളുടെ സീറ്റിലെ ഹർജിയല്ലേ? (Not your seat?)</span>
-                    <p class="text-amber-700 mt-0.5">ഈ ഇൻവേർഡ് ഹർജി നിങ്ങളുടെ സീറ്റുമായി ബന്ധപ്പെട്ടതല്ലെങ്കിൽ, എഡിറ്റ് ചെയ്യാതെ Inward-ലേക്ക് തിരിച്ചയക്കാവുന്നതാണ്.</p>
+                    <span class="font-bold text-amber-900 text-sm">Not your seat?</span>
+                    <p class="text-amber-700 mt-0.5">If this inward petition is not related to your seat, you can return it to Inward without editing.</p>
                 </div>
             </div>
             <button type="button" @click="showReturnModal = true" class="px-4 py-2 text-xs font-bold text-rose-700 bg-rose-100 hover:bg-rose-200 border border-rose-300 rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap">

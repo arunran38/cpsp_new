@@ -90,7 +90,7 @@
             <div class="flex items-center gap-3">
                 <i data-lucide="alert-circle" class="w-5 h-5 text-rose-600 shrink-0"></i>
                 <div>
-                    <span class="font-bold text-rose-900 text-sm">Returned to Inward (Inward-ലേക്ക് തിരിച്ചയച്ച ഹർജി)</span>
+                    <span class="font-bold text-rose-900 text-sm">Returned to Inward</span>
                     <p class="text-rose-700 mt-0.5">
                         Returned on {{ $petition->returned_at?->format('d-m-Y h:i A') }} by {{ $petition->returnedByUser?->name ?? 'CPSP User' }}. 
                         Reason: <strong class="font-semibold">{{ $petition->return_reason }}</strong>
