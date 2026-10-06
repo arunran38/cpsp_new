@@ -410,14 +410,6 @@
                         @endif
 
                         @if($hasInwardRole)
-                        <a href="{{ route('inward.transfers') }}" 
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.transfers') ? 'active-submenu' : 'submenu-link' }}">
-                           <span class="submenu-indicator"></span>
-                           Inward Transferred Petitions
-                        </a>
-                        @endif
-
-                        @if($hasInwardRole)
                         <a href="{{ route('inward.statistics') }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator"></span>
@@ -470,7 +462,7 @@
                         @endif
                         
                         @if(Auth::user()->canAccess('view petitions'))
-                        <a href="{{ route('petitions.index') }}" 
+                        <a href="{{ route('petitions.index', ['tab' => 'inward']) }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator"></span>
                            View Petitions

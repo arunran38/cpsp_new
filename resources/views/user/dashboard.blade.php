@@ -151,7 +151,7 @@
         </div>
     </a>
 
-    <a href="{{ Auth::user()->canAccess('view_file_transfer') || Auth::user()->canAccess('view file transfer') || Auth::user()->hasRole('inward') || Auth::user()->hasRole('Inward') || Auth::user()->canAccess('access admin dashboard') ? route('inward.transfers') : route('petitions.index', ['tab' => 'inward']) }}"
+    <a href="{{ route('petitions.index', ['tab' => 'inward']) }}"
        class="group relative block p-5 transition-all duration-500 bg-teal-50 border border-teal-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(20,184,166,0.15)] hover:-translate-y-1">
         <div class="absolute -top-10 -right-10 w-28 h-28 bg-teal-500/10 rounded-full blur-xl group-hover:bg-teal-500/20 transition-all duration-500"></div>
         
@@ -291,7 +291,7 @@
                 </div>
                 <h2 class="text-base font-bold text-slate-900">Recent Petitions</h2>
             </div>
-            <a href="{{ route('petitions.index') }}" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-colors uppercase tracking-wider">View Full List</a>
+            <a href="{{ route('petitions.index', ['tab' => 'inward']) }}" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-colors uppercase tracking-wider">View Full List</a>
         </div>
         
         <div class="p-0">

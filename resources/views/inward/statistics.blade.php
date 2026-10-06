@@ -20,12 +20,17 @@
         </div>
 
         <div class="flex items-center gap-3">
+            <a href="{{ route('inward.statistics.export', request()->query()) }}" 
+               class="px-4 py-2.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-all flex items-center gap-2 shadow-sm">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+                Export CSV
+            </a>
             <button onclick="window.print()" 
                class="px-4 py-2.5 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2 shadow-sm">
                 <i data-lucide="printer" class="w-4 h-4"></i>
                 Print Data Sheet
             </button>
-            <a href="{{ route('inward.transfers') }}" 
+            <a href="{{ route('petitions.index', ['tab' => 'inward']) }}" 
                class="px-4 py-2.5 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-all flex items-center gap-2 shadow-sm">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 Inward Petitions
@@ -34,44 +39,45 @@
     </div>
 
     <!-- Date Range Filter Form (Print Hidden) -->
-    <div class="print:hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <form method="GET" action="{{ route('inward.statistics') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+    <div class="print:hidden bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <form method="GET" action="{{ route('inward.statistics') }}" class="flex flex-wrap items-end gap-3.5">
             <!-- Date From -->
-            <div>
-                <label for="date_from" class="block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-wider">Date From</label>
-                <div class="relative">
-                    <input type="date" 
-                           name="date_from" 
-                           id="date_from" 
-                           value="{{ $dateFrom }}" 
-                           class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:border-indigo-600 outline-none transition-all">
-                    <i data-lucide="calendar" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                </div>
+            <div class="w-full sm:w-64">
+                <label for="date_from" class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-teal-600"></i>
+                    Date From
+                </label>
+                <input type="date" 
+                       name="date_from" 
+                       id="date_from" 
+                       value="{{ $dateFrom }}" 
+                       class="h-10 w-full px-3.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:border-teal-600 focus:ring-2 focus:ring-teal-500/10 outline-none transition-all">
             </div>
 
             <!-- Date To -->
-            <div>
-                <label for="date_to" class="block text-xs font-semibold text-slate-600 mb-1 uppercase tracking-wider">Date To</label>
-                <div class="relative">
-                    <input type="date" 
-                           name="date_to" 
-                           id="date_to" 
-                           value="{{ $dateTo }}" 
-                           class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:border-indigo-600 outline-none transition-all">
-                    <i data-lucide="calendar" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-                </div>
+            <div class="w-full sm:w-64">
+                <label for="date_to" class="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-teal-600"></i>
+                    Date To
+                </label>
+                <input type="date" 
+                       name="date_to" 
+                       id="date_to" 
+                       value="{{ $dateTo }}" 
+                       class="h-10 w-full px-3.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:border-teal-600 focus:ring-2 focus:ring-teal-500/10 outline-none transition-all">
             </div>
 
             <!-- Filter Actions -->
-            <div class="md:col-span-2 flex items-center gap-3">
+            <div class="flex items-center gap-2 pt-1 sm:pt-0">
                 <button type="submit" 
-                        class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
-                    <i data-lucide="filter" class="w-4 h-4"></i>
+                        class="h-10 px-5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2">
+                    <i data-lucide="filter" class="w-3.5 h-3.5"></i>
                     Apply Filter
                 </button>
                 @if($dateFrom || $dateTo)
                 <a href="{{ route('inward.statistics') }}" 
-                   class="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all flex items-center gap-1.5">
+                   class="h-10 px-4 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5"
+                   title="Reset date filter">
                     <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                     Reset
                 </a>
@@ -131,7 +137,7 @@
                                 </span>
                             </td>
                             <td class="px-5 py-3.5 text-right print:hidden">
-                                <a href="{{ route('inward.transfers', array_merge(request()->query(), ['search' => $stat['seat_name']])) }}" 
+                                <a href="{{ route('petitions.index', array_merge(request()->query(), ['tab' => 'inward', 'search' => $stat['seat_name']])) }}" 
                                    class="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-100 transition-all">
                                     <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                                     View Petitions

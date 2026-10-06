@@ -297,16 +297,17 @@
 
     <!-- Inward Transactions Table (Keep each transaction in the same page) -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6">
-        <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="px-6 py-4 border-b border-slate-200 bg-slate-50/80 space-y-4">
+            <!-- Row 1: Title & Records Count -->
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center font-bold shadow-sm">
+                <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 border border-teal-100 flex items-center justify-center font-bold shadow-sm">
                     <i data-lucide="arrow-right-left" class="w-5 h-5"></i>
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
                         <h3 class="text-base font-bold text-slate-900">Inward Transactions</h3>
                         @if(isset($transfers) && method_exists($transfers, 'total'))
-                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
                                 {{ $transfers->total() }} records
                             </span>
                         @endif
@@ -315,26 +316,73 @@
                 </div>
             </div>
 
-            <!-- Search Inward Transactions -->
-            <form method="GET" action="{{ route('inward.enter_petition') }}" class="flex items-center gap-2">
-                <div class="relative">
-                    <input type="text" 
-                           name="search" 
-                           value="{{ request('search') }}" 
-                           placeholder="Search receipt, complainant..." 
-                           class="w-64 pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none">
-                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2"></i>
-                </div>
-                <button type="submit" class="px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-all flex items-center gap-1">
-                    <i data-lucide="filter" class="w-3 h-3"></i>
-                    Filter
-                </button>
-                @if(request('search'))
-                    <a href="{{ route('inward.enter_petition') }}" class="p-1.5 text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl text-xs" title="Clear">
-                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-                    </a>
-                @endif
-            </form>
+            <!-- Row 2: Three buttons on the left (below title) aligned with Search & Dates on the right -->
+            @php
+                $currentUser = Auth::user();
+                $isInwardUser = $currentUser && (
+                    $currentUser->hasRole('inward') || 
+                    $currentUser->hasRole('Inward') || 
+                    ($currentUser->currentSeatUser()?->seat && (
+                        $currentUser->currentSeatUser()->seat->hasRole('inward') || 
+                        $currentUser->currentSeatUser()->seat->hasRole('Inward') || 
+                        str_contains(strtolower($currentUser->currentSeatUser()->seat->seat_name), 'inward')
+                    )) ||
+                    $currentUser->canAccess('access admin dashboard')
+                );
+
+                $filterButtons = ['all' => 'All Petitions'];
+                if ($isInwardUser) {
+                    $filterButtons['transferred'] = 'Transferred';
+                    $filterButtons['returned'] = 'Returned from CPSP';
+                }
+            @endphp
+            <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pt-1">
+                <!-- Filter Pills: All Petitions, Transferred, Returned from CPSP -->
+                <nav class="flex flex-wrap items-center gap-2" aria-label="Filter inward transactions">
+                    @foreach($filterButtons as $filterKey => $filterLabel)
+                        <a href="{{ route('inward.enter_petition', array_merge(request()->except(['page', 'filter']), ['filter' => $filterKey])) }}"
+                           @class([
+                               'h-9 px-3.5 inline-flex items-center text-xs font-semibold rounded-xl border transition-all shadow-sm',
+                               'bg-teal-700 text-white border-teal-700 shadow-sm' => $filter === $filterKey,
+                               'bg-white text-blue-600 border-blue-200 hover:bg-blue-50/60' => $filter !== $filterKey,
+                           ])>
+                            {{ $filterLabel }}
+                        </a>
+                    @endforeach
+                </nav>
+
+                <!-- Search and Transfer-Date Filters (Aligned with Buttons) -->
+                <form method="GET" action="{{ route('inward.enter_petition') }}" class="flex flex-wrap items-end gap-2.5">
+                    <input type="hidden" name="filter" value="{{ $filter }}">
+                    <div class="relative">
+                        <input type="text"
+                               name="search"
+                               value="{{ request('search') }}"
+                               placeholder="Search receipt, complainant..."
+                               class="h-9 w-56 sm:w-64 pl-8 pr-3 text-xs bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+                    </div>
+                    <label class="flex flex-col gap-1 text-[10px] font-semibold text-blue-600">
+                        Transfer date from
+                        <input type="date" name="date_from" value="{{ request('date_from') }}"
+                               class="h-9 px-2.5 text-xs font-normal bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none">
+                    </label>
+                    <label class="flex flex-col gap-1 text-[10px] font-semibold text-blue-600">
+                        Transfer date to
+                        <input type="date" name="date_to" value="{{ request('date_to') }}"
+                               class="h-9 px-2.5 text-xs font-normal bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none">
+                    </label>
+                    <button type="submit" class="h-9 px-4 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-sm transition-all inline-flex items-center gap-1.5">
+                        <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                        Filter
+                    </button>
+                    @if(request()->hasAny(['search', 'date_from', 'date_to']))
+                        <a href="{{ route('inward.enter_petition', ['filter' => $filter]) }}" class="h-9 w-9 inline-flex items-center justify-center text-slate-500 hover:text-slate-700 bg-slate-100 rounded-xl text-xs transition-colors" title="Clear search and dates">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        </a>
+                    @endif
+                </form>
+            </div>
         </div>
 
         <div class="overflow-x-auto">
@@ -344,6 +392,7 @@
                         <th class="px-5 py-3 text-center w-12">#</th>
                         <th class="px-5 py-3">Receipt / Inward No</th>
                         <th class="px-5 py-3">Date of Receipt</th>
+                        <th class="px-5 py-3">Transferred On</th>
                         <th class="px-5 py-3">Complainant</th>
                         <th class="px-5 py-3">Mode of Receipt</th>
                         <th class="px-5 py-3">Target Concerned Seat</th>
@@ -367,6 +416,9 @@
                             </td>
                             <td class="px-5 py-3.5 font-medium text-slate-700 whitespace-nowrap">
                                 {{ \Carbon\Carbon::parse($item->date_of_petition_received)->format('d-m-Y') }}
+                            </td>
+                            <td class="px-5 py-3.5 font-medium text-slate-700 whitespace-nowrap">
+                                {{ $item->created_at?->format('d-m-Y') }}
                             </td>
                             <td class="px-5 py-3.5">
                                 <span class="font-semibold text-slate-900 block">{{ $complainant?->person_name ?? 'N/A' }}</span>
@@ -417,7 +469,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-10 text-center text-slate-400">
+                            <td colspan="9" class="px-6 py-10 text-center text-slate-400">
                                 <div class="flex flex-col items-center justify-center gap-2">
                                     <i data-lucide="inbox" class="w-7 h-7 text-slate-300"></i>
                                     <p class="font-medium text-slate-500">No inward petition transactions recorded yet.</p>

@@ -32,17 +32,10 @@
 
         <!-- Unified Tabs -->
         <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl mb-6 w-fit border border-slate-200 shadow-sm">
-            @if(Auth::check() && (Auth::user()->canAccess('view_file_transfer') || Auth::user()->canAccess('view file transfer') || Auth::user()->hasRole('inward') || Auth::user()->hasRole('Inward') || Auth::user()->canAccess('access admin dashboard')))
-                <a href="{{ route('inward.transfers') }}"
-                    class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('inward.transfers') || $tab === 'inward' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
-                    Inward Petition
-                </a>
-            @else
-                <a href="{{ route('petitions.index', ['tab' => 'inward']) }}"
-                    class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'inward' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
-                    Inward Petition
-                </a>
-            @endif
+            <a href="{{ route('petitions.index', ['tab' => 'inward']) }}"
+                class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'inward' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
+                Inward Petition
+            </a>
             <a href="{{ route('petitions.index', ['tab' => 'all']) }}"
                 class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'all' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
                 All Petitions

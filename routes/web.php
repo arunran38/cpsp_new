@@ -52,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/inward/create', [PetitionController::class, 'inwardCreate'])->name('inward.create');
         Route::get('/inward/transfers', [PetitionController::class, 'inwardTransfers'])->name('inward.transfers');
         Route::get('/inward/statistics', [PetitionController::class, 'inwardStatistics'])->name('inward.statistics');
+        Route::get('/inward/statistics/export', [PetitionController::class, 'inwardStatisticsExport'])->name('inward.statistics.export');
         Route::post('/petitions/check-petition-no', [PetitionController::class, 'checkPetitionNo'])->name('petitions.checkPetitionNo');
         Route::post('/petitions/check-file-no', [PetitionController::class, 'checkFileNo'])->name('petitions.checkFileNo');
         Route::post('/petitions/check-duplicates', [PetitionController::class, 'checkDuplicates'])->name('petitions.checkDuplicates');
