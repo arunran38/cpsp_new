@@ -31,29 +31,30 @@
         </div>
 
         <!-- Unified Tabs -->
-        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl mb-6 w-fit border border-slate-200 shadow-sm">
-            <a href="{{ route('petitions.index', ['tab' => 'inward']) }}"
-                class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'inward' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
-                Inward Petition
+        <div
+            class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 p-1.5 rounded-2xl mb-6 w-full bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+            <a href="{{ route('inward.enter_petition') }}"
+                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'inward' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                Inward Petitions
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'all']) }}"
-                class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'all' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
+                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'all' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                 All Petitions
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'received']) }}"
-                class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'received' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
+                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'received' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                 New Petitions
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'forwarded']) }}"
-                class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'forwarded' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
+                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'forwarded' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                 Forwarded Petitions
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'vrs']) }}"
-                class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'vrs' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
+                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'vrs' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                 Verification Reports Received
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'decisions']) }}"
-                class="px-6 py-2.5 rounded-xl text-sm font-bold transition-all {{ $tab === 'decisions' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50' }}">
+                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'decisions' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                 Final Decisions
             </a>
         </div>
@@ -61,7 +62,7 @@
         @if($tab === 'decisions')
             <!-- Sub-Tabs for Final Decisions -->
             <div
-                class="flex flex-wrap items-center gap-2 mb-6 p-1 bg-slate-50/50 rounded-2xl border border-slate-200 animate-in fade-in slide-in-from-top-2 duration-300">
+                class="flex flex-wrap items-center justify-center gap-2 mb-6 p-1.5 bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] animate-in fade-in slide-in-from-top-2 duration-300">
                 @php
                     $statuses = [
                         'All' => null,
@@ -70,6 +71,7 @@
                         'PE' => 'PE',
                         'SC' => 'SC',
                         'CV' => 'CV',
+                        'Internal Vigilance' => 'IV',
                         'ICell' => 'ICell',
                         'Closed' => 'Closed',
                         'Sent to Govt' => 'Sent to Govt'
@@ -77,7 +79,7 @@
                 @endphp
                 @foreach($statuses as $label => $value)
                     <a href="{{ route('petitions.index', ['tab' => 'decisions', 'status' => $value]) }}"
-                        class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all border {{ request('status') == $value ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50' }}">
+                        class="px-5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-300 {{ request('status') == $value ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] border border-emerald-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                         {{ $label }}
                     </a>
                 @endforeach
@@ -167,41 +169,41 @@
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 
                     <div x-data="{ 
-                                    action: '', 
-                                    fileNo: '', 
-                                    fileNoError: '',
-                                    checkEmpty() {
-                                        if (!this.fileNo.trim()) {
-                                            this.fileNoError = 'this field is required';
-                                        } else {
-                                            this.fileNoError = '';
-                                        }
-                                    },
-                                    async checkFileNoUniqueness() {
-                                        if (!this.fileNo.trim()) {
-                                            this.fileNoError = 'this field is required';
-                                            return;
-                                        }
-                                        try {
-                                            const response = await fetch('/petitions/check-file-no', {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Content-Type': 'application/json',
-                                                    'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
-                                                },
-                                                body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
-                                            });
-                                            const data = await response.json();
-                                            if (data.exists) {
-                                                this.fileNoError = 'File number already exists';
-                                            } else {
-                                                this.fileNoError = '';
+                                            action: '', 
+                                            fileNo: '', 
+                                            fileNoError: '',
+                                            checkEmpty() {
+                                                if (!this.fileNo.trim()) {
+                                                    this.fileNoError = 'this field is required';
+                                                } else {
+                                                    this.fileNoError = '';
+                                                }
+                                            },
+                                            async checkFileNoUniqueness() {
+                                                if (!this.fileNo.trim()) {
+                                                    this.fileNoError = 'this field is required';
+                                                    return;
+                                                }
+                                                try {
+                                                    const response = await fetch('/petitions/check-file-no', {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Content-Type': 'application/json',
+                                                            'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
+                                                        },
+                                                        body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
+                                                    });
+                                                    const data = await response.json();
+                                                    if (data.exists) {
+                                                        this.fileNoError = 'File number already exists';
+                                                    } else {
+                                                        this.fileNoError = '';
+                                                    }
+                                                } catch (error) {
+                                                    console.error(error);
+                                                }
                                             }
-                                        } catch (error) {
-                                            console.error(error);
-                                        }
-                                    }
-                                }" class="space-y-4">
+                                        }" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1">File Number <span
@@ -249,10 +251,11 @@
 
                         <div x-show="action === 'Close' || action === 'Sent_to_Govt'" x-cloak class="pt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Directorate Order Number</label>
-                            <input type="text" name="directorate_order_number" 
+                            <input type="text" name="directorate_order_number"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 mb-3"
-                                placeholder="Order Number" x-bind:required="action === 'Close' || action === 'Sent_to_Govt'">
-                                
+                                placeholder="Order Number"
+                                x-bind:required="action === 'Close' || action === 'Sent_to_Govt'">
+
                             <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order</label>
                             <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
                                 class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
@@ -320,6 +323,7 @@
                                 'PE' => 'Preliminary Enquiry (PE)',
                                 'SC' => 'Surprise Check (SC)',
                                 'CV' => 'Confidential Verification (CV)',
+                                'IV' => 'Internal Vigilance (IV)',
                                 'ICell' => 'Intelligence Cell (I Cell)',
                                 'Closed' => 'Closed',
                                 'Sent to Govt' => 'Sent to Govt'
@@ -383,6 +387,7 @@
                                 'PE' => 'Preliminary Enquiry (PE)',
                                 'SC' => 'Surprise Check (SC)',
                                 'CV' => 'Confidential Verification (CV)',
+                                'IV' => 'Internal Vigilance (IV)',
                                 'ICell' => 'Intelligence Cell (I Cell)',
                                 'Closed' => 'Closed',
                                 'Sent to Govt' => 'Sent to Govt'
@@ -401,7 +406,7 @@
                     <div class="grid grid-cols-1 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Directorate Order Number</label>
-                            <input type="text" name="directorate_order_number" 
+                            <input type="text" name="directorate_order_number"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-slate-800"
                                 placeholder="Order Number" required>
                         </div>

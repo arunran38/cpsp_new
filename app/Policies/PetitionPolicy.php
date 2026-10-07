@@ -29,7 +29,7 @@ class PetitionPolicy
      */
     public function create(User $user): bool
     {
-        return true;
+        return $user->canAccess('create petitions');
     }
 
     /**
@@ -37,6 +37,9 @@ class PetitionPolicy
      */
     public function update(User $user, Petition $petition): bool
     {
+        if (!$user->canAccess('update petitions')) {
+            return false;
+        }
         return $this->authorize($user, $petition);
     }
 
@@ -45,8 +48,7 @@ class PetitionPolicy
      */
     public function delete(User $user, Petition $petition): bool
     {
-        // CPSP users / non-admin users cannot delete petitions forwarded from Inward
-        if ($petition->isFromInward() && !$user->canAccess('access admin dashboard')) {
+        if (!$user->canAccess('delete petitions')) {
             return false;
         }
 
@@ -58,11 +60,6 @@ class PetitionPolicy
      */
     private function authorize(User $user, Petition $petition): bool
     {
-        // 1. Admin can access everything unless impersonating
-        if ($user->canAccess('access admin dashboard') && !session('is_impersonating_seat')) {
-            return true;
-        }
-
         if ($user->canAccess('view all petitions')) {
             return true;
         }

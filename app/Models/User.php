@@ -104,26 +104,30 @@ class User extends Authenticatable
      */
     public function canAccess(string $permission): bool
     {
-        // If they are NOT impersonating a seat, check their personal User permissions first
-        if (!session('is_impersonating_seat')) {
-            try {
-                if ($this->hasPermissionTo($permission)) {
-                    return true;
-                }
-            } catch (\Exception $e) {
-                // Log or ignore
-            }
-        }
-
         $currentSeatUser = $this->currentSeatUser();
         $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
 
-        if (!$currentSeat) {
+        // If sitting in a seat, the seat's permissions govern access (except for admin dashboard)
+        if ($currentSeat && !session('is_impersonating_seat')) {
+            try {
+                if ($currentSeat->hasPermissionTo($permission)) {
+                    return true;
+                }
+            } catch (\Exception $e) { }
+
+            // Still allow global admin dashboard access if the user has it personally
+            if ($permission === 'access admin dashboard') {
+                try {
+                    return $this->hasPermissionTo($permission);
+                } catch (\Exception $e) { }
+            }
+
             return false;
         }
 
+        // If not in a seat (or impersonating), fallback to personal permissions
         try {
-            return $currentSeat->hasPermissionTo($permission);
+            return $this->hasPermissionTo($permission);
         } catch (\Exception $e) {
             return false;
         }

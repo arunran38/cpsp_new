@@ -1,5 +1,5 @@
 @extends(auth()->user()->canAccess('access admin dashboard') && !session('is_impersonating_seat') ? 'layouts.admin' : 'layouts.user')
-@section('container_width', 'max-w-full')
+@section('container_width', 'max-w-7xl')
 
 @section('content')
 <div class="space-y-6">
@@ -20,76 +20,74 @@
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 relative z-10">
-            @if(Auth::user()->canAccess('export_statistics') || Auth::user()->canAccess('export statistics') || Auth::user()->canAccess('access admin dashboard'))
-            <a href="{{ route('inward.statistics.export', request()->query()) }}" 
-               class="px-4 py-2.5 text-xs font-bold text-teal-700 bg-white border-2 border-teal-100 rounded-xl hover:bg-teal-50 hover:border-teal-200 transition-all flex items-center gap-2 shadow-sm focus:ring-4 focus:ring-teal-50 outline-none">
-                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-                Export CSV
-            </a>
-            <button onclick="window.print()" 
-               class="px-4 py-2.5 text-xs font-bold text-slate-700 bg-white border-2 border-slate-200 rounded-xl hover:bg-slate-50 transition-all flex items-center gap-2 shadow-sm focus:ring-4 focus:ring-slate-50 outline-none">
-                <i data-lucide="printer" class="w-4 h-4"></i>
-                Print Report
-            </button>
-            @endif
-            <a href="{{ route('petitions.index', ['tab' => 'inward']) }}" 
-               class="px-5 py-2.5 text-xs font-bold text-white bg-slate-900 border-2 border-transparent rounded-xl hover:bg-slate-800 transition-all flex items-center gap-2 shadow-md shadow-slate-900/20 focus:ring-4 focus:ring-slate-200 outline-none">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                Back to Petitions
-            </a>
-        </div>
+
     </div>
 
     <!-- Date Range Filter Form (Print Hidden) -->
-    <div class="print:hidden bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10">
-        <form method="GET" action="{{ route('inward.statistics') }}" class="flex flex-wrap items-end gap-5">
-            <!-- Date From -->
-            <div class="w-full sm:w-64">
-                <label for="date_from" class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider flex items-center gap-2">
-                    <div class="p-1 bg-teal-50 rounded-md"><i data-lucide="calendar" class="w-3.5 h-3.5 text-teal-600"></i></div>
-                    Date From
-                </label>
-                <div class="relative">
-                    <input type="date" 
-                           name="date_from" 
-                           id="date_from" 
-                           value="{{ $dateFrom }}" 
-                           class="h-11 w-full px-4 text-sm font-medium bg-slate-50/50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all shadow-inner">
+    <div class="print:hidden bg-white py-4 px-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10">
+        <form method="GET" action="{{ route('inward.statistics') }}" class="flex flex-col md:flex-row md:items-end justify-between gap-5 w-full">
+            
+            <div class="flex flex-wrap items-end gap-5">
+                <!-- Date From -->
+                <div class="w-full sm:w-56">
+                    <label for="date_from" class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="calendar" class="w-4 h-4 text-teal-600"></i>
+                        Date From
+                    </label>
+                    <div class="relative">
+                        <input type="date" 
+                               name="date_from" 
+                               id="date_from" 
+                               value="{{ $dateFrom }}" 
+                               class="h-10 w-full px-4 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all">
+                    </div>
+                </div>
+
+                <!-- Date To -->
+                <div class="w-full sm:w-56">
+                    <label for="date_to" class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="calendar" class="w-4 h-4 text-teal-600"></i>
+                        Date To
+                    </label>
+                    <div class="relative">
+                        <input type="date" 
+                               name="date_to" 
+                               id="date_to" 
+                               value="{{ $dateTo }}" 
+                               class="h-10 w-full px-4 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all">
+                    </div>
+                </div>
+
+                <!-- Filter Actions -->
+                <div class="flex items-center gap-3">
+                    <button type="submit" 
+                            class="h-10 px-5 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 outline-none focus:ring-4 focus:ring-slate-900/20">
+                        <i data-lucide="filter" class="w-4 h-4 text-teal-400"></i>
+                        Apply Filter
+                    </button>
+                    
+                    @if($dateFrom || $dateTo)
+                    <a href="{{ route('inward.statistics') }}" 
+                       class="h-10 px-4 text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-xl transition-all flex items-center gap-2 outline-none focus:ring-4 focus:ring-slate-100"
+                       title="Reset date filter">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        Reset
+                    </a>
+                    @endif
                 </div>
             </div>
 
-            <!-- Date To -->
-            <div class="w-full sm:w-64">
-                <label for="date_to" class="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider flex items-center gap-2">
-                    <div class="p-1 bg-teal-50 rounded-md"><i data-lucide="calendar" class="w-3.5 h-3.5 text-teal-600"></i></div>
-                    Date To
-                </label>
-                <div class="relative">
-                    <input type="date" 
-                           name="date_to" 
-                           id="date_to" 
-                           value="{{ $dateTo }}" 
-                           class="h-11 w-full px-4 text-sm font-medium bg-slate-50/50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all shadow-inner">
-                </div>
-            </div>
-
-            <!-- Filter Actions -->
-            <div class="flex items-center gap-3 pt-2 sm:pt-0">
-                <button type="submit" 
-                        class="h-11 px-6 text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-lg shadow-teal-600/20 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2 outline-none focus:ring-4 focus:ring-teal-500/20">
-                    <i data-lucide="filter" class="w-4 h-4"></i>
-                    Apply Filter
-                </button>
-                @if($dateFrom || $dateTo)
-                <a href="{{ route('inward.statistics') }}" 
-                   class="h-11 px-5 text-sm font-bold text-slate-600 bg-white border-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-xl transition-all flex items-center gap-2 outline-none focus:ring-4 focus:ring-slate-100"
-                   title="Reset date filter">
-                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                    Reset
+            <!-- Export Actions -->
+            <div class="flex items-center gap-3 mt-3 md:mt-0">
+                @if(Auth::user()->canAccess('export_statistics') || Auth::user()->canAccess('export statistics') || Auth::user()->canAccess('access admin dashboard'))
+                <a href="{{ route('inward.statistics.export', request()->query()) }}" 
+                   class="h-10 px-5 text-sm font-bold text-teal-700 bg-teal-50 border border-teal-100 hover:bg-teal-100 hover:border-teal-200 rounded-xl transition-all flex items-center gap-2 outline-none focus:ring-4 focus:ring-teal-500/20 shadow-sm whitespace-nowrap">
+                    <i data-lucide="file-spreadsheet" class="w-4.5 h-4.5"></i>
+                    Export Excel
                 </a>
                 @endif
             </div>
+
         </form>
     </div>
 
@@ -112,11 +110,7 @@
                     <p class="text-sm text-slate-500 mt-1 font-medium">Overall petition summary assigned to CPSP seats.</p>
                 @endif
             </div>
-            <div class="print:hidden flex items-center gap-2">
-                <span class="px-3 py-1.5 bg-teal-50 text-teal-700 rounded-lg border border-teal-100 text-xs font-bold uppercase tracking-wider">
-                    Data Sheet
-                </span>
-            </div>
+
         </div>
 
         <div class="overflow-x-auto">
@@ -126,10 +120,11 @@
                         <th class="px-5 py-4">Concerned Seat</th>
                         <th class="px-5 py-4">Seat Occupant</th>
                         <th class="px-4 py-4 text-center">Total Inward</th>
+                        @if(auth()->user()->canAccess('view processed statistics'))
                         <th class="px-4 py-4 text-center">Processed</th>
                         <th class="px-4 py-4 text-center">Pending</th>
                         <th class="px-6 py-4 w-40">Progress</th>
-                        <th class="px-5 py-4 text-right print:hidden">Action</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-sm">
@@ -142,19 +137,23 @@
                                 {{ $stat['occupant'] }}
                             </td>
                             <td class="px-4 py-4 text-center">
-                                <span class="font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
+                                <a href="{{ route('petitions.index', ['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to')]) }}" 
+                                   class="font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-indigo-700 px-2.5 py-0.5 rounded border border-slate-200 transition-colors block cursor-pointer text-center">
                                     {{ $stat['total_sent'] }}
-                                </span>
+                                </a>
                             </td>
+                            @if(auth()->user()->canAccess('view processed statistics'))
                             <td class="px-4 py-4 text-center">
-                                <span class="font-bold text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded border border-teal-200">
+                                <a href="{{ route('petitions.index', ['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'All_Final_Decisions']) }}"
+                                   class="font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 hover:text-teal-900 px-2.5 py-0.5 rounded border border-teal-200 transition-colors block cursor-pointer text-center">
                                     {{ $stat['processed'] }}
-                                </span>
+                                </a>
                             </td>
                             <td class="px-4 py-4 text-center">
-                                <span class="font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded border border-rose-200">
+                                <a href="{{ route('petitions.index', ['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending']) }}"
+                                   class="font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-900 px-2.5 py-0.5 rounded border border-rose-200 transition-colors block cursor-pointer text-center">
                                     {{ $stat['pending'] }}
-                                </span>
+                                </a>
                             </td>
                             <td class="px-6 py-4">
                                 @php
@@ -167,13 +166,7 @@
                                     <span class="text-[10px] font-bold text-slate-500 w-8 text-right">{{ $percent }}%</span>
                                 </div>
                             </td>
-                            <td class="px-5 py-4 text-right print:hidden">
-                                <a href="{{ route('petitions.index', array_merge(request()->query(), ['tab' => 'inward', 'search' => $stat['seat_name']])) }}" 
-                                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-600 bg-white hover:text-teal-700 hover:bg-teal-50 hover:border-teal-200 rounded-lg border border-slate-200 shadow-sm transition-all focus:ring-2 focus:ring-teal-100 outline-none">
-                                    <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                                    View
-                                </a>
-                            </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>
@@ -193,14 +186,21 @@
                         <td colspan="2" class="px-5 py-5 text-right uppercase tracking-wider font-extrabold text-xs text-slate-300">
                             Pendency Details (Total Summary):
                         </td>
-                        <td class="px-4 py-5 text-center font-black text-lg text-white">
-                            {{ $summaryTotals['totalSent'] }}
+                        <td class="px-4 py-5 text-center font-black text-lg text-white hover:text-indigo-300 transition-colors">
+                            <a href="{{ route('petitions.index', ['date_from' => request('date_from'), 'date_to' => request('date_to')]) }}" class="block">
+                                {{ $summaryTotals['totalSent'] }}
+                            </a>
                         </td>
-                        <td class="px-4 py-5 text-center font-black text-lg text-emerald-400">
-                            {{ $summaryTotals['processed'] }}
+                        @if(auth()->user()->canAccess('view processed statistics'))
+                        <td class="px-4 py-5 text-center font-black text-lg text-emerald-400 hover:text-emerald-300 transition-colors">
+                            <a href="{{ route('petitions.index', ['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'All_Final_Decisions']) }}" class="block">
+                                {{ $summaryTotals['processed'] }}
+                            </a>
                         </td>
-                        <td class="px-4 py-5 text-center font-black text-lg text-rose-400">
-                            {{ $summaryTotals['pending'] }}
+                        <td class="px-4 py-5 text-center font-black text-lg text-rose-400 hover:text-rose-300 transition-colors">
+                            <a href="{{ route('petitions.index', ['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending']) }}" class="block">
+                                {{ $summaryTotals['pending'] }}
+                            </a>
                         </td>
                         <td class="px-6 py-5">
                             @php
@@ -213,7 +213,7 @@
                                 <span class="text-[10px] font-bold text-slate-300 w-8 text-right">{{ $totalPercent }}%</span>
                             </div>
                         </td>
-                        <td class="print:hidden"></td>
+                        @endif
                     </tr>
                 </tfoot>
             </table>

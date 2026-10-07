@@ -491,7 +491,7 @@
                                                 placeholder="Select Designation" />
                                         </div>
                                         <div>
-                                            <x-searchable-select label="Department"
+                                            <x-searchable-select label='Department <span class="text-rose-500" x-show="acc.name.trim() !== \'\'">*</span>'
                                                 x-bind:name="`accused[${index}][department_id]`" x-model="acc.department_id"
                                                 :options="$departments->pluck('department_name', 'id')->toArray()"
                                                 placeholder="Select Department" />
@@ -878,7 +878,11 @@
                             return false;
                         }
                     } else if (step === 3) {
-                        // Suspect can be unknown or optional for initial inward petitions
+                        const invalidDept = this.accused.some(a => a && a.name && a.name.trim() !== '' && !a.department_id);
+                        if (invalidDept) {
+                            alert("The department field is mandatory when suspect name is entered.");
+                            return false;
+                        }
                     }
                     return true;
                 },

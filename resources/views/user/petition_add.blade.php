@@ -406,7 +406,7 @@
                                         placeholder="Select Designation" />
                                 </div>
                                 <div>
-                                    <x-searchable-select label="Department" x-bind:name="`accused[${index}][department_id]`"
+                                    <x-searchable-select label='Department <span class="text-rose-500" x-show="acc.name.trim() !== \'\'">*</span>' x-bind:name="`accused[${index}][department_id]`"
                                         x-model="acc.department_id" :options="$departments->pluck('department_name', 'id')->toArray()" placeholder="Select Department" />
                                 </div>
                             </div>
@@ -1044,6 +1044,15 @@
 
                             // For Step 2 and Step 3, skip required validation but still check format
                             if (step === 2 || step === 3) {
+                                if (step === 3 && el.name.includes('[department_id]')) {
+                                    const match = el.name.match(/accused\[(\d+)\]\[department_id\]/);
+                                    if (match) {
+                                        const index = parseInt(match[1]);
+                                        if (this.accused[index] && this.accused[index].name.trim() !== '' && !el.value) {
+                                            customError = 'The department field is mandatory when accused name is entered.';
+                                        }
+                                    }
+                                }
                                 // Only validate format, not required status
                                 if (customError) {
                                     isValid = false;

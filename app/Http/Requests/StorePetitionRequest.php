@@ -39,7 +39,7 @@ class StorePetitionRequest extends FormRequest
             'accused.*.entity_type' => 'required|in:Person,Firm',
             'accused.*.name' => 'required|string',
             'accused.*.designation_id' => 'nullable|exists:designation_lists,id',
-            'accused.*.department_id' => 'nullable|exists:department_lists,id',
+            'accused.*.department_id' => 'required_with:accused.*.name|exists:department_lists,id',
             'accused.*.phone' => 'nullable|string',
             'accused.*.pen_number' => 'nullable|digits_between:6,7',
             'accused.*.addresses' => 'nullable|array',
@@ -54,6 +54,7 @@ class StorePetitionRequest extends FormRequest
         return [
             'date_of_petition_received.before_or_equal' => 'Date cannot be in the future.',
             'accused.*.pen_number.digits_between' => 'The PEN number must be either 6 or 7 digits.',
+            'accused.*.department_id.required_with' => 'The department field is mandatory when accused name is entered.',
         ];
     }
 }

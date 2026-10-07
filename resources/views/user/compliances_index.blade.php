@@ -219,6 +219,7 @@
                                 filterDecision === 'PE' ? 'Preliminary Enquiry (PE)' :
                                 filterDecision === 'VE' ? 'Vigilance Enquiry (VE)' :
                                 filterDecision === 'CV' ? 'Confidential Verification (CV)' :
+                                filterDecision === 'IV' ? 'Internal Vigilance (IV)' :
                                 filterDecision === 'SC' ? 'Surprise Check (SC)' :
                                 'All Pending'
                             "></span>
@@ -248,6 +249,7 @@
                                 ['value' => 'PE', 'label' => 'Preliminary Enquiry (PE)', 'count' => $pendingCounts['PE']],
                                 ['value' => 'VE', 'label' => 'Vigilance Enquiry (VE)', 'count' => $pendingCounts['VE']],
                                 ['value' => 'CV', 'label' => 'Confidential Verification (CV)', 'count' => $pendingCounts['CV']],
+                                ['value' => 'IV', 'label' => 'Internal Vigilance (IV)', 'count' => $pendingCounts['IV']],
                                 ['value' => 'SC', 'label' => 'Surprise Check (SC)', 'count' => $pendingCounts['SC']],
                             ];
                         @endphp

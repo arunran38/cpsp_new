@@ -581,6 +581,7 @@
                                                     <option value="PE">Preliminary Enquiry (PE)</option>
                                                     <option value="SC">Surprise Check (SC)</option>
                                                     <option value="CV">Confidential Verification (CV)</option>
+                                                    <option value="IV">Internal Vigilance (IV)</option>
                                                     <option value="ICell">Intelligence Cell (I Cell)</option>
                                                     <option value="Closed">Closed</option>
                                                     <option value="Sent to Govt">Sent to Govt</option>
@@ -675,6 +676,7 @@
                                                     <option value="PE">Preliminary Enquiry (PE)</option>
                                                     <option value="SC">Surprise Check (SC)</option>
                                                     <option value="CV">Confidential Verification (CV)</option>
+                                                    <option value="IV">Internal Vigilance (IV)</option>
                                                     <option value="ICell">Intelligence Cell (I Cell)</option>
                                                     <option value="Closed">Closed</option>
                                                     <option value="Sent to Govt">Sent to Govt</option>

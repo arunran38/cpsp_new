@@ -95,7 +95,8 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        @foreach(['VC' => 'Vigilance Case (VC)', 'PE' => 'Preliminary Enquiry (PE)', 'VE' => 'Vigilance Enquiry (VE)', 'CV' => 'Confidential Verification (CV)', 'SC' => 'Surprise Check (SC)'] as $code => $label)
+                        @foreach(['VC' => 'Vigilance Case (VC)', 'PE' => 'Preliminary Enquiry (PE)', 'VE' => 'Vigilance Enquiry (VE)', 'CV' => 'Confidential Verification (CV)', 'IV' => 'Internal Vigilance (IV)',
+                            'IV' => 'Internal Vigilance (IV)', 'SC' => 'Surprise Check (SC)'] as $code => $label)
                             <tr class="hover:bg-slate-50/50 transition-colors">
                                 <td class="py-4 px-6 font-semibold text-slate-700">
                                     {{ $label }}

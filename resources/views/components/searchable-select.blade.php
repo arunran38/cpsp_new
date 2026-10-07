@@ -37,7 +37,7 @@
     @if($label)
         <label class="block text-sm font-semibold text-slate-700 transition-colors duration-200"
             :class="open ? 'text-indigo-600' : ''">
-            {{ $label }}
+            {!! $label !!}
         </label>
     @endif
 

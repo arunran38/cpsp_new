@@ -5,11 +5,64 @@
     @php
         $seatsList = $seats ?? \App\Models\Seat::role('CPSP')->where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
+        $tab = 'inward';
     @endphp
 
     <div class="space-y-6" x-data="inwardPetitionForm()" @keydown.ctrl.enter.prevent="openConfirmationModal()"
         @keydown.cmd.enter.prevent="openConfirmationModal()">
 
+        <!-- Page Header -->
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white px-8 py-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-indigo-600"></div>
+
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
+                    <i data-lucide="list" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Submitted Petitions</h1>
+                    <p class="text-sm text-slate-500 mt-1">Unified view of all petitions and workflow stages.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                @if(Auth::user()->canAccess('create petitions'))
+                    <a href="{{ route('petitions.create') }}"
+                        class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
+                        <i data-lucide="plus" class="w-4 h-4"></i> New Petition
+                    </a>
+                @endif
+            </div>
+        </div>
+
+        <!-- Unified Tabs -->
+        <div class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 p-1.5 rounded-2xl mb-6 w-full bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+            <a href="{{ route('inward.enter_petition') }}"
+                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'inward' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                Inward Petitions
+            </a>
+            <a href="{{ route('petitions.index', ['tab' => 'all']) }}"
+                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'all' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                All Petitions
+            </a>
+            <a href="{{ route('petitions.index', ['tab' => 'received']) }}"
+                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'received' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                New Petitions
+            </a>
+            <a href="{{ route('petitions.index', ['tab' => 'forwarded']) }}"
+                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'forwarded' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                Forwarded Petitions
+            </a>
+            <a href="{{ route('petitions.index', ['tab' => 'vrs']) }}"
+                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'vrs' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                Verification Reports Received
+            </a>
+            <a href="{{ route('petitions.index', ['tab' => 'decisions']) }}"
+                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'decisions' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                Final Decisions
+            </a>
+        </div>
+
+        @if((Auth::user()->canAccess('create_inward_petitions') || Auth::user()->canAccess('create inward petitions')) && !Auth::user()->hasRole('super admin') && !Auth::user()->hasRole('admin'))
         <!-- Premium Header Section -->
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-2">
             <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
@@ -256,34 +309,10 @@
                     </div>
                 </div>
         </form>
+        @endif
 
-        <!-- Premium Header Section -->
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mt-10 mb-2">
-            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
-                <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
-            </div>
-            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
-                <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
-            </div>
-            
-            <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
-                <div class="text-center sm:text-left z-10">
-                    <div class="flex items-center gap-3 justify-center sm:justify-start mb-1">
-                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
-                            Inward Petitions
-                        </h1>
-                        @if(isset($transfers) && method_exists($transfers, 'total'))
-                            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/30 text-indigo-100 border border-indigo-400/30 backdrop-blur-md">
-                                {{ $transfers->total() }} records
-                            </span>
-                        @endif
-                    </div>
-                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
-                        History of inward petitions registered and transferred to seats.
-                    </p>
-                </div>
-            </div>
-        </div>
+
+
 
         <!-- Filter Section -->
         @php
@@ -305,7 +334,7 @@
             <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                 @if($canFilterTransfer)
                     <!-- Filter Pills: All Petitions, Transferred, Returned from CPSP -->
-                    <nav class="flex flex-wrap items-center gap-2" aria-label="Filter inward transactions">
+                    <nav class="flex flex-nowrap items-center gap-2 overflow-x-auto hide-scrollbar" aria-label="Filter inward transactions">
                         @foreach($filterButtons as $filterKey => $filterLabel)
                             <a href="{{ route('inward.enter_petition', array_merge(request()->except(['page', 'filter']), ['filter' => $filterKey])) }}"
                                 @class([
@@ -333,13 +362,13 @@
 
                 <!-- Search and Transfer-Date Filters -->
                 <form id="search-form" method="GET" action="{{ route('inward.enter_petition') }}"
-                    class="flex flex-wrap items-center gap-3" x-data="{ searchTimer: null }">
+                    class="flex flex-nowrap items-center gap-2 overflow-x-auto hide-scrollbar" x-data="{ searchTimer: null }">
                     <input type="hidden" name="filter" value="{{ $filter }}">
-                    <div class="relative">
+                    <div class="relative min-w-[200px]">
                         <input type="text" name="search" value="{{ request('search') }}"
                             @input="clearTimeout(searchTimer); searchTimer = setTimeout(() => performLiveSearch(), 500)"
                             placeholder="Receipt no, Complainant ..."
-                            class="h-10 w-full lg:w-96 pl-9 pr-4 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white focus:border-indigo-600 outline-none transition-all">
+                            class="h-10 w-full xl:w-64 pl-9 pr-4 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white focus:border-indigo-600 outline-none transition-all">
                         <i data-lucide="search"
                             class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
                     </div>

@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\InwardStatisticsExport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response as HttpResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -35,6 +37,7 @@ class PetitionController extends Controller
      */
     public function create(): View
     {
+        $this->authorize('create', Petition::class);
         $districts = \App\Models\District::orderBy('district_id')->get();
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
@@ -52,8 +55,7 @@ class PetitionController extends Controller
         if (!$user->canAccess('inward_form') && 
             !$user->canAccess('inward form') && 
             !$user->hasRole('inward') && 
-            !$user->hasRole('Inward') && 
-            !$user->canAccess('access admin dashboard')) {
+            !$user->hasRole('Inward')) {
             abort(403, 'Unauthorized. Permission inward_form required to access Inward Petition Registration Form.');
         }
 
@@ -65,8 +67,7 @@ class PetitionController extends Controller
         $filter = $filters['filter'] ?? 'all';
 
         if (!$user->canAccess('filter_transfer') && 
-            !$user->canAccess('filter transfer') && 
-            !$user->canAccess('access admin dashboard')) {
+            !$user->canAccess('filter transfer')) {
             $filter = 'all';
         }
 
@@ -80,7 +81,7 @@ class PetitionController extends Controller
         $transfersQuery = Petition::with(['seat.activeAssignment.user', 'user', 'addresses', 'cpspOpenedByUser', 'cpspOpenedBySeat', 'returnedByUser'])
             ->whereNull('linked_petition_id');
 
-        if (!$user->canAccess('access admin dashboard') || session('is_impersonating_seat')) {
+        if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
             $currentSeat = $user->currentSeatUser();
             $transfersQuery->where(function($q) use ($user, $currentSeat) {
                 $q->where('user_id', $user->user_id);
@@ -148,8 +149,7 @@ class PetitionController extends Controller
         if (!$user->canAccess('inward_form') && 
             !$user->canAccess('inward form') && 
             !$user->hasRole('inward') && 
-            !$user->hasRole('Inward') && 
-            !$user->canAccess('access admin dashboard')) {
+            !$user->hasRole('Inward')) {
             abort(403, 'Unauthorized.');
         }
 
@@ -163,7 +163,7 @@ class PetitionController extends Controller
         $transfersQuery = Petition::with(['user', 'seat.activeAssignment.user', 'unit', 'addresses'])
             ->whereNull('linked_petition_id');
 
-        if (!$user->canAccess('access admin dashboard') || session('is_impersonating_seat')) {
+        if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
             $currentSeat = $user->currentSeatUser();
             $transfersQuery->where(function($q) use ($user, $currentSeat) {
                 $q->where('user_id', $user->user_id);
@@ -238,7 +238,7 @@ class PetitionController extends Controller
         $currentSeat = $user->currentSeatUser();
 
         // Security check: Must belong to current seat or user is admin
-        if (!$user->canAccess('access admin dashboard') && !session('is_impersonating_seat')) {
+        if (!$user->canAccess('view all petitions') && !session('is_impersonating_seat')) {
             if ($currentSeat && $petition->seat_id !== $currentSeat->seat_id) {
                 abort(403, 'Unauthorized. This petition is not assigned to your seat.');
             }
@@ -273,8 +273,7 @@ class PetitionController extends Controller
         $hasInwardAccess = $user->canAccess('view_file_transfer') || 
             $user->canAccess('view file transfer') || 
             $user->hasRole('inward') || 
-            $user->hasRole('Inward') || 
-            $user->canAccess('access admin dashboard');
+            $user->hasRole('Inward');
 
         if (!$hasInwardAccess) {
             abort(403, 'Unauthorized to reassign inward petitions.');
@@ -304,13 +303,12 @@ class PetitionController extends Controller
     /**
      * Display Inward Statistics / Seat-wise Data Sheet page.
      */
-    public function inwardStatistics(Request $request): View|StreamedResponse
+    public function inwardStatistics(Request $request): View|StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         $user = Auth::user();
         
         $canAccessStats = $user->canAccess('inward_statistics') || 
-                          $user->canAccess('inward statistics') || 
-                          $user->canAccess('access admin dashboard');
+                          $user->canAccess('inward statistics');
 
         if (!$canAccessStats) {
             abort(403, 'Unauthorized access to Inward Statistics.');
@@ -410,11 +408,10 @@ class PetitionController extends Controller
             $summaryTotals['decisions'] = $totalDecisions;
         }
 
-        // Handle CSV Export
-        if ($request->get('export') === 'csv') {
+        // Handle Excel Export
+        if ($request->input('export') === 'csv') {
             if (!$user->canAccess('export_statistics') && 
-                !$user->canAccess('export statistics') && 
-                !$user->canAccess('access admin dashboard')) {
+                !$user->canAccess('export statistics')) {
                 abort(403, 'Unauthorized. Permission export_statistics required to export statistics.');
             }
             $periodSuffix = '';
@@ -425,52 +422,11 @@ class PetitionController extends Controller
             } elseif ($dateTo) {
                 $periodSuffix = "_to_{$dateTo}";
             }
-            $filename = "inward_seat_statistics{$periodSuffix}_" . now()->format('Ymd_His') . ".csv";
+            $filename = "inward_seat_statistics{$periodSuffix}_" . now()->format('Ymd_His') . ".xlsx";
+            
+            $canViewProcessed = $user->canAccess('view_processed_statistics') || $user->canAccess('view processed statistics');
 
-            return response()->streamDownload(function () use ($seatStats, $summaryTotals, $dateFrom, $dateTo) {
-                $handle = fopen('php://output', 'w');
-                // UTF-8 BOM for Microsoft Excel compatibility
-                fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
-
-                // Document Metadata Header
-                fputcsv($handle, ['Inward Seat-Wise Petition Statistics Data Sheet']);
-                fputcsv($handle, [
-                    'Report Period: ' . ($dateFrom ? date('d/m/Y', strtotime($dateFrom)) : 'Beginning') . 
-                    ' to ' . ($dateTo ? date('d/m/Y', strtotime($dateTo)) : 'Today')
-                ]);
-                fputcsv($handle, []);
-
-                // Table Columns
-                fputcsv($handle, [
-                    '#',
-                    'Concerned Seat',
-                    'Seat Occupant (Officer)',
-                    'Received (New)',
-                ]);
-
-                // Table Rows
-                foreach ($seatStats as $index => $stat) {
-                    fputcsv($handle, [
-                        $index + 1,
-                        $stat['seat_name'],
-                        $stat['occupant'],
-                        $stat['received'],
-                    ]);
-                }
-
-                // Summary Total Row
-                fputcsv($handle, [
-                    'Total Summary',
-                    '',
-                    '',
-                    $summaryTotals['received'],
-                ]);
-
-                fclose($handle);
-            }, $filename, [
-                'Content-Type' => 'text/csv; charset=UTF-8',
-                'Cache-Control' => 'no-store, no-cache',
-            ]);
+            return Excel::download(new InwardStatisticsExport($seatStats, $summaryTotals, $dateFrom, $dateTo, $canViewProcessed), $filename);
         }
 
         return view('inward.statistics', compact(
@@ -484,12 +440,11 @@ class PetitionController extends Controller
     /**
      * Export Inward Statistics as CSV directly.
      */
-    public function inwardStatisticsExport(Request $request): StreamedResponse|View
+    public function inwardStatisticsExport(Request $request): StreamedResponse|View|\Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         $user = Auth::user();
         if (!$user->canAccess('export_statistics') && 
-            !$user->canAccess('export statistics') && 
-            !$user->canAccess('access admin dashboard')) {
+            !$user->canAccess('export statistics')) {
             abort(403, 'Unauthorized. Permission export_statistics required to export statistics.');
         }
 
@@ -502,6 +457,10 @@ class PetitionController extends Controller
      */
     public function store(StorePetitionRequest $request): RedirectResponse
     {
+        if (!$request->boolean('is_inward_entry') && !$request->filled('seat_id')) {
+            $this->authorize('create', Petition::class);
+        }
+        
         try {
             if ($request->filled('duplicate_link_number')) {
                 $originalPetition = Petition::where('receipt_no', $request->input('duplicate_link_number'))->first();
@@ -544,7 +503,12 @@ class PetitionController extends Controller
      */
     public function index(Request $request)
     {
-        $tab = $request->get('tab', 'inward');
+        $tab = $request->input('tab', 'inward');
+
+        if ($tab === 'inward') {
+            return redirect()->route('inward.enter_petition');
+        }
+
         $petitions = $this->getPetitionsQuery($request)->paginate(10)->appends($request->query());
 
         if ($request->ajax()) {
@@ -560,11 +524,11 @@ class PetitionController extends Controller
     public function reports(Request $request)
     {
         $petitions = $this->getPetitionsQuery($request)->paginate(10)->appends($request->query());
-        $tab = $request->get('tab', 'all');
+        $tab = $request->input('tab', 'all');
 
         $seats = [];
         $users = [];
-        if (Auth::user()->canAccess('access admin dashboard')) {
+        if (Auth::user()->canAccess('view all petitions')) {
             $seats = Seat::where('is_active', true)
                          ->where('seat_name', 'like', 'CPSP%')
                          ->get()
@@ -591,11 +555,11 @@ class PetitionController extends Controller
      */
     public function export(Request $request): HttpResponse
     {
-        $tab = $request->get('tab', 'all');
+        $tab = $request->input('tab', 'all');
         $query = $this->getPetitionsQuery($request);
 
         // Filter by user_id so users only export their own created petitions, unless they are admin viewing all
-        if (!Auth::user()->canAccess('access admin dashboard') || session('is_impersonating_seat')) {
+        if (!Auth::user()->canAccess('view all petitions') || session('is_impersonating_seat')) {
             $query->where('petitions.user_id', Auth::id());
         }
 
@@ -604,12 +568,12 @@ class PetitionController extends Controller
         $filename = "petitions_report_" . $tab . "_" . date('Y-m-d') . ".xls";
         
         // Prepare metadata for the export view
-        $requestedColumns = $request->get('custom_columns');
+        $requestedColumns = $request->input('custom_columns');
         if ($requestedColumns && is_array($requestedColumns)) {
             $columns = $requestedColumns;
         } else {
             $columns = ['#', 'Receipt No', 'Received Date', 'Complainant Name & Address', 'Suspect Name & Address', 'Nature', 'Description', 'Mode', 'Proposed Action', 'Present Status', 'Final Recommendation'];
-            if (Auth::user()->canAccess('access admin dashboard')) $columns[] = 'Seat';
+            if (Auth::user()->canAccess('view all petitions')) $columns[] = 'Seat';
             if ($tab === 'forwarded') $columns[] = 'Unit';
             if ($tab === 'vrs') { $columns[] = 'VR Ref No'; $columns[] = 'VR Date'; }
             if ($tab === 'decisions') $columns[] = 'Decision';
@@ -669,7 +633,7 @@ class PetitionController extends Controller
             $petition->markAsOpenedByCpsp($user, $user->currentSeatUser());
         }
 
-        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) && !Auth::user()->canAccess('access admin dashboard')) {
+        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) ) {
             return redirect()->route('petitions.index')->with('error', 'Cannot edit a petition once a final decision has been taken.');
         }
 
@@ -712,13 +676,13 @@ class PetitionController extends Controller
     {
         $petition = Petition::findOrFail($id);
 
-        if ($petition->isFromInward() && !Auth::user()->canAccess('access admin dashboard')) {
+        if ($petition->isFromInward() ) {
             return redirect()->route('petitions.index')->with('error', 'CPSP seats are not permitted to delete petitions received from Inward.');
         }
 
         $this->authorize('delete', $petition);
 
-        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) && !Auth::user()->canAccess('access admin dashboard')) {
+        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) ) {
             return redirect()->route('petitions.index')->with('error', 'Cannot delete a petition after a final decision has been issued.');
         }
 
@@ -815,8 +779,8 @@ class PetitionController extends Controller
      */
     public function searchDuplicates(Request $request)
     {
-        $query = $request->get('q');
-        $excludeId = $request->get('exclude');
+        $query = $request->input('q');
+        $excludeId = $request->input('exclude');
 
         if (!$query) {
             return response()->json([]);
@@ -867,7 +831,7 @@ class PetitionController extends Controller
         if ($upload->petition_id) {
             $petition = Petition::findOrFail($upload->petition_id);
             $this->authorize('view', $petition);
-        } elseif (!Auth::user()->canAccess('access admin dashboard') && $upload->uploaded_by !== Auth::id()) {
+        } elseif (!Auth::user()->canAccess('view all petitions') && $upload->uploaded_by !== Auth::id()) {
             abort(403);
         }
 
@@ -875,7 +839,7 @@ class PetitionController extends Controller
             abort(404);
         }
 
-        return Storage::disk('public')->download($upload->file_path, $upload->original_filename);
+        return response()->download(Storage::disk('public')->path($upload->file_path), $upload->original_filename);
     }
 
     /**
@@ -1036,7 +1000,7 @@ class PetitionController extends Controller
         $user = Auth::user();
 
         // Security: Filter by user/seat if not unrestricted admin
-        if (!$user->canAccess('access admin dashboard') || session('is_impersonating_seat')) {
+        if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
             $currentSeat = $user->currentSeatUser();
             if ($currentSeat) {
                 $query->where('seat_id', $currentSeat->seat_id);
@@ -1046,10 +1010,10 @@ class PetitionController extends Controller
         }
 
         // Apply filters using scopes
-        $query->filterByTab($request->get('tab', 'inward'))
-              ->filterByStatus($request->status, $request->get('tab', 'inward'))
+        $query->filterByTab($request->input('tab', 'inward'))
+              ->filterByStatus($request->status, $request->input('tab', 'inward'))
               ->search($request->search, $request->search_type)
-              ->filterDates($request->date_from, $request->date_to, $request->status, $request->get('tab', 'inward'));
+              ->filterDates($request->date_from, $request->date_to, $request->status, $request->input('tab', 'inward'));
 
         // Hide duplicate (linked) petitions from general list, unless explicitly searched
         if (!$request->filled('receipt_no') && !$request->filled('search')) {

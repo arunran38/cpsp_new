@@ -27,7 +27,8 @@
         </tr>
     </thead>
     <tbody>
-        @foreach(['VC' => 'Vigilance Case (VC)', 'PE' => 'Preliminary Enquiry (PE)', 'VE' => 'Vigilance Enquiry (VE)', 'CV' => 'Confidential Verification (CV)', 'SC' => 'Surprise Check (SC)'] as $code => $label)
+        @foreach(['VC' => 'Vigilance Case (VC)', 'PE' => 'Preliminary Enquiry (PE)', 'VE' => 'Vigilance Enquiry (VE)', 'CV' => 'Confidential Verification (CV)', 'IV' => 'Internal Vigilance (IV)',
+                            'IV' => 'Internal Vigilance (IV)', 'SC' => 'Surprise Check (SC)'] as $code => $label)
             <tr>
                 <td style="text-align: center; vertical-align: middle;">{{ $label }}</td>
                 <td style="text-align: center; vertical-align: middle;">{{ $stats[$code]['Total'] }}</td>

@@ -59,6 +59,7 @@ class Decision extends Model
             'PE' => 'Preliminary Enquiry (PE)',
             'SC' => 'Surprise Check (SC)',
             'CV' => 'Confidential Verification (CV)',
+            'IV' => 'Internal Vigilance (IV)',
             'ICell' => 'Intelligence Cell (I Cell)',
             'Closed' => 'Closed',
             'Sent to Govt' => 'Sent to Govt'

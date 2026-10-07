@@ -113,11 +113,13 @@
                                 </optgroup>
                                 <optgroup label="Final Decisions" class="font-bold text-slate-900 bg-slate-50">
                                     <option value="All_Final_Decisions" {{ request('status') == 'All_Final_Decisions' ? 'selected' : '' }} class="font-medium text-indigo-600 bg-indigo-50/50 py-1.5 font-bold">All Final Decisions</option>
+                                    <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }} class="font-medium text-rose-600 bg-rose-50/50 py-1.5 font-bold">Pending (No Final Decision)</option>
                                     <option value="VC" {{ request('status') == 'VC' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Vigilance Case (VC)</option>
                                     <option value="VE" {{ request('status') == 'VE' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Vigilance Enquiry (VE)</option>
                                     <option value="PE" {{ request('status') == 'PE' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Preliminary Enquiry (PE)</option>
                                     <option value="SC" {{ request('status') == 'SC' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Surprise Check (SC)</option>
                                     <option value="CV" {{ request('status') == 'CV' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Confidential Verification (CV)</option>
+                                    <option value="IV" {{ request('status') == 'IV' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Internal Vigilance (IV)</option>
                                     <option value="ICell" {{ request('status') == 'ICell' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Intelligence Cell (I Cell)</option>
                                     <option value="Closed" {{ request('status') == 'Closed' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Closed</option>
                                     <option value="Sent to Govt" {{ request('status') == 'Sent to Govt' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Sent to Govt</option>
@@ -364,6 +366,7 @@
                                 <option value="PE">Preliminary Enquiry (PE)</option>
                                 <option value="SC">Surprise Check (SC)</option>
                                 <option value="CV">Confidential Verification (CV)</option>
+                                                    <option value="IV">Internal Vigilance (IV)</option>
                                 <option value="ICell">Intelligence Cell (I Cell)</option>
                                 <option value="Closed">Closed</option>
                                 <option value="Sent to Govt">Sent to Govt</option>
@@ -426,6 +429,7 @@
                             <option value="PE">Preliminary Enquiry (PE)</option>
                             <option value="SC">Surprise Check (SC)</option>
                             <option value="CV">Confidential Verification (CV)</option>
+                                                    <option value="IV">Internal Vigilance (IV)</option>
                             <option value="ICell">Intelligence Cell (I Cell)</option>
                             <option value="Closed">Closed</option>
                             <option value="Sent to Govt">Sent to Govt</option>
