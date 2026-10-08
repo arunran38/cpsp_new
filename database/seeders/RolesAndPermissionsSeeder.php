@@ -49,23 +49,15 @@ class RolesAndPermissionsSeeder extends Seeder
         // പെർമിഷനുകൾ ഉണ്ടാക്കുന്നു (Scoped Permissions)
         Permission::firstOrCreate(['name' => 'view own petitions']);
         Permission::firstOrCreate(['name' => 'view all petitions']);
-        $viewFileTransfer = Permission::firstOrCreate(['name' => 'view_file_transfer']);
-        Permission::firstOrCreate(['name' => 'view file transfer']);
-        $inwardFormPermission = Permission::firstOrCreate(['name' => 'inward_form']);
-        Permission::firstOrCreate(['name' => 'inward form']);
-
-        $inwardStats = Permission::firstOrCreate(['name' => 'inward_statistics']);
-        $inwardStatsSpaced = Permission::firstOrCreate(['name' => 'inward statistics']);
-        $exportStats = Permission::firstOrCreate(['name' => 'export_statistics']);
-        $exportStatsSpaced = Permission::firstOrCreate(['name' => 'export statistics']);
-        $filterTransfer = Permission::firstOrCreate(['name' => 'filter_transfer']);
-        $filterTransferSpaced = Permission::firstOrCreate(['name' => 'filter transfer']);
+        Permission::firstOrCreate(['name' => 'access admin dashboard']);
         
-        $viewProcessedStats = Permission::firstOrCreate(['name' => 'view_processed_statistics']);
-        $viewProcessedStatsSpaced = Permission::firstOrCreate(['name' => 'view processed statistics']);
-
-        $createInwardPetitions = Permission::firstOrCreate(['name' => 'create_inward_petitions']);
-        $createInwardPetitionsSpaced = Permission::firstOrCreate(['name' => 'create inward petitions']);
+        $viewFileTransfer = Permission::firstOrCreate(['name' => 'view file transfer']);
+        $inwardFormPermission = Permission::firstOrCreate(['name' => 'inward form']);
+        $inwardStats = Permission::firstOrCreate(['name' => 'inward statistics']);
+        $exportStats = Permission::firstOrCreate(['name' => 'export statistics']);
+        $filterTransfer = Permission::firstOrCreate(['name' => 'filter transfer']);
+        $viewProcessedStats = Permission::firstOrCreate(['name' => 'view processed statistics']);
+        $createInwardPetitions = Permission::firstOrCreate(['name' => 'create inward petitions']);
 
         // റോളുകൾ ഉണ്ടാക്കുന്നു (Create Roles) & Assign Permissions
         $superAdminRole = Role::firstOrCreate(['name' => 'super admin']);
@@ -77,38 +69,28 @@ class RolesAndPermissionsSeeder extends Seeder
             $viewFileTransfer, 
             $inwardFormPermission,
             $inwardStats,
-            $inwardStatsSpaced,
             $exportStats,
-            $exportStatsSpaced,
             $filterTransfer,
-            $filterTransferSpaced,
             $createInwardPetitions,
-            $createInwardPetitionsSpaced,
         ]);
         $cpspRole->givePermissionTo([$viewFileTransfer, $inwardFormPermission]);
         $adminRole->givePermissionTo([
             $viewFileTransfer, 
             $inwardFormPermission,
             $inwardStats,
-            $inwardStatsSpaced,
             $exportStats,
-            $exportStatsSpaced,
             $filterTransfer,
-            $filterTransferSpaced,
             $viewProcessedStats,
-            $viewProcessedStatsSpaced,
+            'access admin dashboard',
         ]);
         $superAdminRole->givePermissionTo([
             $viewFileTransfer, 
             $inwardFormPermission,
             $inwardStats,
-            $inwardStatsSpaced,
             $exportStats,
-            $exportStatsSpaced,
             $filterTransfer,
-            $filterTransferSpaced,
             $viewProcessedStats,
-            $viewProcessedStatsSpaced,
+            'access admin dashboard',
         ]);
         // റോളുകൾ ഉണ്ടാക്കുന്നു (Create Roles)
         $superAdmin = Role::firstOrCreate(['name' => 'super admin']);
