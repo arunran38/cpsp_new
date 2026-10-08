@@ -385,7 +385,7 @@
                 <!-- Inward Dropdown with Hover & Click -->
                 <div x-data="{ 
                         hoverOpen: false,
-                        clickOpen: {{ request()->routeIs('inward.*') ? 'true' : 'false' }},
+                        clickOpen: {{ request()->routeIs('inward.*') || request()->routeIs('petitions.index') ? 'true' : 'false' }},
                         hoverTimeout: null,
                         toggle() { this.clickOpen = !this.clickOpen }
                     }" 
@@ -414,6 +414,21 @@
                          x-transition:leave-end="slide-down-enter-from"
                          class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
                         
+                        @if($canAccessInwardEntry)
+                        <a href="{{ route('inward.enter_petition') }}" 
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.enter_petition') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator"></span>
+                           Inward Registration
+                        </a>
+                        
+                        @if(Auth::user()->canAccess('view petitions'))
+                        <a href="{{ route('inward.enter_petition') }}#view-inward-petitions" 
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator"></span>
+                           View Inward Petitions
+                        </a>
+                        @endif
+                        @endif
 
                         @if($canAccessInwardStats)
                         <a href="{{ route('inward.statistics') }}" 
@@ -459,7 +474,7 @@
                          x-transition:leave-end="slide-down-enter-from"
                          class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
                         
-                        @if(Auth::user()->canAccess('create petitions'))
+                        @if(Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('create petition') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('create_inward_petitions'))
                         <a href="{{ route('petitions.create') }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.create') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator"></span>

@@ -72,61 +72,68 @@
 
 
 
-        <!-- Stepper Navigation (Elegant Line-based) -->
-        <div class="py-4">
-            <div class="relative max-w-3xl mx-auto px-4 md:px-0">
+        <!-- Stepper Navigation (Catchy Dark Premium) -->
+        <div class="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl mb-6 p-6 sm:p-10">
+            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+                <div class="w-96 h-96 bg-blue-600/20 rounded-full blur-[80px]"></div>
+            </div>
+            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+                <div class="w-96 h-96 bg-teal-500/20 rounded-full blur-[80px]"></div>
+            </div>
+
+            <div class="relative max-w-3xl mx-auto px-4 md:px-0 z-10">
                 <!-- Background Line -->
-                <div class="absolute top-4 left-0 w-full h-0.5 bg-indigo-300/20 -translate-y-1/2 z-0"></div>
+                <div class="absolute top-5 left-0 w-full h-1 bg-slate-700 -translate-y-1/2 z-0 rounded-full"></div>
                 <!-- Progress Line -->
-                <div class="absolute top-4 left-0 h-0.5 bg-teal-500 -translate-y-1/2 transition-all duration-500 ease-out z-0"
+                <div class="absolute top-5 left-0 h-1 bg-gradient-to-r from-teal-400 to-teal-500 -translate-y-1/2 transition-all duration-700 ease-out z-0 rounded-full shadow-[0_0_10px_rgba(45,212,191,0.5)]"
                     :style="`width: ${((step - 1) / 3) * 100}%`"></div>
 
                 <div class="relative z-10 flex justify-between">
                     <!-- Step 1 -->
                     <button type="button" @click="setStep(1)"
-                        class="flex flex-col items-center gap-2 focus:outline-none group bg-transparent">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-sm"
-                            :class="step >= 1 ? 'bg-teal-500 text-white' : 'bg-white text-blue-500 border border-blue-200'">
-                            <span x-show="step > 1"><i data-lucide="check" class="w-4 h-4"></i></span>
-                            <span x-show="step === 1">1</span>
+                        class="flex flex-col items-center gap-3 focus:outline-none group bg-transparent">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 ring-4 ring-slate-900 relative z-20"
+                            :class="step === 1 ? 'bg-teal-400 text-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.8)] scale-110' : (step > 1 ? 'bg-teal-500 text-white shadow-[0_0_10px_rgba(20,184,166,0.6)]' : 'bg-blue-600 text-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500')">
+                            <span x-show="step > 1"><i data-lucide="check" class="w-5 h-5"></i></span>
+                            <span x-show="step <= 1">1</span>
                         </div>
-                        <span class="text-xs font-semibold whitespace-nowrap transition-colors"
-                            :class="step >= 1 ? 'text-white' : 'text-blue-200'">Petition Details</span>
+                        <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
+                            :class="step === 1 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : (step > 1 ? 'text-teal-500' : 'text-blue-500')">Petition Details</span>
                     </button>
 
                     <!-- Step 2 -->
                     <button type="button" @click="setStep(2)"
-                        class="flex flex-col items-center gap-2 focus:outline-none group bg-transparent">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-sm"
-                            :class="step >= 2 ? 'bg-teal-500 text-white' : 'bg-white text-blue-500 border border-blue-200'">
-                            <span x-show="step > 2"><i data-lucide="check" class="w-4 h-4"></i></span>
+                        class="flex flex-col items-center gap-3 focus:outline-none group bg-transparent">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 ring-4 ring-slate-900 relative z-20"
+                            :class="step === 2 ? 'bg-teal-400 text-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.8)] scale-110' : (step > 2 ? 'bg-teal-500 text-white shadow-[0_0_10px_rgba(20,184,166,0.6)]' : 'bg-blue-600 text-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500')">
+                            <span x-show="step > 2"><i data-lucide="check" class="w-5 h-5"></i></span>
                             <span x-show="step <= 2">2</span>
                         </div>
-                        <span class="text-xs font-semibold whitespace-nowrap transition-colors"
-                            :class="step >= 2 ? 'text-white' : 'text-blue-200'">Complainant</span>
+                        <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
+                            :class="step === 2 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : (step > 2 ? 'text-teal-500' : 'text-blue-500')">Complainant</span>
                     </button>
 
                     <!-- Step 3 -->
                     <button type="button" @click="setStep(3)"
-                        class="flex flex-col items-center gap-2 focus:outline-none group bg-transparent">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-sm"
-                            :class="step >= 3 ? 'bg-teal-500 text-white' : 'bg-white text-blue-500 border border-blue-200'">
-                            <span x-show="step > 3"><i data-lucide="check" class="w-4 h-4"></i></span>
+                        class="flex flex-col items-center gap-3 focus:outline-none group bg-transparent">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 ring-4 ring-slate-900 relative z-20"
+                            :class="step === 3 ? 'bg-teal-400 text-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.8)] scale-110' : (step > 3 ? 'bg-teal-500 text-white shadow-[0_0_10px_rgba(20,184,166,0.6)]' : 'bg-blue-600 text-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500')">
+                            <span x-show="step > 3"><i data-lucide="check" class="w-5 h-5"></i></span>
                             <span x-show="step <= 3">3</span>
                         </div>
-                        <span class="text-xs font-semibold whitespace-nowrap transition-colors"
-                            :class="step >= 3 ? 'text-white' : 'text-blue-200'">Suspect</span>
+                        <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
+                            :class="step === 3 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : (step > 3 ? 'text-teal-500' : 'text-blue-500')">Suspect</span>
                     </button>
 
                     <!-- Step 4 -->
                     <button type="button" @click="setStep(4)"
-                        class="flex flex-col items-center gap-2 focus:outline-none group bg-transparent">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 shadow-sm"
-                            :class="step >= 4 ? 'bg-teal-500 text-white' : 'bg-white text-blue-500 border border-blue-200'">
+                        class="flex flex-col items-center gap-3 focus:outline-none group bg-transparent">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 ring-4 ring-slate-900 relative z-20"
+                            :class="step === 4 ? 'bg-teal-400 text-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.8)] scale-110' : 'bg-blue-600 text-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500'">
                             <span>4</span>
                         </div>
-                        <span class="text-xs font-semibold whitespace-nowrap transition-colors"
-                            :class="step >= 4 ? 'text-white' : 'text-blue-200'">Complete</span>
+                        <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
+                            :class="step === 4 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : 'text-blue-500'">Complete</span>
                     </button>
                 </div>
             </div>
