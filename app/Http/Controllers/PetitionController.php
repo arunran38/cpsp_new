@@ -712,7 +712,7 @@ class PetitionController extends Controller
             return back()->with('error', 'This petition is already linked as a duplicate.');
         }
 
-        $originalPetition = Petition::where('receipt_no', $request->original_receipt_no)->first();
+        $originalPetition = Petition::where('receipt_no', '=', $request->original_receipt_no, 'and')->first();
 
         if (!$originalPetition) {
             return back()->with('error', 'Original petition not found. Please check the receipt number.');
@@ -792,7 +792,7 @@ class PetitionController extends Controller
             return response()->json([]);
         }
 
-        $petitions = Petition::where(function($q) use ($query) {
+        $petitions = Petition::query()->where(function ($q) use ($query) {
             $q->where('receipt_no', 'LIKE', "%{$query}%")
               ->orWhere('nature_of_petition', 'LIKE', "%{$query}%")
               ->orWhereHas('addresses', function ($q2) use ($query) {
