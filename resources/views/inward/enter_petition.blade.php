@@ -34,31 +34,36 @@
             </div>
         </div>
 
-        <!-- Unified Tabs -->
         <div class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 p-1.5 rounded-2xl mb-6 w-full bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
             <a href="{{ route('inward.enter_petition') }}"
-                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'inward' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
-                Inward Petitions
+                class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'inward' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                <span>Inward Petitions</span>
+                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'inward' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['inward'] ?? 0 }}</span>
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'all']) }}"
-                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'all' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
-                All Petitions
+                class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'all' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                <span>All Petitions</span>
+                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'all' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['all'] ?? 0 }}</span>
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'received']) }}"
-                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'received' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
-                New Petitions
+                class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'received' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                <span>New Petitions</span>
+                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'received' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['received'] ?? 0 }}</span>
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'forwarded']) }}"
-                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'forwarded' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
-                Forwarded Petitions
+                class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'forwarded' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                <span>Forwarded Petitions</span>
+                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'forwarded' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['forwarded'] ?? 0 }}</span>
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'vrs']) }}"
-                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'vrs' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
-                Verification Reports Received
+                class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'vrs' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                <span>Verification Reports Received</span>
+                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'vrs' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['vrs'] ?? 0 }}</span>
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'decisions']) }}"
-                class="flex-1 text-center px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'decisions' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
-                Final Decisions
+                class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'decisions' ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                <span>Final Decisions</span>
+                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'decisions' ? 'bg-white text-emerald-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['decisions'] ?? 0 }}</span>
             </a>
         </div>
 
