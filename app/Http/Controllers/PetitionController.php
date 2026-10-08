@@ -48,9 +48,8 @@ class PetitionController extends Controller
     {
         $user = Auth::user();
 
-        // Permission Check: Must have 'inward_form' or 'inward form' or 'Inward'/'inward' role
+        // Permission Check: Must have 'inward_form' or 'Inward'/'inward' role
         if (!$user->canAccess('inward_form') && 
-            !$user->canAccess('inward form') && 
             !$user->hasRole('inward') && 
             !$user->hasRole('Inward') && 
             !$user->canAccess('access admin dashboard')) {
@@ -65,7 +64,6 @@ class PetitionController extends Controller
         $filter = $filters['filter'] ?? 'all';
 
         if (!$user->canAccess('filter_transfer') && 
-            !$user->canAccess('filter transfer') && 
             !$user->canAccess('access admin dashboard')) {
             $filter = 'all';
         }
@@ -176,7 +174,6 @@ class PetitionController extends Controller
     {
         $user = Auth::user();
         $hasInwardAccess = $user->canAccess('view_file_transfer') || 
-            $user->canAccess('view file transfer') || 
             $user->hasRole('inward') || 
             $user->hasRole('Inward') || 
             $user->canAccess('access admin dashboard');
@@ -214,7 +211,6 @@ class PetitionController extends Controller
         $user = Auth::user();
         
         $canAccessStats = $user->canAccess('inward_statistics') || 
-                          $user->canAccess('inward statistics') || 
                           $user->canAccess('access admin dashboard');
 
         if (!$canAccessStats) {
@@ -289,7 +285,6 @@ class PetitionController extends Controller
         // Handle CSV Export
         if ($request->get('export') === 'csv') {
             if (!$user->canAccess('export_statistics') && 
-                !$user->canAccess('export statistics') && 
                 !$user->canAccess('access admin dashboard')) {
                 abort(403, 'Unauthorized. Permission export_statistics required to export statistics.');
             }
@@ -364,7 +359,6 @@ class PetitionController extends Controller
     {
         $user = Auth::user();
         if (!$user->canAccess('export_statistics') && 
-            !$user->canAccess('export statistics') && 
             !$user->canAccess('access admin dashboard')) {
             abort(403, 'Unauthorized. Permission export_statistics required to export statistics.');
         }

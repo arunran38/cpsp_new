@@ -370,13 +370,11 @@
                     $canAccessInwardEntry = Auth::check() && (
                         $hasInwardRole ||
                         Auth::user()->canAccess('inward_form') || 
-                        Auth::user()->canAccess('inward form') || 
                         Auth::user()->canAccess('access admin dashboard')
                     );
 
                     $canAccessInwardStats = Auth::check() && (
                         Auth::user()->canAccess('inward_statistics') || 
-                        Auth::user()->canAccess('inward statistics') || 
                         Auth::user()->canAccess('access admin dashboard')
                     );
                 @endphp

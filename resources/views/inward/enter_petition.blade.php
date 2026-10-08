@@ -321,7 +321,6 @@
                 $currentUser = Auth::user();
                 $canFilterTransfer = $currentUser && (
                     $currentUser->canAccess('filter_transfer') || 
-                    $currentUser->canAccess('filter transfer') || 
                     $currentUser->canAccess('access admin dashboard')
                 );
 
