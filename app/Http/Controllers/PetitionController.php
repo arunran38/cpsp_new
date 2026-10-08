@@ -136,7 +136,9 @@ class PetitionController extends Controller
             return view('inward.partials.inward_table', compact('transfers', 'filter', 'counts'))->render();
         }
 
-        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments', 'transfers', 'filter', 'counts'));
+        $unifiedCounts = $this->getUnifiedCounts();
+
+        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments', 'transfers', 'filter', 'counts', 'unifiedCounts'));
     }
 
     /**
@@ -515,7 +517,13 @@ class PetitionController extends Controller
             return view('user.partials.reports_table', compact('petitions', 'tab'))->render();
         }
 
-        return view('user.petition_view', compact('petitions', 'tab'));
+        $unifiedCounts = $this->getUnifiedCounts();
+        $decisionCounts = [];
+        if ($tab === 'decisions') {
+            $decisionCounts = $this->getDecisionCounts();
+        }
+
+        return view('user.petition_view', compact('petitions', 'tab', 'unifiedCounts', 'decisionCounts'));
     }
 
     /**
@@ -984,6 +992,70 @@ class PetitionController extends Controller
         });
 
         return response()->json($duplicates);
+    }
+
+    /**
+     * Get counts for unified tabs
+     */
+    private function getUnifiedCounts()
+    {
+        $user = Auth::user();
+        $query = Petition::query();
+
+        if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
+            $currentSeat = $user->currentSeatUser();
+            if ($currentSeat) {
+                $query->where('seat_id', $currentSeat->seat_id);
+            } else {
+                $query->where('petitions.user_id', $user->id);
+            }
+        }
+
+        $query->whereNull('linked_petition_id');
+
+        $petitions = $query->get(['status', 'is_cpsp_processed', 'is_returned_to_inward', 'petition_id']);
+        
+        return [
+            'inward' => $petitions->filter(fn($p) => !$p->is_cpsp_processed && !$p->is_returned_to_inward)->count(),
+            'all' => $petitions->filter(fn($p) => $p->is_cpsp_processed)->count(),
+            'received' => $petitions->filter(fn($p) => $p->status === Petition::STATUS_RECEIVED && $p->is_cpsp_processed)->count(),
+            'forwarded' => $petitions->filter(fn($p) => $p->status === Petition::STATUS_FORWARDED)->count(),
+            'vrs' => $petitions->filter(fn($p) => $p->status === Petition::STATUS_VR_RECEIVED)->count(),
+            'decisions' => $petitions->filter(fn($p) => in_array($p->status, [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_CLOSED]))->count(),
+        ];
+    }
+
+    /**
+     * Get counts for decision subtabs
+     */
+    private function getDecisionCounts()
+    {
+        $user = Auth::user();
+        $query = Petition::query()->whereIn('status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_CLOSED])->whereNull('linked_petition_id');
+
+        if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
+            $currentSeat = $user->currentSeatUser();
+            if ($currentSeat) {
+                $query->where('seat_id', $currentSeat->seat_id);
+            } else {
+                $query->where('petitions.user_id', $user->id);
+            }
+        }
+
+        $decisionsData = $query->with('decision')->get();
+
+        return [
+            'All' => $decisionsData->count(),
+            'VC' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'VC')->count(),
+            'VE' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'VE')->count(),
+            'PE' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'PE')->count(),
+            'SC' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'SC')->count(),
+            'CV' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'CV')->count(),
+            'IV' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'IV')->count(),
+            'ICell' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'ICell')->count(),
+            'Closed' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'Closed')->count(),
+            'Sent to Govt' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'Sent to Govt')->count(),
+        ];
     }
 
     /**
