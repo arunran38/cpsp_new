@@ -11,61 +11,7 @@
     <div class="space-y-6" x-data="inwardPetitionForm()" @keydown.ctrl.enter.prevent="openConfirmationModal()"
         @keydown.cmd.enter.prevent="openConfirmationModal()">
 
-        <!-- Page Header -->
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white px-8 py-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-indigo-600"></div>
 
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
-                    <i data-lucide="list" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Submitted Petitions</h1>
-                    <p class="text-sm text-slate-500 mt-1">Unified view of all petitions and workflow stages.</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-3">
-                @if(Auth::user()->canAccess('create petitions'))
-                    <a href="{{ route('petitions.create') }}"
-                        class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
-                        <i data-lucide="plus" class="w-4 h-4"></i> New Petition
-                    </a>
-                @endif
-            </div>
-        </div>
-
-        <div class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 p-1.5 rounded-2xl mb-6 w-full bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-            <a href="{{ route('inward.enter_petition') }}"
-                class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'inward' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
-                <span>Inward Petitions</span>
-                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'inward' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['inward'] ?? 0 }}</span>
-            </a>
-            <a href="{{ route('petitions.index', ['tab' => 'all']) }}"
-                class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'all' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
-                <span>All Petitions</span>
-                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'all' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['all'] ?? 0 }}</span>
-            </a>
-            <a href="{{ route('petitions.index', ['tab' => 'received']) }}"
-                class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'received' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
-                <span>New Petitions</span>
-                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'received' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['received'] ?? 0 }}</span>
-            </a>
-            <a href="{{ route('petitions.index', ['tab' => 'forwarded']) }}"
-                class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'forwarded' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
-                <span>Forwarded Petitions</span>
-                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'forwarded' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['forwarded'] ?? 0 }}</span>
-            </a>
-            <a href="{{ route('petitions.index', ['tab' => 'vrs']) }}"
-                class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'vrs' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
-                <span>Verification Reports Received</span>
-                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'vrs' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['vrs'] ?? 0 }}</span>
-            </a>
-            <a href="{{ route('petitions.index', ['tab' => 'decisions']) }}"
-                class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'decisions' ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
-                <span>Final Decisions</span>
-                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'decisions' ? 'bg-white text-emerald-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['decisions'] ?? 0 }}</span>
-            </a>
-        </div>
 
         @if((Auth::user()->canAccess('create_inward_petitions') || Auth::user()->canAccess('create inward petitions')) && !Auth::user()->hasRole('super admin') && !Auth::user()->hasRole('admin'))
         <!-- Premium Header Section -->
@@ -86,14 +32,7 @@
                         Minimal inward petition entry and seat transfer.
                     </p>
                 </div>
-                
-                <div class="flex items-center gap-3 z-10">
-                    <a href="{{ route('petitions.index') }}"
-                        class="px-5 py-2.5 text-sm font-semibold text-slate-200 bg-slate-800/80 hover:bg-slate-700 hover:text-white border border-slate-700/50 rounded-xl transition-all flex items-center gap-2 shadow-sm backdrop-blur-sm">
-                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                        Back to Petitions
-                    </a>
-                </div>
+
             </div>
         </div>
 
@@ -318,6 +257,27 @@
 
 
 
+
+        <!-- Premium Header Section for View Inward Petitions -->
+        <div id="view-inward-petitions" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-4 mt-8 scroll-mt-24">
+            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+                <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+                <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            
+            <div class="relative px-6 py-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
+                <div class="text-center sm:text-left z-10">
+                    <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                        View Inward Petitions
+                    </h1>
+                    <p class="text-slate-300 font-medium max-w-2xl text-xs sm:text-sm">
+                        Track and manage petitions registered through the inward section.
+                    </p>
+                </div>
+            </div>
+        </div>
 
         <!-- Filter Section -->
         @php

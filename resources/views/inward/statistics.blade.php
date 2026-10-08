@@ -3,41 +3,24 @@
 
 @section('content')
 <div class="space-y-6">
-    <!-- Page Header (Print Hidden) -->
-    <div class="print:hidden bg-white px-8 py-8 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-teal-400 via-emerald-500 to-teal-500"></div>
-        <div class="absolute -right-24 -top-24 w-64 h-64 bg-teal-50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+    <!-- Premium Header Section (Print Hidden) -->
+    <div class="print:hidden relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2">
+        <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+            <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
+        </div>
+        <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+            <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
+        </div>
         
-        <div class="flex items-center gap-5 relative z-10">
-            <div class="w-14 h-14 bg-gradient-to-br from-teal-50 to-emerald-50 rounded-2xl flex items-center justify-center text-teal-600 border border-teal-100 shadow-sm transform hover:scale-105 transition-transform">
-                <i data-lucide="bar-chart-2" class="w-7 h-7"></i>
-            </div>
-            <div>
-                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Inward Statistics</h1>
-                <p class="text-sm text-slate-500 mt-1 font-medium">
+        <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
+            <div class="text-center sm:text-left z-10">
+                <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                    Inward Statistics
+                </h1>
+                <p class="text-slate-300 font-medium max-w-2xl text-sm">
                     Detailed seat-wise data sheet of petitions registered in Inward.
                 </p>
             </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-            @if(Auth::user()->canAccess('export_statistics') || Auth::user()->canAccess('access admin dashboard'))
-            <a href="{{ route('inward.statistics.export', request()->query()) }}" 
-               class="px-4 py-2.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-all flex items-center gap-2 shadow-sm">
-                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
-                Export CSV
-            </a>
-            <button onclick="window.print()" 
-               class="px-4 py-2.5 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-xl hover:bg-slate-200 transition-all flex items-center gap-2 shadow-sm">
-                <i data-lucide="printer" class="w-4 h-4"></i>
-                Print Data Sheet
-            </button>
-            @endif
-            <a href="{{ route('petitions.index', ['tab' => 'inward']) }}" 
-               class="px-4 py-2.5 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-all flex items-center gap-2 shadow-sm">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                Inward Petitions
-            </a>
         </div>
     </div>
 

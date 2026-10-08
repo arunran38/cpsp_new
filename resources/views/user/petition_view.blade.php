@@ -5,28 +5,32 @@
     <div x-data="{ showForwardModal: false, showVrModal: false, showDecisionModal: false, activePetitionId: null, activeForwardingId: null, showReturnModal: false, returnPetitionId: null, returnReceiptNo: '' }"
         @open-return-modal.window="returnPetitionId = $event.detail.id; returnReceiptNo = $event.detail.receipt; showReturnModal = true"
         class="space-y-6">
-        <!-- Page Header -->
-        <div
-            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white px-8 py-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-indigo-600"></div>
-
-            <div class="flex items-center gap-4">
-                <div
-                    class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
-                    <i data-lucide="list" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-slate-900">Submitted Petitions</h1>
-                    <p class="text-sm text-slate-500 mt-1">Unified view of all petitions and workflow stages.</p>
-                </div>
+        <!-- Premium Header Section -->
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2">
+            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+                <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
             </div>
-            <div class="flex items-center gap-3">
-                @if(Auth::user()->canAccess('create petitions'))
-                    <a href="{{ route('petitions.create') }}"
-                        class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
-                        <i data-lucide="plus" class="w-4 h-4"></i> New Petition
-                    </a>
-                @endif
+            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+                <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            
+            <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
+                <div class="text-center sm:text-left z-10">
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                        Submitted Petitions
+                    </h1>
+                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
+                        Unified view of all petitions and workflow stages.
+                    </p>
+                </div>
+                <div class="flex items-center gap-3 z-10">
+                    @if(Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('create petition') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('create_inward_petitions'))
+                        <a href="{{ route('petitions.create') }}"
+                            class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
+                            <i data-lucide="plus" class="w-4 h-4"></i> New Petition
+                        </a>
+                    @endif
+                </div>
             </div>
         </div>
 
