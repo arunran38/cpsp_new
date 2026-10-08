@@ -255,6 +255,10 @@ class Petition extends Model
             return $query->whereHas('decision');
         }
 
+        if ($status === 'Pending') {
+            return $query->doesntHave('decision');
+        }
+
         if (in_array($status, $finalDecisionStatuses)) {
             return $query->whereHas('decision', fn($q) => $q->where('final_decision', $status));
         }

@@ -180,7 +180,7 @@
                                 <button type="button"
                                     @click="$dispatch('open-return-modal', { id: {{ $petition->petition_id }}, receipt: '{{ $petition->receipt_no }}' })"
                                     class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                    title="Return to Inward (Inward-ലേക്ക് തിരിച്ചയക്കുക)">
+                                    title="Return to Inward">
                                     <i class="fa-solid fa-arrow-rotate-left text-rose-500"></i>
                                 </button>
                             @endif

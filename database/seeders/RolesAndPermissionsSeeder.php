@@ -1,9 +1,12 @@
 <?php
 
+
+
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -16,6 +19,8 @@ class RolesAndPermissionsSeeder extends Seeder
         $categories = [
             'users',
             'units',
+            'departments',
+            'designations',
             'seats',
             'master reports',
             'petitions',
@@ -37,18 +42,30 @@ class RolesAndPermissionsSeeder extends Seeder
         foreach ($categories as $category) {
             foreach ($actions as $action) {
                 $permissionName = "{$action} {$category}";
-                \Spatie\Permission\Models\Permission::firstOrCreate(['name' => $permissionName]);
+                Permission::firstOrCreate(['name' => $permissionName]);
             }
         }
 
         // പെർമിഷനുകൾ ഉണ്ടാക്കുന്നു (Scoped Permissions)
-        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view own petitions']);
-        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view all petitions']);
-        $viewFileTransfer = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view_file_transfer']);
-        $inwardFormPermission = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'inward_form']);
-        $inwardStats = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'inward_statistics']);
-        $exportStats = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'export_statistics']);
-        $filterTransfer = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'filter_transfer']);
+        Permission::firstOrCreate(['name' => 'view own petitions']);
+        Permission::firstOrCreate(['name' => 'view all petitions']);
+        $viewFileTransfer = Permission::firstOrCreate(['name' => 'view_file_transfer']);
+        Permission::firstOrCreate(['name' => 'view file transfer']);
+        $inwardFormPermission = Permission::firstOrCreate(['name' => 'inward_form']);
+        Permission::firstOrCreate(['name' => 'inward form']);
+
+        $inwardStats = Permission::firstOrCreate(['name' => 'inward_statistics']);
+        $inwardStatsSpaced = Permission::firstOrCreate(['name' => 'inward statistics']);
+        $exportStats = Permission::firstOrCreate(['name' => 'export_statistics']);
+        $exportStatsSpaced = Permission::firstOrCreate(['name' => 'export statistics']);
+        $filterTransfer = Permission::firstOrCreate(['name' => 'filter_transfer']);
+        $filterTransferSpaced = Permission::firstOrCreate(['name' => 'filter transfer']);
+        
+        $viewProcessedStats = Permission::firstOrCreate(['name' => 'view_processed_statistics']);
+        $viewProcessedStatsSpaced = Permission::firstOrCreate(['name' => 'view processed statistics']);
+
+        $createInwardPetitions = Permission::firstOrCreate(['name' => 'create_inward_petitions']);
+        $createInwardPetitionsSpaced = Permission::firstOrCreate(['name' => 'create inward petitions']);
 
         // റോളുകൾ ഉണ്ടാക്കുന്നു (Create Roles) & Assign Permissions
         $superAdminRole = Role::firstOrCreate(['name' => 'super admin']);
@@ -62,6 +79,7 @@ class RolesAndPermissionsSeeder extends Seeder
             $inwardStats,
             $exportStats,
             $filterTransfer,
+            $filterTransferSpaced,
         ]);
         $cpspRole->givePermissionTo([$viewFileTransfer, $inwardFormPermission]);
         $adminRole->givePermissionTo([
@@ -70,6 +88,7 @@ class RolesAndPermissionsSeeder extends Seeder
             $inwardStats,
             $exportStats,
             $filterTransfer,
+            $filterTransferSpaced,
         ]);
         $superAdminRole->givePermissionTo([
             $viewFileTransfer, 
@@ -77,9 +96,12 @@ class RolesAndPermissionsSeeder extends Seeder
             $inwardStats,
             $exportStats,
             $filterTransfer,
+            $filterTransferSpaced,
         ]);
         // റോളുകൾ ഉണ്ടാക്കുന്നു (Create Roles)
-        Role::firstOrCreate(['name' => 'super admin']);
+        $superAdmin = Role::firstOrCreate(['name' => 'super admin']);
+        $superAdmin->syncPermissions(Permission::all());
+
         Role::firstOrCreate(['name' => 'admin']);
         Role::firstOrCreate(['name' => 'CPSP']);
         $iopHq = Role::firstOrCreate(['name' => 'IOP HQ']);

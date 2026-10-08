@@ -94,6 +94,8 @@ class SeatController extends Controller
      */
     public function statistics(Request $request): View
     {
+        $this->validateDateRange($request);
+
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
@@ -114,6 +116,8 @@ class SeatController extends Controller
      */
     public function exportStatistics(Request $request): HttpResponse
     {
+        $this->validateDateRange($request);
+
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
@@ -146,6 +150,14 @@ class SeatController extends Controller
             ->header('Content-Type', 'application/vnd.ms-excel')
             ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
             ->header('Cache-Control', 'max-age=0');
+    }
+
+    private function validateDateRange(Request $request): void
+    {
+        $request->validate([
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+        ]);
     }
 
     /**

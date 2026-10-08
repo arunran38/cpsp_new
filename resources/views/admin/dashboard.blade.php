@@ -36,17 +36,25 @@
             $q->where('is_active', true);
         })->get();
 
-        // Chart Data: Seat vs Petitions (Bar Chart)
+        // Chart Data: Seat vs Petitions (Bar Chart) - Only CPSP role
         $seatStats = \App\Models\Seat::where('is_active', true)
+            ->where(function ($query) {
+                $query->whereHas('roles', function ($q) {
+                    $q->whereIn('name', ['CPSP', 'cpsp']);
+                })->orWhereHas('activeAssignment.user.roles', function ($q) {
+                    $q->whereIn('name', ['CPSP', 'cpsp']);
+                });
+            })
             ->withCount([
                 'petitionsReceived' => function ($q) use ($fromDate, $toDate) {
                     $q->whereBetween('date_of_petition_received', [$fromDate, $toDate]);
                 }
             ])
-            ->get();
+            ->get()
+            ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
 
-        $chartSeatLabels = json_encode($seatStats->pluck('seat_name')->toArray());
-        $chartSeatData = json_encode($seatStats->pluck('petitions_received_count')->toArray());
+        $chartSeatLabels = json_encode($seatStats->pluck('seat_name')->values()->toArray());
+        $chartSeatData = json_encode($seatStats->pluck('petitions_received_count')->values()->toArray());
 
         // Chart Data: Petition Status Distribution (Filtered)
         $statusStats = \App\Models\Petition::whereBetween('date_of_petition_received', [$fromDate, $toDate])

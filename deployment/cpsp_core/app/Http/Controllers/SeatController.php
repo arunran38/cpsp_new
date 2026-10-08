@@ -83,6 +83,11 @@ class SeatController extends Controller
      */
     public function statistics(Request $request): View
     {
+        $request->validate([
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+        ]);
+
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
@@ -101,6 +106,11 @@ class SeatController extends Controller
      */
     public function exportStatistics(Request $request): HttpResponse
     {
+        $request->validate([
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+        ]);
+
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 

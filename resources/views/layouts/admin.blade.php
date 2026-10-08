@@ -320,6 +320,24 @@
                 </a>
                 @endif
 
+                @if(Auth::user()->canAccess('view departments'))
+                <!-- Departments Link -->
+                <a href="{{ route('admin.departments.index') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('admin.departments.*') ? 'active-nav' : 'inactive-nav' }}">
+                    <i data-lucide="building" class="w-5 h-5 icon-bounce {{ request()->routeIs('admin.departments.*') ? 'text-indigo-400' : '' }}"></i>
+                    <span>Departments</span>
+                </a>
+                @endif
+
+                @if(Auth::user()->canAccess('view designations'))
+                <!-- Designations Link -->
+                <a href="{{ route('admin.designations.index') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('admin.designations.*') ? 'active-nav' : 'inactive-nav' }}">
+                    <i data-lucide="briefcase" class="w-5 h-5 icon-bounce {{ request()->routeIs('admin.designations.*') ? 'text-indigo-400' : '' }}"></i>
+                    <span>Designations</span>
+                </a>
+                @endif
+
                 @if(Auth::user()->canAccess('view users'))
                 <!-- Users Dropdown -->
                 <div x-data="{ 
@@ -372,7 +390,7 @@
                 <div x-data="{ 
                         hoverOpen: false,
                         hoverTimeout: null,
-                        rolesOpen: false
+                        rolesOpen: {{ request()->routeIs('admin.roles.*') || request()->routeIs('admin.permissions.*') ? 'true' : 'false' }}
                     }" 
                     @mouseenter="hoverOpen = true; clearTimeout(hoverTimeout)"
                     @mouseleave="hoverTimeout = setTimeout(() => { hoverOpen = false }, 300)"
@@ -419,7 +437,8 @@
                 <!-- Seats Dropdown -->
                 <div x-data="{ 
                         hoverOpen: false,
-                        hoverTimeout: null
+                        hoverTimeout: null,
+                        seatsOpen: {{ request()->routeIs('admin.seats.*') && !request()->routeIs('admin.seats.statistics') ? 'true' : 'false' }}
                     }" 
                     @mouseenter="hoverOpen = true; clearTimeout(hoverTimeout)"
                     @mouseleave="hoverTimeout = setTimeout(() => { hoverOpen = false }, 300)"
@@ -462,11 +481,12 @@
                 </div>
                 @endif
 
-                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view master reports') || Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin'))
+                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view master reports') || Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin') || Auth::user()->canAccess('inward_form'))
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-xs font-bold tracking-wider text-blue-500 uppercase">Operations</p>
                 </div>
                 @endif
+
 
                 @if(Auth::user()->canAccess('view petitions'))
                 <!-- View Petitions - Direct Link -->
@@ -487,12 +507,63 @@
                 @endif
 
                 @if(Auth::user()->canAccess('view seat diagnostics'))
-                <!-- Seat Statistics -->
-                <a href="{{ route('admin.seats.statistics') }}" 
-                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('admin.seats.statistics') ? 'active-nav' : 'inactive-nav' }}">
-                    <i data-lucide="pie-chart" class="w-5 h-5 icon-bounce transition-colors"></i>
-                    <span>Seat Diagnostics</span>
-                </a>
+                <!-- Statistical Reports Dropdown -->
+                <div x-data="{ 
+                        hoverOpen: false,
+                        hoverTimeout: null,
+                        reportsOpen: {{ request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') || request()->routeIs('inward.statistics') ? 'true' : 'false' }}
+                    }" 
+                    @mouseenter="hoverOpen = true; clearTimeout(hoverTimeout)"
+                    @mouseleave="hoverTimeout = setTimeout(() => { hoverOpen = false }, 300)"
+                    class="relative">
+                    
+                    <button @click="reportsOpen = !reportsOpen" 
+                            class="nav-item-transition flex items-center justify-between w-full px-4 py-3 text-[15px] font-medium rounded-xl group"
+                            :class="(reportsOpen || hoverOpen) ? 'menu-open' : 'inactive-nav'">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="pie-chart" class="w-5 h-5 icon-bounce" :class="(reportsOpen || hoverOpen) || request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') || request()->routeIs('inward.statistics') ? 'text-indigo-400' : ''"></i>
+                            <span>Statistical Reports</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': reportsOpen || hoverOpen }"></i>
+                    </button>
+                    
+                    <div x-show="reportsOpen || hoverOpen" 
+                         x-cloak 
+                         x-transition:enter="slide-down-enter-active" 
+                         x-transition:enter-start="slide-down-enter-from" 
+                         x-transition:enter-end="slide-down-enter-to"
+                         x-transition:leave="slide-down-leave-active"
+                         x-transition:leave-start="slide-down-leave-from"
+                         x-transition:leave-end="slide-down-leave-to"
+                         class="submenu-container pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
+                        
+                        <a href="{{ route('admin.seats.statistics') }}" 
+                           @click="reportsOpen = true"
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('admin.seats.statistics') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator"></span>
+                            <i data-lucide="laptop" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.seats.statistics') ? 'text-teal-400' : '' }}"></i>
+                            <span>Seat Diagnostics</span>
+                        </a>
+                        
+                        <a href="{{ route('admin.departments.analysis') }}" 
+                           @click="reportsOpen = true"
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('admin.departments.analysis') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator"></span>
+                            <i data-lucide="building-2" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.departments.analysis') ? 'text-teal-400' : '' }}"></i>
+                            <span>Department Wise</span>
+                        </a>
+
+                        @if(Auth::user()->canAccess('inward_statistics') || Auth::user()->canAccess('inward statistics') || Auth::user()->canAccess('access admin dashboard'))
+                        <a href="{{ route('inward.statistics') }}" 
+                           @click="reportsOpen = true"
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator"></span>
+                            <i data-lucide="clock" class="w-4 h-4 mr-2 {{ request()->routeIs('inward.statistics') ? 'text-teal-400' : '' }}"></i>
+                            <span>Pendency Details</span>
+                        </a>
+                        @endif
+                    </div>
+                </div>
                 @endif
 
                 @if(Auth::user()->canAccess('view recycle bin'))

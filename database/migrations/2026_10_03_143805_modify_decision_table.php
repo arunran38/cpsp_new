@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('decisions', function (Blueprint $table) {
-            //
+            $table->renameColumn('decision_remarks', 'final_decision');
+            $table->string('directorate_order_number')->nullable()->after('final_decision');
         });
     }
 
@@ -22,7 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('decisions', function (Blueprint $table) {
-            //
+            $table->dropColumn('directorate_order_number');
+            $table->renameColumn('final_decision', 'decision_remarks');
         });
     }
 };

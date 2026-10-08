@@ -18,7 +18,7 @@
 
     <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
         <div class="p-6 border-b border-slate-200 bg-slate-50">
-            <form id="searchForm" method="GET" action="{{ route('petitions.reports.decisions') }}" class="flex flex-wrap gap-4 items-end">
+            <form id="searchForm" method="GET" action="{{ route('petitions.reports', ['tab' => 'decisions']) }}" class="flex flex-wrap gap-4 items-end">
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-xs font-medium text-slate-700 mb-1">Search Petitions</label>
                     <div class="relative flex items-center">
@@ -36,7 +36,7 @@
                 </div>
                 <div class="flex-none">
                     <label class="block text-xs font-medium text-transparent mb-1">&nbsp;</label>
-                    <a href="{{ route('petitions.reports.decisions') }}" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold px-4 py-[9px] rounded-lg text-sm flex items-center gap-2 shadow-sm transition-all whitespace-nowrap" title="Clear all filters">
+                    <a href="{{ route('petitions.reports', ['tab' => 'decisions']) }}" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold px-4 py-[9px] rounded-lg text-sm flex items-center gap-2 shadow-sm transition-all whitespace-nowrap" title="Clear all filters">
                         <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                         Reset
                     </a>

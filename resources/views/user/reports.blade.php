@@ -29,7 +29,11 @@
                 <a href="{{ route('petitions.export', request()->query()) }}" id="exportButton"
                     class="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-all font-semibold text-sm shadow-sm">
                     <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-                    Excel Export
+                    @if(!Auth::user()->canAccess('access admin dashboard') || session('is_impersonating_seat'))
+                        Export My Petitions
+                    @else
+                        Excel Export
+                    @endif
                 </a>
                 @if(Auth::user()->canAccess('create petitions'))
                     <a href="{{ route('petitions.create') }}"
@@ -109,11 +113,13 @@
                                 </optgroup>
                                 <optgroup label="Final Decisions" class="font-bold text-slate-900 bg-slate-50">
                                     <option value="All_Final_Decisions" {{ request('status') == 'All_Final_Decisions' ? 'selected' : '' }} class="font-medium text-indigo-600 bg-indigo-50/50 py-1.5 font-bold">All Final Decisions</option>
+                                    <option value="Pending" {{ request('status') == 'Pending' ? 'selected' : '' }} class="font-medium text-rose-600 bg-rose-50/50 py-1.5 font-bold">Pending (No Final Decision)</option>
                                     <option value="VC" {{ request('status') == 'VC' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Vigilance Case (VC)</option>
                                     <option value="VE" {{ request('status') == 'VE' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Vigilance Enquiry (VE)</option>
                                     <option value="PE" {{ request('status') == 'PE' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Preliminary Enquiry (PE)</option>
                                     <option value="SC" {{ request('status') == 'SC' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Surprise Check (SC)</option>
                                     <option value="CV" {{ request('status') == 'CV' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Confidential Verification (CV)</option>
+                                    <option value="IV" {{ request('status') == 'IV' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Internal Vigilance (IV)</option>
                                     <option value="ICell" {{ request('status') == 'ICell' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Intelligence Cell (I Cell)</option>
                                     <option value="Closed" {{ request('status') == 'Closed' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Closed</option>
                                     <option value="Sent to Govt" {{ request('status') == 'Sent to Govt' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Sent to Govt</option>
@@ -169,6 +175,23 @@
                                         <option value="{{ $seat->seat_id }}" {{ request('seat_id') == $seat->seat_id ? 'selected' : '' }}
                                             class="font-medium text-slate-800 bg-white py-1">{{ $seat->seat_name }}</option>
                                     @endforeach
+                                </select>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Filter by User</label>
+                            <div class="relative flex items-center">
+                                <select name="user_id"
+                                    class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white appearance-none pr-10">
+                                    <option value="" class="font-medium text-slate-800 bg-white py-1">All Users</option>
+                                    @if(isset($users))
+                                        @foreach($users as $user)
+                                            <option value="{{ $user->user_id }}" {{ request()->filled('user_id') && request('user_id') == $user->user_id ? 'selected' : '' }}
+                                                class="font-medium text-slate-800 bg-white py-1">{{ $user->name }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
                             </div>
@@ -343,6 +366,7 @@
                                 <option value="PE">Preliminary Enquiry (PE)</option>
                                 <option value="SC">Surprise Check (SC)</option>
                                 <option value="CV">Confidential Verification (CV)</option>
+                                                    <option value="IV">Internal Vigilance (IV)</option>
                                 <option value="ICell">Intelligence Cell (I Cell)</option>
                                 <option value="Closed">Closed</option>
                                 <option value="Sent to Govt">Sent to Govt</option>
@@ -405,6 +429,7 @@
                             <option value="PE">Preliminary Enquiry (PE)</option>
                             <option value="SC">Surprise Check (SC)</option>
                             <option value="CV">Confidential Verification (CV)</option>
+                                                    <option value="IV">Internal Vigilance (IV)</option>
                             <option value="ICell">Intelligence Cell (I Cell)</option>
                             <option value="Closed">Closed</option>
                             <option value="Sent to Govt">Sent to Govt</option>
@@ -534,6 +559,35 @@
 @section('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const exportBtn = document.getElementById('exportButton');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', function(e) {
+                    @if(!Auth::user()->canAccess('access admin dashboard') || session('is_impersonating_seat'))
+                    e.preventDefault();
+                    const url = this.href;
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Export My Petitions',
+                            text: 'You are about to download the petitions created by you. Do you want to proceed?',
+                            icon: 'info',
+                            showCancelButton: true,
+                            confirmButtonColor: '#4f46e5',
+                            cancelButtonColor: '#ef4444',
+                            confirmButtonText: 'Yes, Download!'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = url;
+                            }
+                        });
+                    } else {
+                        if (confirm('You are about to download the petitions created by you. Do you want to proceed?')) {
+                            window.location.href = url;
+                        }
+                    }
+                    @endif
+                });
+            }
+
             const searchForm = document.getElementById('searchForm');
             if (!searchForm) return;
 

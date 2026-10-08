@@ -128,7 +128,7 @@ class PetitionForwardingController extends Controller
             return back()->with('error', 'Cannot pull back. VR Report already submitted.');
         }
 
-        if ($forwarding->petition->decision()->exists() && !Auth::user()->canAccess('access admin dashboard')) {
+        if ($forwarding->petition->decision()->exists()) {
             return back()->with('error', 'Cannot pull back. Final decision already made.');
         }
 
@@ -153,7 +153,7 @@ class PetitionForwardingController extends Controller
         $forwarding = PetitionForwarding::findOrFail($id);
         $petition = $forwarding->petition;
 
-        if (Decision::where('petition_id', $petition->petition_id)->exists() && !Auth::user()->canAccess('access admin dashboard')) {
+        if (Decision::where('petition_id', $petition->petition_id)->exists()) {
             return back()->with('error', 'Cannot pull back VR. Final decision already made.');
         }
 

@@ -15,6 +15,8 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\ComplianceController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DesignationController;
 
 Route::get('/dashboard', function () {
     $user = Auth::user();
@@ -49,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Custom Petition Routes (MUST be before resource route)
         Route::get('/inward/enter-petition', [PetitionController::class, 'inwardCreate'])->name('inward.enter_petition');
+        Route::get('/inward/enter-petition/export', [PetitionController::class, 'inwardExport'])->name('inward.export');
         Route::get('/inward/create', [PetitionController::class, 'inwardCreate'])->name('inward.create');
         Route::get('/inward/transfers', [PetitionController::class, 'inwardTransfers'])->name('inward.transfers');
         Route::get('/inward/statistics', [PetitionController::class, 'inwardStatistics'])->name('inward.statistics');
@@ -86,11 +89,32 @@ Route::middleware(['auth'])->group(function () {
         'update' => 'admin.units.update',
         'destroy' => 'admin.units.destroy',
     ]);
+    // Department Analysis
+    Route::get('/departments/analysis', [App\Http\Controllers\DepartmentController::class, 'analysis'])->name('admin.departments.analysis');
+    Route::get('/departments/analysis/export', [App\Http\Controllers\DepartmentController::class, 'exportAnalysis'])->name('admin.departments.analysis.export');
+
+    Route::resource("departments", DepartmentController::class)->names([
+        'index' => 'admin.departments.index',
+        'create' => 'admin.departments.create',
+        'store' => 'admin.departments.store',
+        'edit' => 'admin.departments.edit',
+        'update' => 'admin.departments.update',
+        'destroy' => 'admin.departments.destroy',
+    ]);
+    Route::resource("designations", DesignationController::class)->names([
+        'index' => 'admin.designations.index',
+        'create' => 'admin.designations.create',
+        'store' => 'admin.designations.store',
+        'edit' => 'admin.designations.edit',
+        'update' => 'admin.designations.update',
+        'destroy' => 'admin.designations.destroy',
+    ]);
     Route::post('/admin/units/check-code', [UnitController::class, 'checkUnitCode'])->name('admin.units.checkCode');
     Route::post('/users/check-unique', [UserController::class, 'checkUnique'])->name('users.checkUnique');
 
     Route::get('/seats/statistics', [SeatController::class, 'statistics'])->name('admin.seats.statistics');
     Route::get('/seats/statistics/export', [SeatController::class, 'exportStatistics'])->name('admin.seats.statistics.export');
+
 
     Route::resource("seats", SeatController::class)->names([
         'index' => 'admin.seats.index',
