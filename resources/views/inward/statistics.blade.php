@@ -20,7 +20,6 @@
             </div>
         </div>
 
-<<<<<<< HEAD
         <div class="flex items-center gap-3">
             @if(Auth::user()->canAccess('export_statistics') || Auth::user()->canAccess('access admin dashboard'))
             <a href="{{ route('inward.statistics.export', request()->query()) }}" 
@@ -40,9 +39,6 @@
                 Inward Petitions
             </a>
         </div>
-=======
-
->>>>>>> da6a7ac18f697e042582f40bbd68b1693797bcc2
     </div>
 
     <!-- Date Range Filter Form (Print Hidden) -->
