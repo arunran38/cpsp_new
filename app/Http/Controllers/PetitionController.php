@@ -63,6 +63,7 @@ class PetitionController extends Controller
             'filter' => 'nullable|in:all,transferred,returned',
             'date_from' => 'nullable|date_format:Y-m-d',
             'date_to' => 'nullable|date_format:Y-m-d|after_or_equal:date_from',
+            'seat_id' => 'nullable|exists:seats,seat_id',
         ]);
         $filter = $filters['filter'] ?? 'all';
 
@@ -72,6 +73,7 @@ class PetitionController extends Controller
         }
 
         $seats = Seat::role('CPSP')->where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+        $inwardSeats = Seat::where('seat_name', 'like', '%Inward%')->where('is_active', true)->get();
         $units = \App\Models\Unit::orderBy('unit_name')->get();
         $districts = \App\Models\District::orderBy('district_id')->get();
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
@@ -82,13 +84,27 @@ class PetitionController extends Controller
             ->whereNull('linked_petition_id');
 
         if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
-            $currentSeat = $user->currentSeatUser();
-            $transfersQuery->where(function($q) use ($user, $currentSeat) {
-                $q->where('user_id', $user->user_id);
-                if ($currentSeat) {
-                    $q->orWhere('seat_id', $currentSeat->seat_id);
-                }
-            });
+            if ($user->hasRole(['inward', 'Inward'])) {
+                // Shared Inward Visibility: Let Inward role users see all inward petitions created by ANY inward user
+                $inwardUserIds = \App\Models\User::role(['inward', 'Inward'])->pluck('user_id');
+                $transfersQuery->whereIn('user_id', $inwardUserIds);
+            } else {
+                // Regular user: only their own
+                $currentSeat = $user->currentSeatUser();
+                $transfersQuery->where(function($q) use ($user, $currentSeat) {
+                    $q->where('user_id', $user->user_id);
+                    if ($currentSeat) {
+                        $q->orWhere('seat_id', $currentSeat->seat_id);
+                    }
+                });
+            }
+        } else {
+            // Admin can view all (or filter by seat if requested)
+            if ($request->filled('seat_id')) {
+                $transfersQuery->whereHas('user.seatUsers', function($sq) use ($request) {
+                    $sq->where('seat_id', $request->seat_id);
+                });
+            }
         }
 
         if ($request->filled('search')) {
@@ -138,7 +154,7 @@ class PetitionController extends Controller
 
         $unifiedCounts = $this->getUnifiedCounts();
 
-        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments', 'transfers', 'filter', 'counts', 'unifiedCounts'));
+        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments', 'transfers', 'filter', 'counts', 'unifiedCounts', 'inwardSeats'));
     }
 
     /**

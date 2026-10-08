@@ -12,23 +12,28 @@
 
         $totalPetitions = \App\Models\Petition::whereNull('linked_petition_id')->count();
 
+        $unprocessed = \App\Models\Petition::whereNull('linked_petition_id')
+            ->where('is_cpsp_processed', false)
+            ->where('is_returned_to_inward', false)
+            ->count();
+
         $vrReports = \App\Models\PetitionForwarding::whereNotNull('vr_date')
             ->whereHas('petition', function ($query) {
                 $query->where('status', 'VR_Received')
-                      ->whereNull('linked_petition_id');
+                    ->whereNull('linked_petition_id');
             })
             ->count();
 
         $forwarded = \App\Models\PetitionForwarding::whereNotNull('forwarded_date')
             ->whereHas('petition', function ($query) {
                 $query->where('status', 'Forwarded')
-                      ->whereNull('linked_petition_id');
+                    ->whereNull('linked_petition_id');
             })
             ->count();
 
         $decisions = \App\Models\Decision::whereHas('petition', function ($query) {
-                $query->whereNull('linked_petition_id');
-            })
+            $query->whereNull('linked_petition_id');
+        })
             ->count();
 
         // Vacant Seats mapping
@@ -64,14 +69,15 @@
     <div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
         <!-- Premium Header Section -->
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
+        <div
+            class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
             <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
                 <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
             </div>
             <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
                 <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
             </div>
-            
+
             <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="text-center sm:text-left">
                     <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
@@ -119,157 +125,164 @@
             </div>
         @endif
 
-        <!-- 4 High-End Stat Cards -->
+        <!-- 5 High-End Stat Cards -->
         @if(Auth::user()->canAccess('view master reports'))
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <!-- Card 1: Total Petitions -->
-            <a href="{{ route('petitions.reports', ['tab' => 'all']) }}"
-                class="block p-6 bg-indigo-50 border border-indigo-100 rounded-3xl shadow-sm relative overflow-hidden group hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300">
-                <div class="flex items-start justify-between relative z-10">
-                    <div
-                        class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white border border-indigo-100/50 shadow-sm font-black">
-                        <i data-lucide="file-text" class="w-6 h-6"></i>
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+
+                <!-- Card 1: Unprocessed Petitions -->
+                <a href="{{ route('petitions.index', ['tab' => 'received']) }}"
+                   class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-cyan-500/40 bg-gradient-to-br from-cyan-400 to-blue-500 border border-cyan-400/30 shadow-lg">
+                    <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+                    
+                    <div class="flex items-start justify-between relative z-10">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-cyan-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                            <i data-lucide="inbox" class="w-6 h-6 stroke-[2.5]"></i>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                            New
+                        </span>
                     </div>
-                    <span
-                        class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-white text-emerald-600 border border-emerald-100 uppercase tracking-widest shadow-sm">
-                        Total
-                    </span>
-                </div>
-                <div class="mt-6 relative z-10">
-                    <p class="text-xs font-bold text-indigo-700/60 uppercase tracking-widest leading-none">Total Petitions
-                    </p>
-                    <h3 class="text-4xl font-black text-indigo-900 mt-2 tracking-tight">{{ $totalPetitions }}</h3>
-                </div>
-                <div
-                    class="absolute -bottom-10 -right-10 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl group-hover:bg-indigo-500/10 transition-all duration-500">
-                </div>
-            </a>
-
-
-            <!-- Card 2: Forwarded -->
-            <a href="{{ route('petitions.reports', ['tab' => 'forwarded']) }}"
-                class="p-6 bg-rose-50 border border-rose-100 rounded-3xl shadow-sm relative overflow-hidden group hover:shadow-2xl hover:shadow-rose-500/10 transition-all duration-300">
-                <div class="flex items-start justify-between relative z-10">
-                    <div
-                        class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-rose-600 transition-colors group-hover:bg-rose-600 group-hover:text-white border border-rose-100/50 shadow-sm">
-                        <i data-lucide="send" class="w-6 h-6"></i>
+                    <div class="mt-4 relative z-10">
+                        <p class="text-[10px] font-black text-cyan-50 uppercase tracking-widest leading-none mb-2">Unprocessed Petitions</p>
+                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $unprocessed }}</h3>
                     </div>
-                    <span
-                        class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-white text-rose-600 border border-rose-100 uppercase tracking-widest shadow-sm">
-                        In Prog
-                    </span>
-                </div>
-                <div class="mt-6 relative z-10">
-                    <p class="text-xs font-bold text-rose-700/60 uppercase tracking-widest leading-none">Forwarded</p>
-                    <h3 class="text-4xl font-black text-rose-900 mt-2 tracking-tight">{{ $forwarded }}</h3>
-                </div>
-                <div
-                    class="absolute -bottom-10 -right-10 w-32 h-32 bg-rose-500/5 rounded-full blur-3xl group-hover:bg-rose-500/10 transition-all duration-500">
-                </div>
-            </a>
+                </a>
 
-            <!-- Card 3: Verification Reports -->
-            <a href="{{ route('petitions.reports', ['tab' => 'vrs']) }}"
-                class="p-6 bg-amber-50 border border-amber-100 rounded-3xl shadow-sm relative overflow-hidden group hover:shadow-2xl hover:shadow-amber-500/10 transition-all duration-300">
-                <div class="flex items-start justify-between relative z-10">
-                    <div
-                        class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-amber-600 transition-colors group-hover:bg-amber-600 group-hover:text-white border border-amber-100/50 shadow-sm">
-                        <i data-lucide="clipboard-list" class="w-6 h-6"></i>
+                <!-- Card 2: Total Petitions -->
+                <a href="{{ route('petitions.index', ['tab' => 'all']) }}"
+                   class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-400/30 shadow-lg">
+                    <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+                    
+                    <div class="flex items-start justify-between relative z-10">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-emerald-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                            <i data-lucide="file-text" class="w-6 h-6 stroke-[2.5]"></i>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                            Total
+                        </span>
                     </div>
-                    <span
-                        class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-white text-emerald-600 border border-emerald-100 uppercase tracking-widest shadow-sm">
-                        Reported
-                    </span>
-                </div>
-                <div class="mt-6 relative z-10">
-                    <p class="text-xs font-bold text-amber-700/60 uppercase tracking-widest leading-none">Verification
-                        Reports Received</p>
-                    <h3 class="text-4xl font-black text-amber-900 mt-2 tracking-tight">{{ $vrReports }}</h3>
-                </div>
-                <div
-                    class="absolute -bottom-10 -right-10 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl group-hover:bg-amber-500/10 transition-all duration-500">
-                </div>
-            </a>
-
-
-            <!-- Card 4: Decisions -->
-            <a href="{{ route('petitions.reports', ['tab' => 'decisions']) }}"
-                class="p-6 bg-emerald-50 border border-emerald-100 rounded-3xl shadow-sm relative overflow-hidden group hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300">
-                <div class="flex items-start justify-between relative z-10">
-                    <div
-                        class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-emerald-600 transition-colors group-hover:bg-emerald-600 group-hover:text-white border border-emerald-100/50 shadow-sm">
-                        <i data-lucide="check-square" class="w-6 h-6"></i>
+                    <div class="mt-4 relative z-10">
+                        <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none mb-2">Processed Petitions</p>
+                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $totalPetitions }}</h3>
                     </div>
-                    <span
-                        class="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold bg-white text-emerald-600 border border-emerald-100 uppercase tracking-widest shadow-sm">
-                        Completed
-                    </span>
-                </div>
-                <div class="mt-6 relative z-10">
-                    <p class="text-xs font-bold text-emerald-700/60 uppercase tracking-widest leading-none">Decisions</p>
-                    <h3 class="text-4xl font-black text-emerald-900 mt-2 tracking-tight">{{ $decisions }}</h3>
-                </div>
-                <div
-                    class="absolute -bottom-10 -right-10 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl group-hover:bg-emerald-500/10 transition-all duration-500">
-                </div>
-            </a>
-        </div>
+                </a>
+
+                <!-- Card 3: Forwarded -->
+                <a href="{{ route('petitions.index', ['tab' => 'forwarded']) }}"
+                   class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-pink-500/40 bg-gradient-to-br from-rose-400 to-pink-600 border border-pink-400/30 shadow-lg">
+                    <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+                    
+                    <div class="flex items-start justify-between relative z-10">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-pink-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                            <i data-lucide="send" class="w-6 h-6 stroke-[2.5]"></i>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                            In Prog
+                        </span>
+                    </div>
+                    <div class="mt-4 relative z-10">
+                        <p class="text-[10px] font-black text-pink-100 uppercase tracking-widest leading-none mb-2">Forwarded Petitions</p>
+                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $forwarded }}</h3>
+                    </div>
+                </a>
+
+                <!-- Card 4: Verification Reports -->
+                <a href="{{ route('petitions.index', ['tab' => 'vrs']) }}"
+                   class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-orange-500/40 bg-gradient-to-br from-amber-500 to-orange-600 border border-orange-400/30 shadow-lg">
+                    <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+                    
+                    <div class="flex items-start justify-between relative z-10">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-orange-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                            <i data-lucide="clipboard-list" class="w-6 h-6 stroke-[2.5]"></i>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                            Reported
+                        </span>
+                    </div>
+                    <div class="mt-4 relative z-10">
+                        <p class="text-[10px] font-black text-orange-100 uppercase tracking-widest leading-none mb-2">Verification Reports Received</p>
+                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $vrReports }}</h3>
+                    </div>
+                </a>
+
+
+                <!-- Card 5: Decisions -->
+                <a href="{{ route('petitions.index', ['tab' => 'decisions']) }}"
+                   class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/40 bg-gradient-to-br from-indigo-400 to-indigo-600 border border-indigo-400/30 shadow-lg">
+                    <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+                    
+                    <div class="flex items-start justify-between relative z-10">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-indigo-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                            <i data-lucide="check-square" class="w-6 h-6 stroke-[2.5]"></i>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                            Completed
+                        </span>
+                    </div>
+                    <div class="mt-4 relative z-10">
+                        <p class="text-[10px] font-black text-indigo-50 uppercase tracking-widest leading-none mb-2">Final Decision</p>
+                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $decisions }}</h3>
+                    </div>
+                </a>
+            </div>
         @endif
 
         <!-- Charts Section -->
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
             @if(Auth::user()->canAccess('view seat distribution chart'))
-            <div
-                class="lg:col-span-1 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden flex flex-col">
-                <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6 relative z-10">
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                            <i data-lucide="bar-chart-3" class="w-5 h-5 text-indigo-500"></i> Seat Distribution
-                        </h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Petition load distribution across active seats</p>
-                    </div>
-
-                    <form action="{{ route('admin.dashboard') }}" method="GET" class="flex flex-wrap items-center gap-2">
-                        <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                            <input type="date" name="from_date" value="{{ $fromDate }}" placeholder="DD-MM-YYYY"
-                                class="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer" style="color: #1e40af !important;">
-                            <span class="text-slate-300 text-[10px] font-black mx-1">—</span>
-                            <input type="date" name="to_date" value="{{ $toDate }}" placeholder="DD-MM-YYYY"
-                                class="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer" style="color: #1e40af !important;">
+                <div
+                    class="lg:col-span-1 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden flex flex-col">
+                    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6 relative z-10">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="bar-chart-3" class="w-5 h-5 text-indigo-500"></i> Seat Distribution
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Petition load distribution across active seats</p>
                         </div>
-                        <button type="submit"
-                            class="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
-                            <i data-lucide="filter" class="w-4 h-4"></i>
-                        </button>
-                        @if(request()->has('from_date') || request()->has('to_date'))
-                            <a href="{{ route('admin.dashboard') }}"
-                                class="p-2 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all">
-                                <i data-lucide="x" class="w-4 h-4"></i>
-                            </a>
-                        @endif
-                    </form>
+
+                        <form action="{{ route('admin.dashboard') }}" method="GET" class="flex flex-wrap items-center gap-2">
+                            <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                                <input type="date" name="from_date" value="{{ $fromDate }}" placeholder="DD-MM-YYYY"
+                                    class="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer"
+                                    style="color: #1e40af !important;">
+                                <span class="text-slate-300 text-[10px] font-black mx-1">—</span>
+                                <input type="date" name="to_date" value="{{ $toDate }}" placeholder="DD-MM-YYYY"
+                                    class="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer"
+                                    style="color: #1e40af !important;">
+                            </div>
+                            <button type="submit"
+                                class="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+                                <i data-lucide="filter" class="w-4 h-4"></i>
+                            </button>
+                            @if(request()->has('from_date') || request()->has('to_date'))
+                                <a href="{{ route('admin.dashboard') }}"
+                                    class="p-2 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </a>
+                            @endif
+                        </form>
+                    </div>
+                    <div class="relative flex-grow w-full z-10 min-h-[350px]">
+                        <canvas id="seatPetitionChart"></canvas>
+                    </div>
                 </div>
-                <div class="relative flex-grow w-full z-10 min-h-[350px]">
-                    <canvas id="seatPetitionChart"></canvas>
-                </div>
-            </div>
             @endif
 
             @if(Auth::user()->canAccess('view petition status chart'))
-            <div
-                class="col-span-full lg:col-span-1 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden">
-                <div class="flex items-center justify-between mb-6 relative z-10">
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
-                            <i data-lucide="pie-chart" class="w-5 h-5 text-purple-500"></i> Petition Status
-                        </h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Overall status distribution</p>
+                <div
+                    class="col-span-full lg:col-span-1 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-6 relative z-10">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="pie-chart" class="w-5 h-5 text-purple-500"></i> Petition Status
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Overall status distribution</p>
+                        </div>
+                    </div>
+                    <div class="relative h-[300px] w-full flex items-center justify-center z-10">
+                        <canvas id="statusDoughnutChart"></canvas>
                     </div>
                 </div>
-                <div class="relative h-[300px] w-full flex items-center justify-center z-10">
-                    <canvas id="statusDoughnutChart"></canvas>
-                </div>
-            </div>
             @endif
         </div>
     </div>

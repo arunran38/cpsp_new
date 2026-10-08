@@ -16,12 +16,39 @@
         $petitions = \App\Models\Petition::where('user_id', $user->user_id)->whereNull('linked_petition_id')->get();
     }
 
+    // Role check
+    $isInwardRole = false;
+    if ($currentSeat && isset($currentSeat->seat)) {
+        try {
+            if ($currentSeat->seat->hasRole('Inward') || stripos($currentSeat->seat->seat_name, 'Inward') !== false) {
+                $isInwardRole = true;
+            }
+        } catch (\Exception $e) {
+            if (stripos($currentSeat->seat->seat_name, 'Inward') !== false) {
+                $isInwardRole = true;
+            }
+        }
+    }
+    if (!$isInwardRole) {
+        try {
+            if ($user->hasRole('Inward')) {
+                $isInwardRole = true;
+            }
+        } catch (\Exception $e) { }
+    }
+
     // Stat Metrics
     $totalPetitions = $petitions->count();
     $inwardCount = $petitions->filter(fn($p) => !$p->is_cpsp_processed && !$p->is_returned_to_inward)->count();
     $forwarded = $petitions->filter(fn($p) => $p->status === 'Forwarded')->count();
     $vrsReceived = $petitions->filter(fn($p) => $p->status === 'VR_Received')->count();
     $finalDecisions = $petitions->filter(fn($p) => in_array($p->status, ['Closed', 'Sent_to_Govt']))->count();
+
+    if ($isInwardRole) {
+        $totalInwardCount = $petitions->count();
+        $sentToCpspCount = $petitions->filter(fn($p) => $p->is_cpsp_processed)->count();
+        $returnedFromCpspCount = $petitions->filter(fn($p) => $p->is_returned_to_inward)->count();
+    }
 
     // Chart Data: Petitions by Nature
     $natureStats = collect($petitions)->countBy('nature_of_petition');
@@ -106,6 +133,7 @@
         </div>
     @endif
 
+    @if(!$isInwardRole)
     <!-- Page Header -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white px-8 py-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
         <div class="absolute -top-12 -right-12 w-40 h-40 bg-indigo-500 rounded-full blur-[80px] opacity-20 pointer-events-none"></div>
@@ -129,104 +157,168 @@
             @endif
         </div>
     </div>
+    @endif
 
     <!-- Stats Grid -->
-   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 p-4">
-    <a href="{{ route('petitions.index', ['tab' => 'inward']) }}"
-       class="group relative block p-5 transition-all duration-500 bg-teal-50 border border-teal-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(20,184,166,0.15)] hover:-translate-y-1">
-        <div class="absolute -top-10 -right-10 w-28 h-28 bg-teal-500/10 rounded-full blur-xl group-hover:bg-teal-500/20 transition-all duration-500"></div>
-        
-        <div class="flex items-center justify-between relative z-10">
-            <div class="w-11 h-11 flex items-center justify-center rounded-xl bg-white text-teal-600 shadow-sm group-hover:scale-105 transition-transform duration-500">
-                <i data-lucide="inbox" class="w-5 h-5"></i>
+    @if($isInwardRole)
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 p-4">
+        <!-- Card 1: Total Inward Petitions -->
+        <a href="{{ route('petitions.index', ['tab' => 'all']) }}"
+           class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-cyan-500/40 bg-gradient-to-br from-cyan-400 to-blue-500 border border-cyan-400/30 shadow-lg">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+            
+            <div class="flex items-start justify-between relative z-10">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-cyan-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                    <i data-lucide="inbox" class="w-6 h-6 stroke-[2.5]"></i>
+                </div>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                    Total
+                </span>
             </div>
-            <span class="px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-teal-700 bg-white/60 backdrop-blur-md rounded-full border border-teal-200/60">
-                Inward
-            </span>
-        </div>
-
-        <div class="mt-5 relative z-10">
-            <p class="text-3xl sm:text-4xl font-black text-teal-900 tracking-tight">{{ $inwardCount }}</p>
-            <h3 class="text-xs font-bold text-teal-700/70 uppercase tracking-wider mt-1.5 truncate" title="Inward Petitions">Inward Petitions</h3>
-        </div>
-    </a>
-
-    <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'all']) }}" @else href="{{ route('petitions.index', ['tab' => 'all']) }}" @endif
-       class="group relative block p-5 transition-all duration-500 bg-blue-50 border border-blue-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(59,130,246,0.15)] hover:-translate-y-1">
-        <div class="absolute -top-10 -right-10 w-28 h-28 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
-        
-        <div class="flex items-center justify-between relative z-10">
-            <div class="w-11 h-11 flex items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm group-hover:scale-105 transition-transform duration-500">
-                <i data-lucide="file-text" class="w-5 h-5"></i>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] font-black text-cyan-50 uppercase tracking-widest leading-none mb-2">Total Inward Petitions</p>
+                <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $totalInwardCount }}</h3>
             </div>
-            <span class="px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-blue-700 bg-white/60 backdrop-blur-md rounded-full border border-blue-200/60">
-                Processed
-            </span>
-        </div>
+        </a>
 
-        <div class="mt-5 relative z-10">
-            <p class="text-3xl sm:text-4xl font-black text-blue-900 tracking-tight">{{ $totalPetitions }}</p>
-            <h3 class="text-xs font-bold text-blue-700/70 uppercase tracking-wider mt-1.5 truncate" title="Processed Petitions">Processed Petitions</h3>
-        </div>
-    </a>
-
-    <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'forwarded']) }}" @endif
-       class="group relative block p-5 transition-all duration-500 bg-amber-50 border border-amber-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(245,158,11,0.15)] hover:-translate-y-1">
-        <div class="absolute -top-10 -right-10 w-28 h-28 bg-amber-500/10 rounded-full blur-xl group-hover:bg-amber-500/20 transition-all duration-500"></div>
-        
-        <div class="flex items-center justify-between relative z-10">
-            <div class="w-11 h-11 flex items-center justify-center rounded-xl bg-white text-amber-600 shadow-sm group-hover:scale-105 transition-transform duration-500">
-                <i data-lucide="send" class="w-5 h-5"></i>
+        <!-- Card 2: Sent/Transferred to CPSP -->
+        <a href="{{ route('petitions.index', ['tab' => 'forwarded']) }}"
+           class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-400/30 shadow-lg">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+            
+            <div class="flex items-start justify-between relative z-10">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-emerald-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                    <i data-lucide="send" class="w-6 h-6 stroke-[2.5]"></i>
+                </div>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                    Sent
+                </span>
             </div>
-            <span class="px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-amber-700 bg-white/60 backdrop-blur-md rounded-full border border-amber-200/60">
-                In Prog
-            </span>
-        </div>
-
-        <div class="mt-5 relative z-10">
-            <p class="text-3xl sm:text-4xl font-black text-amber-900 tracking-tight">{{ $forwarded }}</p>
-            <h3 class="text-xs font-bold text-amber-700/70 uppercase tracking-wider mt-1.5 truncate" title="Forwarded Units">Forwarded Units</h3>
-        </div>
-    </a>
-
-    <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'vrs']) }}" @endif
-       class="group relative block p-5 transition-all duration-500 bg-purple-50 border border-purple-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(147,51,234,0.15)] hover:-translate-y-1">
-        <div class="absolute -top-10 -right-10 w-28 h-28 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-all duration-500"></div>
-        
-        <div class="flex items-center justify-between relative z-10">
-            <div class="w-11 h-11 flex items-center justify-center rounded-xl bg-white text-purple-600 shadow-sm group-hover:scale-105 transition-transform duration-500">
-                <i data-lucide="file-check" class="w-5 h-5"></i>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none mb-2">Sent/Transferred to CPSP</p>
+                <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $sentToCpspCount }}</h3>
             </div>
-            <span class="px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-purple-700 bg-white/60 backdrop-blur-md rounded-full border border-purple-200/60">
-                Reported
-            </span>
-        </div>
+        </a>
 
-        <div class="mt-5 relative z-10">
-            <p class="text-3xl sm:text-4xl font-black text-purple-900 tracking-tight">{{ $vrsReceived }}</p>
-            <h3 class="text-xs font-bold text-purple-700/70 uppercase tracking-wider mt-1.5 truncate" title="Verification Reports Received">VR Received</h3>
-        </div>
-    </a>
-
-    <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'decisions']) }}" @endif
-       class="group relative block p-5 transition-all duration-500 bg-emerald-50 border border-emerald-100 rounded-3xl overflow-hidden hover:shadow-[0_15px_30px_rgba(16,185,129,0.15)] hover:-translate-y-1">
-        <div class="absolute -top-10 -right-10 w-28 h-28 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-all duration-500"></div>
-        
-        <div class="flex items-center justify-between relative z-10">
-            <div class="w-11 h-11 flex items-center justify-center rounded-xl bg-white text-emerald-600 shadow-sm group-hover:scale-105 transition-transform duration-500">
-                <i data-lucide="check-square" class="w-5 h-5"></i>
+        <!-- Card 3: Returned from CPSP -->
+        <a href="{{ route('petitions.index', ['tab' => 'returned']) }}"
+           class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-rose-500/40 bg-gradient-to-br from-rose-400 to-pink-600 border border-rose-400/30 shadow-lg">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+            
+            <div class="flex items-start justify-between relative z-10">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-pink-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                    <i data-lucide="corner-down-left" class="w-6 h-6 stroke-[2.5]"></i>
+                </div>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                    Returned
+                </span>
             </div>
-            <span class="px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-emerald-700 bg-white/60 backdrop-blur-md rounded-full border border-emerald-200/60">
-                Completed
-            </span>
-        </div>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] font-black text-pink-100 uppercase tracking-widest leading-none mb-2">Returned from CPSP</p>
+                <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $returnedFromCpspCount }}</h3>
+            </div>
+        </a>
+    </div>
+    @else
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5 p-4">
 
-        <div class="mt-5 relative z-10">
-            <p class="text-3xl sm:text-4xl font-black text-emerald-900 tracking-tight">{{ $finalDecisions }}</p>
-            <h3 class="text-xs font-bold text-emerald-700/70 uppercase tracking-wider mt-1.5 truncate" title="Final Decisions">Final Decisions</h3>
-        </div>
-    </a>
-</div>
+                <!-- Card 1: Inward Petitions -->
+                <a href="{{ route('petitions.index', ['tab' => 'inward']) }}"
+                   class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-cyan-500/40 bg-gradient-to-br from-cyan-400 to-blue-500 border border-cyan-400/30 shadow-lg">
+                    <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+                    
+                    <div class="flex items-start justify-between relative z-10">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-cyan-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                            <i data-lucide="inbox" class="w-6 h-6 stroke-[2.5]"></i>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                            Inward
+                        </span>
+                    </div>
+                    <div class="mt-4 relative z-10">
+                        <p class="text-[10px] font-black text-cyan-50 uppercase tracking-widest leading-none mb-2">Inward Petitions</p>
+                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $inwardCount }}</h3>
+                    </div>
+                </a>
+
+                <!-- Card 2: Total Petitions -->
+                <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'all']) }}" @else href="{{ route('petitions.index', ['tab' => 'all']) }}" @endif
+                   class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-400/30 shadow-lg">
+                    <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+                    
+                    <div class="flex items-start justify-between relative z-10">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-emerald-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                            <i data-lucide="file-text" class="w-6 h-6 stroke-[2.5]"></i>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                            Processed
+                        </span>
+                    </div>
+                    <div class="mt-4 relative z-10">
+                        <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none mb-2">Processed Petitions</p>
+                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $totalPetitions }}</h3>
+                    </div>
+                </a>
+
+                <!-- Card 3: Forwarded -->
+                <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'forwarded']) }}" @else href="{{ route('petitions.index', ['tab' => 'forwarded']) }}" @endif
+                   class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-pink-500/40 bg-gradient-to-br from-rose-400 to-pink-600 border border-pink-400/30 shadow-lg">
+                    <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+                    
+                    <div class="flex items-start justify-between relative z-10">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-pink-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                            <i data-lucide="send" class="w-6 h-6 stroke-[2.5]"></i>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                            In Prog
+                        </span>
+                    </div>
+                    <div class="mt-4 relative z-10">
+                        <p class="text-[10px] font-black text-pink-100 uppercase tracking-widest leading-none mb-2">Forwarded Units</p>
+                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $forwarded }}</h3>
+                    </div>
+                </a>
+
+                <!-- Card 4: Verification Reports -->
+                <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'vrs']) }}" @else href="{{ route('petitions.index', ['tab' => 'vrs']) }}" @endif
+                   class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-orange-500/40 bg-gradient-to-br from-amber-500 to-orange-600 border border-orange-400/30 shadow-lg">
+                    <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+                    
+                    <div class="flex items-start justify-between relative z-10">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-orange-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                            <i data-lucide="clipboard-list" class="w-6 h-6 stroke-[2.5]"></i>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                            Reported
+                        </span>
+                    </div>
+                    <div class="mt-4 relative z-10">
+                        <p class="text-[10px] font-black text-orange-100 uppercase tracking-widest leading-none mb-2">VRs Received</p>
+                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $vrsReceived }}</h3>
+                    </div>
+                </a>
+
+
+                <!-- Card 5: Decisions -->
+                <a @if(Auth::user()->canAccess('view master reports')) href="{{ route('petitions.reports', ['tab' => 'decisions']) }}" @else href="{{ route('petitions.index', ['tab' => 'decisions']) }}" @endif
+                   class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/40 bg-gradient-to-br from-indigo-400 to-indigo-600 border border-indigo-400/30 shadow-lg">
+                    <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+                    
+                    <div class="flex items-start justify-between relative z-10">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-indigo-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                            <i data-lucide="check-square" class="w-6 h-6 stroke-[2.5]"></i>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                            Completed
+                        </span>
+                    </div>
+                    <div class="mt-4 relative z-10">
+                        <p class="text-[10px] font-black text-indigo-50 uppercase tracking-widest leading-none mb-2">Final Decisions</p>
+                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $finalDecisions }}</h3>
+                    </div>
+                </a>
+            </div>
+    @endif
     <!-- Visualizations Grid -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         @if(Auth::user()->canAccess('view petition trends chart'))

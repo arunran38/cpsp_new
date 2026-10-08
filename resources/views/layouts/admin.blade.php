@@ -550,7 +550,7 @@
                            class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('admin.departments.analysis') ? 'active-submenu' : 'submenu-link' }}">
                             <span class="submenu-indicator"></span>
                             <i data-lucide="building-2" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.departments.analysis') ? 'text-teal-400' : '' }}"></i>
-                            <span>Department Wise</span>
+                            <span>Department wise</span>
                         </a>
 
                         @if(Auth::user()->canAccess('inward_statistics') || Auth::user()->canAccess('inward statistics') || Auth::user()->canAccess('access admin dashboard'))

@@ -257,9 +257,8 @@
 
 
 
-
         <!-- Premium Header Section for View Inward Petitions -->
-        <div id="view-inward-petitions" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-4 mt-8 scroll-mt-24">
+        <div id="view-inward-petitions" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2 scroll-mt-24">
             <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
                 <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
             </div>
@@ -267,26 +266,63 @@
                 <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
             </div>
             
-            <div class="relative px-6 py-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
+            <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
                 <div class="text-center sm:text-left z-10">
-                    <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
                         View Inward Petitions
                     </h1>
-                    <p class="text-slate-300 font-medium max-w-2xl text-xs sm:text-sm">
+                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
                         Track and manage petitions registered through the inward section.
                     </p>
                 </div>
             </div>
         </div>
 
+        <!-- Unified Tabs (Visible to users who can view all petitions) -->
+        @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view all petitions'))
+            @php $tab = 'inward'; @endphp
+            <div
+                class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 p-1.5 rounded-2xl mb-6 w-full bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                <a href="{{ route('inward.enter_petition') }}"
+                    class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30">
+                    <span>Inward Petitions</span>
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors bg-white text-indigo-700">{{ $unifiedCounts['inward'] ?? 0 }}</span>
+                </a>
+                <a href="{{ route('petitions.index', ['tab' => 'all']) }}"
+                    class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent">
+                    <span>All Petitions</span>
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors bg-white/20 text-white">{{ $unifiedCounts['all'] ?? 0 }}</span>
+                </a>
+                <a href="{{ route('petitions.index', ['tab' => 'received']) }}"
+                    class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent">
+                    <span>Petitions Processed</span>
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors bg-white/20 text-white">{{ $unifiedCounts['received'] ?? 0 }}</span>
+                </a>
+                <a href="{{ route('petitions.index', ['tab' => 'forwarded']) }}"
+                    class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent">
+                    <span>Forwarded Petitions</span>
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors bg-white/20 text-white">{{ $unifiedCounts['forwarded'] ?? 0 }}</span>
+                </a>
+                <a href="{{ route('petitions.index', ['tab' => 'vrs']) }}"
+                    class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent">
+                    <span>Verification Reports Received</span>
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors bg-white/20 text-white">{{ $unifiedCounts['vrs'] ?? 0 }}</span>
+                </a>
+                <a href="{{ route('petitions.index', ['tab' => 'decisions']) }}"
+                    class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent">
+                    <span>Final Decisions</span>
+                    <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors bg-white/20 text-white">{{ $unifiedCounts['decisions'] ?? 0 }}</span>
+                </a>
+            </div>
+        @endif
+
         <!-- Filter Section -->
         @php
             $currentUser = Auth::user();
             $canFilterTransfer = $currentUser && (
                 $currentUser->canAccess('filter_transfer') ||
-                $currentUser->canAccess('filter transfer') ||
-                $currentUser->canAccess('access admin dashboard')
-            );
+                $currentUser->canAccess('filter transfer')
+            ) && !$currentUser->canAccess('access admin dashboard');
 
             $filterButtons = [
                 'all' => 'All Petitions',
@@ -295,84 +331,110 @@
             ];
         @endphp
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 mt-6">
-            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                @if($canFilterTransfer)
-                    <!-- Filter Pills: All Petitions, Transferred, Returned from CPSP -->
-                    <nav class="flex flex-nowrap items-center gap-2 overflow-x-auto hide-scrollbar" aria-label="Filter inward transactions">
-                        @foreach($filterButtons as $filterKey => $filterLabel)
-                            <a href="{{ route('inward.enter_petition', array_merge(request()->except(['page', 'filter']), ['filter' => $filterKey])) }}"
-                                @class([
-                                    'h-10 px-4 inline-flex items-center gap-2 text-sm font-bold rounded-xl border transition-all shadow-sm',
-                                    'bg-teal-600 text-white border-teal-600 shadow-sm' => $filter === $filterKey,
-                                    'bg-indigo-50/50 text-indigo-700 border-indigo-200 hover:bg-indigo-100' => $filter !== $filterKey,
-                                ])>
-                                <span>{{ $filterLabel }}</span>
-                                @if(isset($counts))
-                                    <span id="badge-{{ $filterKey }}" @class([
-                                        'inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors',
-                                        'bg-white text-teal-700' => $filter === $filterKey,
-                                        'bg-rose-600 text-white animate-pulse shadow-[0_0_8px_rgba(225,29,72,0.5)]' => $filter !== $filterKey && $filterKey === 'returned' && $counts['returned'] > 0,
-                                        'bg-indigo-600 text-white' => $filter !== $filterKey && !($filterKey === 'returned' && $counts['returned'] > 0),
+        <!-- Filter and Data Table Section -->
+        <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden mt-6">
+            <div class="p-6 border-b border-slate-200 bg-slate-50">
+                <div class="flex flex-col gap-4">
+                    @if($canFilterTransfer)
+                        <!-- Filter Pills: All Petitions, Transferred, Returned from CPSP -->
+                        <nav class="flex flex-nowrap items-center gap-2 overflow-x-auto hide-scrollbar mb-2" aria-label="Filter inward transactions">
+                            @foreach($filterButtons as $filterKey => $filterLabel)
+                                <a href="{{ route('inward.enter_petition', array_merge(request()->except(['page', 'filter']), ['filter' => $filterKey])) }}"
+                                    @class([
+                                        'px-4 py-1.5 inline-flex items-center gap-2 text-xs font-bold rounded-full border transition-all shadow-sm',
+                                        'bg-teal-600 text-white border-teal-600 shadow-sm' => $filter === $filterKey,
+                                        'bg-indigo-50/50 text-indigo-700 border-indigo-200 hover:bg-indigo-100' => $filter !== $filterKey,
                                     ])>
-                                        {{ $counts[$filterKey] ?? 0 }}
-                                    </span>
-                                @endif
-                            </a>
-                        @endforeach
-                    </nav>
-                @else
-                    <div></div>
-                @endif
-
-                <!-- Search and Transfer-Date Filters -->
-                <form id="search-form" method="GET" action="{{ route('inward.enter_petition') }}"
-                    class="flex flex-nowrap items-center gap-2 overflow-x-auto hide-scrollbar" x-data="{ searchTimer: null }">
-                    <input type="hidden" name="filter" value="{{ $filter }}">
-                    <div class="relative min-w-[200px]">
-                        <input type="text" name="search" value="{{ request('search') }}"
-                            @input="clearTimeout(searchTimer); searchTimer = setTimeout(() => performLiveSearch(), 500)"
-                            placeholder="Receipt no, Complainant ..."
-                            class="h-10 w-full xl:w-64 pl-9 pr-4 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:bg-white focus:border-indigo-600 outline-none transition-all">
-                        <i data-lucide="search"
-                            class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                    </div>
-                    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 h-10">
-                        <span class="text-xs font-semibold text-slate-500">From</span>
-                        <input type="date" name="date_from" value="{{ request('date_from') }}"
-                            @change="performLiveSearch()"
-                            class="bg-transparent text-sm font-medium text-slate-900 outline-none border-none p-0 focus:ring-0">
-                    </div>
-                    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 h-10">
-                        <span class="text-xs font-semibold text-slate-500">To</span>
-                        <input type="date" name="date_to" value="{{ request('date_to') }}"
-                            @change="performLiveSearch()"
-                            class="bg-transparent text-sm font-medium text-slate-900 outline-none border-none p-0 focus:ring-0">
-                    </div>
-                    <button type="button" @click="performLiveSearch()"
-                        class="h-10 px-5 text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl shadow-sm transition-all inline-flex items-center gap-2">
-                        <i data-lucide="filter" class="w-4 h-4"></i>
-                        Filter
-                    </button>
-                    <button type="submit" formaction="{{ route('inward.export') }}"
-                        class="h-10 px-5 text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 rounded-xl shadow-sm transition-all inline-flex items-center gap-2">
-                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-                        Export
-                    </button>
-                    @if(request()->hasAny(['search', 'date_from', 'date_to']))
-                        <a href="{{ route('inward.enter_petition', ['filter' => $filter]) }}"
-                            class="h-10 w-10 inline-flex items-center justify-center text-rose-500 hover:text-rose-700 hover:bg-rose-50 bg-slate-50 border border-slate-200 rounded-xl transition-colors"
-                            title="Clear search and dates">
-                            <i data-lucide="x" class="w-4 h-4"></i>
-                        </a>
+                                    <span>{{ $filterLabel }}</span>
+                                    @if(isset($counts))
+                                        <span id="badge-{{ $filterKey }}" @class([
+                                            'inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-black px-1.5 transition-colors',
+                                            'bg-white text-teal-700' => $filter === $filterKey,
+                                            'bg-rose-600 text-white animate-pulse shadow-[0_0_8px_rgba(225,29,72,0.5)]' => $filter !== $filterKey && $filterKey === 'returned' && $counts['returned'] > 0,
+                                            'bg-indigo-600 text-white' => $filter !== $filterKey && !($filterKey === 'returned' && $counts['returned'] > 0),
+                                        ])>
+                                            {{ $counts[$filterKey] ?? 0 }}
+                                        </span>
+                                    @endif
+                                </a>
+                            @endforeach
+                        </nav>
                     @endif
-                </form>
+
+                    <form id="search-form" method="GET" action="{{ route('inward.enter_petition') }}"
+                        class="flex flex-wrap gap-4 items-end" x-data="{ searchTimer: null }">
+                        <input type="hidden" name="filter" value="{{ $filter }}">
+                        
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Search Petitions</label>
+                            <div class="relative flex items-center">
+                                <i data-lucide="search" class="w-4 h-4 absolute left-3 text-slate-400"></i>
+                                <input type="text" name="search" value="{{ request('search') }}"
+                                    @input="clearTimeout(searchTimer); searchTimer = setTimeout(() => performLiveSearch(), 500)"
+                                    placeholder="Receipt no, Complainant ..."
+                                    class="w-full pl-9 pr-3 py-[9px] rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black">
+                            </div>
+                        </div>
+
+                        <div class="flex-1 min-w-[150px]">
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Date From</label>
+                            <input type="date" name="date_from" value="{{ request('date_from') }}"
+                                @change="performLiveSearch()" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
+                                style="color: #1e40af !important;">
+                        </div>
+
+                        <div class="flex-1 min-w-[150px]">
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Date To</label>
+                            <input type="date" name="date_to" value="{{ request('date_to') }}"
+                                @change="performLiveSearch()" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
+                                style="color: #1e40af !important;">
+                        </div>
+
+                        @if(isset($inwardSeats) && $inwardSeats->count() > 1 && Auth::user()->canAccess('access admin dashboard'))
+                            <div class="flex-1 min-w-[150px]">
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Seat</label>
+                                <select name="seat_id" @change="performLiveSearch()"
+                                    class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold">
+                                    <option value="">All Inward Seats</option>
+                                    @foreach($inwardSeats as $seat)
+                                        <option value="{{ $seat->seat_id }}" {{ request('seat_id') == $seat->seat_id ? 'selected' : '' }}>
+                                            {{ $seat->seat_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+
+                        <div class="flex-none flex items-center gap-2">
+                            <label class="block text-xs font-medium text-transparent mb-1">&nbsp;</label>
+                            @if(request()->hasAny(['search', 'date_from', 'date_to', 'seat_id']))
+                                <a href="{{ route('inward.enter_petition', ['filter' => $filter]) }}"
+                                    class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold px-4 py-[9px] rounded-lg text-sm flex items-center gap-2 shadow-sm transition-all whitespace-nowrap"
+                                    title="Clear all filters">
+                                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                                    Reset
+                                </a>
+                            @endif
+                            
+                            <button type="button" @click="performLiveSearch()"
+                                class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-semibold px-4 py-[9px] rounded-lg text-sm flex items-center gap-2 shadow-sm transition-all whitespace-nowrap">
+                                <i data-lucide="filter" class="w-4 h-4"></i>
+                                Filter
+                            </button>
+                            
+                            <button type="submit" formaction="{{ route('inward.export') }}"
+                                class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold px-4 py-[9px] rounded-lg text-sm flex items-center gap-2 shadow-sm transition-all whitespace-nowrap">
+                                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                                Export
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
 
-        <!-- Inward Transactions Table (Keep each transaction in the same page) -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6">
-
+            <!-- Inward Transactions Table -->
             <div id="inward-table-container">
                 @include('inward.partials.inward_table')
             </div>
