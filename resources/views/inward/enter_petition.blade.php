@@ -6,6 +6,7 @@
         $seatsList = $seats ?? \App\Models\Seat::role('CPSP')->where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
         $tab = 'inward';
+        $canFileTransfer = Auth::user()->canAccess('file transfer') || Auth::user()->canAccess('access admin dashboard') || Auth::user()->hasRole('admin') || Auth::user()->hasRole('super admin');
     @endphp
 
     <div class="space-y-6" x-data="inwardPetitionForm()" @keydown.ctrl.enter.prevent="openConfirmationModal()"
@@ -13,7 +14,7 @@
 
 
 
-        @if((Auth::user()->canAccess('create_inward_petitions') || Auth::user()->canAccess('create inward petitions')) && !Auth::user()->hasRole('super admin') && !Auth::user()->hasRole('admin'))
+        @if((Auth::user()->canAccess('create_inward_petitions') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('create inward_petition')) && !Auth::user()->hasRole('super admin') && !Auth::user()->hasRole('admin'))
         <!-- Premium Header Section -->
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-2">
             <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
@@ -208,6 +209,7 @@
                                     class="block w-full px-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-400">
                             </div>
 
+                            @if($canFileTransfer)
                             <!-- Target Concerned Seat Dropdown -->
                             <div class="space-y-1.5"
                                 :class="(modeOfPetition && (modeOfPetition.toLowerCase() === 'unit' || modeOfPetition === 'others')) ? 'col-span-1' : 'col-span-1'">
@@ -227,6 +229,18 @@
                                     @endforeach
                                 </select>
                             </div>
+                            @else
+                            <div class="space-y-1.5 col-span-1">
+                                <label class="block text-sm font-semibold text-slate-500">
+                                    Concerned Seat (File Transfer)
+                                </label>
+                                <div class="px-4 py-2.5 text-xs font-medium text-slate-500 bg-slate-100 border border-slate-200 rounded-xl flex items-center gap-2">
+                                    <i data-lucide="lock" class="w-4 h-4 text-slate-400"></i>
+                                    <span>Requires 'file transfer' permission to transfer to CPSP</span>
+                                </div>
+                                <input type="hidden" name="seat_id" value="">
+                            </div>
+                            @endif
 
                         </div>
                     </div>
@@ -247,7 +261,7 @@
                                 :disabled="receiptError !== null || receiptChecking"
                                 class="px-7 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2">
                                 <i data-lucide="send" class="w-4 h-4"></i>
-                                Submit & Transfer Petition
+                                <span>{{ $canFileTransfer ? 'Submit & Transfer Petition' : 'Submit Inward Petition' }}</span>
                             </button>
                         </div>
                     </div>
@@ -487,11 +501,13 @@
                             <span class="font-bold text-slate-900" x-text="formatDate(dateOfPetitionReceivedAtUnit)"></span>
                         </div>
                     </template>
+                    @if($canFileTransfer)
                     <div class="flex justify-between items-center pt-1">
                         <span class="text-slate-500 font-medium">Concerned Seat:</span>
                         <span class="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"
                             x-text="getSelectedSeatName()"></span>
                     </div>
+                    @endif
                 </div>
 
                 <!-- Modal Action Buttons -->
@@ -503,7 +519,7 @@
                     <button type="button" @click="submitFormNow()"
                         class="px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-600/20 transition-all flex items-center gap-2">
                         <i data-lucide="check-circle" class="w-4 h-4"></i>
-                        Yes, Submit & Transfer
+                        <span>{{ $canFileTransfer ? 'Yes, Submit & Transfer' : 'Yes, Submit Inward Petition' }}</span>
                     </button>
                 </div>
             </div>

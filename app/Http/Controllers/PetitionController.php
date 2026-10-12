@@ -51,14 +51,14 @@ class PetitionController extends Controller
     {
         $user = Auth::user();
 
-        // Permission Check: Must have 'inward_form', 'view_file_transfer', or 'Inward'/'CPSP' role
-        if (!$user->canAccess('inward_form') && 
+        // Permission Check: Must have 'create inward_petition', 'view_file_transfer', or 'Inward'/'CPSP' role
+        if (!$user->canAccess('create inward_petition') && 
             !$user->canAccess('view_file_transfer') && 
             !$user->hasRole('inward') && 
             !$user->hasRole('Inward') && 
             !$user->hasRole('CPSP') && 
             !$user->canAccess('access admin dashboard')) {
-            abort(403, 'Unauthorized. Permission inward_form required to access Inward Petition Registration Form.');
+            abort(403, 'Unauthorized. Permission create inward_petition required to access Inward Petition Registration Form.');
         }
 
         $filters = $request->validate([
@@ -166,8 +166,7 @@ class PetitionController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user->canAccess('inward_form') && 
-            !$user->canAccess('inward form') && 
+        if (!$user->canAccess('create inward_petition') && 
             !$user->hasRole('inward') && 
             !$user->hasRole('Inward')) {
             abort(403, 'Unauthorized.');
@@ -290,12 +289,13 @@ class PetitionController extends Controller
     public function reassignInward(Request $request, $id): RedirectResponse
     {
         $user = Auth::user();
-        $hasInwardAccess = $user->canAccess('view_file_transfer') || 
-            $user->hasRole('inward') || 
-            $user->hasRole('Inward');
+        $hasTransferAccess = $user->canAccess('file transfer') || 
+            $user->canAccess('access admin dashboard') || 
+            $user->hasRole('admin') || 
+            $user->hasRole('super admin');
 
-        if (!$hasInwardAccess) {
-            abort(403, 'Unauthorized to reassign inward petitions.');
+        if (!$hasTransferAccess) {
+            abort(403, 'Unauthorized to transfer inward petitions. Permission "file transfer" required.');
         }
 
         $petition = Petition::findOrFail($id);
@@ -504,10 +504,28 @@ class PetitionController extends Controller
                 return redirect()->route('petitions.create');
             }
 
-            $petition = $this->petitionService->store($request->validated(), $request->file('evidence_files') ?? []);
+            $validatedData = $request->validated();
+            if ($request->boolean('is_inward_entry')) {
+                $user = Auth::user();
+                $canTransfer = $user && (
+                    $user->canAccess('file transfer') || 
+                    $user->canAccess('access admin dashboard') || 
+                    $user->hasRole('admin') || 
+                    $user->hasRole('super admin')
+                );
+
+                if (!$canTransfer) {
+                    $validatedData['seat_id'] = null;
+                }
+            }
+
+            $petition = $this->petitionService->store($validatedData, $request->file('evidence_files') ?? []);
             
             if ($request->boolean('is_inward_entry') || $request->filled('seat_id')) {
-                return redirect()->route('inward.enter_petition')->with('success', "Inward Petition (Receipt No: {$petition->receipt_no}) registered and transferred successfully.");
+                $successMsg = $petition->seat_id 
+                    ? "Inward Petition (Receipt No: {$petition->receipt_no}) registered and transferred successfully."
+                    : "Inward Petition (Receipt No: {$petition->receipt_no}) registered successfully.";
+                return redirect()->route('inward.enter_petition')->with('success', $successMsg);
             }
 
             return redirect()->route('petitions.index')->with('success', 'Petition submitted successfully.');

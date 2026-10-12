@@ -29,8 +29,8 @@ class ComplianceController extends Controller
         $unitId = $request->get('unit_id');
         $filterDecision = $request->get('filter_decision');
 
-        // Get final decisions that are PE, VC, VE, CV, SC but have no compliance record yet
-        $pendingQuery = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
+        // Get supported final decisions that have no compliance record yet.
+        $pendingQuery = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'IV', 'SC'])
             ->has('petition')
             ->whereDoesntHave('petition.compliance')
             ->with(['petition', 'decidedBySeat']);
@@ -53,8 +53,8 @@ class ComplianceController extends Controller
         // Clone for counts before pagination and filter_decision
         $basePendingQuery = clone $pendingQuery;
             
-        // Get final decisions that are PE, VC, VE, CV, SC AND have a compliance record
-        $compliedQuery = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
+        // Get supported final decisions that have a compliance record.
+        $compliedQuery = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'IV', 'SC'])
             ->has('petition')
             ->whereHas('petition.compliance')
             ->with(['petition.compliance.createdBy.seatUsers.seat', 'decidedBySeat']);
@@ -96,6 +96,7 @@ class ComplianceController extends Controller
             'VE' => $pendingDecisionsAll->where('final_decision', 'VE')->count(),
             'PE' => $pendingDecisionsAll->where('final_decision', 'PE')->count(),
             'CV' => $pendingDecisionsAll->where('final_decision', 'CV')->count(),
+            'IV' => $pendingDecisionsAll->where('final_decision', 'IV')->count(),
             'SC' => $pendingDecisionsAll->where('final_decision', 'SC')->count(),
             'Total' => $pendingDecisionsAll->count(),
             'Overdue' => $pendingDecisionsAll->filter(fn($d) => \Carbon\Carbon::parse($d->decision_date)->diffInDays(now()) > 10)->count(),
@@ -127,7 +128,7 @@ class ComplianceController extends Controller
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
 
-        $query = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
+        $query = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'IV', 'SC'])
             ->has('petition');
 
         if ($dateFrom) {
@@ -139,7 +140,7 @@ class ComplianceController extends Controller
 
         $decisions = $query->with('petition.compliance')->get();
 
-        $stats = collect(['VC', 'PE', 'VE', 'CV', 'SC'])->mapWithKeys(function ($type) use ($decisions) {
+        $stats = collect(['VC', 'PE', 'VE', 'CV', 'IV', 'SC'])->mapWithKeys(function ($type) use ($decisions) {
             $typeDecisions = $decisions->where('final_decision', $type);
             $total = $typeDecisions->count();
             $complied = $typeDecisions->filter(fn($d) => $d->petition->compliance !== null)->count();
@@ -176,7 +177,7 @@ class ComplianceController extends Controller
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
 
-        $query = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
+        $query = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'IV', 'SC'])
             ->has('petition');
 
         if ($dateFrom) {
@@ -188,7 +189,7 @@ class ComplianceController extends Controller
 
         $decisions = $query->with('petition.compliance')->get();
 
-        $stats = collect(['VC', 'PE', 'VE', 'CV', 'SC'])->mapWithKeys(function ($type) use ($decisions) {
+        $stats = collect(['VC', 'PE', 'VE', 'CV', 'IV', 'SC'])->mapWithKeys(function ($type) use ($decisions) {
             $typeDecisions = $decisions->where('final_decision', $type);
             $total = $typeDecisions->count();
             $complied = $typeDecisions->filter(fn($d) => $d->petition->compliance !== null)->count();
@@ -232,7 +233,7 @@ class ComplianceController extends Controller
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
 
-        $query = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
+        $query = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'IV', 'SC'])
             ->has('petition')
             ->with(['petition.compliance.unit', 'decidedBySeat']);
 

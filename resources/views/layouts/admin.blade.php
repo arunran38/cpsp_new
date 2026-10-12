@@ -481,14 +481,14 @@
                 </div>
                 @endif
 
-                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view master reports') || Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin') || Auth::user()->canAccess('inward_form'))
+                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view master reports') || Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin') || Auth::user()->canAccess('create inward_petition'))
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-xs font-bold tracking-wider text-blue-500 uppercase">Operations</p>
                 </div>
                 @endif
 
 
-                @if(Auth::user()->canAccess('inward_form') || Auth::user()->canAccess('inward form') || Auth::user()->canAccess('access admin dashboard'))
+                @if(Auth::user()->canAccess('create inward_petition') || Auth::user()->canAccess('access admin dashboard'))
                 <!-- Inward Registration -->
                 <a href="{{ route('inward.enter_petition') }}" 
                    class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('inward.enter_petition') ? 'active-nav' : 'inactive-nav' }}">

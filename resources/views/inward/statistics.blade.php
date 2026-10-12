@@ -23,7 +23,7 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-3 z-10">
-                @if(Auth::user()->canAccess('inward_form') || Auth::user()->canAccess('inward form') || Auth::user()->canAccess('access admin dashboard'))
+                @if(Auth::user()->canAccess('create inward_petition') || Auth::user()->canAccess('access admin dashboard'))
                 <a href="{{ route('inward.enter_petition') }}" 
                    class="px-4 py-2.5 text-xs font-bold text-teal-300 bg-teal-500/20 border border-teal-500/30 rounded-xl hover:bg-teal-500/30 transition-all flex items-center gap-2 shadow-sm">
                     <i data-lucide="file-plus" class="w-4 h-4"></i>

@@ -33,7 +33,7 @@
                         Petition Compliances
                     </h1>
                     <p class="text-slate-300 font-medium max-w-2xl text-sm">
-                        Track and update execution details for VC, VE, PE, CV, and SC orders.
+                        Track and update execution details for VC, VE, PE, CV, IV, and SC orders.
                     </p>
                 </div>
                 <div class="z-10">
@@ -74,10 +74,11 @@
                                 'PE' => 'border-blue-200 bg-blue-50 text-blue-700',
                                 'VE' => 'border-cyan-200 bg-cyan-50 text-cyan-700',
                                 'CV' => 'border-purple-200 bg-purple-50 text-purple-700',
+                                'IV' => 'border-teal-200 bg-teal-50 text-teal-700',
                                 'SC' => 'border-orange-200 bg-orange-50 text-orange-700',
                             ];
                         @endphp
-                        @foreach(['VC', 'PE', 'VE', 'CV', 'SC'] as $type)
+                        @foreach(['VC', 'PE', 'VE', 'CV', 'IV', 'SC'] as $type)
                             <span class="inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-bold shadow-sm {{ $decisionBadgeStyles[$type] }}">
                                 {{ $type }}: {{ $pendingCounts[$type] }}
                             </span>
@@ -232,6 +233,7 @@
                                   filterDecision === 'PE' ? '{{ $pendingCounts['PE'] }}' :
                                   filterDecision === 'VE' ? '{{ $pendingCounts['VE'] }}' :
                                   filterDecision === 'CV' ? '{{ $pendingCounts['CV'] }}' :
+                                  filterDecision === 'IV' ? '{{ $pendingCounts['IV'] }}' :
                                   filterDecision === 'SC' ? '{{ $pendingCounts['SC'] }}' :
                                   '{{ $pendingCounts['Total'] }}'
                                   "></span>
@@ -528,13 +530,14 @@
             new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['VC', 'PE', 'VE', 'CV', 'SC'],
+                    labels: ['VC', 'PE', 'VE', 'CV', 'IV', 'SC'],
                     datasets: [{
                         data: [
                             {{ $pendingCounts['VC'] }},
                             {{ $pendingCounts['PE'] }},
                             {{ $pendingCounts['VE'] }},
                             {{ $pendingCounts['CV'] }},
+                            {{ $pendingCounts['IV'] }},
                             {{ $pendingCounts['SC'] }}
                         ],
                         backgroundColor: [
@@ -542,6 +545,7 @@
                             '#2563eb', // blue-600
                             '#0891b2', // cyan-600
                             '#9333ea', // purple-600
+                            '#0d9488', // teal-600
                             '#ea580c'  // orange-600
                         ],
                         borderRadius: 8,

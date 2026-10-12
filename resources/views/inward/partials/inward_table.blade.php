@@ -79,20 +79,35 @@
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                     Returned
                                 </span>
+                                @if(Auth::user()->canAccess('file transfer') || Auth::user()->canAccess('access admin dashboard'))
                                 <button type="button" @click="$dispatch('open-reassign-modal', { id: {{ $item->petition_id }}, receipt: '{{ $item->receipt_no }}' })"
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 text-rose-600 hover:text-rose-700 hover:bg-rose-100 rounded-lg transition-colors shadow-sm text-[10px] font-bold border border-rose-100 uppercase tracking-wider" title="Re-transfer to CPSP">
                                     <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
                                     <span>Re-transfer</span>
                                 </button>
+                                @endif
                             </div>
                         @elseif($item->is_cpsp_processed)
                             <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 Processed
                             </span>
-                        @else
+                        @elseif($item->seat_id)
                             <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                                 Transferred
                             </span>
+                        @else
+                            <div class="flex flex-col items-center justify-center gap-1.5">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                    Pending Transfer
+                                </span>
+                                @if(Auth::user()->canAccess('file transfer') || Auth::user()->canAccess('access admin dashboard'))
+                                <button type="button" @click="$dispatch('open-reassign-modal', { id: {{ $item->petition_id }}, receipt: '{{ $item->receipt_no }}' })"
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors shadow-sm text-[10px] font-bold border border-indigo-100 uppercase tracking-wider" title="Transfer to CPSP">
+                                    <i data-lucide="send" class="w-3 h-3"></i>
+                                    <span>Transfer</span>
+                                </button>
+                                @endif
+                            </div>
                         @endif
                     </td>
                 </tr>

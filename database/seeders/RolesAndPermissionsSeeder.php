@@ -52,7 +52,8 @@ class RolesAndPermissionsSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'access admin dashboard']);
         
         $viewFileTransfer = Permission::firstOrCreate(['name' => 'view_file_transfer']);
-        $inwardFormPermission = Permission::firstOrCreate(['name' => 'inward_form']);
+        $fileTransfer = Permission::firstOrCreate(['name' => 'file transfer']);
+        $createInwardPetition = Permission::firstOrCreate(['name' => 'create inward_petition']);
         $inwardStats = Permission::firstOrCreate(['name' => 'inward_statistics']);
         $exportStats = Permission::firstOrCreate(['name' => 'export_statistics']);
         $filterTransfer = Permission::firstOrCreate(['name' => 'filter_transfer']);
@@ -67,7 +68,8 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $inwardRole->givePermissionTo([
             $viewFileTransfer, 
-            $inwardFormPermission,
+            $fileTransfer,
+            $createInwardPetition,
             $inwardStats,
             $exportStats,
             $filterTransfer,
@@ -75,7 +77,7 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
         $cpspRole->givePermissionTo([
             $viewFileTransfer, 
-            $inwardFormPermission,
+            $createInwardPetition,
             'view petitions',
             'create petitions',
             'update petitions',
@@ -90,7 +92,8 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
         $adminRole->givePermissionTo([
             $viewFileTransfer, 
-            $inwardFormPermission,
+            $fileTransfer,
+            $createInwardPetition,
             $inwardStats,
             $exportStats,
             $filterTransfer,
@@ -99,7 +102,8 @@ class RolesAndPermissionsSeeder extends Seeder
         ]);
         $superAdminRole->givePermissionTo([
             $viewFileTransfer, 
-            $inwardFormPermission,
+            $fileTransfer,
+            $createInwardPetition,
             $inwardStats,
             $exportStats,
             $filterTransfer,

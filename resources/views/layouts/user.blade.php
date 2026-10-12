@@ -369,7 +369,7 @@
 
                     $canAccessInwardEntry = Auth::check() && (
                         $hasInwardRole ||
-                        Auth::user()->canAccess('inward_form') || 
+                        Auth::user()->canAccess('create inward_petition') || 
                         Auth::user()->canAccess('access admin dashboard')
                     );
 
