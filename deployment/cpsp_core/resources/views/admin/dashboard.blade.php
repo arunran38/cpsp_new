@@ -34,8 +34,11 @@
             $q->where('is_active', true);
         })->get();
 
-        // Chart Data: Seat vs Petitions (Bar Chart)
+        // Chart Data: Seat vs Petitions (Bar Chart) - only seats with role CPSP
         $seatStats = \App\Models\Seat::where('is_active', true)
+            ->whereHas('roles', function ($q) {
+                $q->whereRaw('LOWER(name) = ?', ['cpsp']);
+            })
             ->withCount([
                 'petitionsReceived' => function ($q) use ($fromDate, $toDate) {
                     $q->whereBetween('date_of_petition_received', [$fromDate, $toDate]);

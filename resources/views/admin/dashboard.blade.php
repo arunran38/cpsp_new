@@ -21,23 +21,19 @@
             ->where('is_returned_to_inward', false)
             ->count();
 
-        $vrReports = \App\Models\PetitionForwarding::whereNotNull('vr_date')
-            ->whereHas('petition', function ($query) {
-                $query->where('status', 'VR_Received')
-                    ->whereNull('linked_petition_id');
-            })
+        $vrReports = \App\Models\Petition::whereNull('linked_petition_id')
+            ->where('is_returned_to_inward', false)
+            ->where('status', 'VR_Received')
             ->count();
 
-        $forwarded = \App\Models\PetitionForwarding::whereNotNull('forwarded_date')
-            ->whereHas('petition', function ($query) {
-                $query->where('status', 'Forwarded')
-                    ->whereNull('linked_petition_id');
-            })
+        $forwarded = \App\Models\Petition::whereNull('linked_petition_id')
+            ->where('is_returned_to_inward', false)
+            ->where('status', 'Forwarded')
             ->count();
 
-        $decisions = \App\Models\Decision::whereHas('petition', function ($query) {
-            $query->whereNull('linked_petition_id');
-        })
+        $decisions = \App\Models\Petition::whereNull('linked_petition_id')
+            ->where('is_returned_to_inward', false)
+            ->whereIn('status', [\App\Models\Petition::STATUS_SENT_TO_GOVT, \App\Models\Petition::STATUS_CLOSED])
             ->count();
 
         // Vacant Seats mapping
@@ -45,8 +41,11 @@
             $q->where('is_active', true);
         })->get();
 
-        // Chart Data: Seat vs Petitions (Bar Chart)
+        // Chart Data: Seat vs Petitions (Bar Chart) - only seats with role CPSP
         $seatStats = \App\Models\Seat::where('is_active', true)
+            ->whereHas('roles', function ($q) {
+                $q->whereRaw('LOWER(name) = ?', ['cpsp']);
+            })
             ->withCount([
                 'petitionsReceived' => function ($q) use ($fromDate, $toDate) {
                     $q->whereBetween('date_of_petition_received', [$fromDate, $toDate]);

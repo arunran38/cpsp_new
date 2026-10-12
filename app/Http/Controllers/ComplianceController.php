@@ -23,11 +23,11 @@ class ComplianceController extends Controller
 
         $this->validateDateRange($request);
 
-        $dateFrom = $request->get('date_from');
-        $dateTo = $request->get('date_to');
-        $search = $request->get('search');
-        $unitId = $request->get('unit_id');
-        $filterDecision = $request->get('filter_decision');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $search = $request->input('search');
+        $unitId = $request->input('unit_id');
+        $filterDecision = $request->input('filter_decision');
 
         // Get final decisions that are PE, VC, VE, CV, SC but have no compliance record yet
         $pendingQuery = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
@@ -124,8 +124,8 @@ class ComplianceController extends Controller
 
         $this->validateDateRange($request);
 
-        $dateFrom = $request->get('date_from');
-        $dateTo = $request->get('date_to');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
 
         $query = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
             ->has('petition');
@@ -173,8 +173,8 @@ class ComplianceController extends Controller
 
         $this->validateDateRange($request);
 
-        $dateFrom = $request->get('date_from');
-        $dateTo = $request->get('date_to');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
 
         $query = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
             ->has('petition');
@@ -227,10 +227,10 @@ class ComplianceController extends Controller
 
         $this->validateDateRange($request);
 
-        $tab = $request->get('tab', 'pending');
-        $filterDecision = $request->get('filter_decision', '');
-        $dateFrom = $request->get('date_from');
-        $dateTo = $request->get('date_to');
+        $tab = $request->input('tab', 'pending');
+        $filterDecision = $request->input('filter_decision', '');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
 
         $query = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'SC'])
             ->has('petition')
