@@ -12,6 +12,10 @@
 
         $totalPetitions = \App\Models\Petition::whereNull('linked_petition_id')->count();
 
+        $processed = \App\Models\Petition::whereNull('linked_petition_id')
+            ->where('is_cpsp_processed', true)
+            ->count();
+
         $unprocessed = \App\Models\Petition::whereNull('linked_petition_id')
             ->where('is_cpsp_processed', false)
             ->where('is_returned_to_inward', false)
@@ -130,7 +134,7 @@
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
 
                 <!-- Card 1: Unprocessed Petitions -->
-                <a href="{{ route('petitions.index', ['tab' => 'received']) }}"
+                <a href="{{ route('petitions.index', ['tab' => 'inward']) }}"
                    class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-cyan-500/40 bg-gradient-to-br from-cyan-400 to-blue-500 border border-cyan-400/30 shadow-lg">
                     <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
                     
@@ -163,7 +167,7 @@
                     </div>
                     <div class="mt-4 relative z-10">
                         <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none mb-2">Processed Petitions</p>
-                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $totalPetitions }}</h3>
+                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $processed }}</h3>
                     </div>
                 </a>
 

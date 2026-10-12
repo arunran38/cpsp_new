@@ -31,6 +31,9 @@
             this.selectedLabel = label;
             this.open = false;
             this.search = '';
+            if (this.$refs.hiddenInput && typeof clearError === 'function') {
+                clearError({ target: this.$refs.hiddenInput });
+            }
         }
      }">
 
@@ -44,14 +47,18 @@
     <div class="relative group">
         <div @click="open = !open; if(open) $nextTick(() => $refs.searchInput.focus())"
             class="flex items-center justify-between w-full px-4 py-2.5 text-sm bg-white border rounded-xl text-slate-900 transition-all duration-200 cursor-pointer outline-none shadow-sm"
-            :class="open ? 'border-indigo-500 ring-4 ring-indigo-500/10' : 'border-slate-200 hover:border-slate-300'">
+            :class="[
+                (typeof formErrors !== 'undefined' && formErrors && $refs.hiddenInput && formErrors[$refs.hiddenInput.name]) 
+                    ? 'border-rose-500 ring-4 ring-rose-500/10' 
+                    : (open ? 'border-indigo-500 ring-4 ring-indigo-500/10' : 'border-slate-200 hover:border-slate-300')
+            ]">
 
             <div class="flex items-center gap-2 truncate">
                 <span x-text="selectedLabel || '{{ $placeholder }}'" class="font-medium truncate transition-colors"
                     :class="!selectedLabel ? 'text-slate-400' : 'text-black'"></span>
             </div>
 
-            <input type="hidden" @if($name) name="{{ $name }}" @endif {{ $attributes->whereStartsWith('x-bind:name') }}
+            <input type="hidden" x-ref="hiddenInput" @if($name) name="{{ $name }}" @endif {{ $attributes->whereStartsWith('x-bind:name') }}
                 :value="selected">
 
             <div class="flex-shrink-0 ml-2">
@@ -59,6 +66,9 @@
                     :class="open ? 'rotate-180 text-indigo-600' : ''"></i>
             </div>
         </div>
+        <template x-if="typeof formErrors !== 'undefined' && formErrors && $refs.hiddenInput && formErrors[$refs.hiddenInput.name]">
+            <p class="text-xs font-medium text-rose-500 mt-1" x-text="formErrors[$refs.hiddenInput.name]"></p>
+        </template>
 
         <div x-show="open" @click.outside="open = false" x-cloak x-transition:enter="transition ease-out duration-200"
             x-transition:enter-start="opacity-0 translate-y-2 scale-95"

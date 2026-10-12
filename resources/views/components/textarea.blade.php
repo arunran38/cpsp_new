@@ -23,7 +23,7 @@
         ]) }}
         :class="[
             count > max ? 'border-rose-500 ring-rose-500/10' : '',
-            ($data.formErrors && $refs.textarea && $data.formErrors[$refs.textarea.name]) ? 'border-rose-500 ring-4 ring-rose-500/10 focus:border-rose-500 focus:ring-rose-500/10' : 'border-slate-200 focus:ring-4 focus:ring-primary/10 focus:border-primary'
+            (typeof formErrors !== 'undefined' && formErrors && $refs.textarea && formErrors[$refs.textarea.name]) ? 'border-rose-500 ring-4 ring-rose-500/10 focus:border-rose-500 focus:ring-rose-500/10' : 'border-slate-200 focus:ring-4 focus:ring-primary/10 focus:border-primary'
         ]"
         @if(!($attributes->has(':name') || $attributes->has('::name') || $attributes->has('x-bind:name'))) name="{{ $name }}" @endif
         x-ref="textarea"
@@ -35,7 +35,7 @@
             <p class="text-xs font-medium text-rose-500 mt-1">{{ $message }}</p>
         @enderror
     @endif
-    <template x-if="$data.formErrors && $refs.textarea && $data.formErrors[$refs.textarea.name]">
-        <p class="text-xs font-medium text-rose-500 mt-1" x-text="$data.formErrors[$refs.textarea.name]"></p>
+    <template x-if="typeof formErrors !== 'undefined' && formErrors && $refs.textarea && formErrors[$refs.textarea.name]">
+        <p class="text-xs font-medium text-rose-500 mt-1" x-text="formErrors[$refs.textarea.name]"></p>
     </template>
 </div>

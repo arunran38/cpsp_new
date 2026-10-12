@@ -2,16 +2,17 @@
 @section('container_width', 'max-w-full')
 
 @section('content')
-    <div class="space-y-6" x-data="petitionForm()">
+    <div class="space-y-6" x-data="petitionForm()" @open-return-modal.window="showReturnModal = true">
         <!-- Premium Header Section -->
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2">
+        <div
+            class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2">
             <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
                 <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
             </div>
             <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
                 <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
             </div>
-            
+
             <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
                 <div class="text-center sm:text-left z-10">
                     <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
@@ -21,11 +22,13 @@
                         Ref No: {{ $petition->receipt_no }}
                     </p>
                 </div>
-                
+
                 <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 z-10">
                     @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
-                        <button type="button" @click="showReturnModal = true"
-                            class="px-4 py-2 text-sm font-semibold text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg hover:bg-rose-500/20 transition-all flex items-center gap-2 backdrop-blur-sm shadow-sm">
+                        <button type="button"
+                            onclick="window.openReturnModal({{ $petition->petition_id }}, '{{ addslashes($petition->receipt_no) }}')"
+                            @click="showReturnModal = true; returnPetitionId = {{ $petition->petition_id }}; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: {{ $petition->petition_id }}, receipt: '{{ addslashes($petition->receipt_no) }}' })"
+                            class="px-4 py-2 text-sm font-semibold text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg hover:bg-rose-500/20 transition-all flex items-center gap-2 backdrop-blur-sm shadow-sm cursor-pointer">
                             <i data-lucide="corner-up-left" class="w-4 h-4"></i> Return to Inward
                         </button>
                     @endif
@@ -42,19 +45,24 @@
         </div>
 
         @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
-        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-            <div class="flex items-center gap-3">
-                <i data-lucide="help-circle" class="w-5 h-5 text-amber-600 shrink-0"></i>
-                <div>
-                    <span class="font-bold text-amber-900 text-sm">Not your seat?</span>
-                    <p class="text-amber-700 mt-0.5">If this inward petition is not related to your seat, you can return it to Inward without editing.</p>
+            <div
+                class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="help-circle" class="w-5 h-5 text-amber-600 shrink-0"></i>
+                    <div>
+                        <span class="font-bold text-amber-900 text-sm">Not your seat?</span>
+                        <p class="text-amber-700 mt-0.5">If this inward petition is not related to your seat, you can return it
+                            to Inward without editing.</p>
+                    </div>
                 </div>
+                <button type="button"
+                    onclick="window.openReturnModal({{ $petition->petition_id }}, '{{ addslashes($petition->receipt_no) }}')"
+                    @click="showReturnModal = true; returnPetitionId = {{ $petition->petition_id }}; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: {{ $petition->petition_id }}, receipt: '{{ addslashes($petition->receipt_no) }}' })"
+                    class="px-4 py-2 text-xs font-bold text-rose-700 bg-rose-100 hover:bg-rose-200 border border-rose-300 rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+                    <i data-lucide="corner-up-left" class="w-4 h-4"></i>
+                    Return to Inward
+                </button>
             </div>
-            <button type="button" @click="showReturnModal = true" class="px-4 py-2 text-xs font-bold text-rose-700 bg-rose-100 hover:bg-rose-200 border border-rose-300 rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap">
-                <i data-lucide="corner-up-left" class="w-4 h-4"></i>
-                Return to Inward
-            </button>
-        </div>
         @endif
 
         @if ($errors->any())
@@ -77,7 +85,8 @@
 
 
         <!-- Stepper Navigation (Catchy Dark Premium) -->
-        <div class="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl mb-6 py-4 px-6 sm:py-6 sm:px-10">
+        <div
+            class="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl mb-6 py-4 px-6 sm:py-6 sm:px-10">
             <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
                 <div class="w-96 h-96 bg-blue-600/20 rounded-full blur-[80px]"></div>
             </div>
@@ -87,10 +96,11 @@
 
             <div class="relative max-w-3xl mx-auto px-4 md:px-0 z-10">
                 <!-- Background Line -->
-                <div class="absolute top-5 left-[12.5%] right-[12.5%] h-1 bg-slate-700 -translate-y-1/2 z-0 rounded-full"></div>
+                <div class="absolute top-5 left-[12.5%] right-[12.5%] h-1 bg-slate-700 -translate-y-1/2 z-0 rounded-full">
+                </div>
                 <!-- Progress Line -->
                 <div class="absolute top-5 left-[12.5%] h-1 bg-gradient-to-r from-teal-400 to-teal-500 -translate-y-1/2 transition-all duration-700 ease-out z-0 rounded-full shadow-[0_0_10px_rgba(45,212,191,0.5)]"
-                    :style="`width: ${((step - 1) / 3) * 100}%`"></div>
+                    :style="`width: ${(step - 1) * 25}%`"></div>
 
                 <div class="relative z-10 flex justify-between">
                     <!-- Step 1 -->
@@ -101,8 +111,10 @@
                             <span x-show="step > 1"><i data-lucide="check" class="w-5 h-5"></i></span>
                             <span x-show="step <= 1">1</span>
                         </div>
-                        <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
-                            :class="step === 1 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : (step > 1 ? 'text-teal-500' : 'text-blue-500')">Petition Details</span>
+                        <span
+                            class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
+                            :class="step === 1 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : (step > 1 ? 'text-teal-500' : 'text-blue-500')">Petition
+                            Details</span>
                     </button>
 
                     <!-- Step 2 -->
@@ -113,7 +125,8 @@
                             <span x-show="step > 2"><i data-lucide="check" class="w-5 h-5"></i></span>
                             <span x-show="step <= 2">2</span>
                         </div>
-                        <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
+                        <span
+                            class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
                             :class="step === 2 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : (step > 2 ? 'text-teal-500' : 'text-blue-500')">Complainant</span>
                     </button>
 
@@ -125,7 +138,8 @@
                             <span x-show="step > 3"><i data-lucide="check" class="w-5 h-5"></i></span>
                             <span x-show="step <= 3">3</span>
                         </div>
-                        <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
+                        <span
+                            class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
                             :class="step === 3 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : (step > 3 ? 'text-teal-500' : 'text-blue-500')">Suspect</span>
                     </button>
 
@@ -136,7 +150,8 @@
                             :class="step === 4 ? 'bg-teal-400 text-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.8)] scale-110' : 'bg-blue-600 text-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500'">
                             <span>4</span>
                         </div>
-                        <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
+                        <span
+                            class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
                             :class="step === 4 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : 'text-blue-500'">Complete</span>
                     </button>
                 </div>
@@ -145,7 +160,8 @@
 
         <!-- Form Sections (Minimalist Cards) -->
         <form method="POST" action="{{ route('petitions.update', $petition->petition_id) }}" enctype="multipart/form-data"
-            class="bg-white rounded-2xl shadow-sm border border-slate-200" id="petitionFormElement" novalidate>
+            class="bg-white rounded-2xl shadow-sm border border-slate-200" id="petitionFormElement" novalidate
+            @focusout="validateField($event)" @input="clearError($event)" @change="clearError($event)">
             @csrf
             @method('PUT')
 
@@ -235,7 +251,7 @@
                             </template>
                         @endif
 
-                        <x-file-upload name="evidence_files[]" label="Add Additional Evidence (Attachments)"
+                        <x-file-upload name="evidence_files[]" label=""
                             :multiple="true" />
                     </div>
                 </div>
@@ -336,7 +352,7 @@
                                                         </div>
                                                     </div>
                                                     <div class="lg:col-span-2">
-                                                        <x-input label="Street Address *" name="comp_address"
+                                                        <x-input label="Address *" name="comp_address"
                                                             x-bind:name="`complainants[${index}][addresses][${addrIndex}][address]`"
                                                             x-model="addr.address" x-bind:required="step === 2"
                                                             placeholder="House No, Street, Locality" />
@@ -411,7 +427,8 @@
                                 existing petition(s) that look similar to the details you entered.</p>
                         </div>
                     </div>
-                    <button type="button" @click="showDuplicateModal = true" style="background-color: #f59e0b; color: white;"
+                    <button type="button" @click="showDuplicateModal = true"
+                        style="background-color: #f59e0b; color: white;"
                         class="whitespace-nowrap text-xs font-bold px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
                         View & Link Duplicates
                     </button>
@@ -502,7 +519,8 @@
                                                 placeholder="Select Designation" />
                                         </div>
                                         <div>
-                                            <x-searchable-select label="Department <span class='text-rose-500' x-show='acc.name.trim().length > 0'>*</span>"
+                                            <x-searchable-select
+                                                label="Department <span class='text-rose-500' x-show='acc.name.trim().length > 0'>*</span>"
                                                 x-bind:name="`accused[${index}][department_id]`" x-model="acc.department_id"
                                                 :options="$departments->pluck('department_name', 'id')->toArray()"
                                                 placeholder="Select Department" />
@@ -556,10 +574,10 @@
                                                         </div>
                                                     </div>
                                                     <div class="lg:col-span-2">
-                                                        <x-input label="Street Address" name="acc_address"
+                                                        <x-input label="Address" name="acc_address"
                                                             x-bind:name="`accused[${index}][addresses][${addrIndex}][address]`"
                                                             x-model="addr.address" x-bind:required="step === 3"
-                                                            placeholder="House No, Street, Locality" />
+                                                            placeholder="House No, Name, Locality" />
                                                     </div>
                                                     <div class="grid grid-cols-2 gap-4">
                                                         <div>
@@ -637,136 +655,166 @@
                     </div>
                 </div>
             </div>
-        </div>
+    </div>
 
-        <!-- Duplicate Detection Modal (Redesigned) -->
-        <div x-show="showDuplicateModal" x-cloak
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-            <div class="bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh]"
-                @click.stop x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-95 translate-y-4">
-                
-                <!-- Premium Header -->
-                <div class="relative overflow-hidden bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 px-8 py-6">
-                    <!-- Background decorative elements -->
-                    <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 blur-2xl rounded-full pointer-events-none"></div>
-                    <div class="absolute bottom-0 left-10 w-32 h-32 bg-indigo-400/20 blur-2xl rounded-full pointer-events-none"></div>
-                    
-                    <div class="relative z-10 flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div class="p-3 bg-white/10 rounded-2xl shadow-inner border border-white/10 backdrop-blur-sm text-indigo-100">
-                                <i data-lucide="copy" class="w-6 h-6"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-bold text-white tracking-tight">Potential Duplicates Found</h3>
-                                <p class="text-indigo-100 text-sm mt-0.5">We found matches based on your recent inputs. Review and link if needed.</p>
-                            </div>
-                        </div>
-                        <button type="button" @click="showDuplicateModal = false"
-                            class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/20">
-                            <i data-lucide="x" class="w-6 h-6"></i>
-                        </button>
-                    </div>
+    <!-- Duplicate Detection Modal (Redesigned) -->
+    <div x-show="showDuplicateModal" x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md"
+        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh]"
+            @click.stop x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+            x-transition:leave-end="opacity-0 scale-95 translate-y-4">
+
+            <!-- Premium Header -->
+            <div class="relative overflow-hidden bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 px-8 py-6">
+                <!-- Background decorative elements -->
+                <div
+                    class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 blur-2xl rounded-full pointer-events-none">
+                </div>
+                <div class="absolute bottom-0 left-10 w-32 h-32 bg-indigo-400/20 blur-2xl rounded-full pointer-events-none">
                 </div>
 
-                <!-- Content Area -->
-                <div class="p-6 sm:p-8 overflow-y-auto custom-scrollbar bg-slate-50/50" style="max-height: calc(90vh - 100px);">
-                    
-                    <div class="grid grid-cols-1 gap-6">
-                        <template x-for="dup in duplicates" :key="dup.petition_id">
-                            <div class="group relative bg-white rounded-2xl border border-slate-200 p-6 flex flex-col xl:flex-row gap-6 items-start xl:items-center justify-between shadow-sm hover:shadow-xl hover:border-indigo-300 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-                                <!-- Subtle highlight strip on hover -->
-                                <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                
-                                <div class="flex-1 w-full space-y-5">
-                                    <!-- Top Row: Badges -->
-                                    <div class="flex flex-wrap items-center gap-3">
-                                        <div class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm">
-                                            <i data-lucide="hash" class="w-4 h-4"></i>
-                                            <span class="text-sm font-bold tracking-wide" x-text="dup.receipt_no"></span>
-                                        </div>
-                                        <template x-if="dup.file_no">
-                                            <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm">
-                                                <i data-lucide="folder-open" class="w-4 h-4 text-blue-500"></i>
-                                                <span class="text-sm font-semibold" x-text="dup.file_no"></span>
-                                            </div>
-                                        </template>
-                                        <div class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-                                            <i data-lucide="calendar-days" class="w-4 h-4 text-slate-500"></i>
-                                            <span class="text-sm font-semibold" x-text="dup.date"></span>
-                                        </div>
-                                        <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100 shadow-sm">
-                                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Status</span>
-                                            <span class="text-sm font-bold" x-text="dup.status"></span>
-                                        </div>
-                                        <template x-if="dup.decision">
-                                            <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-100 shadow-sm">
-                                                <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Decision</span>
-                                                <span class="text-sm font-bold" x-text="dup.decision"></span>
-                                            </div>
-                                        </template>
-                                    </div>
+                <div class="relative z-10 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="p-3 bg-white/10 rounded-2xl shadow-inner border border-white/10 backdrop-blur-sm text-indigo-100">
+                            <i data-lucide="copy" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white tracking-tight">Potential Duplicates Found</h3>
+                            <p class="text-indigo-100 text-sm mt-0.5">We found matches based on your recent inputs. Review
+                                and link if needed.</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="showDuplicateModal = false"
+                        class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/20">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
 
-                                    <!-- Middle Row: Complainant and Suspect Details -->
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div class="flex items-start gap-3">
-                                            <div class="mt-1 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 border border-blue-200">
-                                                <i data-lucide="user" class="w-4 h-4"></i>
-                                            </div>
-                                            <div>
-                                                <p class="text-[11px] font-bold text-blue-500 uppercase tracking-widest">Complainant</p>
-                                                <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.complainant"></p>
-                                            </div>
+            <!-- Content Area -->
+            <div class="p-6 sm:p-8 overflow-y-auto custom-scrollbar bg-slate-50/50" style="max-height: calc(90vh - 100px);">
+
+                <div class="grid grid-cols-1 gap-6">
+                    <template x-for="dup in duplicates" :key="dup.petition_id">
+                        <div
+                            class="group relative bg-white rounded-2xl border border-slate-200 p-6 flex flex-col xl:flex-row gap-6 items-start xl:items-center justify-between shadow-sm hover:shadow-xl hover:border-indigo-300 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                            <!-- Subtle highlight strip on hover -->
+                            <div
+                                class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                            </div>
+
+                            <div class="flex-1 w-full space-y-5">
+                                <!-- Top Row: Badges -->
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <div
+                                        class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm">
+                                        <i data-lucide="hash" class="w-4 h-4"></i>
+                                        <span class="text-sm font-bold tracking-wide" x-text="dup.receipt_no"></span>
+                                    </div>
+                                    <template x-if="dup.file_no">
+                                        <div
+                                            class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm">
+                                            <i data-lucide="folder-open" class="w-4 h-4 text-blue-500"></i>
+                                            <span class="text-sm font-semibold" x-text="dup.file_no"></span>
                                         </div>
-                                        <div class="flex items-start gap-3">
-                                            <div class="mt-1 w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0 border border-rose-200">
-                                                <i data-lucide="user-x" class="w-4 h-4"></i>
-                                            </div>
-                                            <div>
-                                                <p class="text-[11px] font-bold text-rose-500 uppercase tracking-widest">Suspect</p>
-                                                <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.accused"></p>
-                                            </div>
+                                    </template>
+                                    <div
+                                        class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                                        <i data-lucide="calendar-days" class="w-4 h-4 text-slate-500"></i>
+                                        <span class="text-sm font-semibold" x-text="dup.date"></span>
+                                    </div>
+                                    <div
+                                        class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100 shadow-sm">
+                                        <span
+                                            class="text-xs font-bold uppercase tracking-wider text-emerald-600">Status</span>
+                                        <span class="text-sm font-bold" x-text="dup.status"></span>
+                                    </div>
+                                    <template x-if="dup.decision">
+                                        <div
+                                            class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-100 shadow-sm">
+                                            <span
+                                                class="text-xs font-bold uppercase tracking-wider text-amber-600">Decision</span>
+                                            <span class="text-sm font-bold" x-text="dup.decision"></span>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Middle Row: Complainant and Suspect Details -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="flex items-start gap-3">
+                                        <div
+                                            class="mt-1 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 border border-blue-200">
+                                            <i data-lucide="user" class="w-4 h-4"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-[11px] font-bold text-blue-500 uppercase tracking-widest">
+                                                Complainant</p>
+                                            <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.complainant"></p>
                                         </div>
                                     </div>
-
-                                    <!-- Bottom Row: Description Preview -->
-                                    <div class="bg-gradient-to-r from-slate-50 to-white p-4 rounded-xl border border-slate-100 shadow-inner group-hover:bg-slate-50 transition-colors">
-                                        <p class="text-sm text-slate-600 italic leading-relaxed line-clamp-2">"<span x-text="dup.description"></span>"</p>
+                                    <div class="flex items-start gap-3">
+                                        <div
+                                            class="mt-1 w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0 border border-rose-200">
+                                            <i data-lucide="user-x" class="w-4 h-4"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-[11px] font-bold text-rose-500 uppercase tracking-widest">Suspect
+                                            </p>
+                                            <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.accused"></p>
+                                        </div>
                                     </div>
                                 </div>
-                                
-                                <!-- Action Button -->
-                                <div class="w-full xl:w-auto shrink-0 flex items-center">
-                                    <button type="button" @click="linkPetition(dup.petition_id, dup.receipt_no)"
-                                        class="w-full xl:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-teal-600 active:scale-95 transition-all flex justify-center items-center gap-2 group-hover:animate-pulse focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                                        <i data-lucide="link" class="w-4 h-4 transition-transform group-hover:rotate-12"></i> 
-                                        Link & Merge
-                                    </button>
+
+                                <!-- Bottom Row: Description Preview -->
+                                <div
+                                    class="bg-gradient-to-r from-slate-50 to-white p-4 rounded-xl border border-slate-100 shadow-inner group-hover:bg-slate-50 transition-colors">
+                                    <p class="text-sm text-slate-600 italic leading-relaxed line-clamp-2">"<span
+                                            x-text="dup.description"></span>"</p>
                                 </div>
                             </div>
-                        </template>
-                    </div>
+
+                            <!-- Action Button -->
+                            <div class="w-full xl:w-auto shrink-0 flex items-center">
+                                <button type="button" @click="linkPetition(dup.petition_id, dup.receipt_no)"
+                                    class="w-full xl:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-teal-600 active:scale-95 transition-all flex justify-center items-center gap-2 group-hover:animate-pulse focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                                    <i data-lucide="link" class="w-4 h-4 transition-transform group-hover:rotate-12"></i>
+                                    Link & Merge
+                                </button>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>
-        </form>
-        @include('user.partials.return_to_inward_modal')
+    </div>
+    </form>
+    @include('user.partials.return_to_inward_modal')
     </div>
 
     <script>
         function petitionForm() {
             return {
                 step: 1,
+                formErrors: {},
                 showReturnModal: false,
                 returnPetitionId: {{ $petition->petition_id }},
-                returnReceiptNo: '{!! addslashes($petition->receipt_no) !!}',
+                returnReceiptNo: {!! json_encode($petition->receipt_no) !!},
                 petitionDetails: {
-                    receipt_no: '{!! addslashes($petition->receipt_no) !!}',
-                    date: '{{ $petition->date_of_petition_received }}',
-                    nature: '{{ $petition->nature_of_petition }}',
-                    mode: '{{ $petition->mode_of_petition_received }}',
-                    mode_others: '{!! addslashes($petition->mode_of_petition_received_others) !!}',
-                    description: `{!! addslashes($petition->description ?? '') !!}`,
-                    proposed_action: `{!! addslashes($petition->proposed_action) !!}`
+                    receipt_no: {!! json_encode($petition->receipt_no) !!},
+                    date: {!! json_encode($petition->date_of_petition_received) !!},
+                    nature: {!! json_encode($petition->nature_of_petition) !!},
+                    mode: {!! json_encode($petition->mode_of_petition_received) !!},
+                    mode_others: {!! json_encode($petition->mode_of_petition_received_others ?? '') !!},
+                    description: {!! json_encode($petition->description ?? '') !!},
+                    proposed_action: {!! json_encode($petition->proposed_action ?? '') !!}
                 },
                 complainants: {!! json_encode($complainants) !!}.length > 0 ? {!! json_encode($complainants) !!} : [{ id: Date.now(), name: '', phone: '', email: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
                 accused: {!! json_encode($accused) !!}.length > 0 ? {!! json_encode($accused) !!} : [{ id: Date.now() + 1, entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
@@ -819,7 +867,7 @@
                             // Filter out the current petition itself from duplicates
                             this.duplicates = data.filter(d => d.petition_id != {{ $petition->petition_id }});
                             this.isCheckingDuplicates = false;
-                            
+
                             this.$nextTick(() => {
                                 if (typeof lucide !== 'undefined') {
                                     lucide.createIcons();
@@ -877,25 +925,261 @@
                     }
                 },
                 validateStep(step) {
+                    let isValid = true;
+                    const formElements = document.getElementById('petitionFormElement').querySelectorAll('input, select, textarea');
+                    formElements.forEach(el => {
+                        const stepContainer = el.closest(`[x-show*="step === ${step}"]`);
+                        if (stepContainer && el.name && !el.disabled) {
+                            let customError = '';
+                            if (el.value) {
+                                if ((el.name.includes('[pincode]') || el.name === 'comp_pincode' || el.name === 'acc_pincode') && !/^\d{6}$/.test(el.value)) {
+                                    customError = 'Pincode must be 6 digits.';
+                                } else if ((el.name.includes('[phone]') || el.name === 'comp_phone' || el.name === 'acc_phone') && !/^\d{10}$/.test(el.value)) {
+                                    customError = 'Phone number must be 10 digits.';
+                                } else if ((el.name.includes('[pen_number]') || el.name === 'acc_pen_number') && !/^\d{6,7}$/.test(el.value)) {
+                                    customError = 'PEN must be 6 or 7 digits.';
+                                }
+                            }
+
+                            if (step === 2 || step === 3) {
+                                if (step === 3 && el.name.includes('[department_id]')) {
+                                    const match = el.name.match(/accused\[(\d+)\]\[department_id\]/);
+                                    if (match) {
+                                        const index = parseInt(match[1]);
+                                        if (this.accused[index] && this.accused[index].name.trim() !== '' && !el.value) {
+                                            customError = 'This field is required.';
+                                        }
+                                    }
+                                }
+                                if (customError) {
+                                    isValid = false;
+                                    this.formErrors[el.name] = customError;
+                                } else if (el.value && !el.checkValidity()) {
+                                    isValid = false;
+                                    if (el.validity.patternMismatch) {
+                                        this.formErrors[el.name] = 'Invalid format.';
+                                    } else if (el.validity.typeMismatch) {
+                                        this.formErrors[el.name] = 'Please enter a valid value.';
+                                    } else {
+                                        this.formErrors[el.name] = el.validationMessage;
+                                    }
+                                } else {
+                                    this.formErrors[el.name] = '';
+                                }
+                            } else {
+                                if (customError) {
+                                    isValid = false;
+                                    this.formErrors[el.name] = customError;
+                                } else if (!el.checkValidity()) {
+                                    isValid = false;
+                                    if (el.validity.valueMissing) {
+                                        this.formErrors[el.name] = 'This field is required.';
+                                    } else if (el.validity.rangeOverflow) {
+                                        this.formErrors[el.name] = 'Date cannot be in the future.';
+                                    } else if (el.validity.patternMismatch) {
+                                        this.formErrors[el.name] = 'Invalid format.';
+                                    } else if (el.validity.typeMismatch) {
+                                        this.formErrors[el.name] = 'Please enter a valid value.';
+                                    } else {
+                                        this.formErrors[el.name] = el.validationMessage;
+                                    }
+                                } else {
+                                    this.formErrors[el.name] = '';
+                                }
+                            }
+                        }
+                    });
+
+                    // Explicit check for step 1 required fields in Alpine model
                     if (step === 1) {
-                        if (!this.petitionDetails.receipt_no || !this.petitionDetails.date || !this.petitionDetails.nature || !this.petitionDetails.mode || !this.petitionDetails.description) {
-                            alert("Please fill all required petition details.");
-                            return false;
+                        const step1Required = [
+                            { key: 'receipt_no', name: 'receipt_no' },
+                            { key: 'date', name: 'date_of_petition_received' },
+                            { key: 'nature', name: 'nature_of_petition' },
+                            { key: 'mode', name: 'mode_of_petition_received' },
+                            { key: 'description', name: 'description' }
+                        ];
+                        step1Required.forEach(f => {
+                            const val = this.petitionDetails[f.key];
+                            if (!val || String(val).trim() === '') {
+                                this.formErrors[f.name] = 'This field is required.';
+                                isValid = false;
+                            }
+                        });
+                        if (this.petitionDetails.mode === 'others') {
+                            if (!this.petitionDetails.mode_others || this.petitionDetails.mode_others.trim() === '') {
+                                this.formErrors['mode_others'] = 'This field is required.';
+                                isValid = false;
+                            }
                         }
                     } else if (step === 2) {
-                        const validComp = this.complainants.every(c => c && c.name && c.name.trim() !== '');
-                        if (!validComp) {
-                            alert("Please provide at least Name for all complainants.");
-                            return false;
-                        }
+                        this.complainants.forEach((c, idx) => {
+                            const nameField = `complainants[${idx}][name]`;
+                            if (!c || !c.name || c.name.trim() === '') {
+                                this.formErrors[nameField] = 'This field is required.';
+                                isValid = false;
+                            } else {
+                                this.formErrors[nameField] = '';
+                            }
+                        });
                     } else if (step === 3) {
-                        const invalidDept = this.accused.some(a => a && a.name && a.name.trim() !== '' && !a.department_id);
-                        if (invalidDept) {
-                            alert("The department field is mandatory when suspect name is entered.");
-                            return false;
+                        this.accused.forEach((a, idx) => {
+                            const deptField = `accused[${idx}][department_id]`;
+                            const nameField = `accused[${idx}][name]`;
+                            if (a && a.name && a.name.trim() !== '') {
+                                if (!a.department_id) {
+                                    this.formErrors[deptField] = 'This field is required.';
+                                    isValid = false;
+                                } else {
+                                    this.formErrors[deptField] = '';
+                                }
+                            }
+                        });
+                    }
+
+                    if (!isValid) {
+                        this.$nextTick(() => {
+                            const firstErrKey = Object.keys(this.formErrors).find(k => this.formErrors[k]);
+                            if (firstErrKey) {
+                                const el = document.querySelector(`[name="${firstErrKey}"]`);
+                                if (el) {
+                                    el.focus();
+                                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                            }
+                        });
+                    }
+
+                    return isValid;
+                },
+                validateField(event) {
+                    const el = event.target;
+                    if (!el || !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return;
+                    if (!el.name) return;
+
+                    const fieldName = el.name;
+                    const fieldValue = el.value ? el.value.trim() : '';
+
+                    const stepContainer = el.closest('[x-show*="step === 2"], [x-show*="step === 3"]');
+                    if (stepContainer) {
+                        if (fieldValue) {
+                            if (fieldName.includes('[phone]') || fieldName === 'comp_phone' || fieldName === 'acc_phone') {
+                                if (fieldValue && !/^\d{10}$/.test(fieldValue)) {
+                                    this.formErrors[fieldName] = 'Phone number must be 10 digits.';
+                                } else {
+                                    this.formErrors[fieldName] = '';
+                                }
+                            } else if (fieldName.includes('[email]') || fieldName === 'comp_email' || fieldName === 'acc_email') {
+                                if (fieldValue && !/^\S+@\S+\.\S+$/.test(fieldValue)) {
+                                    this.formErrors[fieldName] = 'Please enter a valid email address.';
+                                } else {
+                                    this.formErrors[fieldName] = '';
+                                }
+                            } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode' || fieldName === 'acc_pincode') {
+                                if (!/^\d{6}$/.test(fieldValue)) {
+                                    this.formErrors[fieldName] = 'Pincode must be 6 digits.';
+                                } else {
+                                    this.formErrors[fieldName] = '';
+                                }
+                            } else if (fieldName.includes('[pen_number]') || fieldName === 'acc_pen_number') {
+                                if (!/^\d{6,7}$/.test(fieldValue)) {
+                                    this.formErrors[fieldName] = 'PEN must be 6 or 7 digits.';
+                                } else {
+                                    this.formErrors[fieldName] = '';
+                                }
+                            } else if (fieldName.includes('[department_id]')) {
+                                this.formErrors[fieldName] = '';
+                            } else {
+                                this.formErrors[fieldName] = '';
+                            }
+                        } else {
+                            if (fieldName.includes('[department_id]')) {
+                                const match = fieldName.match(/accused\[(\d+)\]\[department_id\]/);
+                                if (match) {
+                                    const index = parseInt(match[1]);
+                                    if (this.accused[index] && this.accused[index].name && this.accused[index].name.trim() !== '') {
+                                        this.formErrors[fieldName] = 'This field is required.';
+                                    } else {
+                                        this.formErrors[fieldName] = '';
+                                    }
+                                }
+                            } else {
+                                this.formErrors[fieldName] = '';
+                            }
+                        }
+                        return;
+                    }
+
+                    if (fieldName === 'date_of_petition_received') {
+                        if (!fieldValue) {
+                            this.formErrors[fieldName] = 'This field is required.';
+                        } else {
+                            const [year, month, day] = fieldValue.split('-').map(Number);
+                            const selected = new Date(year, month - 1, day);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            if (selected > today) {
+                                this.formErrors[fieldName] = 'Date cannot be in the future.';
+                            } else {
+                                this.formErrors[fieldName] = '';
+                            }
+                        }
+                    } else {
+                        if (el.checkValidity()) {
+                            this.formErrors[fieldName] = '';
+                        } else {
+                            if (el.validity.valueMissing) {
+                                this.formErrors[fieldName] = 'This field is required.';
+                            } else if (el.validity.rangeOverflow) {
+                                this.formErrors[fieldName] = 'Date cannot be in the future.';
+                            } else if (el.validity.patternMismatch) {
+                                this.formErrors[fieldName] = 'Invalid format.';
+                            } else if (el.validity.typeMismatch) {
+                                this.formErrors[fieldName] = 'Please enter a valid value.';
+                            } else {
+                                this.formErrors[fieldName] = el.validationMessage;
+                            }
                         }
                     }
-                    return true;
+                },
+                clearError(event) {
+                    const el = event.target;
+                    if (!el || !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return;
+                    if (!el.name) return;
+
+                    const fieldName = el.name;
+                    const fieldValue = el.value ? el.value.trim() : '';
+
+                    const stepContainer = el.closest('[x-show*="step === 2"], [x-show*="step === 3"]');
+                    if (stepContainer) {
+                        if (fieldName.includes('[phone]') || fieldName === 'comp_phone') {
+                            if (fieldValue && /^\d{10}$/.test(fieldValue)) {
+                                this.formErrors[fieldName] = '';
+                            }
+                        } else if (fieldName.includes('[pincode]') || fieldName === 'comp_pincode' || fieldName === 'acc_pincode') {
+                            if (!fieldValue || /^\d{6}$/.test(fieldValue)) {
+                                this.formErrors[fieldName] = '';
+                            } else {
+                                this.formErrors[fieldName] = 'Pincode must be 6 digits.';
+                            }
+                        } else if (fieldName.includes('[pen_number]') || fieldName === 'acc_pen_number') {
+                            if (!fieldValue || /^\d{6,7}$/.test(fieldValue)) {
+                                this.formErrors[fieldName] = '';
+                            }
+                        } else if (fieldName.includes('[name]') || fieldName === 'comp_name') {
+                            if (fieldValue) {
+                                this.formErrors[fieldName] = '';
+                            }
+                        } else {
+                            if (fieldValue) {
+                                this.formErrors[fieldName] = '';
+                            }
+                        }
+                    } else {
+                        if (fieldValue || !el.hasAttribute('required')) {
+                            this.formErrors[fieldName] = '';
+                        }
+                    }
                 },
                 setStep(target) {
                     if (target < this.step || this.validateStep(this.step)) {

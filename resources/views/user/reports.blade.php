@@ -628,6 +628,9 @@
                                 exportBtn.href = exportUrl.toString();
                             }
 
+                            if (window.Alpine) {
+                                window.Alpine.initTree(currentTable);
+                            }
                             if (window.lucide) window.lucide.createIcons();
                         }
                     })

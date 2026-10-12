@@ -37,7 +37,7 @@
         <!-- Unified Tabs -->
         <div
             class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 p-1.5 rounded-2xl mb-6 w-full bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-            <a href="{{ route('inward.enter_petition') }}"
+            <a href="{{ route('petitions.index', ['tab' => 'inward']) }}"
                 class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'inward' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                 <span>Inward Petitions</span>
                 <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'inward' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['inward'] ?? 0 }}</span>
@@ -444,9 +444,10 @@
                 </form>
             </div>
         </div>
-    </div>
 
-    @include('user.partials.return_to_inward_modal')
+        <!-- Return to Inward Modal -->
+        @include('user.partials.return_to_inward_modal')
+    </div>
 @endsection
 
 @section('scripts')
@@ -520,6 +521,9 @@
                         const currentTable = document.getElementById('tableContainer');
                         if (currentTable) {
                             currentTable.innerHTML = html;
+                            if (window.Alpine) {
+                                window.Alpine.initTree(currentTable);
+                            }
                             if (window.lucide) {
                                 window.lucide.createIcons();
                             }

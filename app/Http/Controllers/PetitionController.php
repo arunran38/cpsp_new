@@ -234,7 +234,7 @@ class PetitionController extends Controller
             'Expires' => '0'
         ];
 
-        return response(view('inward.export_excel', compact('transfers'))->render(), 200, $headers);
+        return response(view('inward.export_excel', compact('transfers', 'filter'))->render(), 200, $headers);
     }
 
     /**
@@ -249,20 +249,22 @@ class PetitionController extends Controller
     /**
      * Pull back / return an Inward petition to Inward.
      */
-    public function returnToInward(Request $request, $id): RedirectResponse
+    public function returnToInward(Request $request, $id = null): RedirectResponse
     {
+        $id = $id ?? $request->input('petition_id');
+        if (!$id) {
+            return back()->with('error', 'Petition ID is required to return to Inward.');
+        }
+
         $petition = Petition::findOrFail($id);
         $user = Auth::user();
         $currentSeat = $user->currentSeatUser();
 
-        // Security check: Must belong to current seat or user is admin
-        if (!$user->canAccess('view all petitions') && !session('is_impersonating_seat')) {
-            if ($currentSeat && $petition->seat_id !== $currentSeat->seat_id) {
-                abort(403, 'Unauthorized. This petition is not assigned to your seat.');
-            }
+        // Cannot return if already finalized or already processed
+        if ($petition->is_cpsp_processed) {
+            return back()->with('error', 'Cannot return a petition that has already been processed.');
         }
 
-        // Cannot return if already finalized
         if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_INTERNAL_VIGILANCE])) {
             return back()->with('error', 'Cannot return a petition that has been finalized.');
         }
@@ -279,7 +281,7 @@ class PetitionController extends Controller
             'is_cpsp_processed' => false,
         ]);
 
-        return redirect()->route('petitions.index', ['tab' => 'inward'])->with('success', 'ഹർജി വിജയകരമായി Inward-ലേക്ക് തിരിച്ചയച്ചു (Petition returned to Inward successfully).');
+        return redirect()->route('petitions.index', ['tab' => 'inward'])->with('success', 'Petition returned to Inward successfully.');
     }
 
     /**
@@ -522,10 +524,6 @@ class PetitionController extends Controller
     public function index(Request $request)
     {
         $tab = $request->input('tab', 'inward');
-
-        if ($tab === 'inward') {
-            return redirect()->route('inward.enter_petition');
-        }
 
         $petitions = $this->getPetitionsQuery($request)->paginate(10)->appends($request->query());
 
@@ -1027,7 +1025,8 @@ class PetitionController extends Controller
             }
         }
 
-        $query->whereNull('linked_petition_id');
+        $query->whereNull('linked_petition_id')
+              ->where('is_returned_to_inward', false);
 
         $petitions = $query->get(['status', 'is_cpsp_processed', 'is_returned_to_inward', 'petition_id']);
         
@@ -1047,7 +1046,10 @@ class PetitionController extends Controller
     private function getDecisionCounts()
     {
         $user = Auth::user();
-        $query = Petition::query()->whereIn('status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_CLOSED])->whereNull('linked_petition_id');
+        $query = Petition::query()
+            ->whereIn('status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_CLOSED])
+            ->whereNull('linked_petition_id')
+            ->where('is_returned_to_inward', false);
 
         if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
             $currentSeat = $user->currentSeatUser();
@@ -1084,13 +1086,23 @@ class PetitionController extends Controller
             'date_to' => 'nullable|date|after_or_equal:date_from',
         ]);
 
-        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user', 'seat', 'originalPetition.addresses']);
+        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user.seatUsers.seat', 'seat.activeAssignment.user', 'unit', 'originalPetition.addresses', 'returnedByUser']);
         $user = Auth::user();
+
+        $tab = $request->input('tab', 'inward');
+        $currentSeat = $user->currentSeatUser();
 
         // Security: Filter by user/seat if not unrestricted admin
         if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
-            $currentSeat = $user->currentSeatUser();
-            if ($currentSeat) {
+            if ($user->hasRole(['inward', 'Inward'])) {
+                $inwardUserIds = \App\Models\User::role(['inward', 'Inward'])->pluck('user_id');
+                $query->where(function($q) use ($inwardUserIds, $currentSeat) {
+                    $q->whereIn('petitions.user_id', $inwardUserIds);
+                    if ($currentSeat) {
+                        $q->orWhere('seat_id', $currentSeat->seat_id);
+                    }
+                });
+            } elseif ($currentSeat) {
                 $query->where('seat_id', $currentSeat->seat_id);
             } else {
                 $query->where('petitions.user_id', $user->id);
@@ -1159,7 +1171,7 @@ class PetitionController extends Controller
                     'pen_number' => (string) $first->pen_number,
                     'addresses' => $addresses->map(fn($addr) => [
                         'address_type' => (string) $addr->address_type,
-                        'address' => (string) $addr->full_address,
+                        'address' => (string) ($addr->full_address === 'Not provided' ? '' : $addr->full_address),
                         'district_id' => (string) $addr->district_id,
                         'pincode' => (string) $addr->pincode,
                     ])->values()->all()

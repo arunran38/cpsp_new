@@ -676,8 +676,8 @@
     </script>
 
     <!-- Reassign to CPSP Modal -->
-    <div x-data="{ open: false, petitionId: null, receiptNo: '' }"
-         @open-reassign-modal.window="open = true; petitionId = $event.detail.id; receiptNo = $event.detail.receipt"
+    <div x-data="{ open: false, petitionId: null, receiptNo: '', returnReason: '', returnedBy: '', returnedAt: '', returnedSeat: '' }"
+         @open-reassign-modal.window="open = true; petitionId = $event.detail.id; receiptNo = $event.detail.receipt; returnReason = $event.detail.reason || ''; returnedBy = $event.detail.by || ''; returnedAt = $event.detail.at || ''; returnedSeat = $event.detail.seat || ''; $nextTick(() => { if (window.lucide) { lucide.createIcons(); } });"
          class="relative z-[100]" aria-labelledby="modal-title" role="dialog" aria-modal="true" x-cloak x-show="open">
         <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" x-show="open"
             x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
@@ -718,6 +718,28 @@
                         </div>
                         
                         <div class="p-6 space-y-6 bg-white">
+                            <!-- Reason for Return Banner -->
+                            <div x-show="returnReason" class="rounded-2xl bg-rose-50 border border-rose-200/80 p-4 space-y-2.5">
+                                <div class="flex items-center gap-2 text-rose-800 text-xs font-bold uppercase tracking-wider">
+                                    <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500"></i>
+                                    <span>Reason for Return</span>
+                                </div>
+                                <div class="bg-white/90 rounded-xl p-3 border border-rose-100 shadow-sm">
+                                    <p class="text-sm text-rose-950 font-semibold leading-relaxed break-words" x-text="returnReason"></p>
+                                </div>
+                                <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-rose-700/80 pt-0.5">
+                                    <span x-show="returnedBy" class="font-medium text-slate-700 flex items-center gap-1">
+                                        <i data-lucide="user" class="w-3.5 h-3.5 text-rose-400"></i>
+                                        <span>Returned by: <strong x-text="returnedBy"></strong></span>
+                                        <span x-show="returnedSeat" class="text-slate-500 font-normal">(<span x-text="returnedSeat"></span>)</span>
+                                    </span>
+                                    <span x-show="returnedAt" class="text-slate-400 flex items-center gap-1">
+                                        <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                                        <span x-text="returnedAt"></span>
+                                    </span>
+                                </div>
+                            </div>
+
                             <div class="space-y-2.5">
                                 <label class="block text-[15px] font-bold text-indigo-900 mb-1">
                                     Select Seat <span class="text-rose-500">*</span>

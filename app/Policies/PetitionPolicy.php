@@ -75,6 +75,11 @@ class PetitionPolicy
             return true;
         }
 
+        // 4. Any seat user can view and edit/return an unprocessed inward petition
+        if (!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $currentSeat) {
+            return true;
+        }
+
         // 4. If it's a duplicate, allow access if the user can access the original petition
         if ($petition->linked_petition_id) {
             // Prevent infinite recursion by not using $this->authorize directly for the parent

@@ -42,7 +42,7 @@
                 <div class="absolute top-5 left-[12.5%] right-[12.5%] h-1 bg-slate-700 -translate-y-1/2 z-0 rounded-full"></div>
                 <!-- Progress Line -->
                 <div class="absolute top-5 left-[12.5%] h-1 bg-gradient-to-r from-teal-400 to-teal-500 -translate-y-1/2 transition-all duration-700 ease-out z-0 rounded-full shadow-[0_0_10px_rgba(45,212,191,0.5)]"
-                    :style="`width: ${((step - 1) / 3) * 100}%`"></div>
+                    :style="`width: ${(step - 1) * 25}%`"></div>
 
                 <div class="relative z-10 flex justify-between">
                     <!-- Step 1 -->

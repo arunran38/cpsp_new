@@ -40,7 +40,7 @@
                             <i data-lucide="{{ $petition->cpsp_opened_at ? 'eye' : 'clock' }}" class="w-4 h-4 {{ $petition->cpsp_opened_at ? 'text-indigo-600' : 'text-amber-600' }}"></i>
                             <span>
                                 @if($petition->cpsp_opened_at)
-                                    First Opened by CPSP: <strong class="font-bold">{{ $petition->cpspOpenedBySeat->seat_name ?? 'CPSP Seat' }}</strong> ({{ $petition->cpspOpenedByUser->name ?? 'User' }}) on {{ $petition->cpsp_opened_at->format('d-m-Y h:i A') }}
+                                    Opened by CPSP: <strong class="font-bold">{{ $petition->cpspOpenedBySeat->seat_name ?? 'CPSP Seat' }}</strong> ({{ $petition->cpspOpenedByUser->name ?? 'User' }}) on {{ $petition->cpsp_opened_at->format('d-m-Y h:i A') }}
                                 @else
                                     Status: Not Opened by CPSP Seat Yet
                                 @endif
@@ -52,10 +52,17 @@
             </div>
             <div class="flex items-center gap-3">
                 @if(Auth::user()->canAccess('update petitions') && (Auth::user()->canAccess('access admin dashboard') || !in_array($petition->status, ['Closed', 'Sent_to_Govt'])))
-                    <a href="{{ route('petitions.edit', $petition->petition_id) }}"
-                        class="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2">
-                        <i data-lucide="edit" class="w-4 h-4"></i> Edit Details
-                    </a>
+                    @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
+                        <a href="{{ route('petitions.edit', $petition->petition_id) }}"
+                            class="px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 rounded-lg transition-all shadow-md shadow-teal-500/20 flex items-center gap-2">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i> Add Further Details
+                        </a>
+                    @else
+                        <a href="{{ route('petitions.edit', $petition->petition_id) }}"
+                            class="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2">
+                            <i data-lucide="edit" class="w-4 h-4"></i> Edit Details
+                        </a>
+                    @endif
                     @if(!$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Duplicate']))
                         <button type="button" @click="showLinkModal = true"
                             class="px-4 py-2.5 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-all shadow-sm flex items-center gap-2">
@@ -63,8 +70,10 @@
                         </button>
                     @endif
                     @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
-                        <button type="button" @click="showReturnModal = true"
-                            class="px-4 py-2.5 text-sm font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-all shadow-sm flex items-center gap-2">
+                        <button type="button"
+                            onclick="window.openReturnModal({{ $petition->petition_id }}, '{{ addslashes($petition->receipt_no) }}')"
+                            @click="showReturnModal = true; returnPetitionId = {{ $petition->petition_id }}; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: {{ $petition->petition_id }}, receipt: '{{ addslashes($petition->receipt_no) }}' })"
+                            class="px-4 py-2.5 text-sm font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-all shadow-sm flex items-center gap-2 cursor-pointer">
                             <i data-lucide="corner-up-left" class="w-4 h-4 text-rose-600"></i> Return to Inward
                         </button>
                     @endif

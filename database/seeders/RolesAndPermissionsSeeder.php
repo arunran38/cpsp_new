@@ -73,7 +73,7 @@ class RolesAndPermissionsSeeder extends Seeder
             $filterTransfer,
             $createInwardPetitions,
         ]);
-        $cpspRole->givePermissionTo([$viewFileTransfer, $inwardFormPermission]);
+        $cpspRole->givePermissionTo([$viewFileTransfer]);
         $adminRole->givePermissionTo([
             $viewFileTransfer, 
             $inwardFormPermission,

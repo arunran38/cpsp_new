@@ -8,14 +8,6 @@
     $currentSeat = $user->currentSeatUser();
     $isImpersonating = session('is_impersonating_seat', false);
     
-    if ($currentSeat) {
-        $petitions = \App\Models\Petition::where('seat_id', $currentSeat->seat_id)->whereNull('linked_petition_id')->get();
-    } elseif ($user->canAccess('access admin dashboard')) {
-        $petitions = \App\Models\Petition::whereNull('linked_petition_id')->get();
-    } else {
-        $petitions = \App\Models\Petition::where('user_id', $user->user_id)->whereNull('linked_petition_id')->get();
-    }
-
     // Role check
     $isInwardRole = false;
     if ($currentSeat && isset($currentSeat->seat)) {
@@ -37,8 +29,35 @@
         } catch (\Exception $e) { }
     }
 
+    if ($isInwardRole) {
+        $inwardUserIds = \App\Models\User::role(['inward', 'Inward'])->pluck('user_id')->push($user->user_id)->unique();
+        $petitions = \App\Models\Petition::where(function($q) use ($inwardUserIds, $currentSeat) {
+                $q->whereIn('user_id', $inwardUserIds);
+                if ($currentSeat) {
+                    $q->orWhere('seat_id', $currentSeat->seat_id);
+                }
+            })
+            ->whereNull('linked_petition_id')
+            ->get();
+    } elseif ($currentSeat) {
+        $petitions = \App\Models\Petition::where('seat_id', $currentSeat->seat_id)
+            ->where('is_returned_to_inward', false)
+            ->whereNull('linked_petition_id')
+            ->get();
+    } elseif ($user->canAccess('access admin dashboard')) {
+        $petitions = \App\Models\Petition::where('is_returned_to_inward', false)
+            ->whereNull('linked_petition_id')
+            ->get();
+    } else {
+        $petitions = \App\Models\Petition::where('user_id', $user->user_id)
+            ->where('is_returned_to_inward', false)
+            ->whereNull('linked_petition_id')
+            ->get();
+    }
+
     // Stat Metrics
     $totalPetitions = $petitions->count();
+    $processedPetitions = $petitions->filter(fn($p) => (bool)$p->is_cpsp_processed)->count();
     $inwardCount = $petitions->filter(fn($p) => !$p->is_cpsp_processed && !$p->is_returned_to_inward)->count();
     $forwarded = $petitions->filter(fn($p) => $p->status === 'Forwarded')->count();
     $vrsReceived = $petitions->filter(fn($p) => $p->status === 'VR_Received')->count();
@@ -97,20 +116,38 @@
     $chartTrendCountsJson = json_encode($chartTrendCounts);
 
     // Recent Petitions Table Data
-    if ($currentSeat) {
+    if ($isInwardRole) {
+        $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
+            ->where(function($q) use ($inwardUserIds, $currentSeat) {
+                $q->whereIn('user_id', $inwardUserIds);
+                if ($currentSeat) {
+                    $q->orWhere('seat_id', $currentSeat->seat_id);
+                }
+            })
+            ->whereNull('linked_petition_id')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+    } elseif ($currentSeat) {
         $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
             ->where('seat_id', $currentSeat->seat_id)
+            ->where('is_returned_to_inward', false)
+            ->whereNull('linked_petition_id')
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
     } elseif ($user->canAccess('access admin dashboard')) {
         $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
+            ->where('is_returned_to_inward', false)
+            ->whereNull('linked_petition_id')
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
     } else {
         $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
             ->where('user_id', $user->user_id)
+            ->where('is_returned_to_inward', false)
+            ->whereNull('linked_petition_id')
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
@@ -256,7 +293,7 @@
                     </div>
                     <div class="mt-4 relative z-10">
                         <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none mb-2">Processed Petitions</p>
-                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $totalPetitions }}</h3>
+                        <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $processedPetitions }}</h3>
                     </div>
                 </a>
 

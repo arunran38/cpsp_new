@@ -1,11 +1,21 @@
 <!-- Return to Inward Modal -->
-<div x-show="showReturnModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;"
+<div id="returnToInwardModal"
+    x-data="{
+        showReturnModal: false,
+        returnPetitionId: {{ isset($petition) ? $petition->petition_id : 'null' }},
+        returnReceiptNo: '{{ isset($petition) ? addslashes($petition->receipt_no) : '' }}'
+    }"
+    @open-return-modal.window="showReturnModal = true; if($event.detail?.id) returnPetitionId = $event.detail.id; if($event.detail?.receipt) returnReceiptNo = $event.detail.receipt"
+    x-show="showReturnModal"
+    x-cloak
+    class="fixed inset-0 z-[100] overflow-y-auto"
     aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <!-- Backdrop -->
         <div x-show="showReturnModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
-            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="showReturnModal = false"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+            @click="showReturnModal = false; if(window.closeReturnModal) window.closeReturnModal();"
             class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" aria-hidden="true"></div>
 
         <span class="hidden sm:inline-block sm:align-middle sm:min-h-screen" aria-hidden="true">&#8203;</span>
@@ -18,8 +28,13 @@
             x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             class="inline-block align-bottom bg-white rounded-2xl text-left overflow-visible shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-200">
 
-            <form :action="'{{ url('petitions') }}/' + returnPetitionId + '/return-to-inward'" method="POST">
+            <form id="returnToInwardForm" method="POST"
+                :action="'{{ url('petitions') }}/' + (returnPetitionId || '{{ $petition->petition_id ?? '' }}') + '/return-to-inward'"
+                action="{{ isset($petition) ? route('petitions.returnToInward', $petition->petition_id) : url('petitions/return-to-inward') }}"
+                @submit="if(!this.action || this.action.includes('__ID__') || this.action.endsWith('/return-to-inward')) { const pid = returnPetitionId || document.getElementById('modal_return_petition_id').value; if(pid) { this.action = '{{ url('petitions') }}/' + pid + '/return-to-inward'; } }">
                 @csrf
+                <input type="hidden" name="petition_id" :value="returnPetitionId" value="{{ $petition->petition_id ?? '' }}" id="modal_return_petition_id">
+
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between rounded-t-2xl relative overflow-hidden bg-white">
                     <div class="flex items-center gap-4 relative z-10">
                         <div class="w-12 h-12 rounded-2xl bg-white shadow-sm border border-rose-100 text-rose-600 flex items-center justify-center">
@@ -30,7 +45,8 @@
                             <p class="text-sm text-rose-600 font-semibold mt-0.5">Send petition back for reassignment</p>
                         </div>
                     </div>
-                    <button type="button" @click="showReturnModal = false"
+                    <button type="button" @click="showReturnModal = false; if(window.closeReturnModal) window.closeReturnModal();"
+                        onclick="if(window.closeReturnModal) window.closeReturnModal();"
                         class="text-blue-400 hover:text-blue-600 p-2 rounded-xl hover:bg-blue-50 transition-all relative z-10 focus:outline-none">
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
@@ -42,7 +58,7 @@
                             <i data-lucide="hash" class="w-4 h-4 text-teal-500"></i>
                             <span class="text-sm font-bold">Receipt Number</span>
                         </div>
-                        <span class="font-bold text-teal-700 text-base font-mono bg-white px-4 py-1.5 rounded-lg border border-teal-200 shadow-sm" x-text="returnReceiptNo"></span>
+                        <span id="returnModalReceiptDisplay" class="font-bold text-teal-700 text-base font-mono bg-white px-4 py-1.5 rounded-lg border border-teal-200 shadow-sm" x-text="returnReceiptNo || '{{ $petition->receipt_no ?? '' }}'">{{ $petition->receipt_no ?? '' }}</span>
                     </div>
 
                     <div class="space-y-2.5">
@@ -68,7 +84,8 @@
                 </div>
 
                 <div class="px-6 py-5 bg-slate-50/80 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-end gap-3 rounded-b-2xl">
-                    <button type="button" @click="showReturnModal = false"
+                    <button type="button" @click="showReturnModal = false; if(window.closeReturnModal) window.closeReturnModal();"
+                        onclick="if(window.closeReturnModal) window.closeReturnModal();"
                         class="w-full sm:w-auto px-6 py-2.5 text-sm font-bold text-blue-600 bg-white border border-blue-200 rounded-xl hover:bg-blue-50 hover:text-blue-700 transition-all focus:ring-4 focus:ring-blue-100 outline-none">
                         Cancel
                     </button>
@@ -82,3 +99,46 @@
         </div>
     </div>
 </div>
+
+<script>
+    window.openReturnModal = function(id, receipt) {
+        // 1. Dispatch custom event for Alpine listeners
+        window.dispatchEvent(new CustomEvent('open-return-modal', {
+            detail: { id: id, receipt: receipt }
+        }));
+
+        // 2. Direct DOM manipulation fallback (works even if Alpine is uninitialized)
+        const modal = document.getElementById('returnToInwardModal');
+        if (modal) {
+            modal.style.display = 'block';
+            modal.removeAttribute('x-cloak');
+        }
+
+        const receiptDisplay = document.getElementById('returnModalReceiptDisplay');
+        if (receiptDisplay && receipt) {
+            receiptDisplay.textContent = receipt;
+        }
+
+        const hiddenIdInput = document.getElementById('modal_return_petition_id');
+        if (hiddenIdInput && id) {
+            hiddenIdInput.value = id;
+        }
+
+        const form = document.getElementById('returnToInwardForm');
+        if (form && id) {
+            form.action = '{{ url('petitions') }}/' + id + '/return-to-inward';
+        }
+
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    };
+
+    window.closeReturnModal = function() {
+        const modal = document.getElementById('returnToInwardModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        window.dispatchEvent(new CustomEvent('close-return-modal'));
+    };
+</script>

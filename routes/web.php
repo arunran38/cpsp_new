@@ -63,6 +63,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/petitions/{id}/link-duplicate', [PetitionController::class, 'linkDuplicate'])->name('petitions.linkDuplicate');
         Route::post('/petitions/{id}/unlink-duplicate', [PetitionController::class, 'unlinkDuplicate'])->name('petitions.unlinkDuplicate');
         Route::post('/petitions/{id}/return-to-inward', [PetitionController::class, 'returnToInward'])->name('petitions.returnToInward');
+        Route::post('/petitions/return-to-inward', [PetitionController::class, 'returnToInward'])->name('petitions.returnToInward.fallback');
         Route::post('/inward/petitions/{id}/reassign', [PetitionController::class, 'reassignInward'])->name('inward.petitions.reassign');
         Route::get('/petitions/download/{upload_id}', [PetitionController::class, 'downloadAttachment'])->name('petitions.download');
 

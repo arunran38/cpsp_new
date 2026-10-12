@@ -15,6 +15,9 @@
                 @if(Auth::user()->canAccess('access admin dashboard'))
                     <th class="px-6 py-4">Entered By (Inward)</th>
                 @endif
+                @if(($filter ?? request('filter')) === 'returned')
+                    <th class="px-6 py-4">Reason for Return</th>
+                @endif
                 <th class="px-6 py-4 text-center">Status</th>
             </tr>
         </thead>
@@ -73,13 +76,52 @@
                         </div>
                     </td>
                     @endif
+                    @if(($filter ?? request('filter')) === 'returned')
+                    <td class="px-5 py-3.5">
+                        @if($item->is_returned_to_inward)
+                            <div class="max-w-xs space-y-1">
+                                <div class="bg-rose-50 border border-rose-200/80 rounded-xl px-3 py-2 text-xs shadow-sm">
+                                    <div class="flex items-start gap-1.5">
+                                        <i data-lucide="message-square" class="w-3.5 h-3.5 text-rose-500 mt-0.5 shrink-0"></i>
+                                        <span class="font-semibold text-rose-900 leading-snug break-words">
+                                            {{ $item->return_reason ?? 'No remarks provided' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                @if($item->returnedByUser || $item->returned_at)
+                                    <div class="text-[11px] text-slate-500 flex flex-wrap items-center gap-x-2 gap-y-0.5 px-1">
+                                        @if($item->returnedByUser)
+                                            <span class="font-medium text-slate-600">
+                                                By: {{ $item->returnedByUser->name }}
+                                            </span>
+                                        @endif
+                                        @if($item->returned_at)
+                                            <span class="text-slate-400">
+                                                {{ \Carbon\Carbon::parse($item->returned_at)->format('d M, Y h:i A') }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        @else
+                            <span class="text-slate-300 font-bold">—</span>
+                        @endif
+                    </td>
+                    @endif
                     <td class="px-5 py-3.5 text-center">
                         @if($item->is_returned_to_inward)
                             <div class="flex flex-col items-center justify-center gap-1.5">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                     Returned
                                 </span>
-                                <button type="button" @click="$dispatch('open-reassign-modal', { id: {{ $item->petition_id }}, receipt: '{{ $item->receipt_no }}' })"
+                                <button type="button" @click="$dispatch('open-reassign-modal', { 
+                                        id: {{ $item->petition_id }}, 
+                                        receipt: {{ json_encode($item->receipt_no) }},
+                                        reason: {{ json_encode($item->return_reason ?? '') }},
+                                        by: {{ json_encode($item->returnedByUser?->name ?? '') }},
+                                        at: {{ json_encode($item->returned_at ? \Carbon\Carbon::parse($item->returned_at)->format('d M, Y h:i A') : '') }},
+                                        seat: {{ json_encode($item->seat?->seat_name ?? '') }}
+                                    })"
                                     class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 text-rose-600 hover:text-rose-700 hover:bg-rose-100 rounded-lg transition-colors shadow-sm text-[10px] font-bold border border-rose-100 uppercase tracking-wider" title="Re-transfer to CPSP">
                                     <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
                                     <span>Re-transfer</span>
@@ -98,7 +140,12 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="px-6 py-10 text-center text-slate-400">
+                    @php
+                        $colspan = 7;
+                        if (Auth::user()->canAccess('access admin dashboard')) $colspan++;
+                        if (($filter ?? request('filter')) === 'returned') $colspan++;
+                    @endphp
+                    <td colspan="{{ $colspan }}" class="px-6 py-10 text-center text-slate-400">
                         <div class="flex flex-col items-center justify-center gap-2">
                             <i data-lucide="inbox" class="w-7 h-7 text-slate-300"></i>
                             <p class="font-medium text-slate-500">No inward petition transactions recorded yet.</p>
