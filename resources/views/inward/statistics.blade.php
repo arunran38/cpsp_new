@@ -21,6 +21,33 @@
                     Detailed seat-wise data sheet of petitions registered in Inward.
                 </p>
             </div>
+
+            <div class="flex flex-wrap items-center gap-3 z-10">
+                @if(Auth::user()->canAccess('inward_form') || Auth::user()->canAccess('inward form') || Auth::user()->canAccess('access admin dashboard'))
+                <a href="{{ route('inward.enter_petition') }}" 
+                   class="px-4 py-2.5 text-xs font-bold text-teal-300 bg-teal-500/20 border border-teal-500/30 rounded-xl hover:bg-teal-500/30 transition-all flex items-center gap-2 shadow-sm">
+                    <i data-lucide="file-plus" class="w-4 h-4"></i>
+                    Inward Form
+                </a>
+                @endif
+                @if(Auth::user()->canAccess('export_statistics') || Auth::user()->canAccess('export statistics') || Auth::user()->canAccess('access admin dashboard'))
+                <a href="{{ route('inward.statistics.export', request()->query()) }}" 
+                   class="px-4 py-2.5 text-xs font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 rounded-xl hover:bg-emerald-500/30 transition-all flex items-center gap-2 shadow-sm">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                    Export CSV
+                </a>
+                <button onclick="window.print()" 
+                   class="px-4 py-2.5 text-xs font-bold text-slate-200 bg-slate-800/80 border border-slate-700 rounded-xl hover:bg-slate-700 transition-all flex items-center gap-2 shadow-sm">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    Print Data Sheet
+                </button>
+                @endif
+                <a href="{{ route('petitions.index', ['tab' => 'inward']) }}" 
+                   class="px-4 py-2.5 text-xs font-bold text-indigo-300 bg-indigo-500/20 border border-indigo-500/30 rounded-xl hover:bg-indigo-500/30 transition-all flex items-center gap-2 shadow-sm">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    Inward Petitions
+                </a>
+            </div>
         </div>
     </div>
 

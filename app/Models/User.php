@@ -106,11 +106,12 @@ class User extends Authenticatable
     {
         $currentSeatUser = $this->currentSeatUser();
         $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
+        $altPermission = str_contains($permission, '_') ? str_replace('_', ' ', $permission) : str_replace(' ', '_', $permission);
 
         // If sitting in a seat, the seat's permissions govern access (except for admin dashboard)
         if ($currentSeat && !session('is_impersonating_seat')) {
             try {
-                if ($currentSeat->hasPermissionTo($permission)) {
+                if ($currentSeat->hasPermissionTo($permission) || $currentSeat->hasPermissionTo($altPermission)) {
                     return true;
                 }
             } catch (\Exception $e) { }
@@ -127,7 +128,7 @@ class User extends Authenticatable
 
         // If not in a seat (or impersonating), fallback to personal permissions
         try {
-            return $this->hasPermissionTo($permission);
+            return $this->hasPermissionTo($permission) || $this->hasPermissionTo($altPermission);
         } catch (\Exception $e) {
             return false;
         }

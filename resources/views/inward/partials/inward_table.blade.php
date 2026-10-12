@@ -28,7 +28,11 @@
                     </td>
                     <td class="px-5 py-3.5">
                         <div class="flex flex-col">
-                            <span class="font-bold text-indigo-900 block font-mono">{{ $item->receipt_no }}</span>
+                            <a href="{{ route('petitions.show', $item->petition_id) }}" 
+                               class="font-bold text-indigo-700 hover:text-indigo-900 block font-mono hover:underline" 
+                               title="View Petition Details">
+                                {{ $item->receipt_no }}
+                            </a>
                             <span class="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                                 <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
                                 {{ \Carbon\Carbon::parse($item->date_of_petition_received)->format('d-m-Y') }}
@@ -79,15 +83,27 @@
                                 </button>
                             </div>
                         @elseif($item->is_cpsp_processed)
-                            <span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                Processed by CPSP
-                            </span>
+                            <div class="flex flex-col items-center justify-center gap-1">
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    Processed by CPSP
+                                </span>
+                                <a href="{{ route('petitions.show', $item->petition_id) }}" 
+                                   class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1 mt-0.5">
+                                    <i data-lucide="external-link" class="w-3 h-3"></i> View
+                                </a>
+                            </div>
                         @else
-                            <span
-                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                Transferred
-                            </span>
+                            <div class="flex flex-col items-center justify-center gap-1">
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    Transferred
+                                </span>
+                                <a href="{{ route('petitions.show', $item->petition_id) }}" 
+                                   class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-all mt-0.5 shadow-sm">
+                                    <i data-lucide="eye" class="w-3 h-3 text-indigo-600"></i> Open
+                                </a>
+                            </div>
                         @endif
                     </td>
                 </tr>

@@ -488,6 +488,15 @@
                 @endif
 
 
+                @if(Auth::user()->canAccess('inward_form') || Auth::user()->canAccess('inward form') || Auth::user()->canAccess('access admin dashboard'))
+                <!-- Inward Registration -->
+                <a href="{{ route('inward.enter_petition') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('inward.enter_petition') ? 'active-nav' : 'inactive-nav' }}">
+                    <i data-lucide="file-input" class="w-5 h-5 icon-bounce {{ request()->routeIs('inward.enter_petition') ? 'text-indigo-400' : '' }}"></i>
+                    <span>Inward Registration</span>
+                </a>
+                @endif
+
                 @if(Auth::user()->canAccess('view petitions'))
                 <!-- View Petitions - Direct Link -->
                 <a href="{{ route('petitions.index', ['tab' => 'inward']) }}" 

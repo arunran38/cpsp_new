@@ -49,23 +49,15 @@ class RolesAndPermissionsSeeder extends Seeder
         // പെർമിഷനുകൾ ഉണ്ടാക്കുന്നു (Scoped Permissions)
         Permission::firstOrCreate(['name' => 'view own petitions']);
         Permission::firstOrCreate(['name' => 'view all petitions']);
-        $viewFileTransfer = Permission::firstOrCreate(['name' => 'view_file_transfer']);
-        Permission::firstOrCreate(['name' => 'view file transfer']);
-        $inwardFormPermission = Permission::firstOrCreate(['name' => 'inward_form']);
-        Permission::firstOrCreate(['name' => 'inward form']);
-
-        $inwardStats = Permission::firstOrCreate(['name' => 'inward_statistics']);
-        $inwardStatsSpaced = Permission::firstOrCreate(['name' => 'inward statistics']);
-        $exportStats = Permission::firstOrCreate(['name' => 'export_statistics']);
-        $exportStatsSpaced = Permission::firstOrCreate(['name' => 'export statistics']);
-        $filterTransfer = Permission::firstOrCreate(['name' => 'filter_transfer']);
-        $filterTransferSpaced = Permission::firstOrCreate(['name' => 'filter transfer']);
+        Permission::firstOrCreate(['name' => 'access admin dashboard']);
         
-        $viewProcessedStats = Permission::firstOrCreate(['name' => 'view_processed_statistics']);
-        $viewProcessedStatsSpaced = Permission::firstOrCreate(['name' => 'view processed statistics']);
-
-        $createInwardPetitions = Permission::firstOrCreate(['name' => 'create_inward_petitions']);
-        $createInwardPetitionsSpaced = Permission::firstOrCreate(['name' => 'create inward petitions']);
+        $viewFileTransfer = Permission::firstOrCreate(['name' => 'view_file_transfer']);
+        $inwardFormPermission = Permission::firstOrCreate(['name' => 'inward_form']);
+        $inwardStats = Permission::firstOrCreate(['name' => 'inward_statistics']);
+        $exportStats = Permission::firstOrCreate(['name' => 'export_statistics']);
+        $filterTransfer = Permission::firstOrCreate(['name' => 'filter_transfer']);
+        $viewProcessedStats = Permission::firstOrCreate(['name' => 'view processed statistics']);
+        $createInwardPetitions = Permission::firstOrCreate(['name' => 'create inward petitions']);
 
         // റോളുകൾ ഉണ്ടാക്കുന്നു (Create Roles) & Assign Permissions
         $superAdminRole = Role::firstOrCreate(['name' => 'super admin']);
@@ -79,16 +71,31 @@ class RolesAndPermissionsSeeder extends Seeder
             $inwardStats,
             $exportStats,
             $filterTransfer,
-            $filterTransferSpaced,
+            $createInwardPetitions,
         ]);
-        $cpspRole->givePermissionTo([$viewFileTransfer, $inwardFormPermission]);
+        $cpspRole->givePermissionTo([
+            $viewFileTransfer, 
+            $inwardFormPermission,
+            'view petitions',
+            'create petitions',
+            'update petitions',
+            'delete petitions',
+            'view own petitions',
+            'view master reports',
+            'create master reports',
+            'update master reports',
+            'delete master reports',
+            'view compliances',
+            'update compliances',
+        ]);
         $adminRole->givePermissionTo([
             $viewFileTransfer, 
             $inwardFormPermission,
             $inwardStats,
             $exportStats,
             $filterTransfer,
-            $filterTransferSpaced,
+            $viewProcessedStats,
+            'access admin dashboard',
         ]);
         $superAdminRole->givePermissionTo([
             $viewFileTransfer, 
@@ -96,14 +103,12 @@ class RolesAndPermissionsSeeder extends Seeder
             $inwardStats,
             $exportStats,
             $filterTransfer,
-            $filterTransferSpaced,
+            $viewProcessedStats,
+            'access admin dashboard',
         ]);
-        // റോളുകൾ ഉണ്ടാക്കുന്നു (Create Roles)
-        $superAdmin = Role::firstOrCreate(['name' => 'super admin']);
-        $superAdmin->syncPermissions(Permission::all());
+        // Super Admin gets all permissions
+        $superAdminRole->syncPermissions(Permission::all());
 
-        Role::firstOrCreate(['name' => 'admin']);
-        Role::firstOrCreate(['name' => 'CPSP']);
         $iopHq = Role::firstOrCreate(['name' => 'IOP HQ']);
 
         // IOP HQ-നുള്ള പെർമിഷനുകൾ

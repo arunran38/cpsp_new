@@ -3,19 +3,23 @@
 
 @section('content')
     <div class="space-y-6" x-data="petitionForm()">
-        <!-- Page Header (Professional & Clean) -->
-        <div
-            class="bg-white px-8 py-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden">
-            <!-- Subtle top accent line -->
-            <div class="absolute top-0 left-0 w-full h-1 bg-indigo-600"></div>
-
-            <div class="flex items-center gap-4">
-                <div
-                    class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
-                    <i data-lucide="file-text" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-slate-900">New Complaint</h1>
+        <!-- Premium Header Section -->
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2">
+            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+                <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+                <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            
+            <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
+                <div class="text-center sm:text-left z-10">
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                        New Petition
+                    </h1>
+                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
+                        Register a new petition with all necessary details.
+                    </p>
                 </div>
             </div>
         </div>
@@ -25,7 +29,7 @@
 
 
         <!-- Stepper Navigation (Catchy Dark Premium) -->
-        <div class="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl mb-6 p-6 sm:p-10">
+        <div class="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl mb-6 py-4 px-6 sm:py-6 sm:px-10">
             <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
                 <div class="w-96 h-96 bg-blue-600/20 rounded-full blur-[80px]"></div>
             </div>
@@ -35,15 +39,15 @@
 
             <div class="relative max-w-3xl mx-auto px-4 md:px-0 z-10">
                 <!-- Background Line -->
-                <div class="absolute top-5 left-0 w-full h-1 bg-slate-700 -translate-y-1/2 z-0 rounded-full"></div>
+                <div class="absolute top-5 left-[12.5%] right-[12.5%] h-1 bg-slate-700 -translate-y-1/2 z-0 rounded-full"></div>
                 <!-- Progress Line -->
-                <div class="absolute top-5 left-0 h-1 bg-gradient-to-r from-teal-400 to-teal-500 -translate-y-1/2 transition-all duration-700 ease-out z-0 rounded-full shadow-[0_0_10px_rgba(45,212,191,0.5)]"
+                <div class="absolute top-5 left-[12.5%] h-1 bg-gradient-to-r from-teal-400 to-teal-500 -translate-y-1/2 transition-all duration-700 ease-out z-0 rounded-full shadow-[0_0_10px_rgba(45,212,191,0.5)]"
                     :style="`width: ${((step - 1) / 3) * 100}%`"></div>
 
                 <div class="relative z-10 flex justify-between">
                     <!-- Step 1 -->
                     <button type="button" @click="setStep(1)"
-                        class="flex flex-col items-center gap-3 focus:outline-none group bg-transparent">
+                        class="flex-1 flex flex-col items-center gap-3 focus:outline-none group bg-transparent">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 ring-4 ring-slate-900 relative z-20"
                             :class="step === 1 ? 'bg-teal-400 text-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.8)] scale-110' : (step > 1 ? 'bg-teal-500 text-white shadow-[0_0_10px_rgba(20,184,166,0.6)]' : 'bg-blue-600 text-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500')">
                             <span x-show="step > 1"><i data-lucide="check" class="w-5 h-5"></i></span>
@@ -55,7 +59,7 @@
 
                     <!-- Step 2 -->
                     <button type="button" @click="step >= 2 ? setStep(2) : null"
-                        class="flex flex-col items-center gap-3 focus:outline-none group bg-transparent"
+                        class="flex-1 flex flex-col items-center gap-3 focus:outline-none group bg-transparent"
                         :class="{ 'cursor-not-allowed opacity-80': step < 2 }">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 ring-4 ring-slate-900 relative z-20"
                             :class="step === 2 ? 'bg-teal-400 text-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.8)] scale-110' : (step > 2 ? 'bg-teal-500 text-white shadow-[0_0_10px_rgba(20,184,166,0.6)]' : 'bg-blue-600 text-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500')">
@@ -68,7 +72,7 @@
 
                     <!-- Step 3 -->
                     <button type="button" @click="step >= 3 ? setStep(3) : null"
-                        class="flex flex-col items-center gap-3 focus:outline-none group bg-transparent"
+                        class="flex-1 flex flex-col items-center gap-3 focus:outline-none group bg-transparent"
                         :class="{ 'cursor-not-allowed opacity-80': step < 3 }">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 ring-4 ring-slate-900 relative z-20"
                             :class="step === 3 ? 'bg-teal-400 text-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.8)] scale-110' : (step > 3 ? 'bg-teal-500 text-white shadow-[0_0_10px_rgba(20,184,166,0.6)]' : 'bg-blue-600 text-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500')">
@@ -81,7 +85,7 @@
 
                     <!-- Step 4 -->
                     <button type="button" @click="step >= 4 ? setStep(4) : null"
-                        class="flex flex-col items-center gap-3 focus:outline-none group bg-transparent"
+                        class="flex-1 flex flex-col items-center gap-3 focus:outline-none group bg-transparent"
                         :class="{ 'cursor-not-allowed opacity-80': step < 4 }">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 ring-4 ring-slate-900 relative z-20"
                             :class="step === 4 ? 'bg-teal-400 text-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.8)] scale-110' : 'bg-blue-600 text-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500'">
@@ -413,7 +417,7 @@
                                         placeholder="Select Designation" />
                                 </div>
                                 <div>
-                                    <x-searchable-select label='Department <span class="text-rose-500" x-show="acc.name.trim() !== \'\'">*</span>' x-bind:name="`accused[${index}][department_id]`"
+                                    <x-searchable-select label="Department <span class='text-rose-500' x-show='acc.name.trim().length > 0'>*</span>" x-bind:name="`accused[${index}][department_id]`"
                                         x-model="acc.department_id" :options="$departments->pluck('department_name', 'id')->toArray()" placeholder="Select Department" />
                                 </div>
                             </div>
