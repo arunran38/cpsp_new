@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Builder;
+use App\Services\HashidService;
 
 class Petition extends Model
 {
@@ -257,7 +258,7 @@ class Petition extends Model
      */
     public function getRouteKey(): mixed
     {
-        return \App\Services\HashidService::encode($this->getKey());
+        return HashidService::encode($this->getKey());
     }
 
     /**
@@ -265,7 +266,7 @@ class Petition extends Model
      */
     public function resolveRouteBinding($value, $field = null): ?Model
     {
-        $id = \App\Services\HashidService::decode($value);
+        $id = HashidService::decode($value);
         return $this->where($field ?? $this->getRouteKeyName(), $id ?? $value)->first();
     }
 
@@ -274,7 +275,7 @@ class Petition extends Model
      */
     public function getHashidAttribute(): string
     {
-        return \App\Services\HashidService::encode($this->getKey());
+        return HashidService::encode($this->getKey());
     }
 
     /**
@@ -282,7 +283,7 @@ class Petition extends Model
      */
     public static function findByHashidOrFail(mixed $hashid): self
     {
-        $id = \App\Services\HashidService::decode($hashid) ?? $hashid;
+        $id = HashidService::decode($hashid) ?? $hashid;
         return static::findOrFail($id);
     }
 
@@ -460,7 +461,7 @@ class Petition extends Model
         return self::where('status', self::STATUS_CLOSED_BY_GOVT)->count();
     }
 
-    public function compliance(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function compliance(): HasOne
     {
         return $this->hasOne(Compliance::class, 'petition_id', 'petition_id');
     }

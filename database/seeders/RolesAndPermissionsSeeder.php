@@ -59,54 +59,60 @@ class RolesAndPermissionsSeeder extends Seeder
         $viewProcessedStats = Permission::firstOrCreate(['name' => 'view processed statistics']);
         $createInwardPetitions = Permission::firstOrCreate(['name' => 'create inward petitions']);
 
-        // റോളുകൾ ഉണ്ടാക്കുന്നു (Create Roles) & Assign Permissions
-        $superAdminRole = Role::firstOrCreate(['name' => 'super admin']);
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $cpspRole = Role::firstOrCreate(['name' => 'CPSP']);
-        $inwardRole = Role::firstOrCreate(['name' => 'Inward']);
+        // -------------------------------------------------------------
+        // Roles Creation & Permissions Assignment
+        // -------------------------------------------------------------
 
-        $inwardRole->givePermissionTo([
-            $viewFileTransfer, 
-            $inwardFormPermission,
-            $inwardStats,
-            $exportStats,
-            $filterTransfer,
-            $createInwardPetitions,
-        ]);
-        $cpspRole->givePermissionTo([$viewFileTransfer]);
-        $adminRole->givePermissionTo([
-            $viewFileTransfer, 
-            $inwardFormPermission,
-            $inwardStats,
-            $exportStats,
-            $filterTransfer,
-            $viewProcessedStats,
-            'access admin dashboard',
-        ]);
-        $superAdminRole->givePermissionTo([
-            $viewFileTransfer, 
-            $inwardFormPermission,
-            $inwardStats,
-            $exportStats,
-            $filterTransfer,
-            $viewProcessedStats,
-            'access admin dashboard',
-        ]);
-        // റോളുകൾ ഉണ്ടാക്കുന്നു (Create Roles)
+        // 1. Super Admin: Unrestricted full access
         $superAdmin = Role::firstOrCreate(['name' => 'super admin']);
         $superAdmin->syncPermissions(Permission::all());
 
-        Role::firstOrCreate(['name' => 'admin']);
-        Role::firstOrCreate(['name' => 'CPSP']);
-        $iopHq = Role::firstOrCreate(['name' => 'IOP HQ']);
+        // 2. Admin: System administrator (operations, masters, reports, charts, dashboard)
+        $admin = Role::firstOrCreate(['name' => 'admin']);
+        $adminPermissions = Permission::whereNotIn('name', [
+            'delete roles',
+            'delete permissions',
+        ])->get();
+        $admin->syncPermissions($adminPermissions);
 
-        // IOP HQ-നുള്ള പെർമിഷനുകൾ
-        $iopHq->givePermissionTo([
+        // 3. Inward Desk: Reception, petition registration, transfers & statistics
+        $inward = Role::firstOrCreate(['name' => 'Inward']);
+        $inward->syncPermissions([
+            'view file transfer', 
+            'inward form',
+            'inward statistics',
+            'export statistics',
+            'filter transfer',
+            'create inward petitions',
+            'create petitions',
+            'view petitions',
+            'view own petitions',
+        ]);
+
+        // 4. CPSP Desk: Grievance management, forwarding, compliances, transfers
+        $cpsp = Role::firstOrCreate(['name' => 'CPSP']);
+        $cpsp->syncPermissions([
+            'view petitions',
+            'view all petitions',
+            'view own petitions',
+            'create petitions',
+            'update petitions',
+            'view file transfer',
+            'filter transfer',
+            'view compliances',
+            'create compliances',
+            'update compliances',
+        ]);
+
+        // 5. IOP HQ: Petitions oversight and compliances
+        $iopHq = Role::firstOrCreate(['name' => 'IOP HQ']);
+        $iopHq->syncPermissions([
             'view petitions',
             'view all petitions',
             'view compliances',
             'create compliances',
-            'update compliances'
+            'update compliances',
+            'view master reports',
         ]);
     }
 }

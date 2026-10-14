@@ -58,15 +58,26 @@
                                     <span class="font-black text-slate-900 text-sm leading-tight capitalize">{{ $role->name }}</span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <div class="flex flex-wrap gap-2">
-                                        @forelse($role->permissions as $permission)
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                                                {{ $permission->name }}
-                                            </span>
-                                        @empty
-                                            <span class="text-slate-400 text-xs italic">No permissions assigned</span>
-                                        @endforelse
-                                    </div>
+                                    @if(strtolower($role->name) === 'super admin' || $role->permissions->count() >= 70)
+                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                            <i class="fa-solid fa-shield-halved text-emerald-600"></i> All Permissions ({{ $role->permissions->count() }})
+                                        </span>
+                                    @else
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            @forelse($role->permissions->take(6) as $permission)
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                                                    {{ $permission->name }}
+                                                </span>
+                                            @empty
+                                                <span class="text-slate-400 text-xs italic">No permissions assigned</span>
+                                            @endforelse
+                                            @if($role->permissions->count() > 6)
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                    +{{ $role->permissions->count() - 6 }} more
+                                                </span>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">

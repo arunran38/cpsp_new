@@ -8,6 +8,7 @@ use App\Models\Seat;
 use App\Http\Requests\StorePetitionRequest;
 use App\Http\Requests\UpdatePetitionRequest;
 use App\Services\PetitionService;
+use App\Services\HashidService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -255,7 +256,7 @@ class PetitionController extends Controller
             return back()->with('error', 'Petition ID is required to return to Inward.');
         }
 
-        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
         $user = Auth::user();
         $currentSeat = $user->currentSeatUser();
@@ -299,7 +300,7 @@ class PetitionController extends Controller
             abort(403, 'Unauthorized to reassign inward petitions.');
         }
 
-        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
 
         $request->validate([
@@ -621,7 +622,7 @@ class PetitionController extends Controller
      */
     public function show($id): View
     {
-        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::with([
             'addresses.designation', 
             'addresses.department', 
@@ -652,7 +653,7 @@ class PetitionController extends Controller
      */
     public function edit($id): View|RedirectResponse
     {
-        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::with(['addresses', 'uploads'])->findOrFail($realId);
         $this->authorize('update', $petition);
 
@@ -681,7 +682,7 @@ class PetitionController extends Controller
      */
     public function update(UpdatePetitionRequest $request, $id): RedirectResponse
     {
-        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
         $this->authorize('update', $petition);
 
@@ -704,7 +705,7 @@ class PetitionController extends Controller
      */
     public function destroy($id): RedirectResponse
     {
-        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
 
         if ($petition->isFromInward() ) {
@@ -730,7 +731,7 @@ class PetitionController extends Controller
             'original_receipt_no' => 'required|string',
         ]);
 
-        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
         $this->authorize('update', $petition);
 
@@ -784,7 +785,7 @@ class PetitionController extends Controller
      */
     public function unlinkDuplicate(Request $request, $id): RedirectResponse
     {
-        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
         $this->authorize('update', $petition);
 
@@ -828,7 +829,7 @@ class PetitionController extends Controller
         });
 
         if ($excludeId) {
-            $realExclude = \App\Services\HashidService::decode($excludeId) ?? $excludeId;
+            $realExclude = HashidService::decode($excludeId) ?? $excludeId;
             $petitions->where('petition_id', '!=', $realExclude);
         }
 
@@ -860,7 +861,7 @@ class PetitionController extends Controller
      */
     public function downloadAttachment($uploadId)
     {
-        $realUploadId = \App\Services\HashidService::decode($uploadId) ?? $uploadId;
+        $realUploadId = HashidService::decode($uploadId) ?? $uploadId;
         $upload = Upload::findOrFail($realUploadId);
         
         if ($upload->petition_id) {
@@ -885,7 +886,7 @@ class PetitionController extends Controller
         $request->validate(['receipt_no' => 'required|string|max:255']);
         $exists = Petition::where('receipt_no', $request->receipt_no);
         if ($request->filled('petition_id')) {
-            $realPid = \App\Services\HashidService::decode($request->petition_id) ?? $request->petition_id;
+            $realPid = HashidService::decode($request->petition_id) ?? $request->petition_id;
             $exists->where('petition_id', '!=', $realPid);
         }
         return response()->json(['exists' => $exists->exists()]);
@@ -900,7 +901,7 @@ class PetitionController extends Controller
             'file_no' => 'required|string|max:255',
             'petition_id' => 'required'
         ]);
-        $realPid = \App\Services\HashidService::decode($request->petition_id) ?? $request->petition_id;
+        $realPid = HashidService::decode($request->petition_id) ?? $request->petition_id;
         return response()->json(['exists' => Petition::where('file_no', $request->file_no)->where('petition_id', '!=', $realPid)->exists()]);
     }
 

@@ -6,6 +6,7 @@ use App\Models\Petition;
 use App\Models\Decision;
 use App\Models\Upload;
 use App\Http\Requests\StoreDecisionRequest;
+use App\Services\HashidService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ class DecisionController extends Controller
     {
         return DB::transaction(function () use ($request) {
             try {
-                $petitionId = \App\Services\HashidService::decode($request->petition_id) ?? $request->petition_id;
+                $petitionId = HashidService::decode($request->petition_id) ?? $request->petition_id;
                 $petition = Petition::findOrFail($petitionId);
                 $user = Auth::user();
                 $seatUser = $user ? $user->currentSeatUser() : null;

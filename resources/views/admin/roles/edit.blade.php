@@ -1,76 +1,649 @@
 @extends('layouts.admin')
-@section('container_width', 'max-w-4xl')
+@section('container_width', 'max-w-full')
 
 @section('content')
-    <div class="space-y-8">
-        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+@php
+    // -------------------------------------------------------------
+    // Define the 7 High-Level System Modules & Their Capabilities
+    // -------------------------------------------------------------
+    $modules = [
+        'users' => [
+            'key' => 'users',
+            'title' => 'User & Access Management',
+            'desc' => 'User accounts, role configurations, system permissions & admin panel access',
+            'icon' => 'users',
+            'gradient' => 'from-blue-500 to-indigo-600 shadow-blue-500/25',
+            'accent' => 'blue',
+            'crud' => [
+                'users' => ['name' => 'Users', 'desc' => 'Accounts & credentials', 'icon' => 'user'],
+                'roles' => ['name' => 'Roles', 'desc' => 'Role configurations', 'icon' => 'shield'],
+                'permissions' => ['name' => 'Permissions', 'desc' => 'Granular capability items', 'icon' => 'key'],
+            ],
+            'special' => [
+                'Admin Dashboard' => [
+                    'desc' => 'Global administrative access',
+                    'filter' => fn($p) => str_contains(strtolower($p->name), 'dashboard')
+                ]
+            ]
+        ],
+        'organization' => [
+            'key' => 'organization',
+            'title' => 'Organization & Master Data',
+            'desc' => 'Police stations, circles, departments, official ranks, and office seats',
+            'icon' => 'building-2',
+            'gradient' => 'from-cyan-500 to-blue-600 shadow-cyan-500/25',
+            'accent' => 'cyan',
+            'crud' => [
+                'units' => ['name' => 'Units', 'desc' => 'Vigilance Units', 'icon' => 'building-2'],
+                'departments' => ['name' => 'Departments', 'desc' => 'External govt bodies', 'icon' => 'landmark'],
+                'designations' => ['name' => 'Designations', 'desc' => 'Official ranks & titles', 'icon' => 'award'],
+                'seats' => ['name' => 'Seats', 'desc' => 'Desk allocations & assignments', 'icon' => 'briefcase'],
+            ],
+            'special' => []
+        ],
+        'petitions' => [
+            'key' => 'petitions',
+            'title' => 'Petitions & Grievance Lifecycle',
+            'desc' => 'Petition processing, status workflows, and jurisdiction visibility scopes',
+            'icon' => 'file-text',
+            'gradient' => 'from-emerald-500 to-teal-600 shadow-emerald-500/25',
+            'accent' => 'emerald',
+            'crud' => [
+                'petitions' => ['name' => 'Petitions', 'desc' => 'Grievances & petition records', 'icon' => 'file-text'],
+            ],
+            'special' => [
+                'Visibility Scopes' => [
+                    'desc' => 'Personal vs department-wide visibility',
+                    'filter' => fn($p) => str_contains(strtolower($p->name), 'own') || str_contains(strtolower($p->name), 'all petitions')
+                ]
+            ]
+        ],
+        'inward' => [
+            'key' => 'inward',
+            'title' => 'Inward Desk & File Transfers',
+            'desc' => 'Inward registration desk, petition intake, and inter-unit file movements',
+            'icon' => 'inbox',
+            'gradient' => 'from-teal-500 to-emerald-600 shadow-teal-500/25',
+            'accent' => 'teal',
+            'crud' => [],
+            'special' => [
+                'Inward Registration' => [
+                    'desc' => 'Registration form & petition intake',
+                    'filter' => fn($p) => str_contains(strtolower($p->name), 'inward') && !str_contains(strtolower($p->name), 'stat')
+                ],
+                'File Movements' => [
+                    'desc' => 'File transfer visibility & filtering',
+                    'filter' => fn($p) => str_contains(strtolower($p->name), 'transfer')
+                ]
+            ]
+        ],
+        'compliances' => [
+            'key' => 'compliances',
+            'title' => 'IOP HQ Compliances',
+            'desc' => 'Directives tracking, compliance reporting, and court/IOP orders monitoring',
+            'icon' => 'clipboard-check',
+            'gradient' => 'from-indigo-600 to-purple-600 shadow-indigo-500/25',
+            'accent' => 'indigo',
+            'crud' => [
+                'compliances' => ['name' => 'Compliances', 'desc' => 'Directives & compliance records', 'icon' => 'clipboard-check'],
+            ],
+            'special' => []
+        ],
+        'analytics' => [
+            'key' => 'analytics',
+            'title' => 'Reports, Analytics & Charts',
+            'desc' => 'Master reports, operational statistics, data exports, and graphical charts',
+            'icon' => 'pie-chart',
+            'gradient' => 'from-purple-500 to-pink-600 shadow-purple-500/25',
+            'accent' => 'purple',
+            'crud' => [],
+            'special' => [
+                'Master Reports' => [
+                    'desc' => 'Consolidated master reporting',
+                    'filter' => fn($p) => str_contains(strtolower($p->name), 'master report')
+                ],
+                'Operational Statistics' => [
+                    'desc' => 'Inward metrics & data exports',
+                    'filter' => fn($p) => (str_contains(strtolower($p->name), 'stat') || str_contains(strtolower($p->name), 'export')) && !str_contains(strtolower($p->name), 'chart')
+                ],
+                'Visual Analytics Charts' => [
+                    'desc' => 'Trends, nature, status & seat distribution charts',
+                    'filter' => fn($p) => str_contains(strtolower($p->name), 'chart')
+                ]
+            ]
+        ],
+        'system' => [
+            'key' => 'system',
+            'title' => 'System Maintenance & Recovery',
+            'desc' => 'Seat diagnostics, health audits, and deleted record recovery',
+            'icon' => 'activity',
+            'gradient' => 'from-rose-500 to-orange-600 shadow-rose-500/25',
+            'accent' => 'rose',
+            'crud' => [],
+            'special' => [
+                'Health & Recovery' => [
+                    'desc' => 'Diagnostic logs and trash recovery',
+                    'filter' => fn($p) => str_contains(strtolower($p->name), 'recycle') || str_contains(strtolower($p->name), 'diagnostic')
+                ]
+            ]
+        ]
+    ];
+
+    $crudActions = ['view', 'create', 'update', 'delete'];
+    $allocatedPermIds = [];
+    $moduleData = [];
+
+    foreach ($modules as $modKey => $mod) {
+        $moduleData[$modKey] = [
+            'info' => $mod,
+            'crud' => [],
+            'special' => [],
+            'all_permissions' => []
+        ];
+
+        // 1. Populate CRUD entities
+        foreach ($mod['crud'] as $entityKey => $entityMeta) {
+            foreach ($crudActions as $act) {
+                $targetName = "{$act} {$entityKey}";
+                $found = $permissions->first(fn($p) => strtolower(trim($p->name)) === $targetName);
+                if ($found) {
+                    $moduleData[$modKey]['crud'][$entityKey][$act] = $found;
+                    $moduleData[$modKey]['all_permissions'][] = $found;
+                    $allocatedPermIds[] = $found->id;
+                }
+            }
+        }
+
+        // 2. Populate Special groups
+        foreach ($mod['special'] as $groupName => $groupConfig) {
+            $matched = $permissions->filter(function($p) use ($groupConfig, $allocatedPermIds) {
+                if (in_array($p->id, $allocatedPermIds)) return false;
+                return ($groupConfig['filter'])($p);
+            });
+
+            if ($matched->isNotEmpty()) {
+                $moduleData[$modKey]['special'][$groupName] = [
+                    'desc' => $groupConfig['desc'],
+                    'permissions' => $matched
+                ];
+                foreach ($matched as $mp) {
+                    $moduleData[$modKey]['all_permissions'][] = $mp;
+                    $allocatedPermIds[] = $mp->id;
+                }
+            }
+        }
+    }
+
+    // Catch any unallocated permissions
+    $unallocated = $permissions->filter(fn($p) => !in_array($p->id, $allocatedPermIds));
+    if ($unallocated->isNotEmpty()) {
+        $moduleData['system']['special']['Additional Privileges'] = [
+            'desc' => 'Other standalone system capabilities',
+            'permissions' => $unallocated
+        ];
+        foreach ($unallocated as $up) {
+            $moduleData['system']['all_permissions'][] = $up;
+        }
+    }
+@endphp
+
+<div class="space-y-6" x-data="rolePermissionsManager()">
+    <!-- Header -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-3.5">
+            <a href="{{ route('admin.roles.index') }}" 
+               class="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white flex items-center justify-center transition-all shadow-sm">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white">Edit Role</h1>
+                <div class="flex items-center gap-2.5">
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Edit Role</h1>
+                    <span class="px-3 py-0.5 rounded-full text-xs sm:text-sm font-black uppercase tracking-wider bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-sm">
+                        {{ $role->name }}
+                    </span>
+                </div>
+                <p class="text-sm font-medium text-slate-300 mt-0.5">Manage permissions and access controls organized strictly module-by-module.</p>
             </div>
-            <a href="{{ route('admin.roles.index') }}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl transition-colors">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('admin.roles.index') }}" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-200 hover:text-white bg-slate-800/90 hover:bg-slate-800 border border-slate-700 transition-all flex items-center gap-2 shadow-sm">
+                <i data-lucide="shield" class="w-4 h-4 text-indigo-400"></i> Roles List
             </a>
         </div>
+    </div>
 
-        <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden p-8">
-            <form action="{{ route('admin.roles.update', $role->id) }}" method="POST">
-                @csrf
-                @method('PUT')
-                
-                <div class="mb-6">
-                    <label for="name" class="block text-sm font-bold text-slate-700 mb-2">Role Name</label>
-                    <input type="text" name="name" id="name" value="{{ old('name', $role->name) }}" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all" required>
-                    @error('name')
-                        <p class="text-rose-500 text-xs mt-2 font-medium">{{ $message }}</p>
-                    @enderror
-                </div>
+    <form action="{{ route('admin.roles.update', $role->id) }}" method="POST">
+        @csrf
+        @method('PUT')
 
-                <div class="mb-8">
-                    <label class="block text-sm font-bold text-slate-700 mb-4">Assign Permissions</label>
-                    
-                    @php
-                        $groupedPermissions = [];
-                        foreach($permissions as $p) {
-                            $parts = explode(' ', $p->name, 2);
-                            $category = $parts[1] ?? 'other';
-                            $groupedPermissions[$category][] = $p;
-                        }
-                    @endphp
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        @foreach($groupedPermissions as $category => $perms)
-                            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col">
-                                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">{{ $category }}</h3>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-grow">
-                                    @php
-                                        $order = ['create' => 1, 'view' => 2, 'update' => 3, 'delete' => 4];
-                                        usort($perms, function($a, $b) use ($order) {
-                                            $actionA = strtolower(explode(' ', $a->name)[0]);
-                                            $actionB = strtolower(explode(' ', $b->name)[0]);
-                                            $valA = $order[$actionA] ?? 99;
-                                            $valB = $order[$actionB] ?? 99;
-                                            return $valA <=> $valB;
-                                        });
-                                    @endphp
-                                    @foreach($perms as $permission)
-                                        <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white shadow-sm cursor-pointer hover:border-primary/30 hover:shadow-md transition-all">
-                                            <input type="checkbox" name="permissions[]" value="{{ $permission->name }}" 
-                                                {{ $role->hasPermissionTo($permission->name) ? 'checked' : '' }}
-                                                class="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary/50">
-                                            <span class="text-slate-700 text-sm font-semibold capitalize">{{ $permission->name }}</span>
-                                        </label>
-                                    @endforeach
-                                </div>
+        <!-- Role Name & Global Stats Card with Rainbow Accent -->
+        <div class="bg-white border border-slate-200 rounded-3xl shadow-lg overflow-hidden mb-6">
+            <div class="h-1.5 w-full bg-gradient-to-r from-blue-500 via-indigo-500 via-purple-500 via-pink-500 via-rose-500 via-amber-500 to-emerald-500"></div>
+            
+            <div class="p-6 sm:p-7 bg-gradient-to-b from-indigo-50/40 via-white to-white">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                    <div class="lg:col-span-7">
+                        <label for="name" class="block text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider mb-2">
+                            Role Name <span class="text-rose-600">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-indigo-600">
+                                <i data-lucide="shield" class="w-5 h-5"></i>
                             </div>
-                        @endforeach
+                            <input type="text" name="name" id="name" value="{{ old('name', $role->name) }}" 
+                                   class="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-black placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-600 transition-all text-base shadow-xs"
+                                   placeholder="e.g. Officer, Section Supervisor..." required>
+                        </div>
+                        @error('name')
+                            <p class="text-rose-600 text-xs sm:text-sm mt-1.5 font-bold">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    
+                    <!-- Global Permission Coverage Widget -->
+                    <div class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs">
+                        <div class="flex items-center justify-between mb-2.5">
+                            <span class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Permissions Assigned</span>
+                            <span class="text-xs sm:text-sm font-black text-white px-3 py-0.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-xs">
+                                <span x-text="selectedCount">{{ $role->permissions->count() }}</span> / <span x-text="totalCount">{{ $permissions->count() }}</span>
+                            </span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200">
+                            <div class="bg-gradient-to-r from-blue-500 via-indigo-500 via-purple-500 to-emerald-500 h-full rounded-full transition-all duration-300"
+                                 :style="'width: ' + (totalCount > 0 ? (selectedCount / totalCount * 100) : 0) + '%'"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-slate-700 mt-2 font-bold">
+                            <span>System Coverage</span>
+                            <span class="text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-300 font-black text-xs"
+                                  x-text="(totalCount > 0 ? Math.round(selectedCount / totalCount * 100) : 0) + '%'">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar: Search + Module Quick Nav Pills + Quick Actions -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col gap-3.5">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <!-- Search Input -->
+                    <div class="relative w-full md:w-88">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                            <i data-lucide="search" class="w-4 h-4"></i>
+                        </div>
+                        <input type="text" x-model="search" 
+                               placeholder="Filter modules or permissions..."
+                               class="w-full pl-10 pr-9 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all shadow-xs">
+                        <button type="button" x-show="search.length > 0" @click="search = ''" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+
+                    <!-- Batch Actions -->
+                    <div class="flex items-center gap-2.5 w-full md:w-auto justify-end flex-wrap">
+                        <button type="button" @click="selectAll()" 
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-sm shadow-emerald-600/20 hover:-translate-y-0.5 transition-all">
+                            <i data-lucide="check-check" class="w-4 h-4"></i> Select All
+                        </button>
+                        <button type="button" @click="selectViewOnly()" 
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-sm shadow-blue-600/20 hover:-translate-y-0.5 transition-all">
+                            <i data-lucide="eye" class="w-4 h-4"></i> All View
+                        </button>
+                        <button type="button" @click="deselectAll()" 
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 shadow-sm shadow-rose-600/20 hover:-translate-y-0.5 transition-all">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Clear All
+                        </button>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-4 mt-8">
-                    <a href="{{ route('admin.roles.index') }}" class="px-6 py-2.5 rounded-xl font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition-colors">Cancel</a>
-                    <button type="submit" class="px-6 py-2.5 font-bold text-white rounded-xl bg-primary hover:bg-primary/90 shadow-sm transition-all">Update Role</button>
+                <!-- Module Quick Filter Pills -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 pt-1 custom-scrollbar text-xs sm:text-sm font-bold">
+                    <button type="button" @click="activeModule = 'all'"
+                            :class="activeModule === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-800 hover:bg-slate-100 border border-slate-300'"
+                            class="px-3.5 py-2 rounded-xl transition-all shrink-0">
+                        All Modules ({{ count($modules) }})
+                    </button>
+                    @foreach($modules as $modKey => $mod)
+                        <button type="button" @click="activeModule = '{{ $modKey }}'"
+                                :class="activeModule === '{{ $modKey }}' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-800 hover:bg-slate-100 border border-slate-300'"
+                                class="px-3.5 py-2 rounded-xl transition-all shrink-0 flex items-center gap-1.5">
+                            <span>{{ $mod['title'] }}</span>
+                        </button>
+                    @endforeach
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
+
+        <!-- ------------------------------------------------------------- -->
+        <!-- Module-by-Module Cards Section                                -->
+        <!-- ------------------------------------------------------------- -->
+        <div class="space-y-6">
+            @foreach($moduleData as $modKey => $data)
+                @php 
+                    $modInfo = $data['info']; 
+                    $modTotal = count($data['all_permissions']);
+                    $allPermNames = array_map(fn($p) => $p->name, $data['all_permissions']);
+                    $searchData = strtolower($modInfo['title'] . ' ' . $modInfo['desc'] . ' ' . implode(' ', $allPermNames));
+                @endphp
+
+                <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden module-container"
+                     x-show="(activeModule === 'all' || activeModule === '{{ $modKey }}') && matchesSearch('{{ addslashes($searchData) }}')"
+                     data-module-card="{{ $modKey }}">
+                    
+                    <!-- Module Card Header with Vibrant Gradient Icon & Module Toggle -->
+                    <div class="p-6 bg-slate-50/80 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br {{ $modInfo['gradient'] }} text-white flex items-center justify-center shrink-0 shadow-md">
+                                <i data-lucide="{{ $modInfo['icon'] }}" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight">{{ $modInfo['title'] }}</h3>
+                                <p class="text-xs sm:text-sm font-semibold text-slate-600 mt-0.5">{{ $modInfo['desc'] }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Module Master Toggle & Live Counter -->
+                        <div class="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                            <span class="text-xs sm:text-sm font-black text-slate-700 bg-white px-3 py-1.5 rounded-xl border border-slate-300 shadow-2xs">
+                                <span class="font-black text-indigo-600" id="mod-counter-{{ $modKey }}">0</span> / {{ $modTotal }}
+                            </span>
+                            <label class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/80 hover:bg-indigo-100 transition-all cursor-pointer">
+                                <input type="checkbox" 
+                                       id="mod-master-{{ $modKey }}"
+                                       @change="toggleModuleGroup('{{ $modKey }}', $event.target.checked)"
+                                       class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/40 cursor-pointer">
+                                <span class="text-xs sm:text-sm font-black text-indigo-950 uppercase tracking-wide">Toggle Module</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Module Body: CRUD Grid & Structured Special Sub-sections -->
+                    <div class="p-6 space-y-6">
+                        
+                        <!-- 1. CRUD Capabilities Table (if module has CRUD entities) -->
+                        @if(!empty($data['crud']))
+                            <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="bg-slate-100 text-slate-800 text-xs sm:text-sm font-black uppercase tracking-wider border-b border-slate-200">
+                                                <th class="px-5 py-3.5 text-slate-900">Resource</th>
+                                                <th class="px-3 py-3.5 text-center w-24">
+                                                    <span class="inline-block px-3 py-1 rounded-md text-xs font-black bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xs">ALL</span>
+                                                </th>
+                                                <th class="px-3 py-3.5 text-center w-24">
+                                                    <span class="inline-block px-3 py-1 rounded-md text-xs font-black bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs">VIEW</span>
+                                                </th>
+                                                <th class="px-3 py-3.5 text-center w-24">
+                                                    <span class="inline-block px-3 py-1 rounded-md text-xs font-black bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs">CREATE</span>
+                                                </th>
+                                                <th class="px-3 py-3.5 text-center w-24">
+                                                    <span class="inline-block px-3 py-1 rounded-md text-xs font-black bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-xs">UPDATE</span>
+                                                </th>
+                                                <th class="px-3 py-3.5 text-center w-24">
+                                                    <span class="inline-block px-3 py-1 rounded-md text-xs font-black bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-xs">DELETE</span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 text-sm">
+                                            @foreach($data['crud'] as $entityKey => $actions)
+                                                @php
+                                                    $entityMeta = $modInfo['crud'][$entityKey];
+                                                    $rowSlug = Str::slug($entityKey);
+                                                @endphp
+                                                <tr class="hover:bg-indigo-50/30 transition-colors perm-module-row"
+                                                    x-show="matchesSearch('{{ strtolower($entityMeta['name'] . ' ' . $entityKey . ' ' . $entityMeta['desc']) }}')"
+                                                    data-module="{{ $rowSlug }}">
+                                                    <td class="px-5 py-3.5">
+                                                        <div class="flex items-center gap-3">
+                                                            <div class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center shrink-0">
+                                                                <i data-lucide="{{ $entityMeta['icon'] }}" class="w-4 h-4"></i>
+                                                            </div>
+                                                            <div>
+                                                                <div class="font-black text-slate-900 text-sm sm:text-base leading-tight">{{ $entityMeta['name'] }}</div>
+                                                                <div class="text-slate-600 text-xs sm:text-sm font-semibold mt-0.5">{{ $entityMeta['desc'] }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <!-- Row Master Toggle -->
+                                                    <td class="px-3 py-3.5 text-center">
+                                                        <input type="checkbox" 
+                                                               id="row-master-{{ $rowSlug }}"
+                                                               @change="toggleRow('{{ $rowSlug }}', $event.target.checked); syncModuleStats('{{ $modKey }}')"
+                                                               class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/40 cursor-pointer">
+                                                    </td>
+                                                    <!-- View -->
+                                                    <td class="px-3 py-3.5 text-center">
+                                                        @if(isset($actions['view']))
+                                                            @php $perm = $actions['view']; @endphp
+                                                            <input type="checkbox" 
+                                                                   name="permissions[]" 
+                                                                   value="{{ $perm->name }}"
+                                                                   data-action="view"
+                                                                   {{ $role->hasPermissionTo($perm->name) ? 'checked' : '' }}
+                                                                   @change="onCheckboxChange('{{ $rowSlug }}', '{{ $modKey }}')"
+                                                                   title="{{ $perm->name }}"
+                                                                   class="perm-checkbox perm-mod-{{ $modKey }} perm-row-{{ $rowSlug }} perm-act-view w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500/40 cursor-pointer">
+                                                        @endif
+                                                    </td>
+                                                    <!-- Create -->
+                                                    <td class="px-3 py-3.5 text-center">
+                                                        @if(isset($actions['create']))
+                                                            @php $perm = $actions['create']; @endphp
+                                                            <input type="checkbox" 
+                                                                   name="permissions[]" 
+                                                                   value="{{ $perm->name }}"
+                                                                   data-action="create"
+                                                                   {{ $role->hasPermissionTo($perm->name) ? 'checked' : '' }}
+                                                                   @change="onCheckboxChange('{{ $rowSlug }}', '{{ $modKey }}')"
+                                                                   title="{{ $perm->name }}"
+                                                                   class="perm-checkbox perm-mod-{{ $modKey }} perm-row-{{ $rowSlug }} perm-act-create w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/40 cursor-pointer">
+                                                        @endif
+                                                    </td>
+                                                    <!-- Update -->
+                                                    <td class="px-3 py-3.5 text-center">
+                                                        @if(isset($actions['update']))
+                                                            @php $perm = $actions['update']; @endphp
+                                                            <input type="checkbox" 
+                                                                   name="permissions[]" 
+                                                                   value="{{ $perm->name }}"
+                                                                   data-action="update"
+                                                                   {{ $role->hasPermissionTo($perm->name) ? 'checked' : '' }}
+                                                                   @change="onCheckboxChange('{{ $rowSlug }}', '{{ $modKey }}')"
+                                                                   title="{{ $perm->name }}"
+                                                                   class="perm-checkbox perm-mod-{{ $modKey }} perm-row-{{ $rowSlug }} perm-act-update w-5 h-5 rounded border-slate-300 text-amber-500 focus:ring-amber-500/40 cursor-pointer">
+                                                        @endif
+                                                    </td>
+                                                    <!-- Delete -->
+                                                    <td class="px-3 py-3.5 text-center">
+                                                        @if(isset($actions['delete']))
+                                                            @php $perm = $actions['delete']; @endphp
+                                                            <input type="checkbox" 
+                                                                   name="permissions[]" 
+                                                                   value="{{ $perm->name }}"
+                                                                   data-action="delete"
+                                                                   {{ $role->hasPermissionTo($perm->name) ? 'checked' : '' }}
+                                                                   @change="onCheckboxChange('{{ $rowSlug }}', '{{ $modKey }}')"
+                                                                   title="{{ $perm->name }}"
+                                                                   class="perm-checkbox perm-mod-{{ $modKey }} perm-row-{{ $rowSlug }} perm-act-delete w-5 h-5 rounded border-slate-300 text-rose-600 focus:ring-rose-500/40 cursor-pointer">
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- 2. Structured Operational Sub-Sections -->
+                        @if(!empty($data['special']))
+                            <div class="space-y-4">
+                                @foreach($data['special'] as $groupTitle => $groupInfo)
+                                    @php $subSlug = Str::slug($groupTitle); @endphp
+                                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5">
+                                        <div class="flex items-center justify-between mb-3.5 border-b border-slate-200 pb-2.5">
+                                            <div class="flex items-center gap-2.5">
+                                                <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                                                <h4 class="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider">{{ $groupTitle }}</h4>
+                                                <span class="text-xs font-semibold text-slate-600">({{ $groupInfo['desc'] }})</span>
+                                            </div>
+                                            <span class="text-xs font-bold text-slate-700 bg-white px-2.5 py-1 rounded-md border border-slate-300 shadow-2xs">
+                                                {{ count($groupInfo['permissions']) }} items
+                                            </span>
+                                        </div>
+
+                                        <!-- Aligned Grid of Structured Toggle Chips -->
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                                            @foreach($groupInfo['permissions'] as $perm)
+                                                <label class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:border-indigo-400 hover:bg-indigo-50/20 transition-all cursor-pointer group shadow-2xs">
+                                                    <input type="checkbox" 
+                                                           name="permissions[]" 
+                                                           value="{{ $perm->name }}"
+                                                           {{ $role->hasPermissionTo($perm->name) ? 'checked' : '' }}
+                                                           @change="onCheckboxChange('{{ $subSlug }}', '{{ $modKey }}')"
+                                                           class="perm-checkbox perm-mod-{{ $modKey }} perm-row-{{ $subSlug }} w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/30 cursor-pointer">
+                                                    <span class="text-xs sm:text-sm font-bold text-slate-900 select-none leading-snug">
+                                                        {{ $perm->name }}
+                                                    </span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <!-- Sticky Save Footer with Vibrant Gradient Action Button -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-xl p-4 sm:px-6 flex items-center justify-between sticky bottom-4 z-20 mt-6 backdrop-blur-md">
+            <div class="flex items-center gap-2.5">
+                <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-xs sm:text-sm font-bold text-slate-800">
+                    <span class="text-indigo-600 font-black text-sm sm:text-base" x-text="selectedCount">0</span> of <span class="font-black" x-text="totalCount">{{ $permissions->count() }}</span> capabilities assigned
+                </span>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('admin.roles.index') }}" 
+                   class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="px-7 py-2.5 rounded-xl text-xs sm:text-sm font-black text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 shadow-md shadow-indigo-600/30 hover:-translate-y-0.5 transition-all flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <span>Update Role</span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function rolePermissionsManager() {
+    return {
+        activeModule: 'all',
+        search: '',
+        selectedCount: 0,
+        totalCount: 0,
+        init() {
+            this.updateCount();
+            this.syncAllModules();
+            this.$nextTick(() => {
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+            });
+        },
+        updateCount() {
+            const allCheckboxes = this.$el.querySelectorAll('input.perm-checkbox');
+            const checkedCheckboxes = this.$el.querySelectorAll('input.perm-checkbox:checked');
+            this.totalCount = allCheckboxes.length;
+            this.selectedCount = checkedCheckboxes.length;
+        },
+        toggleModuleGroup(modKey, isChecked) {
+            const checkboxes = this.$el.querySelectorAll('.perm-mod-' + modKey);
+            checkboxes.forEach(cb => {
+                cb.checked = isChecked;
+            });
+            this.syncModuleStats(modKey);
+            this.updateCount();
+        },
+        toggleRow(rowSlug, isChecked) {
+            const checkboxes = this.$el.querySelectorAll('.perm-row-' + rowSlug);
+            checkboxes.forEach(cb => {
+                cb.checked = isChecked;
+            });
+            this.updateCount();
+        },
+        onCheckboxChange(rowSlug, modKey) {
+            if (rowSlug) this.syncRowMaster(rowSlug);
+            if (modKey) this.syncModuleStats(modKey);
+            this.updateCount();
+        },
+        syncRowMaster(rowSlug) {
+            const checkboxes = Array.from(this.$el.querySelectorAll('.perm-row-' + rowSlug));
+            const master = this.$el.querySelector('#row-master-' + rowSlug);
+            if (!master || checkboxes.length === 0) return;
+
+            const checkedCount = checkboxes.filter(cb => cb.checked).length;
+            master.checked = checkedCount === checkboxes.length;
+            master.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+        },
+        syncModuleStats(modKey) {
+            const checkboxes = Array.from(this.$el.querySelectorAll('.perm-mod-' + modKey));
+            const master = this.$el.querySelector('#mod-master-' + modKey);
+            const counter = this.$el.querySelector('#mod-counter-' + modKey);
+            
+            if (checkboxes.length === 0) return;
+
+            const checkedCount = checkboxes.filter(cb => cb.checked).length;
+            if (counter) counter.innerText = checkedCount;
+
+            if (master) {
+                master.checked = checkedCount === checkboxes.length;
+                master.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+            }
+        },
+        syncAllModules() {
+            const containers = this.$el.querySelectorAll('.module-container');
+            containers.forEach(c => {
+                const modKey = c.getAttribute('data-module-card');
+                if (modKey) this.syncModuleStats(modKey);
+            });
+
+            const rows = this.$el.querySelectorAll('tr.perm-module-row');
+            rows.forEach(r => {
+                const slug = r.getAttribute('data-module');
+                if (slug) this.syncRowMaster(slug);
+            });
+        },
+        selectAll() {
+            this.$el.querySelectorAll('input.perm-checkbox').forEach(cb => {
+                cb.checked = true;
+            });
+            this.syncAllModules();
+            this.updateCount();
+        },
+        deselectAll() {
+            this.$el.querySelectorAll('input.perm-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            this.syncAllModules();
+            this.updateCount();
+        },
+        selectViewOnly() {
+            this.$el.querySelectorAll('input.perm-checkbox').forEach(cb => {
+                cb.checked = cb.classList.contains('perm-act-view');
+            });
+            this.syncAllModules();
+            this.updateCount();
+        },
+        matchesSearch(text) {
+            if (!this.search || !this.search.trim()) return true;
+            return text.toLowerCase().includes(this.search.toLowerCase().trim());
+        }
+    };
+}
+</script>
 @endsection

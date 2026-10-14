@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
+use App\Services\HashidService;
 
 class Upload extends Model
 {
@@ -20,12 +21,12 @@ class Upload extends Model
 
     public function getRouteKey(): mixed
     {
-        return \App\Services\HashidService::encode($this->getKey());
+        return HashidService::encode($this->getKey());
     }
 
     public function getHashidAttribute(): string
     {
-        return \App\Services\HashidService::encode($this->getKey());
+        return HashidService::encode($this->getKey());
     }
 
     public function petition()
