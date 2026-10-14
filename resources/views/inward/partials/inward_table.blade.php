@@ -115,7 +115,7 @@
                                     Returned
                                 </span>
                                 <button type="button" @click="$dispatch('open-reassign-modal', { 
-                                        id: {{ $item->petition_id }}, 
+                                        id: '{{ $item->hashid }}', 
                                         receipt: {{ json_encode($item->receipt_no) }},
                                         reason: {{ json_encode($item->return_reason ?? '') }},
                                         by: {{ json_encode($item->returnedByUser?->name ?? '') }},
@@ -131,6 +131,11 @@
                             <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 Processed
                             </span>
+                            @if($item->processedBySeat || $item->processedByUser)
+                                <span class="block text-[10px] text-emerald-700 font-semibold mt-1">
+                                    {{ $item->processedBySeat->seat_name ?? '' }} ({{ $item->processedByUser->name ?? '' }})
+                                </span>
+                            @endif
                         @else
                             <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                                 Transferred

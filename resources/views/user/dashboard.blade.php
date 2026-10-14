@@ -65,8 +65,8 @@
 
     if ($isInwardRole) {
         $totalInwardCount = $petitions->count();
-        $sentToCpspCount = $petitions->filter(fn($p) => $p->is_cpsp_processed)->count();
-        $returnedFromCpspCount = $petitions->filter(fn($p) => $p->is_returned_to_inward)->count();
+        $sentToCpspCount = $petitions->filter(fn($p) => !$p->is_returned_to_inward)->count();
+        $returnedFromCpspCount = $petitions->filter(fn($p) => (bool)$p->is_returned_to_inward)->count();
     }
 
     // Chart Data: Petitions by Nature
@@ -200,7 +200,7 @@
     @if($isInwardRole)
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 p-4">
         <!-- Card 1: Total Inward Petitions -->
-        <a href="{{ route('petitions.index', ['tab' => 'all']) }}"
+        <a href="{{ route('inward.enter_petition', ['filter' => 'all', 'hide_form' => 1]) }}#view-inward-petitions"
            class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-cyan-500/40 bg-gradient-to-br from-cyan-400 to-blue-500 border border-cyan-400/30 shadow-lg">
             <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
             
@@ -219,7 +219,7 @@
         </a>
 
         <!-- Card 2: Sent/Transferred to CPSP -->
-        <a href="{{ route('petitions.index', ['tab' => 'forwarded']) }}"
+        <a href="{{ route('inward.enter_petition', ['filter' => 'transferred', 'hide_form' => 1]) }}#view-inward-petitions"
            class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-400/30 shadow-lg">
             <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
             
@@ -238,7 +238,7 @@
         </a>
 
         <!-- Card 3: Returned from CPSP -->
-        <a href="{{ route('petitions.index', ['tab' => 'returned']) }}"
+        <a href="{{ route('inward.enter_petition', ['filter' => 'returned', 'hide_form' => 1]) }}#view-inward-petitions"
            class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-rose-500/40 bg-gradient-to-br from-rose-400 to-pink-600 border border-rose-400/30 shadow-lg">
             <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
             
@@ -420,7 +420,7 @@
                 </div>
                 <h2 class="text-base font-bold text-slate-900">Recent Petitions</h2>
             </div>
-            <a href="{{ route('petitions.index', ['tab' => 'inward']) }}" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-colors uppercase tracking-wider">View Full List</a>
+            <a href="{{ $isInwardRole ? route('inward.enter_petition', ['hide_form' => 1]) . '#view-inward-petitions' : route('petitions.index', ['tab' => 'all']) }}" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-colors uppercase tracking-wider">View Full List</a>
         </div>
         
         <div class="p-0">
@@ -466,7 +466,7 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
-                                        <a href="{{ route('petitions.show', $petition->petition_id) }}" class="inline-flex items-center justify-center p-2 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-all">
+                                        <a href="{{ route('petitions.show', $petition->hashid) }}" class="inline-flex items-center justify-center p-2 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-all">
                                             <i data-lucide="arrow-right" class="w-4 h-4"></i>
                                         </a>
                                     </td>

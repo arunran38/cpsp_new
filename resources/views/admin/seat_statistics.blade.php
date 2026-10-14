@@ -9,20 +9,22 @@
             <div class="flex flex-col lg:flex-row">
 
                 <!-- Premium Header Section -->
-                <div class="relative overflow-hidden bg-gradient-to-r from-[#1e293b] to-[#0f172a] flex-1 flex flex-col sm:flex-row items-center justify-between p-5 lg:p-6 gap-4">
+                <div
+                    class="relative overflow-hidden bg-gradient-to-r from-[#1e293b] to-[#0f172a] flex-1 flex flex-col sm:flex-row items-center justify-between p-5 lg:p-6 gap-4">
                     <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
                         <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
                     </div>
                     <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
                         <div class="w-72 h-72 bg-blue-500/20 rounded-full blur-[60px]"></div>
                     </div>
-                    
+
                     <div class="relative text-center sm:text-left z-10">
                         <div class="flex flex-wrap justify-center sm:justify-start items-center gap-2 mb-1">
                             <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
                                 Diagnostics
                             </h1>
-                            <span class="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/30">
+                            <span
+                                class="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/30">
                                 Seat-wise
                             </span>
                         </div>
@@ -30,10 +32,10 @@
                             Comprehensive view of office performance per unit/seat.
                         </p>
                     </div>
-                    
+
                     <div class="relative shrink-0 z-10">
                         <a href="{{ route('admin.seats.statistics.export', ['date_from' => $dateFrom, 'date_to' => $dateTo]) }}"
-                           class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all text-sm">
+                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all text-sm">
                             <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                             <span>Excel Export</span>
                         </a>
@@ -53,10 +55,11 @@
                                     </div>
                                     <input type="date" name="date_from" value="{{ $dateFrom }}" placeholder="DD-MM-YYYY"
                                         max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300" style="color: #1e40af !important;">
+                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300"
+                                        style="color: #1e40af !important;">
                                 </div>
                             </div>
- 
+
                             <div class="w-full sm:w-auto flex-1 space-y-1.5">
                                 <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Date To</label>
                                 <div class="relative">
@@ -65,7 +68,8 @@
                                     </div>
                                     <input type="date" name="date_to" value="{{ $dateTo }}" placeholder="DD-MM-YYYY"
                                         max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300" style="color: #1e40af !important;">
+                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300"
+                                        style="color: #1e40af !important;">
                                 </div>
                             </div>
 
@@ -119,8 +123,12 @@
                             <th class="px-4 py-3 text-left align-middle border-r border-slate-200" rowspan="2">Seat</th>
                             <th class="px-4 py-3 align-middle border-r border-slate-200" rowspan="2"
                                 title="Total Petitions">Total<br>Petitions</th>
-                            <th class="px-4 py-3 align-middle border-r border-slate-200" rowspan="2" title="New Petitions">
-                                New<br>Petitions</th>
+                            <th class="px-4 py-3 align-middle border-r border-slate-200" rowspan="2"
+                                title="Inward Petitions Pending">
+                                Inward<br>Petitions<br>Pending</th>
+                            <th class="px-4 py-3 align-middle border-r border-slate-200" rowspan="2"
+                                title="Processed Petitions">
+                                Processed<br>Petitions</th>
                             <th class="px-4 py-3 align-middle border-r border-slate-200" rowspan="2"
                                 title="Forwarded Petitions">Forwarded<br>Petitions</th>
                             <th class="px-4 py-3 align-middle border-r border-slate-200" rowspan="2"
@@ -153,8 +161,12 @@
                                     </div>
                                 </td>
 
-                                <td class="px-4 py-3 text-center">{{ $seat->petitions_all_count }}</td>
-                                <td class="px-4 py-3 text-center">{{ $seat->petitions_received_count }}</td>
+                                <td class="px-4 py-3 text-center font-bold text-slate-800">{{ $seat->petitions_all_count }}</td>
+                                <td class="px-4 py-3 text-center font-semibold text-amber-600">{{ $seat->inward_pending_count }}
+                                </td>
+                                <td class="px-4 py-3 text-center font-semibold text-emerald-600">
+                                    {{ $seat->petitions_processed_count }}
+                                </td>
                                 <td class="px-4 py-3 text-center">{{ $seat->forwardings_out_count }}</td>
                                 <td class="px-4 py-3 text-center">{{ $seat->vr_received_count }}</td>
                                 <td class="px-4 py-3 text-center font-bold bg-slate-50">{{ $seat->decisions_made_count }}
@@ -171,7 +183,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="14" class="text-center py-10 text-slate-500">
+                                <td colspan="15" class="text-center py-10 text-slate-500">
                                     No data found
                                 </td>
                             </tr>
@@ -184,8 +196,9 @@
                                 <!-- FIXED HERE -->
                                 <td class="px-4 py-3 text-right">TOTAL</td>
 
-                                <td class="text-center">{{ $seats->sum('petitions_all_count') }}</td>
-                                <td class="text-center">{{ $seats->sum('petitions_received_count') }}</td>
+                                <td class="text-center font-bold">{{ $seats->sum('petitions_all_count') }}</td>
+                                <td class="text-center text-amber-700">{{ $seats->sum('inward_pending_count') }}</td>
+                                <td class="text-center text-emerald-700">{{ $seats->sum('petitions_processed_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('forwardings_out_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('vr_received_count') }}</td>
                                 <td class="text-center font-bold bg-indigo-100/50">{{ $seats->sum('decisions_made_count') }}

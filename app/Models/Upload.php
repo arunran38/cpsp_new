@@ -18,6 +18,16 @@ class Upload extends Model
     const CATEGORY_FINAL_ORDER = 'Final Order';
     const CATEGORY_OTHERS = 'Others';
 
+    public function getRouteKey(): mixed
+    {
+        return \App\Services\HashidService::encode($this->getKey());
+    }
+
+    public function getHashidAttribute(): string
+    {
+        return \App\Services\HashidService::encode($this->getKey());
+    }
+
     public function petition()
     {
         return $this->belongsTo(Petition::class, 'petition_id');

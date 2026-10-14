@@ -65,6 +65,11 @@ class PetitionService
                 'unit_id' => $unitId,
                 'linked_petition_id' => $data['linked_petition_id'] ?? null,
                 'is_cpsp_processed' => !$isInwardUser,
+                'processed_at' => !$isInwardUser ? now() : null,
+                'processed_by_user_id' => !$isInwardUser ? $user->user_id : null,
+                'processed_by_seat_id' => !$isInwardUser ? $seatId : null,
+                'updated_by_user_id' => !$isInwardUser ? $user->user_id : null,
+                'updated_by_seat_id' => !$isInwardUser ? $seatId : null,
             ]);
 
             // Clear any preexisting/orphaned addresses for this ID before adding
@@ -92,7 +97,11 @@ class PetitionService
     public function update(Petition $petition, array $data, array $files = [], array $deletedAttachments = []): Petition
     {
         return DB::transaction(function () use ($petition, $data, $files, $deletedAttachments) {
-            $petition->update([
+            $user = Auth::user();
+            $currentSeat = $user?->currentSeatUser();
+            $currentSeatId = $currentSeat?->seat_id;
+
+            $updatePayload = [
                 'receipt_no' => $data['receipt_no'],
                 'date_of_petition_received' => $data['date_of_petition_received'],
                 'nature_of_petition' => $data['nature_of_petition'],
@@ -101,7 +110,18 @@ class PetitionService
                 'description' => $data['description'],
                 'proposed_action' => $data['proposed_action'] ?? $petition->proposed_action,
                 'is_cpsp_processed' => true,
-            ]);
+                'updated_by_user_id' => $user?->user_id,
+                'updated_by_seat_id' => $currentSeatId,
+            ];
+
+            // If not previously recorded as processed, mark processed by details
+            if (!$petition->processed_at) {
+                $updatePayload['processed_at'] = now();
+                $updatePayload['processed_by_user_id'] = $user?->user_id;
+                $updatePayload['processed_by_seat_id'] = $currentSeatId ?? $petition->seat_id;
+            }
+
+            $petition->update($updatePayload);
 
             // Rebuild addresses
             Address::where('petition_id', $petition->petition_id)->delete();

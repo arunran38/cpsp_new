@@ -108,7 +108,7 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-center">
-                                <a href="{{ route('petitions.show', $petition->petition_id) }}" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="View Details">
+                                <a href="{{ route('petitions.show', $petition->hashid) }}" class="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="View Details">
                                     <i data-lucide="eye" class="w-5 h-5"></i>
                                 </a>
                             </td>

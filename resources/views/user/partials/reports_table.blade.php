@@ -98,6 +98,11 @@
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                     Processed
                                 </span>
+                                @if($petition->processedBySeat || $petition->processedByUser)
+                                    <span class="block text-[10px] text-emerald-700 font-semibold mt-0.5">
+                                        {{ $petition->processedBySeat->seat_name ?? '' }} ({{ $petition->processedByUser->name ?? '' }})
+                                    </span>
+                                @endif
                             @else
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-cyan-100 text-cyan-800 border border-cyan-200">
                                     Inward Pending
@@ -107,7 +112,7 @@
                         <td class="px-6 py-4 text-center">
                             <div class="flex items-center justify-center gap-3">
                                 @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
-                                    <a href="{{ route('petitions.edit', $petition->petition_id) }}"
+                                    <a href="{{ route('petitions.edit', $petition->hashid) }}"
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold text-xs shadow-md shadow-teal-500/20 transition-all hover:scale-105 whitespace-nowrap"
                                         title="Open Petition to Add Further Details">
                                         <i class="fa-solid fa-file-pen text-xs"></i>
@@ -115,7 +120,7 @@
                                     </a>
                                 @endif
 
-                                <a href="{{ route('petitions.show', $petition->petition_id) }}"
+                                <a href="{{ route('petitions.show', $petition->hashid) }}"
                                     class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                                     title="View Details">
                                     <i class="fa-solid fa-eye text-indigo-500"></i>
@@ -123,8 +128,8 @@
 
                                 @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
                                     <button type="button"
-                                        onclick="window.openReturnModal({{ $petition->petition_id }}, '{{ addslashes($petition->receipt_no) }}')"
-                                        @click="showReturnModal = true; returnPetitionId = {{ $petition->petition_id }}; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: {{ $petition->petition_id }}, receipt: '{{ addslashes($petition->receipt_no) }}' })"
+                                        onclick="window.openReturnModal('{{ $petition->hashid }}', '{{ addslashes($petition->receipt_no) }}')"
+                                        @click="showReturnModal = true; returnPetitionId = '{{ $petition->hashid }}'; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: '{{ $petition->hashid }}', receipt: '{{ addslashes($petition->receipt_no) }}' })"
                                         class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                                         title="Return to Inward">
                                         <i class="fa-solid fa-arrow-rotate-left text-rose-500"></i>
@@ -133,7 +138,7 @@
 
                                 @if(Auth::user()->canAccess('delete petitions'))
                                     @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance']) && (!$petition->isFromInward() || Auth::user()->canAccess('access admin dashboard')))
-                                        <form action="{{ route('petitions.destroy', $petition->petition_id) }}" method="POST"
+                                        <form action="{{ route('petitions.destroy', $petition->hashid) }}" method="POST"
                                             class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
                                             @csrf
                                             @method('DELETE')
@@ -295,7 +300,7 @@
                                         @endif
                                         
                                         @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Internal_Vigilance')
-                                            <a href="{{ route('petitions.show', $petition->petition_id) }}#decision"
+                                            <a href="{{ route('petitions.show', $petition->hashid) }}#decision"
                                                 class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline flex items-center gap-1">
                                                 <i class="fa-solid fa-circle-check"></i> Finalized
                                             </a>
@@ -321,19 +326,22 @@
                                     @endif
                                 @endif
                             </div>
-                        </td>
+                         </td>
                         @if(auth()->user()->canAccess('access admin dashboard'))
                         <td class="px-6 py-4 text-center">
                             <div class="flex flex-col items-center gap-1">
-                                <span class="font-bold text-slate-800 text-xs">{{ $petition->seat->seat_name ?? 'N/A' }}</span>
-                                <span class="text-[10px] text-slate-500">{{ $petition->user->name ?? 'N/A' }}</span>
+                                <span class="font-bold text-slate-800 text-xs">{{ $petition->processedBySeat->seat_name ?? $petition->seat->seat_name ?? 'N/A' }}</span>
+                                <span class="text-[10px] text-slate-500">{{ $petition->processedByUser->name ?? $petition->user->name ?? 'N/A' }}</span>
+                                @if($petition->isFromInward() && $petition->user && $petition->processedByUser && $petition->processed_by_user_id !== $petition->user_id)
+                                    <span class="text-[9px] text-slate-400">Inward: {{ $petition->user->name }}</span>
+                                @endif
                             </div>
                         </td>
                         @endif
                         <td class="px-6 py-4 text-center">
                             <div class="flex items-center justify-center gap-3">
                                 @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
-                                    <a href="{{ route('petitions.edit', $petition->petition_id) }}"
+                                    <a href="{{ route('petitions.edit', $petition->hashid) }}"
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold text-xs shadow-md shadow-teal-500/20 transition-all hover:scale-105 whitespace-nowrap"
                                         title="Open Petition to Add Further Details">
                                         <i class="fa-solid fa-file-pen text-xs"></i>
@@ -341,14 +349,14 @@
                                     </a>
                                 @endif
 
-                                <a href="{{ route('petitions.show', $petition->petition_id) }}"
+                                <a href="{{ route('petitions.show', $petition->hashid) }}"
                                     class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                                     title="View Details">
                                     <i class="fa-solid fa-eye text-indigo-500"></i>
                                 </a>
                                 @if(Auth::user()->canAccess('update petitions'))
                                     @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance']) && ($petition->is_cpsp_processed || $petition->is_returned_to_inward))
-                                        <a href="{{ route('petitions.edit', $petition->petition_id) }}"
+                                        <a href="{{ route('petitions.edit', $petition->hashid) }}"
                                             class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                                             title="Edit Record">
                                             <i class="fa-solid fa-pen-to-square text-emerald-500"></i>
@@ -357,8 +365,8 @@
                                 @endif
                                 @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
                                     <button type="button"
-                                        onclick="window.openReturnModal({{ $petition->petition_id }}, '{{ addslashes($petition->receipt_no) }}')"
-                                        @click="showReturnModal = true; returnPetitionId = {{ $petition->petition_id }}; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: {{ $petition->petition_id }}, receipt: '{{ addslashes($petition->receipt_no) }}' })"
+                                        onclick="window.openReturnModal('{{ $petition->hashid }}', '{{ addslashes($petition->receipt_no) }}')"
+                                        @click="showReturnModal = true; returnPetitionId = '{{ $petition->hashid }}'; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: '{{ $petition->hashid }}', receipt: '{{ addslashes($petition->receipt_no) }}' })"
                                         class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                                         title="Return to Inward">
                                         <i class="fa-solid fa-arrow-rotate-left text-rose-500"></i>
@@ -366,7 +374,7 @@
                                 @endif
                                 @if(Auth::user()->canAccess('delete petitions'))
                                     @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance']) && (!$petition->isFromInward() || Auth::user()->canAccess('access admin dashboard')))
-                                        <form action="{{ route('petitions.destroy', $petition->petition_id) }}" method="POST"
+                                        <form action="{{ route('petitions.destroy', $petition->hashid) }}" method="POST"
                                             class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
                                             @csrf
                                             @method('DELETE')

@@ -17,13 +17,14 @@
 </head>
 <body>
     <table>
-        <tr><td colspan="14" class="header-title" style="border:none;">{{ $mainHeading }}</td></tr>
-        <tr><td colspan="14" style="border:none; height:10px;"></td></tr>
+        <tr><td colspan="15" class="header-title" style="border:none;">{{ $mainHeading }}</td></tr>
+        <tr><td colspan="15" style="border:none; height:10px;"></td></tr>
         
         <colgroup>
             <col style="width: 120pt;"> <!-- Seat -->
             <col style="width: 60pt;"> <!-- Total Petitions -->
-            <col style="width: 60pt;"> <!-- New Petitions -->
+            <col style="width: 60pt;"> <!-- Inward Pending -->
+            <col style="width: 60pt;"> <!-- Processed Petitions -->
             <col style="width: 60pt;"> <!-- Forwarded Petitions -->
             <col style="width: 60pt;"> <!-- VR Received -->
             <col style="width: 60pt;"> <!-- Total Decisions -->
@@ -41,7 +42,8 @@
             <tr>
                 <th rowspan="2">Seat</th>
                 <th rowspan="2">Total Petitions</th>
-                <th rowspan="2">New Petitions</th>
+                <th rowspan="2">Inward Pending</th>
+                <th rowspan="2">Processed Petitions</th>
                 <th rowspan="2">Forwarded Petitions</th>
                 <th rowspan="2">Verification Reports Received</th>
                 <th colspan="9">Final Decisions</th>
@@ -64,7 +66,8 @@
                 <tr>
                     <td class="text-left"><span class="bold">{{ $seat->seat_name }}</span></td>
                     <td>{{ $seat->petitions_all_count }}</td>
-                    <td>{{ $seat->petitions_received_count }}</td>
+                    <td>{{ $seat->inward_pending_count }}</td>
+                    <td>{{ $seat->petitions_processed_count }}</td>
                     <td>{{ $seat->forwardings_out_count }}</td>
                     <td>{{ $seat->vr_received_count }}</td>
                     <td class="bold">{{ $seat->decisions_made_count }}</td>
@@ -84,7 +87,8 @@
                 <tr class="bold" style="background-color: #f1f5f9;">
                     <td class="text-left">TOTAL</td>
                     <td>{{ $seats->sum('petitions_all_count') }}</td>
-                    <td>{{ $seats->sum('petitions_received_count') }}</td>
+                    <td>{{ $seats->sum('inward_pending_count') }}</td>
+                    <td>{{ $seats->sum('petitions_processed_count') }}</td>
                     <td>{{ $seats->sum('forwardings_out_count') }}</td>
                     <td>{{ $seats->sum('vr_received_count') }}</td>
                     <td>{{ $seats->sum('decisions_made_count') }}</td>

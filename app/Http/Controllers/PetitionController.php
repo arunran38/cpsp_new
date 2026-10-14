@@ -79,8 +79,7 @@ class PetitionController extends Controller
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
 
-        // Inward transactions list on the same page
-        $transfersQuery = Petition::with(['seat.activeAssignment.user', 'user', 'addresses', 'cpspOpenedByUser', 'cpspOpenedBySeat', 'returnedByUser'])
+        $transfersQuery = Petition::with(['seat.activeAssignment.user', 'user', 'addresses', 'cpspOpenedByUser', 'cpspOpenedBySeat', 'returnedByUser', 'processedByUser', 'processedBySeat'])
             ->whereNull('linked_petition_id');
 
         if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
@@ -256,7 +255,8 @@ class PetitionController extends Controller
             return back()->with('error', 'Petition ID is required to return to Inward.');
         }
 
-        $petition = Petition::findOrFail($id);
+        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $petition = Petition::findOrFail($realId);
         $user = Auth::user();
         $currentSeat = $user->currentSeatUser();
 
@@ -299,7 +299,8 @@ class PetitionController extends Controller
             abort(403, 'Unauthorized to reassign inward petitions.');
         }
 
-        $petition = Petition::findOrFail($id);
+        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $petition = Petition::findOrFail($realId);
 
         $request->validate([
             'seat_id' => 'required|exists:seats,seat_id',
@@ -317,7 +318,7 @@ class PetitionController extends Controller
             'is_cpsp_processed' => false,
         ]);
 
-        return back()->with('success', "ഹർജി {$newSeat->seat_name} എന്ന സീറ്റിലേക്ക് മാറ്റി നൽകി (Reassigned successfully).");
+        return back()->with('success', 'Petition reassigned successfully.');
     }
 
     /**
@@ -507,11 +508,13 @@ class PetitionController extends Controller
 
             $petition = $this->petitionService->store($request->validated(), $request->file('evidence_files') ?? []);
             
-            if ($request->boolean('is_inward_entry') || $request->filled('seat_id')) {
+            $user = Auth::user();
+            $isInwardUser = $user && ($user->hasRole(['inward', 'Inward']) || str_contains(strtolower($user->currentSeatUser()?->seat?->seat_name ?? ''), 'inward'));
+            if ($request->boolean('is_inward_entry') || ($request->filled('seat_id') && $isInwardUser)) {
                 return redirect()->route('inward.enter_petition')->with('success', "Inward Petition (Receipt No: {$petition->receipt_no}) registered and transferred successfully.");
             }
 
-            return redirect()->route('petitions.index')->with('success', 'Petition submitted successfully.');
+            return redirect()->route('petitions.index', ['tab' => 'all'])->with('success', 'Petition submitted successfully.');
         } catch (\Exception $e) {
             Log::error('Petition Store Exception: ' . $e->getMessage());
             return back()->with('error', 'Failed to save petition: ' . $e->getMessage())->withInput();
@@ -523,7 +526,10 @@ class PetitionController extends Controller
      */
     public function index(Request $request)
     {
-        $tab = $request->input('tab', 'inward');
+        $user = Auth::user();
+        $isInwardOnly = $user && ($user->hasRole(['inward', 'Inward']) || str_contains(strtolower($user->currentSeatUser()?->seat?->seat_name ?? ''), 'inward'));
+        $defaultTab = $isInwardOnly ? 'inward' : 'all';
+        $tab = $request->input('tab', $defaultTab);
 
         $petitions = $this->getPetitionsQuery($request)->paginate(10)->appends($request->query());
 
@@ -580,11 +586,6 @@ class PetitionController extends Controller
         $tab = $request->input('tab', 'all');
         $query = $this->getPetitionsQuery($request);
 
-        // Filter by user_id so users only export their own created petitions, unless they are admin viewing all
-        if (!Auth::user()->canAccess('view all petitions') || session('is_impersonating_seat')) {
-            $query->where('petitions.user_id', Auth::id());
-        }
-
         $petitions = $query->get();
 
         $filename = "petitions_report_" . $tab . "_" . date('Y-m-d') . ".xls";
@@ -620,6 +621,7 @@ class PetitionController extends Controller
      */
     public function show($id): View
     {
+        $realId = \App\Services\HashidService::decode($id) ?? $id;
         $petition = Petition::with([
             'addresses.designation', 
             'addresses.department', 
@@ -629,7 +631,11 @@ class PetitionController extends Controller
             'duplicates',
             'cpspOpenedByUser',
             'cpspOpenedBySeat',
-        ])->findOrFail($id);
+            'processedByUser',
+            'processedBySeat',
+            'updatedByUser',
+            'updatedBySeat',
+        ])->findOrFail($realId);
         $this->authorize('view', $petition);
 
         // Audit: Track when CPSP user opens this petition for the first time
@@ -646,7 +652,8 @@ class PetitionController extends Controller
      */
     public function edit($id): View|RedirectResponse
     {
-        $petition = Petition::with(['addresses', 'uploads'])->findOrFail($id);
+        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $petition = Petition::with(['addresses', 'uploads'])->findOrFail($realId);
         $this->authorize('update', $petition);
 
         // Audit: Track when CPSP user opens/edits this petition for the first time
@@ -674,7 +681,8 @@ class PetitionController extends Controller
      */
     public function update(UpdatePetitionRequest $request, $id): RedirectResponse
     {
-        $petition = Petition::findOrFail($id);
+        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $petition = Petition::findOrFail($realId);
         $this->authorize('update', $petition);
 
         try {
@@ -684,7 +692,7 @@ class PetitionController extends Controller
                 $request->file('evidence_files') ?? [], 
                 $request->deleted_attachments ?? []
             );
-            return redirect()->route('petitions.index')->with('success', 'Petition updated successfully.');
+            return redirect()->route('petitions.index', ['tab' => 'all'])->with('success', 'Petition updated successfully.');
         } catch (\Exception $e) {
             Log::error('Petition Update Error: ' . $e->getMessage());
             return back()->with('error', 'Update Failed: ' . $e->getMessage())->withInput();
@@ -696,20 +704,21 @@ class PetitionController extends Controller
      */
     public function destroy($id): RedirectResponse
     {
-        $petition = Petition::findOrFail($id);
+        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $petition = Petition::findOrFail($realId);
 
         if ($petition->isFromInward() ) {
-            return redirect()->route('petitions.index')->with('error', 'CPSP seats are not permitted to delete petitions received from Inward.');
+            return redirect()->route('petitions.index', ['tab' => 'all'])->with('error', 'CPSP seats are not permitted to delete petitions received from Inward.');
         }
 
         $this->authorize('delete', $petition);
 
         if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) ) {
-            return redirect()->route('petitions.index')->with('error', 'Cannot delete a petition after a final decision has been issued.');
+            return redirect()->route('petitions.index', ['tab' => 'all'])->with('error', 'Cannot delete a petition after a final decision has been issued.');
         }
 
         $petition->delete();
-        return redirect()->route('petitions.index')->with('success', 'Petition moved to trash successfully.');
+        return redirect()->route('petitions.index', ['tab' => 'all'])->with('success', 'Petition moved to trash successfully.');
     }
 
     /**
@@ -721,7 +730,8 @@ class PetitionController extends Controller
             'original_receipt_no' => 'required|string',
         ]);
 
-        $petition = Petition::findOrFail($id);
+        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $petition = Petition::findOrFail($realId);
         $this->authorize('update', $petition);
 
         if ($petition->linked_petition_id) {
@@ -766,7 +776,7 @@ class PetitionController extends Controller
             $newUpload->save();
         }
 
-        return redirect()->route('petitions.show', $petition->petition_id)->with('success', 'Petition successfully linked as a duplicate of ' . $originalPetition->receipt_no . '. The suspects and attachments have been copied to the original petition.');
+        return redirect()->route('petitions.show', $petition->hashid)->with('success', 'Petition successfully linked as a duplicate of ' . $originalPetition->receipt_no . '. The suspects and attachments have been copied to the original petition.');
     }
 
     /**
@@ -774,7 +784,8 @@ class PetitionController extends Controller
      */
     public function unlinkDuplicate(Request $request, $id): RedirectResponse
     {
-        $petition = Petition::findOrFail($id);
+        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $petition = Petition::findOrFail($realId);
         $this->authorize('update', $petition);
 
         if (!$petition->linked_petition_id) {
@@ -790,10 +801,10 @@ class PetitionController extends Controller
         ]);
 
         if ($originalPetition) {
-            return redirect()->route('petitions.show', $originalPetition->petition_id)->with('success', 'Petition has been unlinked successfully and its previous status restored.');
+            return redirect()->route('petitions.show', $originalPetition->hashid)->with('success', 'Petition has been unlinked successfully and its previous status restored.');
         }
 
-        return redirect()->route('petitions.index')->with('success', 'Petition has been unlinked successfully and its previous status restored.');
+        return redirect()->route('petitions.index', ['tab' => 'all'])->with('success', 'Petition has been unlinked successfully and its previous status restored.');
     }
 
     /**
@@ -817,7 +828,8 @@ class PetitionController extends Controller
         });
 
         if ($excludeId) {
-            $petitions->where('petition_id', '!=', $excludeId);
+            $realExclude = \App\Services\HashidService::decode($excludeId) ?? $excludeId;
+            $petitions->where('petition_id', '!=', $realExclude);
         }
 
         // We allow linking to duplicate petitions; the backend will automatically resolve to the root original.
@@ -848,7 +860,8 @@ class PetitionController extends Controller
      */
     public function downloadAttachment($uploadId)
     {
-        $upload = Upload::findOrFail($uploadId);
+        $realUploadId = \App\Services\HashidService::decode($uploadId) ?? $uploadId;
+        $upload = Upload::findOrFail($realUploadId);
         
         if ($upload->petition_id) {
             $petition = Petition::findOrFail($upload->petition_id);
@@ -872,7 +885,8 @@ class PetitionController extends Controller
         $request->validate(['receipt_no' => 'required|string|max:255']);
         $exists = Petition::where('receipt_no', $request->receipt_no);
         if ($request->filled('petition_id')) {
-            $exists->where('petition_id', '!=', $request->petition_id);
+            $realPid = \App\Services\HashidService::decode($request->petition_id) ?? $request->petition_id;
+            $exists->where('petition_id', '!=', $realPid);
         }
         return response()->json(['exists' => $exists->exists()]);
     }
@@ -884,9 +898,10 @@ class PetitionController extends Controller
     {
         $request->validate([
             'file_no' => 'required|string|max:255',
-            'petition_id' => 'required|integer'
+            'petition_id' => 'required'
         ]);
-        return response()->json(['exists' => Petition::where('file_no', $request->file_no)->where('petition_id', '!=', $request->petition_id)->exists()]);
+        $realPid = \App\Services\HashidService::decode($request->petition_id) ?? $request->petition_id;
+        return response()->json(['exists' => Petition::where('file_no', $request->file_no)->where('petition_id', '!=', $realPid)->exists()]);
     }
 
     /**
@@ -1086,10 +1101,11 @@ class PetitionController extends Controller
             'date_to' => 'nullable|date|after_or_equal:date_from',
         ]);
 
-        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user.seatUsers.seat', 'seat.activeAssignment.user', 'unit', 'originalPetition.addresses', 'returnedByUser']);
+        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user.seatUsers.seat', 'seat.activeAssignment.user', 'unit', 'originalPetition.addresses', 'returnedByUser', 'processedByUser', 'processedBySeat', 'updatedByUser', 'updatedBySeat']);
         $user = Auth::user();
-
-        $tab = $request->input('tab', 'inward');
+        $isInwardOnly = $user && ($user->hasRole(['inward', 'Inward']) || str_contains(strtolower($user->currentSeatUser()?->seat?->seat_name ?? ''), 'inward'));
+        $defaultTab = $isInwardOnly ? 'inward' : 'all';
+        $tab = $request->input('tab', $defaultTab);
         $currentSeat = $user->currentSeatUser();
 
         // Security: Filter by user/seat if not unrestricted admin
@@ -1110,10 +1126,10 @@ class PetitionController extends Controller
         }
 
         // Apply filters using scopes
-        $query->filterByTab($request->input('tab', 'inward'))
-              ->filterByStatus($request->status, $request->input('tab', 'inward'))
+        $query->filterByTab($tab)
+              ->filterByStatus($request->status, $tab)
               ->search($request->search, $request->search_type)
-              ->filterDates($request->date_from, $request->date_to, $request->status, $request->input('tab', 'inward'));
+              ->filterDates($request->date_from, $request->date_to, $request->status, $tab);
 
         // Hide duplicate (linked) petitions from general list, unless explicitly searched
         if (!$request->filled('receipt_no') && !$request->filled('search')) {

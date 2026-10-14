@@ -318,7 +318,7 @@
                                     <span class="text-slate-500 text-xs">{{ \Carbon\Carbon::parse($decision->decision_date)->format('d-M-Y') }}</span>
                                 </td>
                                 <td class="py-4 px-6 text-sm">
-                                    <a href="{{ route('petitions.show', $decision->petition->petition_id) }}"
+                                    <a href="{{ route('petitions.show', $decision->petition->hashid) }}"
                                         class="text-sm font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5 block mb-1">
                                         {{ $decision->petition->file_no ?? 'N/A' }}
                                         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
@@ -415,7 +415,7 @@
                                     {{ $decision->petition->compliance->unit->unit_name ?? 'N/A' }}
                                 </td>
                                 <td class="py-4 px-6 text-sm">
-                                    <a href="{{ route('petitions.show', $decision->petition->petition_id) }}"
+                                    <a href="{{ route('petitions.show', $decision->petition->hashid) }}"
                                         class="text-sm font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5 block mb-1">
                                         {{ $decision->petition->file_no ?? 'N/A' }}
                                         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>

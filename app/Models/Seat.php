@@ -102,6 +102,17 @@ class Seat extends Model
         return $query->withCount([
             'petitionsReceived as petitions_all_count' => fn($q) => $this->filterDates($q, $from, $to, 'date_of_petition_received'),
             
+            'petitionsReceived as inward_pending_count' => fn($q) => 
+                $this->filterDates($q, $from, $to, 'date_of_petition_received')
+                    ->where('status', Petition::STATUS_RECEIVED)
+                    ->where('is_cpsp_processed', false)
+                    ->where('is_returned_to_inward', false),
+
+            'petitionsReceived as petitions_processed_count' => fn($q) => 
+                $this->filterDates($q, $from, $to, 'date_of_petition_received')
+                    ->where('status', Petition::STATUS_RECEIVED)
+                    ->where('is_cpsp_processed', true),
+
             'petitionsReceived as petitions_received_count' => fn($q) => 
                 $this->filterDates($q, $from, $to, 'date_of_petition_received')->where('status', Petition::STATUS_RECEIVED),
             

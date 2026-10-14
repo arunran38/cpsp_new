@@ -422,7 +422,7 @@
                         </a>
                         
                         @if(Auth::user()->canAccess('view petitions'))
-                        <a href="{{ route('inward.enter_petition') }}#view-inward-petitions" 
+                        <a href="{{ route('inward.enter_petition', ['hide_form' => 1]) }}#view-inward-petitions" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator"></span>
                            View Inward Petitions
@@ -483,7 +483,7 @@
                         @endif
                         
                         @if(Auth::user()->canAccess('view petitions'))
-                        <a href="{{ route('petitions.index', ['tab' => 'inward']) }}" 
+                        <a href="{{ route('petitions.index', ['tab' => 'all']) }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator"></span>
                            View Petitions

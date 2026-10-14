@@ -2,7 +2,7 @@
 <div id="returnToInwardModal"
     x-data="{
         showReturnModal: false,
-        returnPetitionId: {{ isset($petition) ? $petition->petition_id : 'null' }},
+        returnPetitionId: {{ isset($petition) ? json_encode($petition->hashid) : 'null' }},
         returnReceiptNo: '{{ isset($petition) ? addslashes($petition->receipt_no) : '' }}'
     }"
     @open-return-modal.window="showReturnModal = true; if($event.detail?.id) returnPetitionId = $event.detail.id; if($event.detail?.receipt) returnReceiptNo = $event.detail.receipt"
@@ -29,11 +29,11 @@
             class="inline-block align-bottom bg-white rounded-2xl text-left overflow-visible shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-slate-200">
 
             <form id="returnToInwardForm" method="POST"
-                :action="'{{ url('petitions') }}/' + (returnPetitionId || '{{ $petition->petition_id ?? '' }}') + '/return-to-inward'"
-                action="{{ isset($petition) ? route('petitions.returnToInward', $petition->petition_id) : url('petitions/return-to-inward') }}"
+                :action="'{{ url('petitions') }}/' + (returnPetitionId || '{{ $petition->hashid ?? '' }}') + '/return-to-inward'"
+                action="{{ isset($petition) ? route('petitions.returnToInward', $petition->hashid) : url('petitions/return-to-inward') }}"
                 @submit="if(!this.action || this.action.includes('__ID__') || this.action.endsWith('/return-to-inward')) { const pid = returnPetitionId || document.getElementById('modal_return_petition_id').value; if(pid) { this.action = '{{ url('petitions') }}/' + pid + '/return-to-inward'; } }">
                 @csrf
-                <input type="hidden" name="petition_id" :value="returnPetitionId" value="{{ $petition->petition_id ?? '' }}" id="modal_return_petition_id">
+                <input type="hidden" name="petition_id" :value="returnPetitionId" value="{{ $petition->hashid ?? '' }}" id="modal_return_petition_id">
 
                 <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between rounded-t-2xl relative overflow-hidden bg-white">
                     <div class="flex items-center gap-4 relative z-10">

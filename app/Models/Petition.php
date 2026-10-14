@@ -51,6 +51,11 @@ class Petition extends Model
         'cpsp_opened_at',
         'cpsp_opened_by_user_id',
         'cpsp_opened_by_seat_id',
+        'processed_at',
+        'processed_by_user_id',
+        'processed_by_seat_id',
+        'updated_by_user_id',
+        'updated_by_seat_id',
     ];
 
     protected $casts = [
@@ -58,6 +63,7 @@ class Petition extends Model
         'is_returned_to_inward' => 'boolean',
         'returned_at' => 'datetime',
         'cpsp_opened_at' => 'datetime',
+        'processed_at' => 'datetime',
         'date_of_petition_received_at_unit' => 'date',
     ];
 
@@ -158,6 +164,38 @@ class Petition extends Model
     }
 
     /**
+     * Relationship: User who processed this petition
+     */
+    public function processedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'processed_by_user_id', 'user_id')->withTrashed();
+    }
+
+    /**
+     * Relationship: Seat from which this petition was processed
+     */
+    public function processedBySeat(): BelongsTo
+    {
+        return $this->belongsTo(Seat::class, 'processed_by_seat_id', 'seat_id');
+    }
+
+    /**
+     * Relationship: User who last updated this petition
+     */
+    public function updatedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by_user_id', 'user_id')->withTrashed();
+    }
+
+    /**
+     * Relationship: Seat from which this petition was last updated
+     */
+    public function updatedBySeat(): BelongsTo
+    {
+        return $this->belongsTo(Seat::class, 'updated_by_seat_id', 'seat_id');
+    }
+
+    /**
      * Track when a CPSP user opens/views an Inward petition for the first time.
      */
     public function markAsOpenedByCpsp(User $user, ?SeatUser $seatUser): void
@@ -212,6 +250,40 @@ class Petition extends Model
     public function returnedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'returned_by', 'user_id');
+    }
+
+    /**
+     * Get the value of the model's route key (uses Hashids).
+     */
+    public function getRouteKey(): mixed
+    {
+        return \App\Services\HashidService::encode($this->getKey());
+    }
+
+    /**
+     * Retrieve the model for a bound value (decodes Hashids).
+     */
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        $id = \App\Services\HashidService::decode($value);
+        return $this->where($field ?? $this->getRouteKeyName(), $id ?? $value)->first();
+    }
+
+    /**
+     * Accessor for $petition->hashid
+     */
+    public function getHashidAttribute(): string
+    {
+        return \App\Services\HashidService::encode($this->getKey());
+    }
+
+    /**
+     * Static helper to find a petition by its hashid or numeric ID
+     */
+    public static function findByHashidOrFail(mixed $hashid): self
+    {
+        $id = \App\Services\HashidService::decode($hashid) ?? $hashid;
+        return static::findOrFail($id);
     }
 
     // --- Scopes ---
@@ -310,6 +382,24 @@ class Petition extends Model
     {
         if (!$dateFrom && !$dateTo) return $query;
 
+        $parsedFrom = null;
+        if ($dateFrom) {
+            try {
+                $parsedFrom = \Carbon\Carbon::parse($dateFrom)->format('Y-m-d');
+            } catch (\Exception $e) {
+                $parsedFrom = $dateFrom;
+            }
+        }
+
+        $parsedTo = null;
+        if ($dateTo) {
+            try {
+                $parsedTo = \Carbon\Carbon::parse($dateTo)->format('Y-m-d');
+            } catch (\Exception $e) {
+                $parsedTo = $dateTo;
+            }
+        }
+
         $finalDecisionStatuses = ['VC', 'VE', 'PE', 'SC', 'CV', 'Closed', 'Sent to Govt', 'ICell'];
 
         $column = 'date_of_petition_received';
@@ -330,14 +420,14 @@ class Petition extends Model
         }
 
         if ($relation) {
-            return $query->whereHas($relation, function ($q) use ($dateFrom, $dateTo, $column) {
-                if ($dateFrom) $q->whereDate($column, '>=', $dateFrom);
-                if ($dateTo) $q->whereDate($column, '<=', $dateTo);
+            return $query->whereHas($relation, function ($q) use ($parsedFrom, $parsedTo, $column) {
+                if ($parsedFrom) $q->whereDate($column, '>=', $parsedFrom);
+                if ($parsedTo) $q->whereDate($column, '<=', $parsedTo);
             });
         }
 
-        if ($dateFrom) $query->whereDate($column, '>=', $dateFrom);
-        if ($dateTo) $query->whereDate($column, '<=', $dateTo);
+        if ($parsedFrom) $query->whereDate($column, '>=', $parsedFrom);
+        if ($parsedTo) $query->whereDate($column, '<=', $parsedTo);
 
         return $query;
     }

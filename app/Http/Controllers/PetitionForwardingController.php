@@ -22,7 +22,8 @@ class PetitionForwardingController extends Controller
     {
         return DB::transaction(function () use ($request) {
             try {
-                $petition = Petition::findOrFail($request->petition_id);
+                $petitionId = \App\Services\HashidService::decode($request->petition_id) ?? $request->petition_id;
+                $petition = Petition::findOrFail($petitionId);
                 $user = Auth::user();
                 $seatUser = $user ? $user->currentSeatUser() : null;
                 $currentSeatId = $seatUser ? $seatUser->seat_id : 1;

@@ -26,17 +26,17 @@
                 <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 z-10">
                     @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
                         <button type="button"
-                            onclick="window.openReturnModal({{ $petition->petition_id }}, '{{ addslashes($petition->receipt_no) }}')"
-                            @click="showReturnModal = true; returnPetitionId = {{ $petition->petition_id }}; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: {{ $petition->petition_id }}, receipt: '{{ addslashes($petition->receipt_no) }}' })"
+                            onclick="window.openReturnModal('{{ $petition->hashid }}', '{{ addslashes($petition->receipt_no) }}')"
+                            @click="showReturnModal = true; returnPetitionId = '{{ $petition->hashid }}'; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: '{{ $petition->hashid }}', receipt: '{{ addslashes($petition->receipt_no) }}' })"
                             class="px-4 py-2 text-sm font-semibold text-rose-300 bg-rose-500/10 border border-rose-500/30 rounded-lg hover:bg-rose-500/20 transition-all flex items-center gap-2 backdrop-blur-sm shadow-sm cursor-pointer">
                             <i data-lucide="corner-up-left" class="w-4 h-4"></i> Return to Inward
                         </button>
                     @endif
-                    <a href="{{ route('petitions.index') }}"
+                    <a href="{{ route('petitions.index', ['tab' => $petition->is_cpsp_processed ? 'all' : 'inward']) }}"
                         class="px-4 py-2 text-sm font-semibold text-slate-200 bg-slate-800/80 hover:bg-slate-700 hover:text-white border border-slate-700/50 rounded-xl transition-all flex items-center gap-2 shadow-sm backdrop-blur-sm">
                         Cancel
                     </a>
-                    <a href="{{ route('petitions.show', $petition->petition_id) }}"
+                    <a href="{{ route('petitions.show', $petition->hashid) }}"
                         class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-xl hover:bg-indigo-700 focus:outline-none shadow-sm flex items-center gap-2 transition-all">
                         <i data-lucide="eye" class="w-4 h-4"></i> View Current
                     </a>
@@ -159,7 +159,7 @@
         </div>
 
         <!-- Form Sections (Minimalist Cards) -->
-        <form method="POST" action="{{ route('petitions.update', $petition->petition_id) }}" enctype="multipart/form-data"
+        <form method="POST" action="{{ route('petitions.update', $petition->hashid) }}" enctype="multipart/form-data"
             class="bg-white rounded-2xl shadow-sm border border-slate-200" id="petitionFormElement" novalidate
             @focusout="validateField($event)" @input="clearError($event)" @change="clearError($event)">
             @csrf
@@ -230,7 +230,7 @@
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-1">
-                                            <a href="{{ route('petitions.download', $upload->upload_id) }}" target="_blank"
+                                            <a href="{{ route('petitions.download', $upload->hashid) }}" target="_blank"
                                                 class="shrink-0 p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                                                 title="View Document">
                                                 <i data-lucide="external-link" class="w-4 h-4"></i>

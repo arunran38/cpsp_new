@@ -24,7 +24,7 @@
                     </p>
                 </div>
                 <div class="flex items-center gap-3 z-10">
-                    <button type="button" @click="showExportModal = true"
+                    <button type="button" @click="if (window.syncFiltersToExport) window.syncFiltersToExport(); showExportModal = true"
                         class="flex items-center gap-2 px-4 py-2 bg-indigo-50/10 text-indigo-200 border border-indigo-500/30 rounded-xl hover:bg-indigo-500/20 transition-all font-semibold text-sm shadow-sm">
                         <i data-lucide="settings-2" class="w-4 h-4"></i>
                         Custom Export
@@ -472,13 +472,15 @@
                 </div>
 
                 <form action="{{ route('petitions.export') }}" method="GET" id="customExportForm">
-                    <!-- Preserve existing search filters -->
-                    <input type="hidden" name="tab" value="{{ request('tab', 'all') }}">
-                    @if(request('status')) <input type="hidden" name="status" value="{{ request('status') }}"> @endif
-                    @if(request('search_type')) <input type="hidden" name="search_type" value="{{ request('search_type') }}"> @endif
-                    @if(request('search')) <input type="hidden" name="search" value="{{ request('search') }}"> @endif
-                    @if(request('date_from')) <input type="hidden" name="date_from" value="{{ request('date_from') }}"> @endif
-                    @if(request('date_to')) <input type="hidden" name="date_to" value="{{ request('date_to') }}"> @endif
+                    <!-- Dynamic search filter inputs synced via JS -->
+                    <div id="customExportFiltersContainer">
+                        <input type="hidden" name="tab" value="{{ request('tab', $tab ?? 'all') }}">
+                        @foreach(request()->except(['custom_columns']) as $key => $val)
+                            @if(!empty($val) && !is_array($val))
+                                <input type="hidden" name="{{ $key }}" value="{{ $val }}">
+                            @endif
+                        @endforeach
+                    </div>
 
                     <div x-data="{ 
                         allSelected: true, 
@@ -558,16 +560,57 @@
 @section('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const searchForm = document.getElementById('searchForm');
+            const customExportForm = document.getElementById('customExportForm');
             const exportBtn = document.getElementById('exportButton');
+
+            // Synchronize all active filters from searchForm to both exportButton and customExportForm
+            const syncFiltersToExport = () => {
+                if (!searchForm) return;
+
+                const formData = new FormData(searchForm);
+                const filtersContainer = document.getElementById('customExportFiltersContainer');
+
+                // 1. Update standard Export Button URL
+                if (exportBtn) {
+                    const exportUrl = new URL('{{ route('petitions.export') }}', window.location.origin);
+                    for (const [key, value] of formData.entries()) {
+                        if (value !== null && typeof value === 'string' && value.trim() !== '') {
+                            exportUrl.searchParams.set(key, value.trim());
+                        }
+                    }
+                    exportBtn.href = exportUrl.toString();
+                }
+
+                // 2. Update Custom Export Form hidden inputs
+                if (filtersContainer) {
+                    filtersContainer.innerHTML = '';
+                    for (const [key, value] of formData.entries()) {
+                        if (value !== null && typeof value === 'string' && value.trim() !== '') {
+                            const hiddenInput = document.createElement('input');
+                            hiddenInput.type = 'hidden';
+                            hiddenInput.name = key;
+                            hiddenInput.value = value.trim();
+                            filtersContainer.appendChild(hiddenInput);
+                        }
+                    }
+                }
+            };
+            window.syncFiltersToExport = syncFiltersToExport;
+
+            // Initial sync on page load
+            syncFiltersToExport();
+
             if (exportBtn) {
                 exportBtn.addEventListener('click', function(e) {
+                    syncFiltersToExport();
                     @if(!Auth::user()->canAccess('access admin dashboard') || session('is_impersonating_seat'))
                     e.preventDefault();
                     const url = this.href;
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
-                            title: 'Export My Petitions',
-                            text: 'You are about to download the petitions created by you. Do you want to proceed?',
+                            title: 'Export Petitions',
+                            text: 'You are about to download the Excel report for the currently filtered petitions. Do you want to proceed?',
                             icon: 'info',
                             showCancelButton: true,
                             confirmButtonColor: '#4f46e5',
@@ -579,7 +622,7 @@
                             }
                         });
                     } else {
-                        if (confirm('You are about to download the petitions created by you. Do you want to proceed?')) {
+                        if (confirm('You are about to download the Excel report for the currently filtered petitions. Do you want to proceed?')) {
                             window.location.href = url;
                         }
                     }
@@ -587,13 +630,20 @@
                 });
             }
 
-            const searchForm = document.getElementById('searchForm');
+            if (customExportForm) {
+                customExportForm.addEventListener('submit', function () {
+                    syncFiltersToExport();
+                });
+            }
+
             if (!searchForm) return;
 
             let timer = null;
             let abortController = null;
 
             const performSearch = () => {
+                syncFiltersToExport();
+
                 const formData = new FormData(searchForm);
                 const searchParams = new URLSearchParams(formData);
                 const url = `${searchForm.action}?${searchParams.toString()}`;
@@ -619,14 +669,7 @@
                         if (currentTable) {
                             currentTable.innerHTML = html;
 
-                            // Update Export Button URL
-                            const exportBtn = document.getElementById('exportButton');
-                            if (exportBtn) {
-                                const exportUrl = new URL('{{ route('petitions.export') }}', window.location.origin);
-                                // Append all current search params to the export URL
-                                searchParams.forEach((value, key) => exportUrl.searchParams.set(key, value));
-                                exportBtn.href = exportUrl.toString();
-                            }
+                            syncFiltersToExport();
 
                             if (window.Alpine) {
                                 window.Alpine.initTree(currentTable);
@@ -642,6 +685,7 @@
             // Debounce text inputs
             searchForm.querySelectorAll('input[type="text"]').forEach(input => {
                 input.addEventListener('keyup', () => {
+                    syncFiltersToExport();
                     clearTimeout(timer);
                     timer = setTimeout(performSearch, 500);
                 });
@@ -649,7 +693,10 @@
 
             // Instant filter for select and date
             searchForm.querySelectorAll('select, input[type="date"]').forEach(input => {
-                input.addEventListener('change', performSearch);
+                input.addEventListener('change', () => {
+                    syncFiltersToExport();
+                    performSearch();
+                });
             });
 
             searchForm.addEventListener('submit', (e) => {

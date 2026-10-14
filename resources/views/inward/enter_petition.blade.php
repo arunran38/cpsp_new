@@ -6,35 +6,49 @@
         $seatsList = $seats ?? \App\Models\Seat::role('CPSP')->where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
         $tab = 'inward';
+        $hideRegistrationForm = request()->boolean('hide_form') && !$errors->any();
     @endphp
 
     <div class="space-y-6" x-data="inwardPetitionForm()" @keydown.ctrl.enter.prevent="openConfirmationModal()"
         @keydown.cmd.enter.prevent="openConfirmationModal()">
 
-
-
         @if((Auth::user()->canAccess('create_inward_petitions') || Auth::user()->canAccess('create inward petitions')) && !Auth::user()->hasRole('super admin') && !Auth::user()->hasRole('admin'))
-        <!-- Premium Header Section -->
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-2">
-            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
-                <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
-            </div>
-            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
-                <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
-            </div>
-            
-            <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
-                <div class="text-center sm:text-left z-10">
-                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
-                        Inward Petition Registration
-                    </h1>
-                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
-                        Minimal inward petition entry and seat transfer.
-                    </p>
-                </div>
+        <div x-show="showRegistrationForm"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-2"
+             style="{{ $hideRegistrationForm ? 'display: none;' : '' }}"
+             class="space-y-6">
 
+            <!-- Premium Header Section -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-2">
+                <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+                    <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
+                </div>
+                <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+                    <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
+                </div>
+                
+                <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
+                    <div class="text-center sm:text-left z-10">
+                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                            Inward Petition Registration
+                        </h1>
+                        <p class="text-slate-300 font-medium max-w-2xl text-sm">
+                            Minimal inward petition entry and seat transfer.
+                        </p>
+                    </div>
+                    <div class="z-10">
+                        <button type="button" @click="showRegistrationForm = false; $nextTick(() => { if (window.lucide) { lucide.createIcons(); } })"
+                            class="px-4 py-2 text-xs font-bold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/50 rounded-xl transition-all flex items-center gap-2 shadow-sm backdrop-blur-sm cursor-pointer">
+                            <i data-lucide="eye-off" class="w-4 h-4"></i> Hide Form
+                        </button>
+                    </div>
+                </div>
             </div>
-        </div>
 
         <!-- Alert / Validation Feedback -->
 
@@ -253,9 +267,8 @@
                     </div>
                 </div>
         </form>
+        </div>
         @endif
-
-
 
         <!-- Premium Header Section for View Inward Petitions -->
         <div id="view-inward-petitions" class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2 scroll-mt-24">
@@ -275,6 +288,20 @@
                         Track and manage petitions registered through the inward section.
                     </p>
                 </div>
+                @if((Auth::user()->canAccess('create_inward_petitions') || Auth::user()->canAccess('create inward petitions')) && !Auth::user()->hasRole('super admin') && !Auth::user()->hasRole('admin'))
+                    <div class="z-10">
+                        <button type="button" @click="showRegistrationForm = !showRegistrationForm; $nextTick(() => { if (window.lucide) { lucide.createIcons(); } })"
+                            class="px-5 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center gap-2 shadow-md cursor-pointer"
+                            :class="showRegistrationForm ? 'text-slate-300 bg-slate-800/80 hover:bg-slate-700 border border-slate-700/50' : 'text-white bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/30'">
+                            <span x-show="!showRegistrationForm" class="flex items-center gap-1.5">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i> Register Inward Petition
+                            </span>
+                            <span x-show="showRegistrationForm" class="flex items-center gap-1.5" style="display: none;">
+                                <i data-lucide="chevron-up" class="w-4 h-4"></i> Hide Registration Form
+                            </span>
+                        </button>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -339,7 +366,7 @@
                         <!-- Filter Pills: All Petitions, Transferred, Returned from CPSP -->
                         <nav class="flex flex-nowrap items-center gap-2 overflow-x-auto hide-scrollbar mb-2" aria-label="Filter inward transactions">
                             @foreach($filterButtons as $filterKey => $filterLabel)
-                                <a href="{{ route('inward.enter_petition', array_merge(request()->except(['page', 'filter']), ['filter' => $filterKey])) }}"
+                                <a href="{{ route('inward.enter_petition', array_merge(request()->except(['page', 'filter']), ['filter' => $filterKey])) }}#view-inward-petitions"
                                     @class([
                                         'px-4 py-1.5 inline-flex items-center gap-2 text-xs font-bold rounded-full border transition-all shadow-sm',
                                         'bg-teal-600 text-white border-teal-600 shadow-sm' => $filter === $filterKey,
@@ -513,6 +540,7 @@
     <script>
         function inwardPetitionForm() {
             return {
+                showRegistrationForm: {{ $hideRegistrationForm ? 'false' : 'true' }},
                 receiptNo: '{{ old('receipt_no') }}',
                 dateOfReceipt: '{{ old('date_of_petition_received', now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d')) }}',
                 complainantName: '{{ old('complainants.0.name') }}',
