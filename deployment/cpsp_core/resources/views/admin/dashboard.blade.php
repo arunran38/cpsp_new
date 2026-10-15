@@ -202,7 +202,7 @@
                         <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
                             <i data-lucide="bar-chart-3" class="w-5 h-5 text-indigo-500"></i> Seat Distribution
                         </h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Petition load distribution across active seats</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Processed Petitions Across Active Seats</p>
                     </div>
 
                     <form action="{{ route('admin.dashboard') }}" method="GET" class="flex flex-wrap items-center gap-2">

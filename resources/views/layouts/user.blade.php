@@ -211,16 +211,17 @@
                class="fixed inset-y-0 left-0 z-50 flex flex-col w-80 transition-transform duration-300 ease-out glass-sidebar shadow-2xl shadow-black/30 lg:translate-x-0">
             
             <!-- Sidebar Header -->
-            <div class="flex items-center h-20 px-6 border-b border-slate-800/80 bg-white/5">
-                <a href="{{ route('user.dashboard') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity group">
-                    <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-300">
-                        <i data-lucide="scroll-text" class="w-5 h-5 text-white"></i>
+            <div class="flex items-center h-16 px-6 border-b border-slate-800/80 bg-[#0f172a]">
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 shadow-lg shadow-teal-500/20 flex-shrink-0">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
                     </div>
                     <div>
-                        <span class="text-xl font-bold tracking-tight text-white uppercase">User<span class="text-indigo-400"> Dashboard</span></span>
-                        <p class="text-[10px] text-slate-500 leading-tight uppercase font-semibold">Petition Management</p>
+                        <a href="{{ route('dashboard') }}" class="text-[22px] tracking-tight text-white font-extrabold leading-none flex items-center">
+                            USER <span class="text-teal-400 font-black ml-1">DASHBOARD</span>
+                        </a>
                     </div>
-                </a>
+                </div>
             </div>
 
             <!-- Navigation Container -->
@@ -370,14 +371,13 @@
                     $canAccessInwardEntry = Auth::check() && (
                         $hasInwardRole ||
                         Auth::user()->canAccess('inward_form') || 
-                        Auth::user()->canAccess('inward form') || 
-                        Auth::user()->canAccess('access admin dashboard')
+                        Auth::user()->canAccess('inward form') ||
+                        Auth::user()->canAccess('create inward petitions')
                     );
 
                     $canAccessInwardStats = Auth::check() && (
                         Auth::user()->canAccess('inward_statistics') || 
-                        Auth::user()->canAccess('inward statistics') || 
-                        Auth::user()->canAccess('access admin dashboard')
+                        Auth::user()->canAccess('inward statistics')
                     );
                 @endphp
 
@@ -564,7 +564,7 @@
                             <span>Department wise</span>
                         </a>
 
-                        @if(Auth::user()->canAccess('inward_statistics') || Auth::user()->canAccess('inward statistics') || Auth::user()->canAccess('access admin dashboard'))
+                        @if(Auth::user()->canAccess('inward_statistics') || Auth::user()->canAccess('inward statistics'))
                         <a href="{{ route('inward.statistics') }}" 
                            @click="reportsOpen = true"
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
@@ -593,23 +593,17 @@
 
         <!-- Main Content Area -->
         <div class="lg:pl-80 flex flex-col min-h-screen">
-            <!-- Top Navigation -->
-            @php
-                $isAdditional = Auth::check() && Auth::user()->currentSeatUser()?->is_additional;
-                $headerClasses = $isAdditional 
-                    ? 'bg-amber-950/60 border-amber-800/40 shadow-amber-900/20' 
-                    : 'bg-slate-900/70 border-slate-800/50 shadow-sm';
-            @endphp
-            <header class="sticky top-0 z-30 flex items-center h-20 px-5 transition-all duration-300 lg:px-8 glass-header {{ $headerClasses }}">
+            <!-- Top Navbar -->
+            <header class="sticky top-0 z-30 flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-md">
                 <button type="button" 
-                        class="p-2 -ml-2 text-slate-300 rounded-lg lg:hidden hover:bg-slate-800 hover:text-white transition-colors focus:outline-none"
+                        class="p-2 -ml-2 text-slate-400 lg:hidden hover:text-white" 
                         @click="sidebarOpen = true">
                     <i data-lucide="menu" class="w-5 h-5"></i>
                 </button>
 
                 <div class="flex items-center justify-between flex-1 gap-x-4 lg:gap-x-6">
                     <div class="hidden lg:flex items-center gap-2 text-sm">
-                        <!-- Breadcrumb removed -->
+                        <!-- Clean header space -->
                     </div>
 
                     <div class="flex items-center gap-x-4 ml-auto">
@@ -617,60 +611,58 @@
                             <div class="mr-2">
                                 <form method="POST" action="{{ route('seat.switchBack') }}">
                                     @csrf
-                                    <button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 hover:bg-amber-500/20 transition-all text-[10px] font-black uppercase tracking-widest">
+                                    <button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 transition-all text-xs font-bold uppercase tracking-wider shadow-sm">
                                         <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
-                                        Exit User View
+                                        <span>Exit View</span>
                                     </button>
                                 </form>
                             </div>
                         @endif
+
                         <!-- Profile Dropdown -->
                         <div x-data="{ open: false }" class="relative">
                             <button @click="open = !open" 
                                     @click.away="open = false"
                                     type="button" 
-                                    class="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-indigo-500/40 transition-all">
+                                    class="flex items-center gap-3 pl-1.5 pr-4 py-1.5 rounded-full bg-slate-800/60 border border-slate-700/50 hover:bg-slate-700/80 hover:border-slate-600 transition-all shadow-sm">
                                 @php
-                                    $hasPhoto = Auth::user()->profilePhoto && \Illuminate\Support\Facades\Storage::disk('public')->exists(Auth::user()->profilePhoto->file_path);
+                                    $user = Auth::user();
+                                    $hasPhoto = $user && $user->profilePhoto && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->profilePhoto->file_path);
+                                    $currSeatUser = $user ? $user->currentSeatUser() : null;
+                                    $isAdditional = $currSeatUser?->is_additional;
+                                    $seatName = $currSeatUser?->seat?->seat_name ?? ($user?->roles?->first()?->name ?? 'User');
                                 @endphp
                                 @if($hasPhoto)
                                     <img class="w-10 h-10 rounded-full border border-slate-700 shadow-sm object-cover" 
-                                         src="{{ asset('storage/' . Auth::user()->profilePhoto->file_path) }}" 
+                                         src="{{ asset('storage/' . $user->profilePhoto->file_path) }}" 
                                          alt="Profile">
                                 @else
-                                    <div class="w-10 h-10 rounded-full border border-slate-700 shadow-sm bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
-                                        {{ strtoupper(substr(Auth::user()->name ?? 'A', 0, 1)) }}
+                                    <div class="w-10 h-10 rounded-full border border-teal-500/30 shadow-sm bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white text-xs font-bold">
+                                        {{ strtoupper(substr($user?->name ?? 'A', 0, 1)) }}
                                     </div>
                                 @endif
                                 <div class="hidden lg:flex flex-col items-start gap-0.5 text-left">
-                                    <span class="text-sm font-bold text-slate-200 leading-none">
-                                        {{ Auth::user()->name }}
+                                    <span class="text-[15px] font-bold text-slate-200 leading-none">
+                                        {{ $user?->name ?? 'Guest' }}
                                     </span>
-                                    <span class="text-[10px] font-medium {{ $isAdditional ? 'text-amber-400' : 'text-indigo-400' }} uppercase tracking-wider leading-none flex items-center gap-1.5">
-                                        {{ Auth::user()->currentSeatUser()?->seat?->seat_name ?? 'No Seat' }}
+                                    <span class="text-[11px] font-bold {{ $isAdditional ? 'text-amber-400' : 'text-teal-400' }} uppercase tracking-wider leading-none flex items-center gap-1.5">
+                                        {{ $seatName }}
                                         @if($isAdditional)
-                                            <span class="text-[8px] bg-amber-500/20 text-amber-300 px-1 py-0.5 rounded shadow-sm border border-amber-500/20">Addl. Charge</span>
+                                            <span class="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded shadow-sm border border-amber-500/20">Addl. Charge</span>
                                         @endif
                                     </span>
                                 </div>
                                 <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
                             </button>
 
-                            <div x-show="open" 
-                                 x-cloak
-                                 x-transition:enter="transition ease-out duration-150"
-                                 x-transition:enter-start="transform opacity-0 scale-95"
-                                 x-transition:enter-end="transform opacity-100 scale-100"
-                                 x-transition:leave="transition ease-in duration-100"
-                                 x-transition:leave-start="transform opacity-100 scale-100"
-                                 x-transition:leave-end="transform opacity-0 scale-95"
+                            <div x-show="open" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95"
                                  class="absolute right-0 z-50 w-56 mt-2 origin-top-right profile-dropdown-menu rounded-2xl shadow-xl focus:outline-none overflow-hidden">
                                 @php
-                                    $activeSeats = Auth::user()->seatUsers()->where('is_active', true)->with('seat')->get();
-                                    $currentSeatId = Auth::user()->currentSeatUser()?->seat_id;
+                                    $activeSeats = $user ? $user->seatUsers()->where('is_active', true)->with('seat')->get() : collect([]);
+                                    $currentSeatId = $currSeatUser?->seat_id;
                                 @endphp
 
-                                @if(!Auth::user()->canAccess('access admin dashboard') && $activeSeats->count() > 1)
+                                @if($user && !$user->canAccess('access admin dashboard') && $activeSeats->count() > 1)
                                 <div class="py-1 border-b border-slate-700 bg-slate-800/50">
                                     <div class="px-4 py-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">
                                         Switch Seat
@@ -680,7 +672,7 @@
                                         <form method="POST" action="{{ route('seat.switch', $seatAssignment->seat_id) }}">
                                             @csrf
                                             <button type="submit" class="flex items-center w-full gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors text-left group">
-                                                <i data-lucide="refresh-cw" class="w-4 h-4 text-indigo-400 group-hover:rotate-180 transition-transform duration-300"></i>
+                                                <i data-lucide="refresh-cw" class="w-4 h-4 text-teal-400 group-hover:rotate-180 transition-transform duration-300"></i>
                                                 <span class="font-medium text-slate-200">{{ $seatAssignment->seat->seat_name }}</span>
                                             </button>
                                         </form>
@@ -695,10 +687,15 @@
                                 </div>
                                 @endif
 
-                                <!-- Email section removed -->
                                 <div class="py-1">
+                                    @if($user && $user->canAccess('access admin dashboard'))
+                                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors">
+                                        <i data-lucide="shield" class="w-4 h-4 text-teal-400"></i>
+                                        Admin Panel
+                                    </a>
+                                    @endif
                                     <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors">
-                                        <i data-lucide="user" class="w-4 h-4 text-indigo-400"></i>
+                                        <i data-lucide="user" class="w-4 h-4 text-teal-400"></i>
                                         My Profile
                                     </a>
                                     <a href="{{ route('profile.password.edit') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors">

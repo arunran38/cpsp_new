@@ -11,9 +11,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class DecisionController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
      * Final Decision by Director after VR is received.
      */
@@ -23,6 +26,8 @@ class DecisionController extends Controller
             try {
                 $petitionId = HashidService::decode($request->petition_id) ?? $request->petition_id;
                 $petition = Petition::findOrFail($petitionId);
+                $this->authorize('update', $petition);
+
                 $user = Auth::user();
                 $seatUser = $user ? $user->currentSeatUser() : null;
                 $currentSeatId = $seatUser ? $seatUser->seat_id : 1;

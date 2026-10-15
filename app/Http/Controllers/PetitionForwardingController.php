@@ -13,9 +13,11 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class PetitionForwardingController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Director Forwarding a Petition or making a final decision.
      */
@@ -25,6 +27,8 @@ class PetitionForwardingController extends Controller
             try {
                 $petitionId = HashidService::decode($request->petition_id) ?? $request->petition_id;
                 $petition = Petition::findOrFail($petitionId);
+                $this->authorize('update', $petition);
+
                 $user = Auth::user();
                 $seatUser = $user ? $user->currentSeatUser() : null;
                 $currentSeatId = $seatUser ? $seatUser->seat_id : 1;
@@ -80,6 +84,7 @@ class PetitionForwardingController extends Controller
         return DB::transaction(function () use ($request, $id) {
             try {
                 $forwarding = PetitionForwarding::findOrFail($id);
+                $this->authorize('update', $forwarding->petition);
                 
                 $forwarding->update([
                     'vr_ref_no' => $request->vr_ref_no,
@@ -114,6 +119,8 @@ class PetitionForwardingController extends Controller
         ]);
 
         $forwarding = PetitionForwarding::findOrFail($id);
+        $this->authorize('update', $forwarding->petition);
+
         $forwarding->update(['vr_received_at_cpsp_date' => $request->vr_received_at_cpsp_date]);
 
         return back()->with('success', 'Verification Report received at CPSP.');
@@ -124,6 +131,10 @@ class PetitionForwardingController extends Controller
      */
     public function pullbackForwarding(int $id): RedirectResponse
     {
+        if (!Auth::user()->canAccess('access admin dashboard')) {
+            return back()->with('error', 'Only administrators can pull back a forwarding.');
+        }
+
         $forwarding = PetitionForwarding::findOrFail($id);
 
         if ($forwarding->vr_ref_no) {
@@ -152,6 +163,10 @@ class PetitionForwardingController extends Controller
      */
     public function pullbackVr(int $id): RedirectResponse
     {
+        if (!Auth::user()->canAccess('access admin dashboard')) {
+            return back()->with('error', 'Only administrators can pull back a verification report.');
+        }
+
         $forwarding = PetitionForwarding::findOrFail($id);
         $petition = $forwarding->petition;
 

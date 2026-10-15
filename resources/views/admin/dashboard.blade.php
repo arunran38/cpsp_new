@@ -41,14 +41,15 @@
             $q->where('is_active', true);
         })->get();
 
-        // Chart Data: Seat vs Petitions (Bar Chart) - only seats with role CPSP
+        // Chart Data: Seat vs Petitions (Bar Chart) - only seats with role CPSP and only processed petitions
         $seatStats = \App\Models\Seat::where('is_active', true)
             ->whereHas('roles', function ($q) {
                 $q->whereRaw('LOWER(name) = ?', ['cpsp']);
             })
             ->withCount([
                 'petitionsReceived' => function ($q) use ($fromDate, $toDate) {
-                    $q->whereBetween('date_of_petition_received', [$fromDate, $toDate]);
+                    $q->where('is_cpsp_processed', true)
+                      ->whereBetween('date_of_petition_received', [$fromDate, $toDate]);
                 }
             ])
             ->get();
@@ -56,9 +57,10 @@
         $chartSeatLabels = json_encode($seatStats->pluck('seat_name')->toArray());
         $chartSeatData = json_encode($seatStats->pluck('petitions_received_count')->toArray());
 
-        // Chart Data: Petition Status Distribution (Filtered)
+        // Chart Data: Petition Status Distribution (Filtered) - only processed petitions
         $statusStats = \App\Models\Petition::whereBetween('date_of_petition_received', [$fromDate, $toDate])
             ->whereNull('linked_petition_id')
+            ->where('is_cpsp_processed', true)
             ->groupBy('status')
             ->get(['status', \Illuminate\Support\Facades\DB::raw('count(*) as count')])
             ->pluck('count', 'status');
@@ -240,7 +242,7 @@
                             <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
                                 <i data-lucide="bar-chart-3" class="w-5 h-5 text-indigo-500"></i> Seat Distribution
                             </h2>
-                            <p class="text-xs text-slate-500 mt-0.5">Petition load distribution across active seats</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Processed Petitions Across Active Seats</p>
                         </div>
 
                         <form action="{{ route('admin.dashboard') }}" method="GET" class="flex flex-wrap items-center gap-2">
@@ -371,43 +373,50 @@
             // --- Status Doughnut Chart ---
             const statusCtx = document.getElementById('statusDoughnutChart');
             if (statusCtx) {
-                new Chart(statusCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: {!! $chartStatusLabels !!},
-                        datasets: [{
-                            data: {!! $chartStatusData !!},
-                            backgroundColor: [
-                                colors.primary, colors.success, colors.warning,
-                                colors.secondary, colors.danger, colors.info, '#94a3b8'
-                            ],
-                            borderWidth: 0,
-                            hoverOffset: 15
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '70%',
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    usePointStyle: true,
-                                    padding: 20,
-                                    font: { weight: '500', size: 12 }
+                const chartStatusLabels = {!! $chartStatusLabels !!};
+                const chartStatusData = {!! $chartStatusData !!};
+
+                if (chartStatusLabels.length === 0 || chartStatusData.every(val => Number(val) === 0)) {
+                    statusCtx.parentElement.innerHTML += '<div class="absolute inset-0 flex flex-col justify-center items-center text-slate-400 text-xs font-semibold"><i data-lucide="pie-chart" class="w-8 h-8 mb-2 opacity-40 text-slate-400"></i>No Processed Petitions</div>';
+                } else {
+                    new Chart(statusCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: chartStatusLabels,
+                            datasets: [{
+                                data: chartStatusData,
+                                backgroundColor: [
+                                    colors.primary, colors.success, colors.warning,
+                                    colors.secondary, colors.danger, colors.info, '#94a3b8'
+                                ],
+                                borderWidth: 0,
+                                hoverOffset: 15
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '70%',
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: { weight: '500', size: 12 }
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: '#1e293b',
+                                    titleFont: { size: 11, weight: 'normal' },
+                                    bodyFont: { size: 14, weight: 'bold' },
+                                    padding: 12,
+                                    borderRadius: 8,
                                 }
-                            },
-                            tooltip: {
-                                backgroundColor: '#1e293b',
-                                titleFont: { size: 11, weight: 'normal' },
-                                bodyFont: { size: 14, weight: 'bold' },
-                                padding: 12,
-                                borderRadius: 8,
                             }
                         }
-                    }
-                });
+                    });
+                }
             }
         });
     </script>

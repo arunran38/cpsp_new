@@ -123,7 +123,7 @@
                             <i data-lucide="edit" class="w-4 h-4"></i> Edit Details
                         </a>
                     @endif
-                    @if(!$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Duplicate']))
+                    @if(Auth::user()->canAccess('link petitions') && !$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Duplicate']))
                         <button type="button" @click="showLinkModal = true"
                             class="px-4 py-2.5 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-all shadow-sm flex items-center gap-2">
                             <i data-lucide="link" class="w-4 h-4"></i> Link Petition
@@ -137,7 +137,7 @@
                             <i data-lucide="corner-up-left" class="w-4 h-4 text-rose-600"></i> Return to Inward
                         </button>
                     @endif
-                    @if($petition->linked_petition_id)
+                    @if($petition->linked_petition_id && Auth::user()->canAccess('link petitions'))
                         <form action="{{ route('petitions.unlinkDuplicate', $petition->hashid) }}" method="POST"
                             class="inline unlink-form" data-message="Are you sure you want to unlink this petition?">
                             @csrf

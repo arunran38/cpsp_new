@@ -18,6 +18,7 @@ class UnitController extends Controller
      */
     public function index(): View
     {
+        abort_unless(auth()->user()->canAccess('view units'), 403, 'Unauthorized. Permission view units required.');
         $units = Unit::paginate(10);
         return view('admin.unit_add', compact('units'));
     }
@@ -27,6 +28,7 @@ class UnitController extends Controller
      */
     public function create(): View
     {
+        abort_unless(auth()->user()->canAccess('create units'), 403, 'Unauthorized. Permission create units required.');
         $units = Unit::paginate(10);
         return view('admin.unit_add', compact('units'));
     }
@@ -36,6 +38,7 @@ class UnitController extends Controller
      */
     public function store(StoreUnitRequest $request): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('create units'), 403, 'Unauthorized. Permission create units required.');
         try {
             Unit::create($request->validated());
             Alert::success('Success', 'Unit created successfully.');
@@ -51,6 +54,7 @@ class UnitController extends Controller
      */
     public function edit(int $id): View
     {
+        abort_unless(auth()->user()->canAccess('update units'), 403, 'Unauthorized. Permission update units required.');
         $unit = Unit::findOrFail($id);
         return view('admin.unit_edit', compact('unit'));
     }
@@ -60,6 +64,7 @@ class UnitController extends Controller
      */
     public function update(UpdateUnitRequest $request, int $id): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('update units'), 403, 'Unauthorized. Permission update units required.');
         try {
             $unit = Unit::findOrFail($id);
             $unit->update($request->validated());
@@ -74,6 +79,7 @@ class UnitController extends Controller
      */
     public function destroy(int $id): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('delete units'), 403, 'Unauthorized. Permission delete units required.');
         try {
             $unit = Unit::findOrFail($id);
             $unit->delete();

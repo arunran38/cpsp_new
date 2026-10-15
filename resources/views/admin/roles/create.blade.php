@@ -55,6 +55,10 @@
                 'Visibility Scopes' => [
                     'desc' => 'Personal vs department-wide visibility',
                     'filter' => fn($p) => str_contains(strtolower($p->name), 'own') || str_contains(strtolower($p->name), 'all petitions')
+                ],
+                'Duplicate Management' => [
+                    'desc' => 'Duplicate detection warnings, linking and unlinking records',
+                    'filter' => fn($p) => str_contains(strtolower($p->name), 'duplicate') || str_contains(strtolower($p->name), 'link')
                 ]
             ]
         ],
@@ -79,15 +83,20 @@
         ],
         'compliances' => [
             'key' => 'compliances',
-            'title' => 'IOP HQ Compliances',
-            'desc' => 'Directives tracking, compliance reporting, and court/IOP orders monitoring',
+            'title' => 'Petition Compliances',
+            'desc' => 'Directives tracking, compliance reporting, and orders monitoring',
             'icon' => 'clipboard-check',
             'gradient' => 'from-indigo-600 to-purple-600 shadow-indigo-500/25',
             'accent' => 'indigo',
             'crud' => [
                 'compliances' => ['name' => 'Compliances', 'desc' => 'Directives & compliance records', 'icon' => 'clipboard-check'],
             ],
-            'special' => []
+            'special' => [
+                'Default Home Page' => [
+                    'desc' => 'Landing page on login',
+                    'filter' => fn($p) => str_contains(strtolower($p->name), 'default compliances home')
+                ]
+            ]
         ],
         'analytics' => [
             'key' => 'analytics',
@@ -190,69 +199,60 @@
 @endphp
 
 <div class="space-y-6" x-data="rolePermissionsManager()">
-    <!-- Header -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex items-center gap-3.5">
-            <a href="{{ route('admin.roles.index') }}" 
-               class="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white flex items-center justify-center transition-all shadow-sm">
-                <i data-lucide="arrow-left" class="w-5 h-5"></i>
-            </a>
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Add New Role</h1>
-                <p class="text-sm font-medium text-slate-300 mt-0.5">Define a new role and grant capabilities structured module-by-module.</p>
-            </div>
+    <!-- Premium Header Section matching unit_add design -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
+        <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3 pointer-events-none">
+            <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
         </div>
-        <div class="flex items-center gap-2">
-            <a href="{{ route('admin.roles.index') }}" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-200 hover:text-white bg-slate-800/90 hover:bg-slate-800 border border-slate-700 transition-all flex items-center gap-2 shadow-sm">
-                <i data-lucide="shield" class="w-4 h-4 text-indigo-400"></i> Roles List
-            </a>
+        <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 pointer-events-none">
+            <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
+        </div>
+        
+        <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
+            <div class="flex items-center gap-4 text-center sm:text-left z-10">
+                <a href="{{ route('admin.roles.index') }}" 
+                   class="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white flex items-center justify-center transition-all shadow-sm shrink-0"
+                   title="Back to Roles List">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
+                        Add New Role
+                    </h1>
+                    <p class="text-slate-300 font-medium max-w-2xl text-sm mt-1">
+                        Define a new role and grant capabilities structured module-by-module.
+                    </p>
+                </div>
+            </div>
+            <div class="shrink-0 z-10">
+                <a href="{{ route('admin.roles.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-200 hover:text-white bg-slate-800/90 hover:bg-slate-800 border border-slate-700 transition-all shadow-sm">
+                    <i data-lucide="shield" class="w-4 h-4 text-indigo-400"></i> Roles List
+                </a>
+            </div>
         </div>
     </div>
 
     <form action="{{ route('admin.roles.store') }}" method="POST">
         @csrf
 
-        <!-- Role Name & Global Stats Card with Rainbow Accent -->
-        <div class="bg-white border border-slate-200 rounded-3xl shadow-lg overflow-hidden mb-6">
-            <div class="h-1.5 w-full bg-gradient-to-r from-blue-500 via-indigo-500 via-purple-500 via-pink-500 via-rose-500 via-amber-500 to-emerald-500"></div>
-            
-            <div class="p-6 sm:p-7 bg-gradient-to-b from-indigo-50/40 via-white to-white">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                    <div class="lg:col-span-7">
-                        <label for="name" class="block text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider mb-2">
-                            Role Name <span class="text-rose-600">*</span>
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-indigo-600">
-                                <i data-lucide="shield" class="w-5 h-5"></i>
-                            </div>
-                            <input type="text" name="name" id="name" value="{{ old('name') }}" 
-                                   class="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-black placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-600 transition-all text-base shadow-xs"
-                                   placeholder="e.g. Officer, Section Supervisor..." required>
+        <!-- Role Details Card -->
+        <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden mb-6">
+            <div class="p-6 sm:p-7">
+                <div class="max-w-2xl">
+                    <label for="name" class="block text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider mb-2">
+                        Role Name <span class="text-rose-600">*</span>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-indigo-600">
+                            <i data-lucide="shield" class="w-5 h-5"></i>
                         </div>
-                        @error('name')
-                            <p class="text-rose-600 text-xs sm:text-sm mt-1.5 font-bold">{{ $message }}</p>
-                        @enderror
+                        <input type="text" name="name" id="name" value="{{ old('name') }}" 
+                               class="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-xl text-slate-900 font-bold placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-600 transition-all text-base shadow-xs"
+                               placeholder="e.g. Officer, Section Supervisor..." required>
                     </div>
-                    
-                    <!-- Global Permission Coverage Widget -->
-                    <div class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-xs">
-                        <div class="flex items-center justify-between mb-2.5">
-                            <span class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800">Permissions Assigned</span>
-                            <span class="text-xs sm:text-sm font-black text-white px-3 py-0.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-xs">
-                                <span x-text="selectedCount">{{ count($oldPerms) }}</span> / <span x-text="totalCount">{{ $permissions->count() }}</span>
-                            </span>
-                        </div>
-                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200">
-                            <div class="bg-gradient-to-r from-blue-500 via-indigo-500 via-purple-500 to-emerald-500 h-full rounded-full transition-all duration-300"
-                                 :style="'width: ' + (totalCount > 0 ? (selectedCount / totalCount * 100) : 0) + '%'"></div>
-                        </div>
-                        <div class="flex justify-between items-center text-xs text-slate-700 mt-2 font-bold">
-                            <span>System Coverage</span>
-                            <span class="text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-300 font-black text-xs"
-                                  x-text="(totalCount > 0 ? Math.round(selectedCount / totalCount * 100) : 0) + '%'">0%</span>
-                        </div>
-                    </div>
+                    @error('name')
+                        <p class="text-rose-600 text-xs sm:text-sm mt-1.5 font-bold">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
 
@@ -290,16 +290,16 @@
                 </div>
 
                 <!-- Module Quick Filter Pills -->
-                <div class="flex items-center gap-2 overflow-x-auto pb-1 pt-1 custom-scrollbar text-xs sm:text-sm font-bold">
+                <div class="flex flex-wrap items-center gap-2 pt-1 text-xs sm:text-sm font-bold">
                     <button type="button" @click="activeModule = 'all'"
                             :class="activeModule === 'all' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-800 hover:bg-slate-100 border border-slate-300'"
-                            class="px-3.5 py-2 rounded-xl transition-all shrink-0">
+                            class="px-3.5 py-2 rounded-xl transition-all">
                         All Modules ({{ count($modules) }})
                     </button>
                     @foreach($modules as $modKey => $mod)
                         <button type="button" @click="activeModule = '{{ $modKey }}'"
                                 :class="activeModule === '{{ $modKey }}' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-800 hover:bg-slate-100 border border-slate-300'"
-                                class="px-3.5 py-2 rounded-xl transition-all shrink-0 flex items-center gap-1.5">
+                                class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5">
                             <span>{{ $mod['title'] }}</span>
                         </button>
                     @endforeach
@@ -542,6 +542,9 @@ function rolePermissionsManager() {
         search: '',
         selectedCount: 0,
         totalCount: 0,
+        getRoot() {
+            return this.$root || document.querySelector('[x-data*="rolePermissionsManager"]') || document;
+        },
         init() {
             this.updateCount();
             this.syncAllModules();
@@ -552,21 +555,35 @@ function rolePermissionsManager() {
             });
         },
         updateCount() {
-            const allCheckboxes = this.$el.querySelectorAll('input.perm-checkbox');
-            const checkedCheckboxes = this.$el.querySelectorAll('input.perm-checkbox:checked');
+            const root = this.getRoot();
+            const allCheckboxes = root.querySelectorAll('input.perm-checkbox');
+            const checkedCheckboxes = root.querySelectorAll('input.perm-checkbox:checked');
             this.totalCount = allCheckboxes.length;
             this.selectedCount = checkedCheckboxes.length;
         },
         toggleModuleGroup(modKey, isChecked) {
-            const checkboxes = this.$el.querySelectorAll('.perm-mod-' + modKey);
+            const root = this.getRoot();
+            const checkboxes = root.querySelectorAll('.perm-mod-' + modKey);
             checkboxes.forEach(cb => {
                 cb.checked = isChecked;
             });
+
+            // Sync all row masters inside this module
+            const container = root.querySelector('.module-container[data-module-card="' + modKey + '"]');
+            if (container) {
+                const rows = container.querySelectorAll('tr.perm-module-row');
+                rows.forEach(r => {
+                    const slug = r.getAttribute('data-module');
+                    if (slug) this.syncRowMaster(slug);
+                });
+            }
+
             this.syncModuleStats(modKey);
             this.updateCount();
         },
         toggleRow(rowSlug, isChecked) {
-            const checkboxes = this.$el.querySelectorAll('.perm-row-' + rowSlug);
+            const root = this.getRoot();
+            const checkboxes = root.querySelectorAll('.perm-row-' + rowSlug);
             checkboxes.forEach(cb => {
                 cb.checked = isChecked;
             });
@@ -578,8 +595,9 @@ function rolePermissionsManager() {
             this.updateCount();
         },
         syncRowMaster(rowSlug) {
-            const checkboxes = Array.from(this.$el.querySelectorAll('.perm-row-' + rowSlug));
-            const master = this.$el.querySelector('#row-master-' + rowSlug);
+            const root = this.getRoot();
+            const checkboxes = Array.from(root.querySelectorAll('.perm-row-' + rowSlug));
+            const master = root.querySelector('#row-master-' + rowSlug);
             if (!master || checkboxes.length === 0) return;
 
             const checkedCount = checkboxes.filter(cb => cb.checked).length;
@@ -587,9 +605,10 @@ function rolePermissionsManager() {
             master.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
         },
         syncModuleStats(modKey) {
-            const checkboxes = Array.from(this.$el.querySelectorAll('.perm-mod-' + modKey));
-            const master = this.$el.querySelector('#mod-master-' + modKey);
-            const counter = this.$el.querySelector('#mod-counter-' + modKey);
+            const root = this.getRoot();
+            const checkboxes = Array.from(root.querySelectorAll('.perm-mod-' + modKey));
+            const master = root.querySelector('#mod-master-' + modKey);
+            const counter = root.querySelector('#mod-counter-' + modKey);
             
             if (checkboxes.length === 0) return;
 
@@ -602,34 +621,38 @@ function rolePermissionsManager() {
             }
         },
         syncAllModules() {
-            const containers = this.$el.querySelectorAll('.module-container');
+            const root = this.getRoot();
+            const containers = root.querySelectorAll('.module-container');
             containers.forEach(c => {
                 const modKey = c.getAttribute('data-module-card');
                 if (modKey) this.syncModuleStats(modKey);
             });
 
-            const rows = this.$el.querySelectorAll('tr.perm-module-row');
+            const rows = root.querySelectorAll('tr.perm-module-row');
             rows.forEach(r => {
                 const slug = r.getAttribute('data-module');
                 if (slug) this.syncRowMaster(slug);
             });
         },
         selectAll() {
-            this.$el.querySelectorAll('input.perm-checkbox').forEach(cb => {
+            const root = this.getRoot();
+            root.querySelectorAll('input.perm-checkbox').forEach(cb => {
                 cb.checked = true;
             });
             this.syncAllModules();
             this.updateCount();
         },
         deselectAll() {
-            this.$el.querySelectorAll('input.perm-checkbox').forEach(cb => {
+            const root = this.getRoot();
+            root.querySelectorAll('input.perm-checkbox').forEach(cb => {
                 cb.checked = false;
             });
             this.syncAllModules();
             this.updateCount();
         },
         selectViewOnly() {
-            this.$el.querySelectorAll('input.perm-checkbox').forEach(cb => {
+            const root = this.getRoot();
+            root.querySelectorAll('input.perm-checkbox').forEach(cb => {
                 cb.checked = cb.classList.contains('perm-act-view');
             });
             this.syncAllModules();

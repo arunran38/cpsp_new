@@ -305,7 +305,7 @@
             <nav class="flex-1 px-4 py-6 overflow-y-auto custom-scrollbar space-y-1.5">
                 
                 <!-- Management Section -->
-                @if(Auth::user()->canAccess('view units') || Auth::user()->canAccess('view users') || Auth::user()->canAccess('access admin dashboard') || Auth::user()->canAccess('view seats'))
+                @if(Auth::user()->canAccess('view units') || Auth::user()->canAccess('view departments') || Auth::user()->canAccess('view designations') || Auth::user()->canAccess('view users') || Auth::user()->canAccess('view roles') || Auth::user()->canAccess('view permissions') || Auth::user()->canAccess('view seats'))
                 <div class="pt-2 pb-2">
                     <p class="px-4 text-xs font-bold tracking-wider text-blue-500 uppercase">System Control</p>
                 </div>
@@ -385,7 +385,7 @@
                 </div>
                 @endif
 
-                @if(Auth::user()->canAccess('access admin dashboard'))
+                @if(Auth::user()->canAccess('view roles') || Auth::user()->canAccess('view permissions'))
                 <!-- Roles & Permissions Dropdown -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -415,6 +415,7 @@
                          x-transition:leave-start="slide-down-leave-from"
                          x-transition:leave-end="slide-down-leave-to"
                          class="submenu-container pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
+                        @if(Auth::user()->canAccess('view roles'))
                         <a href="{{ route('admin.roles.index') }}" 
                            @click="rolesOpen = true"
                            class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('admin.roles.*') ? 'active-submenu' : 'submenu-link' }}">
@@ -422,6 +423,8 @@
                             <i data-lucide="shield" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.roles.*') ? 'text-teal-400' : '' }}"></i>
                             <span>Roles</span>
                         </a>
+                        @endif
+                        @if(Auth::user()->canAccess('view permissions'))
                         <a href="{{ route('admin.permissions.index') }}" 
                            @click="rolesOpen = true"
                            class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('admin.permissions.*') ? 'active-submenu' : 'submenu-link' }}">
@@ -429,6 +432,7 @@
                             <i data-lucide="key" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.permissions.*') ? 'text-teal-400' : '' }}"></i>
                             <span>Permissions</span>
                         </a>
+                        @endif
                     </div>
                 </div>
                 @endif
@@ -481,7 +485,7 @@
                 </div>
                 @endif
 
-                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view master reports') || Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin') || Auth::user()->canAccess('inward_form'))
+                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view master reports') || Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin') || Auth::user()->canAccess('inward_form') || Auth::user()->canAccess('view compliances'))
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-xs font-bold tracking-wider text-blue-500 uppercase">Operations</p>
                 </div>
@@ -503,6 +507,15 @@
                    class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('petitions.reports') ? 'active-nav' : 'inactive-nav' }}">
                     <i data-lucide="bar-chart-3" class="w-5 h-5 icon-bounce transition-colors"></i>
                     <span>Master Reports</span>
+                </a>
+                @endif
+
+                @if(Auth::user()->canAccess('view compliances'))
+                <!-- Petition Compliances -->
+                <a href="{{ route('compliances.index') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('compliances.*') ? 'active-nav' : 'inactive-nav' }}">
+                    <i data-lucide="check-square" class="w-5 h-5 icon-bounce text-emerald-400 group-hover:text-emerald-300 transition-colors"></i>
+                    <span>Petition Compliances</span>
                 </a>
                 @endif
 
@@ -553,7 +566,7 @@
                             <span>Department wise</span>
                         </a>
 
-                        @if(Auth::user()->canAccess('inward_statistics') || Auth::user()->canAccess('inward statistics') || Auth::user()->canAccess('access admin dashboard'))
+                        @if(Auth::user()->canAccess('inward_statistics') || Auth::user()->canAccess('inward statistics'))
                         <a href="{{ route('inward.statistics') }}" 
                            @click="reportsOpen = true"
                            class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
@@ -678,6 +691,10 @@
                                 @endif
 
                                 <div class="py-1">
+                                    <a href="{{ route('user.dashboard') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors">
+                                        <i data-lucide="layout-dashboard" class="w-4 h-4 text-teal-400"></i>
+                                        User Dashboard
+                                    </a>
                                     <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors">
                                         <i data-lucide="user" class="w-4 h-4 text-indigo-400"></i>
                                         My Profile

@@ -104,6 +104,15 @@ class User extends Authenticatable
      */
     public function canAccess(string $permission): bool
     {
+        $permission = str_replace('_', ' ', trim($permission));
+
+        // Developer & Super Admin have unrestricted full access
+        try {
+            if ($this->hasRole(['developer', 'Developer', 'super admin', 'Super Admin'])) {
+                return true;
+            }
+        } catch (\Exception $e) { }
+
         $currentSeatUser = $this->currentSeatUser();
         $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
 

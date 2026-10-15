@@ -12,17 +12,20 @@ class DepartmentController extends Controller
 {
     public function index(): View
     {
+        abort_unless(auth()->user()->canAccess('view departments'), 403, 'Unauthorized. Permission view departments required.');
         $departments = Department::paginate(10);
         return view('admin.department_add', compact('departments'));
     }
 
     public function create(): View
     {
+        abort_unless(auth()->user()->canAccess('create departments'), 403, 'Unauthorized. Permission create departments required.');
         return view('admin.department_create');
     }
 
     public function analysis(Request $request)
     {
+        abort_unless(auth()->user()->canAccess('view seat diagnostics'), 403, 'Unauthorized access to Statistical Reports.');
         $search = $request->input('search');
         $date_from = $request->input('date_from');
         $date_to = $request->input('date_to');
@@ -65,6 +68,7 @@ class DepartmentController extends Controller
 
     public function exportAnalysis(Request $request)
     {
+        abort_unless(auth()->user()->canAccess('view seat diagnostics'), 403, 'Unauthorized access to Statistical Reports.');
         $search = $request->input('search');
         $date_from = $request->input('date_from');
         $date_to = $request->input('date_to');
@@ -122,6 +126,7 @@ class DepartmentController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('create departments'), 403, 'Unauthorized. Permission create departments required.');
         $request->validate(['department_name' => 'required|string|max:255']);
         try {
             Department::create($request->all());
@@ -135,12 +140,14 @@ class DepartmentController extends Controller
 
     public function edit(int $id): View
     {
+        abort_unless(auth()->user()->canAccess('update departments'), 403, 'Unauthorized. Permission update departments required.');
         $department = Department::findOrFail($id);
         return view('admin.department_edit', compact('department'));
     }
 
     public function update(Request $request, int $id): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('update departments'), 403, 'Unauthorized. Permission update departments required.');
         $request->validate(['department_name' => 'required|string|max:255']);
         try {
             $department = Department::findOrFail($id);
@@ -153,6 +160,7 @@ class DepartmentController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('delete departments'), 403, 'Unauthorized. Permission delete departments required.');
         try {
             $department = Department::findOrFail($id);
             $department->delete();

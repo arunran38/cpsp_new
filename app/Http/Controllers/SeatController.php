@@ -22,6 +22,8 @@ class SeatController extends Controller
      */
     public function index(): View
     {
+        abort_unless(auth()->user()->canAccess('view seats'), 403, 'Unauthorized access to seats.');
+
         $seats = Seat::with(['units', 'roles', 'activeAssignments.user.profilePhoto'])->paginate(10);
         return view('admin.seat_view', compact('seats'));
     }
@@ -31,6 +33,8 @@ class SeatController extends Controller
      */
     public function create(): View
     {
+        abort_unless(auth()->user()->canAccess('create seats'), 403, 'Unauthorized access to create seats.');
+
         $units = Unit::all();
         $roles = Role::all();
         return view('admin.seat_add', compact('units', 'roles'));
@@ -41,6 +45,8 @@ class SeatController extends Controller
      */
     public function store(StoreSeatRequest $request): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('create seats'), 403, 'Unauthorized access to create seats.');
+
         return DB::transaction(function () use ($request) {
             try {
                 $seat = Seat::create($request->only('seat_name', 'is_active'));
@@ -60,6 +66,8 @@ class SeatController extends Controller
      */
     public function edit(int $id): View
     {
+        abort_unless(auth()->user()->canAccess('update seats'), 403, 'Unauthorized access to edit seats.');
+
         $seat = Seat::with('units')->findOrFail($id);
         $units = Unit::all();
         $roles = Role::all();
@@ -71,6 +79,8 @@ class SeatController extends Controller
      */
     public function update(UpdateSeatRequest $request, int $id): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('update seats'), 403, 'Unauthorized access to update seats.');
+
         $seat = Seat::findOrFail($id);
 
         return DB::transaction(function () use ($request, $seat) {
@@ -94,6 +104,8 @@ class SeatController extends Controller
      */
     public function statistics(Request $request): View
     {
+        abort_unless(auth()->user()->canAccess('view seat diagnostics'), 403, 'Unauthorized access to seat statistics.');
+
         $this->validateDateRange($request);
 
         $dateFrom = $request->input('date_from');
@@ -116,6 +128,8 @@ class SeatController extends Controller
      */
     public function exportStatistics(Request $request): HttpResponse
     {
+        abort_unless(auth()->user()->canAccess('view seat diagnostics') || auth()->user()->canAccess('export statistics'), 403, 'Unauthorized to export seat statistics.');
+
         $this->validateDateRange($request);
 
         $dateFrom = $request->input('date_from');
@@ -165,6 +179,8 @@ class SeatController extends Controller
      */
     public function destroy(int $id): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('delete seats'), 403, 'Unauthorized access to delete seats.');
+
         try {
             $seat = Seat::findOrFail($id);
 
@@ -185,6 +201,8 @@ class SeatController extends Controller
      */
     public function history(int $id): View
     {
+        abort_unless(auth()->user()->canAccess('view seats'), 403, 'Unauthorized access to seat history.');
+
         $seat = Seat::findOrFail($id);
         $assignments = SeatUser::with(['user' => fn($q) => $q->withTrashed()->with('profilePhoto')])
             ->where('seat_id', $id)
@@ -199,6 +217,8 @@ class SeatController extends Controller
      */
     public function revokeAssignment(int $id): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('update seats') || auth()->user()->canAccess('delete seats'), 403, 'Unauthorized.');
+
         try {
             SeatUser::where('seat_id', $id)
                 ->where('is_active', true)
@@ -253,6 +273,8 @@ class SeatController extends Controller
      */
     public function checkSeatName(Request $request)
     {
+        abort_unless(auth()->user()->canAccess('create seats') || auth()->user()->canAccess('update seats'), 403, 'Unauthorized.');
+
         $request->validate(['seat_name' => 'required|string|max:255']);
         return response()->json(['exists' => Seat::where('seat_name', $request->seat_name)->exists()]);
     }

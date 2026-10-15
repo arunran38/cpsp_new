@@ -23,6 +23,9 @@ Route::get('/dashboard', function () {
     if ($user->canAccess('access admin dashboard') && !session('is_impersonating_seat')) {
         return redirect()->route('admin.dashboard');
     }
+    if ($user->canAccess('default compliances home')) {
+        return redirect()->route('compliances.index');
+    }
     return redirect()->route('user.dashboard');
 })->middleware(['auth'])->name('dashboard');
 
@@ -35,10 +38,14 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/admin/dashboard', function () {
+        abort_unless(Auth::user()->canAccess('access admin dashboard'), 403, 'Unauthorized access to admin dashboard.');
         return view('admin.dashboard');
     })->name('admin.dashboard');
 
     Route::get('/user/dashboard', function () {
+        if (Auth::user()->canAccess('default compliances home')) {
+            return redirect()->route('compliances.index');
+        }
         return view('user.dashboard');
     })->name('user.dashboard');
 
@@ -53,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/inward/enter-petition', [PetitionController::class, 'inwardCreate'])->name('inward.enter_petition');
         Route::get('/inward/enter-petition/export', [PetitionController::class, 'inwardExport'])->name('inward.export');
         Route::get('/inward/create', [PetitionController::class, 'inwardCreate'])->name('inward.create');
+        Route::get('/inward/form', [PetitionController::class, 'inwardCreate'])->name('inward.form');
         Route::get('/inward/transfers', [PetitionController::class, 'inwardTransfers'])->name('inward.transfers');
         Route::get('/inward/statistics', [PetitionController::class, 'inwardStatistics'])->name('inward.statistics');
         Route::get('/inward/statistics/export', [PetitionController::class, 'inwardStatisticsExport'])->name('inward.statistics.export');

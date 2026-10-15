@@ -309,6 +309,7 @@
         class="p-8 sm:p-10" style="display: none;">
 
         <!-- Duplicate Detection Banner -->
+        @if(Auth::user()->canAccess('view duplicate warnings'))
         <div x-show="duplicates.length > 0 && !linkedPetitionId" x-cloak
             class="mb-6 p-4 border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
             style="background-color: #fffbeb; border-color: #fde68a;" x-transition>
@@ -323,11 +324,14 @@
                         existing petition(s) that look similar to the details you entered.</p>
                 </div>
             </div>
+            @if(Auth::user()->canAccess('link petitions'))
             <button type="button" @click="showDuplicateModal = true" style="background-color: #f59e0b; color: white;"
                 class="whitespace-nowrap text-xs font-bold px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
                 View & Link Duplicates
             </button>
+            @endif
         </div>
+        @endif
 
         <input type="hidden" name="linked_petition_id" :value="linkedPetitionId">
 
@@ -808,6 +812,7 @@
             </div>
         </div>
     </div>
+    @if(Auth::user()->canAccess('view duplicate warnings'))
     <!-- Duplicate Detection Modal (Redesigned) -->
     <div x-show="showDuplicateModal" x-cloak
         class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
@@ -904,6 +909,7 @@
                             </div>
                             
                             <!-- Action Button -->
+                            @if(Auth::user()->canAccess('link petitions'))
                             <div class="w-full xl:w-auto shrink-0 flex items-center">
                                 <button type="button" @click="linkPetition(dup.petition_id, dup.receipt_no)"
                                     class="w-full xl:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-teal-600 active:scale-95 transition-all flex justify-center items-center gap-2 group-hover:animate-pulse focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
@@ -911,12 +917,14 @@
                                     Link & Merge
                                 </button>
                             </div>
+                            @endif
                         </div>
                     </template>
                 </div>
             </div>
         </div>
     </div>
+    @endif
     </form>
     </div>
 

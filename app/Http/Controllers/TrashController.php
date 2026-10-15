@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class TrashController extends Controller
 {
@@ -16,6 +17,10 @@ class TrashController extends Controller
      */
     public function index(): View
     {
+        if (!Auth::user()->canAccess('view recycle bin')) {
+            abort(403, 'Unauthorized access to recycle bin.');
+        }
+
         $trashedPetitions = Petition::onlyTrashed()->with(['user', 'seat'])->orderBy('deleted_at', 'desc')->paginate(15);
         return view('admin.trash', compact('trashedPetitions'));
     }
@@ -25,6 +30,10 @@ class TrashController extends Controller
      */
     public function restore(int $id): RedirectResponse
     {
+        if (!Auth::user()->canAccess('restore recycle bin') && !Auth::user()->canAccess('update recycle bin')) {
+            abort(403, 'Unauthorized to restore petitions.');
+        }
+
         $petition = Petition::withTrashed()->findOrFail($id);
         $petition->restore();
 
@@ -36,6 +45,10 @@ class TrashController extends Controller
      */
     public function forceDelete(int $id): RedirectResponse
     {
+        if (!Auth::user()->canAccess('delete recycle bin')) {
+            abort(403, 'Unauthorized to permanently delete petitions.');
+        }
+
         return DB::transaction(function () use ($id) {
             try {
                 $petition = Petition::withTrashed()->with(['uploads' => fn($q) => $q->withTrashed()])->findOrFail($id);

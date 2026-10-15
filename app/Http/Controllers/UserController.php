@@ -22,6 +22,8 @@ class UserController extends Controller
      */
     public function index(): View
     {
+        abort_unless(auth()->user()->canAccess('view users'), 403, 'Unauthorized access to users.');
+
         $users = User::with('profilePhoto')
             ->orderBy('status', 'asc')
             ->orderBy('name', 'asc')
@@ -35,6 +37,8 @@ class UserController extends Controller
      */
     public function create(): View
     {
+        abort_unless(auth()->user()->canAccess('create users'), 403, 'Unauthorized access to create users.');
+
         return view("admin.user_registration");
     }
 
@@ -43,6 +47,8 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('create users'), 403, 'Unauthorized access to create users.');
+
         return DB::transaction(function () use ($request) {
             try {
                 $user = User::create([
@@ -73,6 +79,8 @@ class UserController extends Controller
      */
     public function edit(string $id): View|RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('update users'), 403, 'Unauthorized access to edit users.');
+
         try {
             $user = User::findOrFail(decrypt($id));
             return view("admin.edit_users", compact("user"));
@@ -86,6 +94,8 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, string $id): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('update users'), 403, 'Unauthorized access to update users.');
+
         return DB::transaction(function () use ($request, $id) {
             try {
                 $user = User::findOrFail(decrypt($id));
@@ -129,6 +139,8 @@ class UserController extends Controller
      */
     public function updateStatus(Request $request, string $id): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('update users'), 403, 'Unauthorized access to update user status.');
+
         try {
             $request->validate(['status' => 'required|in:Active,Transferred']);
             
@@ -150,6 +162,8 @@ class UserController extends Controller
      */
     public function destroy(string $id): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('delete users'), 403, 'Unauthorized access to delete users.');
+
         return DB::transaction(function () use ($id) {
             try {
                 $user = User::findOrFail(decrypt($id));
@@ -208,6 +222,8 @@ class UserController extends Controller
      */
     public function checkUnique(Request $request): JsonResponse
     {
+        abort_unless(auth()->user()->canAccess('create users') || auth()->user()->canAccess('update users'), 403, 'Unauthorized.');
+
         $request->validate([
             'field' => 'required|string|in:email,pen',
             'value' => 'required|string|max:255',

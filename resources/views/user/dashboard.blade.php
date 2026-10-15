@@ -69,8 +69,9 @@
         $returnedFromCpspCount = $petitions->filter(fn($p) => (bool)$p->is_returned_to_inward)->count();
     }
 
-    // Chart Data: Petitions by Nature
-    $natureStats = collect($petitions)->countBy('nature_of_petition');
+    // Chart Data: Petitions by Nature (Only processed petitions for non-inward desks)
+    $chartPetitions = $isInwardRole ? $petitions : $petitions->filter(fn($p) => (bool)$p->is_cpsp_processed);
+    $natureStats = collect($chartPetitions)->countBy('nature_of_petition');
     $chartNatures = json_encode($natureStats->keys()->toArray());
     $chartNatureCounts = json_encode($natureStats->values()->toArray());
 
@@ -93,7 +94,7 @@
         $endDate = $temp;
     }
 
-    $trendDataFiltered = $petitions->filter(function($p) use ($startDate, $endDate) {
+    $trendDataFiltered = $chartPetitions->filter(function($p) use ($startDate, $endDate) {
         $pDate = \Carbon\Carbon::parse($p->date_of_petition_received);
         return $pDate->between($startDate->startOfDay(), $endDate->endOfDay());
     });

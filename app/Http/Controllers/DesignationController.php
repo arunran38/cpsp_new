@@ -12,18 +12,21 @@ class DesignationController extends Controller
 {
     public function index(): View
     {
+        abort_unless(auth()->user()->canAccess('view designations'), 403, 'Unauthorized. Permission view designations required.');
         $designations = Designation::paginate(10);
         return view('admin.designation_add', compact('designations'));
     }
 
     public function create(): View
     {
+        abort_unless(auth()->user()->canAccess('create designations'), 403, 'Unauthorized. Permission create designations required.');
         $designations = Designation::paginate(10);
         return view('admin.designation_add', compact('designations'));
     }
 
     public function store(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('create designations'), 403, 'Unauthorized. Permission create designations required.');
         $request->validate(['designation_name' => 'required|string|max:255']);
         try {
             Designation::create($request->all());
@@ -37,12 +40,14 @@ class DesignationController extends Controller
 
     public function edit(int $id): View
     {
+        abort_unless(auth()->user()->canAccess('update designations'), 403, 'Unauthorized. Permission update designations required.');
         $designation = Designation::findOrFail($id);
         return view('admin.designation_edit', compact('designation'));
     }
 
     public function update(Request $request, int $id): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('update designations'), 403, 'Unauthorized. Permission update designations required.');
         $request->validate(['designation_name' => 'required|string|max:255']);
         try {
             $designation = Designation::findOrFail($id);
@@ -55,6 +60,7 @@ class DesignationController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('delete designations'), 403, 'Unauthorized. Permission delete designations required.');
         try {
             $designation = Designation::findOrFail($id);
             $designation->delete();

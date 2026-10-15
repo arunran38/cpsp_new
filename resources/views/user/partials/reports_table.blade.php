@@ -111,7 +111,12 @@
                         </td>
                         <td class="px-6 py-4 text-center">
                             <div class="flex items-center justify-center gap-3">
-                                @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
+                                @php
+                                    $canModifyPetition = Auth::user()->canAccess('update petitions') && 
+                                        (Auth::user()->canAccess('access admin dashboard') || !$petition->seat_id || $petition->seat_id === Auth::user()->currentSeatUser()?->seat_id);
+                                @endphp
+
+                                @if($canModifyPetition && !$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
                                     <a href="{{ route('petitions.edit', $petition->hashid) }}"
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold text-xs shadow-md shadow-teal-500/20 transition-all hover:scale-105 whitespace-nowrap"
                                         title="Open Petition to Add Further Details">
@@ -126,7 +131,7 @@
                                     <i class="fa-solid fa-eye text-indigo-500"></i>
                                 </a>
 
-                                @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
+                                @if($canModifyPetition && !$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
                                     <button type="button"
                                         onclick="window.openReturnModal('{{ $petition->hashid }}', '{{ addslashes($petition->receipt_no) }}')"
                                         @click="showReturnModal = true; returnPetitionId = '{{ $petition->hashid }}'; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: '{{ $petition->hashid }}', receipt: '{{ addslashes($petition->receipt_no) }}' })"
@@ -282,6 +287,10 @@
                                                 class="px-3 py-1 text-xs font-bold text-white bg-amber-500 rounded hover:bg-amber-600 transition-colors shadow-sm">
                                                 Forward
                                             </button>
+                                        @elseif($petition->status === 'Received' && !$petition->is_cpsp_processed)
+                                            <span class="text-[11px] font-semibold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                                                Awaiting CPSP Details
+                                            </span>
                                         @endif
                                         
                                         @if($petition->status === 'Forwarded' && $petition->latestForwarding)
@@ -310,6 +319,8 @@
                                             <i class="fa-solid fa-link"></i> Linked
                                         </span>
                                     @endif
+                                @else
+                                    <span class="text-xs text-slate-400 font-medium italic">-</span>
                                 @endif
 
                                 @if($role === 'admin')
@@ -340,7 +351,12 @@
                         @endif
                         <td class="px-6 py-4 text-center">
                             <div class="flex items-center justify-center gap-3">
-                                @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
+                                @php
+                                    $canModifyPetition = Auth::user()->canAccess('update petitions') && 
+                                        (Auth::user()->canAccess('access admin dashboard') || !$petition->seat_id || $petition->seat_id === Auth::user()->currentSeatUser()?->seat_id);
+                                @endphp
+
+                                @if($canModifyPetition && !$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
                                     <a href="{{ route('petitions.edit', $petition->hashid) }}"
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold text-xs shadow-md shadow-teal-500/20 transition-all hover:scale-105 whitespace-nowrap"
                                         title="Open Petition to Add Further Details">
@@ -354,7 +370,7 @@
                                     title="View Details">
                                     <i class="fa-solid fa-eye text-indigo-500"></i>
                                 </a>
-                                @if(Auth::user()->canAccess('update petitions'))
+                                @if($canModifyPetition)
                                     @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance']) && ($petition->is_cpsp_processed || $petition->is_returned_to_inward))
                                         <a href="{{ route('petitions.edit', $petition->hashid) }}"
                                             class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
@@ -363,7 +379,7 @@
                                         </a>
                                     @endif
                                 @endif
-                                @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
+                                @if($canModifyPetition && !$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
                                     <button type="button"
                                         onclick="window.openReturnModal('{{ $petition->hashid }}', '{{ addslashes($petition->receipt_no) }}')"
                                         @click="showReturnModal = true; returnPetitionId = '{{ $petition->hashid }}'; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: '{{ $petition->hashid }}', receipt: '{{ addslashes($petition->receipt_no) }}' })"

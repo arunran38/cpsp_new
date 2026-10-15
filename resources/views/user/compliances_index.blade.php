@@ -79,7 +79,7 @@
                         @endphp
                         @foreach(['VC', 'PE', 'VE', 'CV', 'SC'] as $type)
                             <span class="inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-bold shadow-sm {{ $decisionBadgeStyles[$type] }}">
-                                {{ $type }}: {{ $pendingCounts[$type] }}
+                                {{ $type }}: {{ $pendingCounts[$type] ?? 0 }}
                             </span>
                         @endforeach
                         @if($pendingCounts['Overdue'] > 0)
@@ -219,7 +219,6 @@
                                 filterDecision === 'PE' ? 'Preliminary Enquiry (PE)' :
                                 filterDecision === 'VE' ? 'Vigilance Enquiry (VE)' :
                                 filterDecision === 'CV' ? 'Confidential Verification (CV)' :
-                                filterDecision === 'IV' ? 'Internal Vigilance (IV)' :
                                 filterDecision === 'SC' ? 'Surprise Check (SC)' :
                                 'All Pending'
                             "></span>
@@ -228,12 +227,12 @@
                         <div class="ml-1 flex shrink-0 items-center gap-1.5">
                             <span class="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-teal-100 bg-white px-1.5 text-xs font-bold text-teal-700" 
                                   x-text="
-                                  filterDecision === 'VC' ? '{{ $pendingCounts['VC'] }}' :
-                                  filterDecision === 'PE' ? '{{ $pendingCounts['PE'] }}' :
-                                  filterDecision === 'VE' ? '{{ $pendingCounts['VE'] }}' :
-                                  filterDecision === 'CV' ? '{{ $pendingCounts['CV'] }}' :
-                                  filterDecision === 'SC' ? '{{ $pendingCounts['SC'] }}' :
-                                  '{{ $pendingCounts['Total'] }}'
+                                  filterDecision === 'VC' ? '{{ $pendingCounts['VC'] ?? 0 }}' :
+                                  filterDecision === 'PE' ? '{{ $pendingCounts['PE'] ?? 0 }}' :
+                                  filterDecision === 'VE' ? '{{ $pendingCounts['VE'] ?? 0 }}' :
+                                  filterDecision === 'CV' ? '{{ $pendingCounts['CV'] ?? 0 }}' :
+                                  filterDecision === 'SC' ? '{{ $pendingCounts['SC'] ?? 0 }}' :
+                                  '{{ $pendingCounts['Total'] ?? 0 }}'
                                   "></span>
                             <i data-lucide="chevron-down" class="h-4 w-4 text-slate-400 transition-transform" :class="openFilter ? 'rotate-180' : ''"></i>
                         </div>
@@ -244,13 +243,12 @@
                         class="absolute left-0 z-50 mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
                         @php
                             $options = [
-                                ['value' => '', 'label' => 'All Pending', 'count' => $pendingCounts['Total']],
-                                ['value' => 'VC', 'label' => 'Vigilance Case (VC)', 'count' => $pendingCounts['VC']],
-                                ['value' => 'PE', 'label' => 'Preliminary Enquiry (PE)', 'count' => $pendingCounts['PE']],
-                                ['value' => 'VE', 'label' => 'Vigilance Enquiry (VE)', 'count' => $pendingCounts['VE']],
-                                ['value' => 'CV', 'label' => 'Confidential Verification (CV)', 'count' => $pendingCounts['CV']],
-                                ['value' => 'IV', 'label' => 'Internal Vigilance (IV)', 'count' => $pendingCounts['IV']],
-                                ['value' => 'SC', 'label' => 'Surprise Check (SC)', 'count' => $pendingCounts['SC']],
+                                ['value' => '', 'label' => 'All Pending', 'count' => $pendingCounts['Total'] ?? 0],
+                                ['value' => 'VC', 'label' => 'Vigilance Case (VC)', 'count' => $pendingCounts['VC'] ?? 0],
+                                ['value' => 'PE', 'label' => 'Preliminary Enquiry (PE)', 'count' => $pendingCounts['PE'] ?? 0],
+                                ['value' => 'VE', 'label' => 'Vigilance Enquiry (VE)', 'count' => $pendingCounts['VE'] ?? 0],
+                                ['value' => 'CV', 'label' => 'Confidential Verification (CV)', 'count' => $pendingCounts['CV'] ?? 0],
+                                ['value' => 'SC', 'label' => 'Surprise Check (SC)', 'count' => $pendingCounts['SC'] ?? 0],
                             ];
                         @endphp
 
@@ -531,11 +529,11 @@
                     labels: ['VC', 'PE', 'VE', 'CV', 'SC'],
                     datasets: [{
                         data: [
-                            {{ $pendingCounts['VC'] }},
-                            {{ $pendingCounts['PE'] }},
-                            {{ $pendingCounts['VE'] }},
-                            {{ $pendingCounts['CV'] }},
-                            {{ $pendingCounts['SC'] }}
+                            {{ $pendingCounts['VC'] ?? 0 }},
+                            {{ $pendingCounts['PE'] ?? 0 }},
+                            {{ $pendingCounts['VE'] ?? 0 }},
+                            {{ $pendingCounts['CV'] ?? 0 }},
+                            {{ $pendingCounts['SC'] ?? 0 }}
                         ],
                         backgroundColor: [
                             '#4f46e5', // indigo-600

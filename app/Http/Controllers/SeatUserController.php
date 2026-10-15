@@ -17,6 +17,7 @@ class SeatUserController extends Controller
      */
     public function index(): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('view seats'), 403, 'Unauthorized.');
         return redirect()->route('admin.seats.index');
     }
 
@@ -25,6 +26,7 @@ class SeatUserController extends Controller
      */
     public function create(Request $request): View
     {
+        abort_unless(auth()->user()->canAccess('create seats') || auth()->user()->canAccess('update seats'), 403, 'Unauthorized.');
         $users = User::all();
         $seats = Seat::where('is_active', true)->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $selectedSeatId = $request->get('seat_id');
@@ -37,6 +39,7 @@ class SeatUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('create seats') || auth()->user()->canAccess('update seats'), 403, 'Unauthorized.');
         $request->validate([
             'user_id' => 'required|exists:users,user_id',
             'seat_id' => 'required|exists:seats,seat_id',
@@ -102,6 +105,7 @@ class SeatUserController extends Controller
      */
     public function destroy(int $id): RedirectResponse
     {
+        abort_unless(auth()->user()->canAccess('update seats') || auth()->user()->canAccess('delete seats'), 403, 'Unauthorized.');
         return DB::transaction(function () use ($id) {
             try {
                 $assignment = SeatUser::findOrFail($id);

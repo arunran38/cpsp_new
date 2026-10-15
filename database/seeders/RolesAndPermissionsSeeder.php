@@ -1,12 +1,11 @@
 <?php
 
-
-
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -15,55 +14,81 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        // വിഭാഗങ്ങൾ (Categories)
-        $categories = [
+        // Reset cached roles and permissions
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        // 1. Standard CRUD Entities
+        $crudEntities = [
             'users',
             'units',
             'departments',
             'designations',
             'seats',
-            'master reports',
             'petitions',
-            'seat diagnostics',
-            'recycle bin',
-            'seat distribution chart',
-            'petition status chart',
-            'petition trends chart',
-            'petition nature chart',
             'roles',
             'permissions',
-            'compliances'
+            'compliances',
         ];
 
-        // പ്രവർത്തനങ്ങൾ (Actions)
         $actions = ['view', 'create', 'update', 'delete'];
 
-        // പെർമിഷനുകൾ ഉണ്ടാക്കുന്നു (Create Permissions)
-        foreach ($categories as $category) {
+        foreach ($crudEntities as $entity) {
             foreach ($actions as $action) {
-                $permissionName = "{$action} {$category}";
-                Permission::firstOrCreate(['name' => $permissionName]);
+                Permission::firstOrCreate(['name' => "{$action} {$entity}", 'guard_name' => 'web']);
             }
         }
 
-        // പെർമിഷനുകൾ ഉണ്ടാക്കുന്നു (Scoped Permissions)
-        Permission::firstOrCreate(['name' => 'view own petitions']);
-        Permission::firstOrCreate(['name' => 'view all petitions']);
-        Permission::firstOrCreate(['name' => 'access admin dashboard']);
-        
-        $viewFileTransfer = Permission::firstOrCreate(['name' => 'view file transfer']);
-        $inwardFormPermission = Permission::firstOrCreate(['name' => 'inward form']);
-        $inwardStats = Permission::firstOrCreate(['name' => 'inward statistics']);
-        $exportStats = Permission::firstOrCreate(['name' => 'export statistics']);
-        $filterTransfer = Permission::firstOrCreate(['name' => 'filter transfer']);
-        $viewProcessedStats = Permission::firstOrCreate(['name' => 'view processed statistics']);
-        $createInwardPetitions = Permission::firstOrCreate(['name' => 'create inward petitions']);
+        // 2. Specialized Functional Permissions
+        $specialPermissions = [
+            // Scopes & Dashboard
+            'access admin dashboard',
+            'view own petitions',
+            'view all petitions',
+
+            // Duplicate Detection & Linking
+            'view duplicate warnings',
+            'link petitions',
+
+            // Inward Desk & Transfers
+            'inward form',
+            'create inward petitions',
+            'view file transfer',
+            'filter transfer',
+
+            // Reports & Operational Statistics
+            'view master reports',
+            'inward statistics',
+            'export statistics',
+            'view processed statistics',
+            'default compliances home',
+
+            // Visual Analytics Charts (View-only)
+            'view seat distribution chart',
+            'view petition status chart',
+            'view petition trends chart',
+            'view petition nature chart',
+
+            // System Health & Recovery
+            'view seat diagnostics',
+            'view recycle bin',
+            'restore recycle bin',
+            'update recycle bin', // Compatibility alias for restore
+            'delete recycle bin', // Permanent purge
+        ];
+
+        foreach ($specialPermissions as $perm) {
+            Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'web']);
+        }
 
         // -------------------------------------------------------------
         // Roles Creation & Permissions Assignment
         // -------------------------------------------------------------
 
-        // 1. Super Admin: Unrestricted full access
+        // 1. Developer: Highest level access with all permissions
+        $developer = Role::firstOrCreate(['name' => 'Developer']);
+        $developer->syncPermissions(Permission::all());
+
+        // 2. Super Admin: Unrestricted full access
         $superAdmin = Role::firstOrCreate(['name' => 'super admin']);
         $superAdmin->syncPermissions(Permission::all());
 
@@ -89,7 +114,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view own petitions',
         ]);
 
-        // 4. CPSP Desk: Grievance management, forwarding, compliances, transfers
+        // 4. CPSP Desk: Grievance management, forwarding, compliances, duplicate linking, transfers
         $cpsp = Role::firstOrCreate(['name' => 'CPSP']);
         $cpsp->syncPermissions([
             'view petitions',
@@ -102,6 +127,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'view compliances',
             'create compliances',
             'update compliances',
+            'view duplicate warnings',
+            'link petitions',
         ]);
 
         // 5. IOP HQ: Petitions oversight and compliances
@@ -109,10 +136,16 @@ class RolesAndPermissionsSeeder extends Seeder
         $iopHq->syncPermissions([
             'view petitions',
             'view all petitions',
+            'view master reports',
+            'view seat distribution chart',
+            'view petition status chart',
             'view compliances',
             'create compliances',
             'update compliances',
-            'view master reports',
+            'delete compliances',
+            'default compliances home',
         ]);
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 }

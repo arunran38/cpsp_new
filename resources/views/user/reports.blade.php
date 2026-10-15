@@ -24,6 +24,7 @@
                     </p>
                 </div>
                 <div class="flex items-center gap-3 z-10">
+                    @if(Auth::user()->canAccess('export statistics') || Auth::user()->canAccess('access admin dashboard'))
                     <button type="button" @click="if (window.syncFiltersToExport) window.syncFiltersToExport(); showExportModal = true"
                         class="flex items-center gap-2 px-4 py-2 bg-indigo-50/10 text-indigo-200 border border-indigo-500/30 rounded-xl hover:bg-indigo-500/20 transition-all font-semibold text-sm shadow-sm">
                         <i data-lucide="settings-2" class="w-4 h-4"></i>
@@ -38,7 +39,7 @@
                             Excel Export
                         @endif
                     </a>
-
+                    @endif
                 </div>
             </div>
         </div>
@@ -162,7 +163,7 @@
                         </div>
                     </div>
 
-                    @if(auth()->user()->canAccess('access admin dashboard') && !session('is_impersonating_seat') && isset($seats))
+                    @if(auth()->user()->canAccess('view all petitions') && !session('is_impersonating_seat') && !empty($seats))
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Filter by
                                 Seat</label>
@@ -188,7 +189,7 @@
                                     @if(isset($users))
                                         @foreach($users as $user)
                                             <option value="{{ $user->user_id }}" {{ request()->filled('user_id') && request('user_id') == $user->user_id ? 'selected' : '' }}
-                                                class="font-medium text-slate-800 bg-white py-1">{{ $user->name }}</option>
+                                                class="font-medium text-slate-800 bg-white py-1">{{ $user->name }}{{ !empty($user->pen) ? ' (PEN: ' . $user->pen . ')' : '' }}</option>
                                         @endforeach
                                     @endif
                                 </select>

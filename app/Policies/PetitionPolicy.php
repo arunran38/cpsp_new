@@ -21,7 +21,7 @@ class PetitionPolicy
      */
     public function view(User $user, Petition $petition): bool
     {
-        return $this->authorize($user, $petition);
+        return $this->authorizeView($user, $petition);
     }
 
     /**
@@ -40,7 +40,12 @@ class PetitionPolicy
         if (!$user->canAccess('update petitions')) {
             return false;
         }
-        return $this->authorize($user, $petition);
+
+        if ($user->canAccess('access admin dashboard')) {
+            return true;
+        }
+
+        return $this->authorizeModification($user, $petition);
     }
 
     /**
@@ -52,42 +57,70 @@ class PetitionPolicy
             return false;
         }
 
-        return $this->authorize($user, $petition);
-    }
-
-    /**
-     * Internal authorization logic matching the original Controller implementation.
-     */
-    private function authorize(User $user, Petition $petition): bool
-    {
-        if ($user->canAccess('view all petitions')) {
+        if ($user->canAccess('access admin dashboard')) {
             return true;
         }
 
-        // 2. Check if user is the creator
+        return $this->authorizeModification($user, $petition);
+    }
+
+    /**
+     * Internal authorization logic for viewing a petition.
+     */
+    private function authorizeView(User $user, Petition $petition): bool
+    {
+        if ($user->canAccess('view all petitions') || $user->canAccess('access admin dashboard')) {
+            return true;
+        }
+
+        // Check if user is the creator
         if ($petition->user_id === $user->id) {
             return true;
         }
 
-        // 3. Check if user belongs to the seat assigned to this petition
+        // Check if user belongs to the seat assigned to this petition
         $currentSeat = $user->currentSeatUser();
         if ($currentSeat && $petition->seat_id === $currentSeat->seat_id) {
             return true;
         }
 
-        // 4. Any seat user can view and edit/return an unprocessed inward petition
+        // Any seat user can view an unprocessed inward petition
         if (!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $currentSeat) {
             return true;
         }
 
-        // 4. If it's a duplicate, allow access if the user can access the original petition
+        // If it's a duplicate, allow access if the user can access the original petition
         if ($petition->linked_petition_id) {
-            // Prevent infinite recursion by not using $this->authorize directly for the parent
-            // Just duplicate the basic checks for the parent petition
             $original = Petition::find($petition->linked_petition_id);
             if ($original) {
                 if ($original->user_id === $user->id) return true;
                 if ($currentSeat && $original->seat_id === $currentSeat->seat_id) return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Internal authorization logic for modifying/deleting a petition.
+     */
+    private function authorizeModification(User $user, Petition $petition): bool
+    {
+        // Creator can modify
+        if ($petition->user_id === $user->id) {
+            return true;
+        }
+
+        // User belongs to the assigned seat
+        $currentSeat = $user->currentSeatUser();
+        if ($currentSeat && $petition->seat_id === $currentSeat->seat_id) {
+            return true;
+        }
+
+        // For unprocessed inward petition: only if assigned to current seat or unassigned
+        if (!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $currentSeat) {
+            if (!$petition->seat_id || $petition->seat_id === $currentSeat->seat_id) {
+                return true;
             }
         }
 

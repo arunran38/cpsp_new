@@ -259,6 +259,8 @@ class PetitionController extends Controller
         $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
         $user = Auth::user();
+        $this->authorize('update', $petition);
+
         $currentSeat = $user->currentSeatUser();
 
         // Cannot return if already finalized or already processed
@@ -528,6 +530,10 @@ class PetitionController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        if (!$user->canAccess('view petitions') && !$user->canAccess('view own petitions') && !$user->canAccess('view all petitions')) {
+            abort(403, 'Unauthorized access to petitions.');
+        }
+
         $isInwardOnly = $user && ($user->hasRole(['inward', 'Inward']) || str_contains(strtolower($user->currentSeatUser()?->seat?->seat_name ?? ''), 'inward'));
         $defaultTab = $isInwardOnly ? 'inward' : 'all';
         $tab = $request->input('tab', $defaultTab);
@@ -552,6 +558,8 @@ class PetitionController extends Controller
      */
     public function reports(Request $request)
     {
+        abort_unless(Auth::user()->canAccess('view master reports'), 403, 'Unauthorized access to Master Reports.');
+
         $petitions = $this->getPetitionsQuery($request)->paginate(10)->appends($request->query());
         $tab = $request->input('tab', 'all');
 
@@ -584,6 +592,10 @@ class PetitionController extends Controller
      */
     public function export(Request $request): HttpResponse
     {
+        if (!Auth::user()->canAccess('export statistics') && !Auth::user()->canAccess('view master reports')) {
+            abort(403, 'Unauthorized to export petitions.');
+        }
+
         $tab = $request->input('tab', 'all');
         $query = $this->getPetitionsQuery($request);
 
@@ -735,6 +747,10 @@ class PetitionController extends Controller
         $petition = Petition::findOrFail($realId);
         $this->authorize('update', $petition);
 
+        if (!Auth::user()->canAccess('link petitions')) {
+            abort(403, 'Unauthorized to link duplicate petitions.');
+        }
+
         if ($petition->linked_petition_id) {
             return back()->with('error', 'This petition is already linked as a duplicate.');
         }
@@ -788,6 +804,10 @@ class PetitionController extends Controller
         $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
         $this->authorize('update', $petition);
+
+        if (!Auth::user()->canAccess('link petitions')) {
+            abort(403, 'Unauthorized to unlink duplicate petitions.');
+        }
 
         if (!$petition->linked_petition_id) {
             return back()->with('error', 'This petition is not currently linked to any other petition.');

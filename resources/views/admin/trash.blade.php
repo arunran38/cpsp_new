@@ -69,7 +69,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        @if(Auth::user()->canAccess('update recycle bin'))
+                                        @if(Auth::user()->canAccess('restore recycle bin') || Auth::user()->canAccess('update recycle bin'))
                                         <form action="{{ route('admin.trash.restore', $petition->petition_id) }}" method="POST">
                                             @csrf
                                             <button type="submit"
