@@ -11,12 +11,16 @@
     $seatName = $currentSeat?->seat_name ?? ($user->roles->first()?->name ?? 'User');
     
     // Permission-driven scopes
-    $isExecutive = $user->canAccess('view all petitions') || $user->canAccess('access admin dashboard');
+    $isCpspDesk = $currentSeat
+        ? $currentSeat->hasRole('CPSP')
+        : $user->hasRole('CPSP');
+    $isExecutive = !$isCpspDesk && ($user->canAccess('view all petitions') || $user->canAccess('access admin dashboard'));
     $canSeeSeatChart = $user->canAccess('view seat distribution chart');
     $canSeeStatusChart = $user->canAccess('view petition status chart');
     $canSeeVacantSeats = $user->canAccess('view seats') || $user->canAccess('access admin dashboard');
     $canSeeRecentPetitions = $user->canAccess('view recent petitions');
-    $isInwardDesk = !$isExecutive && ($user->canAccess('view file transfer') || ($currentSeat && stripos($currentSeat->seat_name, 'Inward') !== false));
+    $isInwardDesk = !$isExecutive && !$isCpspDesk
+        && ($user->canAccess('view file transfer') || ($currentSeat && stripos($currentSeat->seat_name, 'Inward') !== false));
 
     // Date filters
     $fromDate = request('from_date', now()->subDays(6)->format('Y-m-d'));
@@ -93,6 +97,62 @@
     }
     $chartStatusLabels = json_encode($statusStats->keys()->toArray());
     $chartStatusData = json_encode($statusStats->values()->toArray());
+
+    // Petition trends and nature are scoped to the same seat as the dashboard metrics.
+    $canSeeTrends = $user->canAccess('view petition trends chart');
+    $canSeeNature = $user->canAccess('view petition nature chart');
+    $chartPetitionsQuery = clone $basePetitionsQuery;
+    if (!$isInwardDesk) {
+        $chartPetitionsQuery->where('is_cpsp_processed', true);
+    }
+
+    $startDate = \Carbon\Carbon::today()->subDays(6);
+    $endDate = \Carbon\Carbon::today();
+    try {
+        if (is_string(request('start_date'))) {
+            $startDate = \Carbon\Carbon::parse(request('start_date'));
+        }
+        if (is_string(request('end_date'))) {
+            $endDate = \Carbon\Carbon::parse(request('end_date'));
+        }
+    } catch (\Carbon\Exceptions\InvalidFormatException $e) {
+        $startDate = \Carbon\Carbon::today()->subDays(6);
+        $endDate = \Carbon\Carbon::today();
+    }
+    if ($startDate->gt($endDate)) {
+        [$startDate, $endDate] = [$endDate, $startDate];
+    }
+    $startDate->startOfDay();
+    $endDate->endOfDay();
+
+    $chartTrendLabels = [];
+    $chartTrendCounts = [];
+    if ($canSeeTrends) {
+        $trendStats = (clone $chartPetitionsQuery)
+            ->whereBetween('date_of_petition_received', [$startDate->toDateString(), $endDate->toDateString()])
+            ->selectRaw('DATE(date_of_petition_received) as petition_date, COUNT(*) as total')
+            ->groupBy('petition_date')
+            ->pluck('total', 'petition_date');
+
+        foreach (\Carbon\CarbonPeriod::create($startDate, $endDate) as $date) {
+            $dateKey = $date->format('Y-m-d');
+            $chartTrendLabels[] = $date->format('d M');
+            $chartTrendCounts[] = (int) $trendStats->get($dateKey, 0);
+        }
+    }
+
+    $natureStats = $canSeeNature
+        ? (clone $chartPetitionsQuery)
+            ->whereNotNull('nature_of_petition')
+            ->where('nature_of_petition', '<>', '')
+            ->selectRaw('nature_of_petition, COUNT(*) as total')
+            ->groupBy('nature_of_petition')
+            ->pluck('total', 'nature_of_petition')
+        : collect();
+    $chartNatureLabels = json_encode($natureStats->keys()->values());
+    $chartNatureCounts = json_encode($natureStats->values()->map(fn ($count) => (int) $count)->values());
+    $chartTrendLabelsJson = json_encode($chartTrendLabels);
+    $chartTrendCountsJson = json_encode($chartTrendCounts);
 
     // Recent Petitions for table
     $recentPetitions = collect([]);
@@ -206,7 +266,7 @@
     @endif
 
     <!-- Dynamic Metrics Cards Grid -->
-    @if($isExecutive)
+    @if($isExecutive || $isCpspDesk)
         {{-- Executive / State-Wide Metrics Cards --}}
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
 
@@ -432,6 +492,52 @@
         </div>
     @endif
 
+    @if($canSeeTrends || $canSeeNature)
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            @if($canSeeTrends)
+                <div class="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <i data-lucide="trending-up" class="w-5 h-5 text-indigo-600"></i>
+                                Petition Trends
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Daily submissions for the selected period</p>
+                        </div>
+                        <form action="{{ route('dashboard') }}" method="GET" class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                            <input type="date" name="start_date" value="{{ $startDate->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
+                                   class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
+                            <span class="text-slate-300 text-xs">—</span>
+                            <input type="date" name="end_date" value="{{ $endDate->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
+                                   class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
+                            <button type="submit" class="p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all" title="Filter Range">
+                                <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="relative h-[320px]">
+                        <canvas id="petitionTrendsChart"></canvas>
+                    </div>
+                </div>
+            @endif
+
+            @if($canSeeNature)
+                <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+                    <div class="mb-5">
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i data-lucide="pie-chart" class="w-5 h-5 text-purple-600"></i>
+                            By Nature
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Distribution of petition types</p>
+                    </div>
+                    <div class="relative h-[320px] flex items-center justify-center">
+                        <canvas id="petitionNatureChart"></canvas>
+                    </div>
+                </div>
+            @endif
+        </div>
+    @endif
+
     @if($canSeeRecentPetitions)
     <!-- Recent Petitions Activity Table -->
     <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
@@ -518,7 +624,7 @@
 @endsection
 
 @section('scripts')
-@if($canSeeSeatChart || $canSeeStatusChart)
+@if($canSeeSeatChart || $canSeeStatusChart || $canSeeTrends || $canSeeNature)
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -616,6 +722,75 @@
                                         padding: 16,
                                         font: { size: 11, weight: '600' }
                                     }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            const trendsCtx = document.getElementById('petitionTrendsChart');
+            if (trendsCtx) {
+                const labels = {!! $chartTrendLabelsJson !!};
+                const data = {!! $chartTrendCountsJson !!};
+                if (data.every(value => value === 0)) {
+                    trendsCtx.parentElement.innerHTML = '<div class="text-center text-slate-400 text-xs font-semibold"><i data-lucide="activity" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>No petition data available for this period.</div>';
+                } else {
+                    new Chart(trendsCtx, {
+                        type: 'bar',
+                        data: {
+                            labels,
+                            datasets: [{
+                                label: 'New Petitions',
+                                data,
+                                backgroundColor: colors.primary,
+                                hoverBackgroundColor: colors.secondary,
+                                borderRadius: 6,
+                                borderSkipped: false,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { grid: { display: false } },
+                                y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } }
+                            }
+                        }
+                    });
+                }
+            }
+
+            const natureCtx = document.getElementById('petitionNatureChart');
+            if (natureCtx) {
+                const labels = {!! $chartNatureLabels !!};
+                const data = {!! $chartNatureCounts !!};
+                if (labels.length === 0) {
+                    natureCtx.parentElement.innerHTML = '<div class="text-center text-slate-400 text-xs font-semibold"><i data-lucide="pie-chart" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>No petition nature data available.</div>';
+                } else {
+                    new Chart(natureCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels,
+                            datasets: [{
+                                data,
+                                backgroundColor: [
+                                    colors.primary, colors.teal, colors.amber,
+                                    colors.secondary, colors.rose, colors.cyan, colors.slate
+                                ],
+                                borderWidth: 0,
+                                hoverOffset: 8,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '70%',
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { usePointStyle: true, padding: 16 }
                                 }
                             }
                         }

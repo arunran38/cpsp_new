@@ -4,8 +4,9 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-
 use Illuminate\Validation\Rule;
+use App\Models\Petition;
+use App\Services\HashidService;
 
 class UpdatePetitionRequest extends FormRequest
 {
@@ -19,8 +20,10 @@ class UpdatePetitionRequest extends FormRequest
 
     public function rules(): array
     {
-        $petition = $this->route('petition');
-        $petitionId = $petition instanceof \App\Models\Petition ? $petition->petition_id : $petition;
+        $routePetition = $this->route('petition');
+        $petitionId = $routePetition instanceof Petition
+            ? $routePetition->petition_id
+            : HashidService::decode($routePetition) ?? $routePetition;
 
         return [
             'receipt_no' => [

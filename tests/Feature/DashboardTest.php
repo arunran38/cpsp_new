@@ -76,7 +76,8 @@ class DashboardTest extends TestCase
         Petition::factory()->create([
             'user_id' => $this->user->user_id,
             'seat_id' => $this->seat->seat_id,
-            'status' => 'Received'
+            'status' => 'Received',
+            'is_cpsp_processed' => false,
         ]);
         
         // Petition for another seat
@@ -87,6 +88,21 @@ class DashboardTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('1'); // Should only see their own seat's petition
+        $response->assertSee('Petition Trends');
+        $response->assertSee('By Nature');
+        $response->assertSee('id="petitionTrendsChart"', false);
+        $response->assertSee('id="petitionNatureChart"', false);
+        $response->assertSee('Inward Petitions');
+        $response->assertSee('Processed Petitions');
+        $response->assertSee('Forwarded to Units');
+        $response->assertSee('VR Reports Received');
+        $response->assertSee('Final Decisions');
+        $this->assertSame(
+            '1',
+            preg_match('/Inward Petitions.*?<h3[^>]*>(\d+)<\/h3>/s', $response->getContent(), $matches)
+                ? $matches[1]
+                : null
+        );
     }
 
     public function test_user_dashboard_date_range_filtering(): void

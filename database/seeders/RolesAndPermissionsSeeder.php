@@ -134,6 +134,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'update compliances',
             'view duplicate warnings',
             'link petitions',
+            'view petition trends chart',
+            'view petition nature chart',
         ]);
 
         // 5. IOP HQ: Petitions oversight and compliances
