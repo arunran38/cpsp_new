@@ -113,45 +113,50 @@
         $chartTrendCounts[] = $dailyStats->get($dateKey, 0);
     }
 
+    $canSeeRecentPetitions = $user->canAccess('view recent petitions');
+
     $chartTrendLabels = json_encode($chartLabels);
     $chartTrendCountsJson = json_encode($chartTrendCounts);
 
     // Recent Petitions Table Data
-    if ($isInwardRole) {
-        $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
-            ->where(function($q) use ($inwardUserIds, $currentSeat) {
-                $q->whereIn('user_id', $inwardUserIds);
-                if ($currentSeat) {
-                    $q->orWhere('seat_id', $currentSeat->seat_id);
-                }
-            })
-            ->whereNull('linked_petition_id')
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
-    } elseif ($currentSeat) {
-        $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
-            ->where('seat_id', $currentSeat->seat_id)
-            ->where('is_returned_to_inward', false)
-            ->whereNull('linked_petition_id')
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
-    } elseif ($user->canAccess('access admin dashboard')) {
-        $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
-            ->where('is_returned_to_inward', false)
-            ->whereNull('linked_petition_id')
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
-    } else {
-        $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
-            ->where('user_id', $user->user_id)
-            ->where('is_returned_to_inward', false)
-            ->whereNull('linked_petition_id')
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get();
+    $recentPetitions = collect([]);
+    if ($canSeeRecentPetitions) {
+        if ($isInwardRole) {
+            $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
+                ->where(function($q) use ($inwardUserIds, $currentSeat) {
+                    $q->whereIn('user_id', $inwardUserIds);
+                    if ($currentSeat) {
+                        $q->orWhere('seat_id', $currentSeat->seat_id);
+                    }
+                })
+                ->whereNull('linked_petition_id')
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
+        } elseif ($currentSeat) {
+            $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
+                ->where('seat_id', $currentSeat->seat_id)
+                ->where('is_returned_to_inward', false)
+                ->whereNull('linked_petition_id')
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
+        } elseif ($user->canAccess('access admin dashboard')) {
+            $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
+                ->where('is_returned_to_inward', false)
+                ->whereNull('linked_petition_id')
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
+        } else {
+            $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
+                ->where('user_id', $user->user_id)
+                ->where('is_returned_to_inward', false)
+                ->whereNull('linked_petition_id')
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
+        }
     }
 @endphp
 
@@ -412,6 +417,7 @@
         @endif
     </div>
 
+    @if($canSeeRecentPetitions)
     <!-- Recent Petitions Activity -->
     <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
         <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
@@ -453,7 +459,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt')
-                                            <span class="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-700">
+                                             <span class="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-700">
                                                 Finalized
                                             </span>
                                         @elseif($petition->status === 'Forwarded' || $petition->status === 'VR_Received')
@@ -487,6 +493,7 @@
             @endif
         </div>
     </div>
+    @endif
 </div>
 @endsection
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>@yield('title', config('app.name', 'Admin Dashboard'))</title>
+    <title>@yield('title', 'CPSP Portal')</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -228,6 +228,7 @@
             margin-right: 12px;
             opacity: 0.3;
             transition: all 0.3s var(--transition-main);
+            flex-shrink: 0;
         }
         
         /* Parent and Open states */
@@ -285,7 +286,7 @@
 
         <!-- Sidebar Component -->
         <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-               class="fixed inset-y-0 left-0 z-50 flex flex-col w-72 transition-transform duration-300 ease-out bg-[#0f172a] border-r border-slate-800 shadow-xl">
+               class="fixed inset-y-0 left-0 z-50 flex flex-col w-80 transition-transform duration-300 ease-out bg-[#0f172a] border-r border-slate-800 shadow-xl">
             
             <!-- Sidebar Header -->
             <div class="flex items-center h-16 px-6 border-b border-slate-800/80 bg-[#0f172a]">
@@ -294,8 +295,8 @@
                         <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
                     </div>
                     <div>
-                        <a href="{{ route('admin.dashboard') }}" class="text-[22px] tracking-tight text-white font-extrabold leading-none flex items-center">
-                            ADMIN <span class="text-teal-400 font-black ml-1">DASHBOARD</span>
+                        <a href="{{ route('dashboard') }}" class="text-[22px] tracking-tight text-white font-extrabold leading-none flex items-center">
+                            CPSP <span class="text-teal-400 font-black ml-1">PORTAL</span>
                         </a>
                     </div>
                 </div>
@@ -303,6 +304,13 @@
 
             <!-- Navigation Container -->
             <nav class="flex-1 px-4 py-6 overflow-y-auto custom-scrollbar space-y-1.5">
+                
+                <!-- Dashboard Link -->
+                <a href="{{ route('dashboard') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') || request()->routeIs('user.dashboard') ? 'active-nav' : 'inactive-nav' }}">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 icon-bounce {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') || request()->routeIs('user.dashboard') ? 'text-indigo-400' : '' }}"></i>
+                    <span>Dashboard</span>
+                </a>
                 
                 <!-- Management Section -->
                 @if(Auth::user()->canAccess('view units') || Auth::user()->canAccess('view departments') || Auth::user()->canAccess('view designations') || Auth::user()->canAccess('view users') || Auth::user()->canAccess('view roles') || Auth::user()->canAccess('view permissions') || Auth::user()->canAccess('view seats'))
@@ -366,20 +374,20 @@
                          x-transition:leave="slide-down-leave-active"
                          x-transition:leave-start="slide-down-leave-from"
                          x-transition:leave-end="slide-down-leave-to"
-                         class="submenu-container pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
+                         class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
                         <a href="{{ route('users.create') }}" 
                            @click="usersOpen = true"
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('users.create') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            <i data-lucide="user-plus" class="w-4 h-4 mr-2 {{ request()->routeIs('users.create') ? 'text-teal-400' : '' }}"></i>
-                            <span>Add User</span>
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('users.create') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="user-plus" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('users.create') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">Add User</span>
                         </a>
                         <a href="{{ route('users.index') }}" 
                            @click="usersOpen = true"
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('users.index') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            <i data-lucide="users" class="w-4 h-4 mr-2 {{ request()->routeIs('users.index') ? 'text-teal-400' : '' }}"></i>
-                            <span>View/Edit Users</span>
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('users.index') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="users" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('users.index') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">View/Edit Users</span>
                         </a>
                     </div>
                 </div>
@@ -414,23 +422,23 @@
                          x-transition:leave="slide-down-leave-active"
                          x-transition:leave-start="slide-down-leave-from"
                          x-transition:leave-end="slide-down-leave-to"
-                         class="submenu-container pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
+                         class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
                         @if(Auth::user()->canAccess('view roles'))
                         <a href="{{ route('admin.roles.index') }}" 
                            @click="rolesOpen = true"
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('admin.roles.*') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            <i data-lucide="shield" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.roles.*') ? 'text-teal-400' : '' }}"></i>
-                            <span>Roles</span>
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.roles.*') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="shield" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('admin.roles.*') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">Roles</span>
                         </a>
                         @endif
                         @if(Auth::user()->canAccess('view permissions'))
                         <a href="{{ route('admin.permissions.index') }}" 
                            @click="rolesOpen = true"
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('admin.permissions.*') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            <i data-lucide="key" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.permissions.*') ? 'text-teal-400' : '' }}"></i>
-                            <span>Permissions</span>
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.permissions.*') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="key" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('admin.permissions.*') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">Permissions</span>
                         </a>
                         @endif
                     </div>
@@ -466,20 +474,20 @@
                          x-transition:leave="slide-down-leave-active"
                          x-transition:leave-start="slide-down-leave-from"
                          x-transition:leave-end="slide-down-leave-to"
-                         class="submenu-container pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
+                         class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
                         <a href="{{ route('admin.seats.create') }}" 
                            @click="seatsOpen = true"
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('admin.seats.create') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            <i data-lucide="plus-square" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.seats.create') ? 'text-teal-400' : '' }}"></i>
-                            <span>Add Seat</span>
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.seats.create') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="plus-square" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('admin.seats.create') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">Add Seat</span>
                         </a>
                         <a href="{{ route('admin.seats.index') }}" 
                            @click="seatsOpen = true"
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('admin.seats.index') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            <i data-lucide="layout-grid" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.seats.index') ? 'text-teal-400' : '' }}"></i>
-                            <span>View/Edit Seats</span>
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.seats.index') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="layout-grid" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('admin.seats.index') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">View/Edit Seats</span>
                         </a>
                     </div>
                 </div>
@@ -492,13 +500,122 @@
                 @endif
 
 
-                @if(Auth::user()->canAccess('view petitions'))
-                <!-- View Petitions - Direct Link -->
-                <a href="{{ route('petitions.index', ['tab' => 'all']) }}" 
-                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('petitions.index') ? 'active-nav' : 'inactive-nav' }}">
-                    <i data-lucide="file-text" class="w-5 h-5 icon-bounce {{ request()->routeIs('petitions.index') ? 'text-indigo-400' : '' }}"></i>
-                    <span>View Petitions</span>
-                </a>
+                @php
+                    $canAccessInwardAdmin = Auth::user()->canAccess('inward form') || 
+                                           Auth::user()->canAccess('create inward petitions') || 
+                                           Auth::user()->canAccess('inward statistics') || 
+                                           Auth::user()->canAccess('view file transfer');
+                @endphp
+
+                @if($canAccessInwardAdmin)
+                <!-- Inward Dropdown -->
+                <div x-data="{ 
+                        hoverOpen: false,
+                        hoverTimeout: null,
+                        inwardOpen: {{ request()->routeIs('inward.*') ? 'true' : 'false' }}
+                    }" 
+                    @mouseenter="hoverOpen = true; clearTimeout(hoverTimeout)"
+                    @mouseleave="hoverTimeout = setTimeout(() => { hoverOpen = false }, 300)"
+                    class="relative">
+                    
+                    <button @click="inwardOpen = !inwardOpen" 
+                            class="nav-item-transition flex items-center justify-between w-full px-4 py-3 text-[15px] font-medium rounded-xl group"
+                            :class="(inwardOpen || hoverOpen) ? 'menu-open' : 'inactive-nav'">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="file-input" class="w-5 h-5 icon-bounce" :class="(inwardOpen || hoverOpen) || request()->routeIs('inward.*') ? 'text-indigo-400' : ''"></i>
+                            <span>Inward</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': inwardOpen || hoverOpen }"></i>
+                    </button>
+                    
+                    <div x-show="inwardOpen || hoverOpen" 
+                         x-cloak 
+                         x-transition:enter="slide-down-enter-active" 
+                         x-transition:enter-start="slide-down-enter-from" 
+                         x-transition:enter-end="slide-down-enter-to"
+                         x-transition:leave="slide-down-leave-active"
+                         x-transition:leave-start="slide-down-leave-from"
+                         x-transition:leave-end="slide-down-leave-to"
+                         class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
+                        @if(Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('inward form'))
+                        <a href="{{ route('inward.enter_petition') }}" 
+                           @click="inwardOpen = true"
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.enter_petition') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="plus-circle" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.enter_petition') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">Inward Registration</span>
+                        </a>
+                        <a href="{{ route('inward.enter_petition', ['hide_form' => 1]) }}#view-inward-petitions" 
+                           @click="inwardOpen = true"
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="list" class="w-4 h-4 mr-2.5 shrink-0"></i>
+                            <span class="whitespace-nowrap">View Inward Petitions</span>
+                        </a>
+                        @endif
+                        @if(Auth::user()->canAccess('inward statistics'))
+                        <a href="{{ route('inward.statistics') }}" 
+                           @click="inwardOpen = true"
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="bar-chart-2" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.statistics') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">Inward Statistics</span>
+                        </a>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
+                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('create petitions'))
+                <!-- Petitions Dropdown -->
+                <div x-data="{ 
+                        hoverOpen: false,
+                        hoverTimeout: null,
+                        petitionsMenuOpen: {{ request()->routeIs('petitions.*') && !request()->routeIs('petitions.reports') ? 'true' : 'false' }}
+                    }" 
+                    @mouseenter="hoverOpen = true; clearTimeout(hoverTimeout)"
+                    @mouseleave="hoverTimeout = setTimeout(() => { hoverOpen = false }, 300)"
+                    class="relative">
+                    
+                    <button @click="petitionsMenuOpen = !petitionsMenuOpen" 
+                            class="nav-item-transition flex items-center justify-between w-full px-4 py-3 text-[15px] font-medium rounded-xl group"
+                            :class="(petitionsMenuOpen || hoverOpen) ? 'menu-open' : 'inactive-nav'">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="file-text" class="w-5 h-5 icon-bounce" :class="(petitionsMenuOpen || hoverOpen) || request()->routeIs('petitions.*') ? 'text-indigo-400' : ''"></i>
+                            <span>Petitions</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': petitionsMenuOpen || hoverOpen }"></i>
+                    </button>
+                    
+                    <div x-show="petitionsMenuOpen || hoverOpen" 
+                         x-cloak 
+                         x-transition:enter="slide-down-enter-active" 
+                         x-transition:enter-start="slide-down-enter-from" 
+                         x-transition:enter-end="slide-down-enter-to"
+                         x-transition:leave="slide-down-leave-active"
+                         x-transition:leave-start="slide-down-leave-from"
+                         x-transition:leave-end="slide-down-leave-to"
+                         class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
+                        @if(Auth::user()->canAccess('create petitions'))
+                        <a href="{{ route('petitions.create') }}" 
+                           @click="petitionsMenuOpen = true"
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('petitions.create') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="file-plus" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('petitions.create') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">Add Petition</span>
+                        </a>
+                        @endif
+                        @if(Auth::user()->canAccess('view petitions'))
+                        <a href="{{ route('petitions.index', ['tab' => 'all']) }}" 
+                           @click="petitionsMenuOpen = true"
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="list" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('petitions.index') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">View Petitions</span>
+                        </a>
+                        @endif
+                    </div>
+                </div>
                 @endif
 
                 @if(Auth::user()->canAccess('view master reports'))
@@ -548,31 +665,31 @@
                          x-transition:leave="slide-down-leave-active"
                          x-transition:leave-start="slide-down-leave-from"
                          x-transition:leave-end="slide-down-leave-to"
-                         class="submenu-container pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
+                         class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
                         
                         <a href="{{ route('admin.seats.statistics') }}" 
                            @click="reportsOpen = true"
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('admin.seats.statistics') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            <i data-lucide="laptop" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.seats.statistics') ? 'text-teal-400' : '' }}"></i>
-                            <span>Seat Diagnostics</span>
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.seats.statistics') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="laptop" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('admin.seats.statistics') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">Seat Diagnostics</span>
                         </a>
                         
                         <a href="{{ route('admin.departments.analysis') }}" 
                            @click="reportsOpen = true"
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('admin.departments.analysis') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            <i data-lucide="building-2" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.departments.analysis') ? 'text-teal-400' : '' }}"></i>
-                            <span>Department wise</span>
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.departments.analysis') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="building-2" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('admin.departments.analysis') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">Department wise</span>
                         </a>
 
                         @if(Auth::user()->canAccess('inward_statistics') || Auth::user()->canAccess('inward statistics'))
                         <a href="{{ route('inward.statistics') }}" 
                            @click="reportsOpen = true"
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-[15px] rounded-lg {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            <i data-lucide="clock" class="w-4 h-4 mr-2 {{ request()->routeIs('inward.statistics') ? 'text-teal-400' : '' }}"></i>
-                            <span>Pendency Details</span>
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="clock" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.statistics') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">Pendency Details</span>
                         </a>
                         @endif
                     </div>
@@ -594,7 +711,7 @@
         @endauth
 
         <!-- Main Content Area -->
-        <div class="{{ Auth::check() ? 'lg:pl-72' : '' }} flex flex-col min-h-screen transition-all duration-300">
+        <div class="{{ Auth::check() ? 'lg:pl-80' : '' }} flex flex-col min-h-screen transition-all duration-300">
             @auth
             <!-- Top Navigation -->
             <header class="sticky top-0 z-30 flex items-center h-16 px-5 lg:px-8 bg-[#0f172a] border-b border-slate-800 transition-all duration-300 shadow-sm">
@@ -691,10 +808,6 @@
                                 @endif
 
                                 <div class="py-1">
-                                    <a href="{{ route('user.dashboard') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors">
-                                        <i data-lucide="layout-dashboard" class="w-4 h-4 text-teal-400"></i>
-                                        User Dashboard
-                                    </a>
                                     <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors">
                                         <i data-lucide="user" class="w-4 h-4 text-indigo-400"></i>
                                         My Profile

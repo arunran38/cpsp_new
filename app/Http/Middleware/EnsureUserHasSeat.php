@@ -18,15 +18,15 @@ class EnsureUserHasSeat
     {
         $user = \Illuminate\Support\Facades\Auth::user();
 
-        // If admin and not impersonating a specific seat, grant unrestricted access
-        if ($user && $user->canAccess('access admin dashboard') && !session('is_impersonating_seat')) {
+        // If admin/executive and not impersonating a specific seat, grant access
+        if ($user && ($user->canAccess('access admin dashboard') || $user->canAccess('view all petitions')) && !session('is_impersonating_seat')) {
             return $next($request);
         }
 
         // Regular users must have an active assigned seat
         if ($user && !$user->currentSeatUser()) {
             Alert::error('Error', 'Seat not assigned. Please contact the administrator.');
-            return redirect()->route('user.dashboard');
+            return redirect()->route('dashboard');
         }
 
         return $next($request);

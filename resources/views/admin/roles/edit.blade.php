@@ -53,8 +53,8 @@
             ],
             'special' => [
                 'Visibility Scopes' => [
-                    'desc' => 'Personal vs department-wide visibility',
-                    'filter' => fn($p) => str_contains(strtolower($p->name), 'own') || str_contains(strtolower($p->name), 'all petitions')
+                    'desc' => 'Personal, recent, or department-wide visibility',
+                    'filter' => fn($p) => str_contains(strtolower($p->name), 'own') || str_contains(strtolower($p->name), 'all petitions') || str_contains(strtolower($p->name), 'recent')
                 ],
                 'Duplicate Management' => [
                     'desc' => 'Duplicate detection warnings, linking and unlinking records',

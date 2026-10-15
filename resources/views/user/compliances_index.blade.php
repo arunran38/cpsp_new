@@ -123,26 +123,7 @@
             </div>
         </div>
 
-        <!-- Alert Messages -->
-        @if(session('success'))
-            <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-start gap-3">
-                <i data-lucide="check-circle" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i>
-                <div>
-                    <h3 class="text-sm font-semibold">Success</h3>
-                    <p class="text-sm mt-1">{{ session('success') }}</p>
-                </div>
-            </div>
-        @endif
 
-        @if(session('error'))
-            <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-3">
-                <i data-lucide="alert-circle" class="w-5 h-5 text-rose-500 shrink-0 mt-0.5"></i>
-                <div>
-                    <h3 class="text-sm font-semibold">Error</h3>
-                    <p class="text-sm mt-1">{{ session('error') }}</p>
-                </div>
-            </div>
-        @endif
 
         <!-- Premium Toolbar -->
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-6 bg-white p-2 rounded-2xl shadow-sm border border-slate-200/80 ring-1 ring-slate-900/5">

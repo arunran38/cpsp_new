@@ -32,11 +32,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        if ($request->user()->canAccess('access admin dashboard')) {
-            return redirect()->route('admin.dashboard');
+        if ($request->user()->canAccess('default compliances home')) {
+            return redirect()->route('compliances.index');
         }
 
-        return redirect()->route('user.dashboard');
+        return redirect()->route('dashboard');
     }
 
     /**

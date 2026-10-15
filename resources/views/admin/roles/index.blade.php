@@ -102,12 +102,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="bg-emerald-50 text-emerald-900 px-5 py-3.5 rounded-2xl border border-emerald-200 flex items-center gap-3 shadow-xs font-semibold text-sm">
-            <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 shrink-0"></i>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
 
     <!-- Main Table Card with Rainbow Accent Bar -->
     <div class="bg-white border border-slate-200 rounded-3xl shadow-lg overflow-hidden">

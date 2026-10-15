@@ -905,9 +905,31 @@
                 },
 
                 removeExistingUpload(id) {
-                    if (confirm('Are you sure you want to remove this document? It will be permanently deleted once you update the petition.')) {
-                        this.deleted_uploads.push(id);
-                    }
+                    Swal.fire({
+                        title: 'Remove Document?',
+                        text: 'Are you sure you want to remove this document? It will be permanently deleted once you update the petition.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, remove',
+                        cancelButtonText: 'Cancel',
+                        confirmButtonColor: '#ef4444',
+                        cancelButtonColor: '#64748b',
+                        reverseButtons: true,
+                        customClass: {
+                            popup: 'cpsp-swal-popup',
+                            title: 'cpsp-swal-title',
+                            htmlContainer: 'cpsp-swal-html',
+                            confirmButton: 'cpsp-swal-confirm-btn',
+                            cancelButton: 'cpsp-swal-cancel-btn'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.deleted_uploads.push(id);
+                            if (window.showToast) {
+                                window.showToast('info', 'Document marked for removal.');
+                            }
+                        }
+                    });
                 },
 
                 nextStep() {

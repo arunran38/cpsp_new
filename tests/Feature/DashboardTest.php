@@ -23,9 +23,14 @@ class DashboardTest extends TestCase
     {
         parent::setUp();
         
-        $this->admin = User::factory()->create(['role' => 'admin']);
-        $this->user = User::factory()->create(['role' => 'user']);
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+
+        $this->admin = User::factory()->create();
+        $this->admin->assignRole('admin');
+
+        $this->user = User::factory()->create();
         $this->seat = Seat::factory()->create();
+        $this->seat->assignRole('CPSP');
         
         SeatUser::factory()->create([
             'user_id' => $this->user->user_id,

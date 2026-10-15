@@ -52,10 +52,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        if ($user->canAccess('access admin dashboard')) {
-            return redirect()->route('admin.dashboard');
-        }
-
-        return redirect()->route('user.dashboard');
+        return redirect()->route('dashboard');
     }
 }

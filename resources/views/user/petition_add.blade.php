@@ -1118,7 +1118,18 @@
                         const duplicates = this.checkDuplicateComplainants();
                         if (duplicates.length > 0) {
                             isValid = false;
-                            duplicates.forEach(msg => alert(msg));
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Duplicate Complainant Information',
+                                html: '<div class="text-left text-sm text-slate-700 space-y-1.5">' + duplicates.map(d => `<div class="p-2.5 bg-amber-50 rounded-xl border border-amber-200">${d}</div>`).join('') + '</div>',
+                                confirmButtonColor: '#4f46e5',
+                                confirmButtonText: 'I Understand',
+                                customClass: {
+                                    popup: 'cpsp-swal-popup',
+                                    title: 'cpsp-swal-title',
+                                    confirmButton: 'cpsp-swal-confirm-btn'
+                                }
+                            });
                         }
                     }
 
@@ -1127,7 +1138,18 @@
                         const duplicates = this.checkDuplicateAccused();
                         if (duplicates.length > 0) {
                             isValid = false;
-                            duplicates.forEach(msg => alert(msg));
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Duplicate Accused Information',
+                                html: '<div class="text-left text-sm text-slate-700 space-y-1.5">' + duplicates.map(d => `<div class="p-2.5 bg-amber-50 rounded-xl border border-amber-200">${d}</div>`).join('') + '</div>',
+                                confirmButtonColor: '#4f46e5',
+                                confirmButtonText: 'I Understand',
+                                customClass: {
+                                    popup: 'cpsp-swal-popup',
+                                    title: 'cpsp-swal-title',
+                                    confirmButton: 'cpsp-swal-confirm-btn'
+                                }
+                            });
                         }
                     }
 

@@ -106,6 +106,31 @@ class User extends Authenticatable
     {
         $permission = str_replace('_', ' ', trim($permission));
 
+        $currentSeatUser = $this->currentSeatUser();
+        $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
+
+        // Permissions that are strict feature toggles (like 'view recent petitions')
+        // MUST be explicitly granted to the active seat / role and NEVER bypassed unconditionally.
+        $strictPermissions = [
+            'view recent petitions',
+        ];
+
+        if (in_array($permission, $strictPermissions)) {
+            if ($currentSeat && !session('is_impersonating_seat')) {
+                try {
+                    return $currentSeat->hasPermissionTo($permission);
+                } catch (\Exception $e) {
+                    return false;
+                }
+            }
+
+            try {
+                return $this->hasPermissionTo($permission);
+            } catch (\Exception $e) {
+                return false;
+            }
+        }
+
         // Developer & Super Admin have unrestricted full access
         try {
             if ($this->hasRole(['developer', 'Developer', 'super admin', 'Super Admin'])) {
@@ -113,12 +138,12 @@ class User extends Authenticatable
             }
         } catch (\Exception $e) { }
 
-        $currentSeatUser = $this->currentSeatUser();
-        $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
-
         // If sitting in a seat, the seat's permissions govern access (except for admin dashboard)
         if ($currentSeat && !session('is_impersonating_seat')) {
             try {
+                if ($currentSeat->hasRole(['developer', 'Developer', 'super admin', 'Super Admin'])) {
+                    return true;
+                }
                 if ($currentSeat->hasPermissionTo($permission)) {
                     return true;
                 }

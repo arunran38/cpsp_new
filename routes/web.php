@@ -19,18 +19,14 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 
 Route::get('/dashboard', function () {
-    $user = Auth::user();
-    if ($user->canAccess('access admin dashboard') && !session('is_impersonating_seat')) {
-        return redirect()->route('admin.dashboard');
-    }
-    if ($user->canAccess('default compliances home')) {
-        return redirect()->route('compliances.index');
-    }
-    return redirect()->route('user.dashboard');
+    return view('dashboard');
 })->middleware(['auth'])->name('dashboard');
 
 Route::get('/', function () {
     if (Auth::check()) {
+        if (Auth::user()->canAccess('default compliances home')) {
+            return redirect()->route('compliances.index');
+        }
         return redirect()->route('dashboard');
     }
     return view('welcome');
@@ -38,15 +34,11 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/admin/dashboard', function () {
-        abort_unless(Auth::user()->canAccess('access admin dashboard'), 403, 'Unauthorized access to admin dashboard.');
-        return view('admin.dashboard');
+        return view('dashboard');
     })->name('admin.dashboard');
 
     Route::get('/user/dashboard', function () {
-        if (Auth::user()->canAccess('default compliances home')) {
-            return redirect()->route('compliances.index');
-        }
-        return view('user.dashboard');
+        return view('dashboard');
     })->name('user.dashboard');
 
     Route::resource("users", UserController::class);

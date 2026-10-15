@@ -248,7 +248,7 @@ class SeatController extends Controller
             session()->forget('is_impersonating_seat');
         }
 
-        return redirect()->route('user.dashboard')->with('success', "Switched to {$assignment->seat->seat_name} view.");
+        return redirect()->route('dashboard')->with('success', "Switched to {$assignment->seat->seat_name} view.");
     }
 
     /**
@@ -265,7 +265,7 @@ class SeatController extends Controller
 
         session()->forget(['current_seat_id', 'is_impersonating_seat']);
 
-        return redirect()->route('admin.dashboard')->with('success', 'Switched back to Admin view.');
+        return redirect()->route('dashboard')->with('success', 'Switched back to Admin view.');
     }
 
     /**

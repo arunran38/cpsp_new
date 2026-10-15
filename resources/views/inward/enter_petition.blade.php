@@ -52,12 +52,6 @@
 
         <!-- Alert / Validation Feedback -->
 
-        @if(session('error'))
-            <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-3 text-rose-800 text-sm">
-                <i data-lucide="alert-circle" class="w-5 h-5 text-rose-600 shrink-0"></i>
-                <span>{{ session('error') }}</span>
-            </div>
-        @endif
 
         @if($errors->any())
             <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 space-y-1">

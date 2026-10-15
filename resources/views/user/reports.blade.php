@@ -623,9 +623,28 @@
                             }
                         });
                     } else {
-                        if (confirm('You are about to download the Excel report for the currently filtered petitions. Do you want to proceed?')) {
-                            window.location.href = url;
-                        }
+                        Swal.fire({
+                            title: 'Download Excel Report?',
+                            text: 'You are about to download the Excel report for the currently filtered petitions.',
+                            icon: 'info',
+                            showCancelButton: true,
+                            confirmButtonColor: '#4f46e5',
+                            cancelButtonColor: '#64748b',
+                            confirmButtonText: 'Yes, Download',
+                            cancelButtonText: 'Cancel',
+                            reverseButtons: true,
+                            customClass: {
+                                popup: 'cpsp-swal-popup',
+                                title: 'cpsp-swal-title',
+                                htmlContainer: 'cpsp-swal-html',
+                                confirmButton: 'cpsp-swal-confirm-btn',
+                                cancelButton: 'cpsp-swal-cancel-btn'
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = url;
+                            }
+                        });
                     }
                     @endif
                 });

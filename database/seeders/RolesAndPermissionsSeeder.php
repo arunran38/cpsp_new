@@ -44,6 +44,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'access admin dashboard',
             'view own petitions',
             'view all petitions',
+            'view recent petitions',
 
             // Duplicate Detection & Linking
             'view duplicate warnings',
@@ -91,6 +92,8 @@ class RolesAndPermissionsSeeder extends Seeder
         // 2. Super Admin: Unrestricted full access
         $superAdmin = Role::firstOrCreate(['name' => 'super admin']);
         $superAdmin->syncPermissions(Permission::all());
+        $superAdminCap = Role::firstOrCreate(['name' => 'Super Admin']);
+        $superAdminCap->syncPermissions(Permission::all());
 
         // 2. Admin: System administrator (operations, masters, reports, charts, dashboard)
         $admin = Role::firstOrCreate(['name' => 'admin']);
@@ -112,6 +115,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'create petitions',
             'view petitions',
             'view own petitions',
+            'view recent petitions',
         ]);
 
         // 4. CPSP Desk: Grievance management, forwarding, compliances, duplicate linking, transfers
@@ -120,6 +124,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view petitions',
             'view all petitions',
             'view own petitions',
+            'view recent petitions',
             'create petitions',
             'update petitions',
             'view file transfer',
@@ -136,6 +141,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $iopHq->syncPermissions([
             'view petitions',
             'view all petitions',
+            'view recent petitions',
             'view master reports',
             'view seat distribution chart',
             'view petition status chart',
@@ -145,6 +151,33 @@ class RolesAndPermissionsSeeder extends Seeder
             'delete compliances',
             'default compliances home',
         ]);
+
+        // 6. Director: Executive oversight, state-wide analytics & visual charts
+        $director = Role::firstOrCreate(['name' => 'Director']);
+        $director->syncPermissions([
+            'view petitions',
+            'view all petitions',
+            'view recent petitions',
+            'view master reports',
+            'view seat distribution chart',
+            'view petition status chart',
+            'view compliances',
+            'view file transfer',
+            'filter transfer',
+            'view duplicate warnings',
+        ]);
+
+        // Ensure Director seat has super admin role
+        $directorSeat = \App\Models\Seat::where('seat_name', 'like', '%Director%')->first();
+        if ($directorSeat) {
+            $directorSeat->assignRole('super admin');
+        }
+
+        // Ensure Admin user has super admin role
+        $adminUser = \App\Models\User::where('pen', '100001')->orWhere('name', 'Admin')->first();
+        if ($adminUser) {
+            $adminUser->assignRole('super admin');
+        }
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>@yield('title', config('app.name', 'User Dashboard'))</title>
+    <title>@yield('title', 'CPSP Portal')</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -163,6 +163,7 @@
             margin-right: 12px;
             opacity: 0.3;
             transition: all 0.3s var(--transition-main);
+            flex-shrink: 0;
         }
         
         /* Profile Dropdown Professional Polish */
@@ -218,7 +219,7 @@
                     </div>
                     <div>
                         <a href="{{ route('dashboard') }}" class="text-[22px] tracking-tight text-white font-extrabold leading-none flex items-center">
-                            USER <span class="text-teal-400 font-black ml-1">DASHBOARD</span>
+                            CPSP <span class="text-teal-400 font-black ml-1">PORTAL</span>
                         </a>
                     </div>
                 </div>
@@ -230,15 +231,22 @@
                     activeDropdown: '{{ request()->routeIs('petitions.*') ? 'petitions' : '' }}'
                  }">
 
+                <!-- Dashboard Link -->
+                <a href="{{ route('dashboard') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl group {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') || request()->routeIs('user.dashboard') ? 'active-nav' : 'inactive-nav' }}">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 icon-bounce {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') || request()->routeIs('user.dashboard') ? 'text-indigo-400' : '' }}"></i>
+                    <span>Dashboard</span>
+                </a>
+
 
                 <!-- System Control Section -->
-                @if(Auth::check() && Auth::user()->currentSeatUser() && (Auth::user()->canAccess('view units') || Auth::user()->canAccess('view seats')))
+                @if(Auth::check() && (Auth::user()->canAccess('view units') || Auth::user()->canAccess('view departments') || Auth::user()->canAccess('view designations') || Auth::user()->canAccess('view roles') || Auth::user()->canAccess('view permissions') || Auth::user()->canAccess('view seats')))
                 <div class="pt-2 pb-2">
                     <p class="px-4 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">System Control</p>
                 </div>
                 @endif
 
-                @if(Auth::check() && Auth::user()->currentSeatUser() && Auth::user()->canAccess('view units'))
+                @if(Auth::check() && Auth::user()->canAccess('view units'))
                 <!-- Units Link -->
                 <a href="{{ route('admin.units.index') }}" 
                    class="nav-item-transition flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl group {{ request()->routeIs('admin.units.*') ? 'active-nav' : 'inactive-nav' }}">
@@ -246,8 +254,75 @@
                     <span>Units</span>
                 </a>
                 @endif
+
+                @if(Auth::check() && Auth::user()->canAccess('view departments'))
+                <!-- Departments Link -->
+                <a href="{{ route('admin.departments.index') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl group {{ request()->routeIs('admin.departments.*') ? 'active-nav' : 'inactive-nav' }}">
+                    <i data-lucide="building" class="w-5 h-5 icon-bounce {{ request()->routeIs('admin.departments.*') ? 'text-indigo-400' : '' }}"></i>
+                    <span>Departments</span>
+                </a>
+                @endif
+
+                @if(Auth::check() && Auth::user()->canAccess('view designations'))
+                <!-- Designations Link -->
+                <a href="{{ route('admin.designations.index') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl group {{ request()->routeIs('admin.designations.*') ? 'active-nav' : 'inactive-nav' }}">
+                    <i data-lucide="briefcase" class="w-5 h-5 icon-bounce {{ request()->routeIs('admin.designations.*') ? 'text-indigo-400' : '' }}"></i>
+                    <span>Designations</span>
+                </a>
+                @endif
+
+                @if(Auth::check() && (Auth::user()->canAccess('view roles') || Auth::user()->canAccess('view permissions')))
+                <!-- Roles & Permissions Dropdown -->
+                <div x-data="{ 
+                        hoverOpen: false,
+                        clickOpen: {{ request()->routeIs('admin.roles.*') || request()->routeIs('admin.permissions.*') ? 'true' : 'false' }},
+                        hoverTimeout: null,
+                        toggle() { this.clickOpen = !this.clickOpen }
+                    }" 
+                    @mouseenter="hoverOpen = true; clearTimeout(hoverTimeout)"
+                    @mouseleave="hoverTimeout = setTimeout(() => { hoverOpen = false }, 200)"
+                    class="relative">
+                    
+                    <button @click="toggle()" 
+                            class="nav-item-transition flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-xl group"
+                            :class="(hoverOpen || clickOpen) ? 'bg-white/5 text-white' : 'inactive-nav'">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="shield-check" class="w-5 h-5 icon-bounce" :class="(hoverOpen || clickOpen) ? 'text-indigo-400' : ''"></i>
+                            <span>Roles & Permissions</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': hoverOpen || clickOpen }"></i>
+                    </button>
+                    
+                    <div x-show="hoverOpen || clickOpen" 
+                         x-cloak 
+                         x-transition:enter="slide-down-enter-active" 
+                         x-transition:enter-start="slide-down-enter-from" 
+                         x-transition:enter-end="slide-down-enter-to"
+                         x-transition:leave="slide-down-enter-active"
+                         x-transition:leave-start="slide-down-enter-to"
+                         x-transition:leave-end="slide-down-enter-from"
+                         class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
+                        @if(Auth::user()->canAccess('view roles'))
+                        <a href="{{ route('admin.roles.index') }}" 
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.roles.*') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <span class="whitespace-nowrap">Roles</span>
+                        </a>
+                        @endif
+                        @if(Auth::user()->canAccess('view permissions'))
+                        <a href="{{ route('admin.permissions.index') }}" 
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.permissions.*') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <span class="whitespace-nowrap">Permissions</span>
+                        </a>
+                        @endif
+                    </div>
+                </div>
+                @endif
                 
-                @if(Auth::check() && Auth::user()->currentSeatUser() && Auth::user()->canAccess('view seats'))
+                @if(Auth::check() && Auth::user()->canAccess('view seats'))
                 <!-- Seats Dropdown -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -277,21 +352,21 @@
                          x-transition:leave="slide-down-enter-active"
                          x-transition:leave-start="slide-down-enter-to"
                          x-transition:leave-end="slide-down-enter-from"
-                         class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
+                         class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
                          
                         @if(Auth::user()->canAccess('create seats'))
                         <a href="{{ route('admin.seats.create') }}" 
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('admin.seats.create') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            Add Seat
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.seats.create') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <span class="whitespace-nowrap">Add Seat</span>
                         </a>
                         @endif
                         
                         @if(Auth::user()->canAccess('view seats'))
                         <a href="{{ route('admin.seats.index') }}" 
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('admin.seats.index') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            View/Edit Seats
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.seats.index') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <span class="whitespace-nowrap">View/Edit Seats</span>
                         </a>
                         @endif
                     </div>
@@ -299,13 +374,13 @@
                 @endif
 
                 <!-- Management Section -->
-                @if(Auth::check() && Auth::user()->currentSeatUser() && (Auth::user()->canAccess('view users') || Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('view master reports')))
+                @if(Auth::check() && (Auth::user()->canAccess('view users') || Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('view master reports')))
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Management</p>
                 </div>
                 @endif
 
-                @if(Auth::check() && Auth::user()->currentSeatUser() && Auth::user()->canAccess('view users'))
+                @if(Auth::check() && Auth::user()->canAccess('view users'))
                 <!-- Users Dropdown -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -336,21 +411,21 @@
                          x-transition:leave="slide-down-enter-active"
                          x-transition:leave-start="slide-down-enter-to"
                          x-transition:leave-end="slide-down-enter-from"
-                         class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
+                         class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
                         
                         @if(Auth::user()->canAccess('create users'))
                         <a href="{{ route('users.create') }}" 
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('users.create') ? 'active-submenu' : 'submenu-link' }}">
-                           <span class="submenu-indicator"></span>
-                           Add User
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('users.create') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator shrink-0"></span>
+                           <span class="whitespace-nowrap">Add User</span>
                         </a>
                         @endif
                         
                         @if(Auth::user()->canAccess('view users'))
                         <a href="{{ route('users.index') }}" 
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('users.index') ? 'active-submenu' : 'submenu-link' }}">
-                           <span class="submenu-indicator"></span>
-                           View/Edit Users
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('users.index') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator shrink-0"></span>
+                           <span class="whitespace-nowrap">View/Edit Users</span>
                         </a>
                         @endif
                     </div>
@@ -412,36 +487,39 @@
                          x-transition:leave="slide-down-enter-active"
                          x-transition:leave-start="slide-down-enter-to"
                          x-transition:leave-end="slide-down-enter-from"
-                         class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
+                         class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
                         
                         @if($canAccessInwardEntry)
                         <a href="{{ route('inward.enter_petition') }}" 
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.enter_petition') ? 'active-submenu' : 'submenu-link' }}">
-                           <span class="submenu-indicator"></span>
-                           Inward Registration
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.enter_petition') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator shrink-0"></span>
+                           <i data-lucide="plus-circle" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.enter_petition') ? 'text-teal-400' : '' }}"></i>
+                           <span class="whitespace-nowrap">Inward Registration</span>
                         </a>
                         
                         @if(Auth::user()->canAccess('view petitions'))
                         <a href="{{ route('inward.enter_petition', ['hide_form' => 1]) }}#view-inward-petitions" 
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
-                           <span class="submenu-indicator"></span>
-                           View Inward Petitions
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator shrink-0"></span>
+                           <i data-lucide="list" class="w-4 h-4 mr-2.5 shrink-0"></i>
+                           <span class="whitespace-nowrap">View Inward Petitions</span>
                         </a>
                         @endif
                         @endif
 
                         @if($canAccessInwardStats)
                         <a href="{{ route('inward.statistics') }}" 
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
-                           <span class="submenu-indicator"></span>
-                           Inward Statistics
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator shrink-0"></span>
+                           <i data-lucide="bar-chart-2" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.statistics') ? 'text-teal-400' : '' }}"></i>
+                           <span class="whitespace-nowrap">Inward Statistics</span>
                         </a>
                         @endif
                     </div>
                 </div>
                 @endif
 
-                @if(Auth::check() && Auth::user()->currentSeatUser() && (Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('create petitions')))
+                @if(Auth::check() && (Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('create petitions')))
                 <!-- Petitions Dropdown with Hover & Click -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -472,28 +550,28 @@
                          x-transition:leave="slide-down-enter-active"
                          x-transition:leave-start="slide-down-enter-to"
                          x-transition:leave-end="slide-down-enter-from"
-                         class="pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
+                         class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
                         
                         @if(Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('create petition') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('create_inward_petitions'))
                         <a href="{{ route('petitions.create') }}" 
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.create') ? 'active-submenu' : 'submenu-link' }}">
-                           <span class="submenu-indicator"></span>
-                           Add Petitions
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('petitions.create') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator shrink-0"></span>
+                           <span class="whitespace-nowrap">Add Petitions</span>
                         </a>
                         @endif
                         
                         @if(Auth::user()->canAccess('view petitions'))
                         <a href="{{ route('petitions.index', ['tab' => 'all']) }}" 
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
-                           <span class="submenu-indicator"></span>
-                           View Petitions
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
+                           <span class="submenu-indicator shrink-0"></span>
+                           <span class="whitespace-nowrap">View Petitions</span>
                         </a>
                         @endif
                     </div>
                 </div>
                 @endif
 
-                @if(Auth::check() && Auth::user()->currentSeatUser() && Auth::user()->canAccess('view master reports'))
+                @if(Auth::check() && Auth::user()->canAccess('view master reports'))
                 <!-- Reports -->
                 <a href="{{ route('petitions.reports') }}" 
                    class="nav-item-transition flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl group {{ request()->routeIs('petitions.reports') ? 'active-nav' : 'inactive-nav' }}">
@@ -511,13 +589,13 @@
                 </a>
                 @endif
                 
-                @if(Auth::check() && Auth::user()->currentSeatUser() && (Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin')))
+                @if(Auth::check() && (Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin')))
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Operations</p>
                 </div>
                 @endif
 
-                @if(Auth::check() && Auth::user()->currentSeatUser() && Auth::user()->canAccess('view seat diagnostics'))
+                @if(Auth::check() && Auth::user()->canAccess('view seat diagnostics'))
                 <!-- Statistical Reports Dropdown -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -543,41 +621,41 @@
                          x-transition:enter="slide-down-enter-active" 
                          x-transition:enter-start="slide-down-enter-from" 
                          x-transition:enter-end="slide-down-enter-to"
-                         x-transition:leave="slide-down-leave-active"
-                         x-transition:leave-start="slide-down-leave-from"
-                         x-transition:leave-end="slide-down-leave-to"
-                         class="submenu-container pl-11 pr-2 mt-1 space-y-1 overflow-hidden">
+                         x-transition:leave="slide-down-enter-active"
+                         x-transition:leave-start="slide-down-enter-to"
+                         x-transition:leave-end="slide-down-enter-from"
+                         class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
                         
                         <a href="{{ route('admin.seats.statistics') }}" 
                            @click="reportsOpen = true"
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('admin.seats.statistics') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            <i data-lucide="laptop" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.seats.statistics') ? 'text-teal-400' : '' }}"></i>
-                            <span>Seat Diagnostics</span>
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.seats.statistics') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="laptop" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('admin.seats.statistics') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">Seat Diagnostics</span>
                         </a>
                         
                         <a href="{{ route('admin.departments.analysis') }}" 
                            @click="reportsOpen = true"
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('admin.departments.analysis') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            <i data-lucide="building-2" class="w-4 h-4 mr-2 {{ request()->routeIs('admin.departments.analysis') ? 'text-teal-400' : '' }}"></i>
-                            <span>Department wise</span>
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.departments.analysis') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="building-2" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('admin.departments.analysis') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">Department wise</span>
                         </a>
 
                         @if(Auth::user()->canAccess('inward_statistics') || Auth::user()->canAccess('inward statistics'))
                         <a href="{{ route('inward.statistics') }}" 
                            @click="reportsOpen = true"
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator"></span>
-                            <i data-lucide="clock" class="w-4 h-4 mr-2 {{ request()->routeIs('inward.statistics') ? 'text-teal-400' : '' }}"></i>
-                            <span>Pendency Details</span>
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="clock" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.statistics') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">Pendency Details</span>
                         </a>
                         @endif
                     </div>
                 </div>
                 @endif
 
-                @if(Auth::check() && Auth::user()->currentSeatUser() && Auth::user()->canAccess('view recycle bin'))
+                @if(Auth::check() && Auth::user()->canAccess('view recycle bin'))
                 <!-- Recycle Bin -->
                 <a href="{{ route('admin.trash.index') }}" 
                    class="nav-item-transition flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl group {{ request()->routeIs('admin.trash.*') ? 'active-nav' : 'inactive-nav' }}">
@@ -688,12 +766,6 @@
                                 @endif
 
                                 <div class="py-1">
-                                    @if($user && $user->canAccess('access admin dashboard'))
-                                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors">
-                                        <i data-lucide="shield" class="w-4 h-4 text-teal-400"></i>
-                                        Admin Panel
-                                    </a>
-                                    @endif
                                     <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors">
                                         <i data-lucide="user" class="w-4 h-4 text-teal-400"></i>
                                         My Profile
