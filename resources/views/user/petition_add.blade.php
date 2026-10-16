@@ -459,8 +459,7 @@
                                 </div>
                                 <div>
                                     <x-searchable-select 
-                                        x-bind:disabled="!acc.name || acc.name.trim() === ''"
-                                        label="Department <span class='text-rose-500' x-show='acc.name && acc.name.trim()'>*</span><span class='text-xs text-slate-400 font-normal ml-1.5' x-show='!acc.name || !acc.name.trim()'>(Enter suspect name first)</span>" 
+                                        label="Department <span class='text-rose-500'>*</span>" 
                                         x-bind:name="`accused[${index}][department_id]`"
                                         x-model="acc.department_id" 
                                         :options="$departments->pluck('department_name', 'id')->toArray()" 
@@ -539,7 +538,7 @@
                 </div>
             </template>
 
-            <div class="pt-2 text-center" x-show="accused[accused.length - 1].name.trim() !== ''">
+            <div class="pt-2 text-center" x-show="accused[accused.length - 1].department_id || (accused[accused.length - 1].name && accused[accused.length - 1].name.trim() !== '')">
                 <button type="button" @click="addAccused()"
                     class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 transition-all flex items-center justify-center gap-2 w-full">
                     <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Suspect
@@ -770,14 +769,14 @@
                         <div class="space-y-4">
                             <template x-for="(acc, idx) in accused" :key="idx">
                                 <div class="bg-white rounded-xl border border-rose-100 shadow-sm overflow-hidden transition-all hover:border-rose-300"
-                                    x-show="acc.name">
+                                    x-show="acc.name || acc.department_id">
                                     <div
                                         class="bg-rose-50/50 px-5 py-3 border-b border-rose-50 flex justify-between items-center">
                                         <div class="flex items-center gap-3">
                                             <div
                                                 class="w-8 h-8 bg-rose-100 text-rose-600 rounded-full flex justify-center items-center text-xs font-bold ring-2 ring-white">
                                                 R</div>
-                                            <h5 class="font-bold text-slate-800 text-base" x-text="acc.name"></h5>
+                                            <h5 class="font-bold text-slate-800 text-base" x-text="acc.name || 'Unknown Suspect'"></h5>
                                         </div>
                                         <span
                                             class="text-[10px] bg-white text-rose-600 border border-rose-200 px-2 py-1 rounded-md font-bold uppercase tracking-wider"
@@ -998,18 +997,8 @@
                 debounceTimer: null,
 
                 init() {
-                    this.$watch('accused', (newAccused) => {
+                    this.$watch('accused', () => {
                         if (this.step === 3) this.debouncedCheckDuplicates();
-                        if (Array.isArray(newAccused)) {
-                            newAccused.forEach((a, idx) => {
-                                if (!a.name || a.name.trim() === '') {
-                                    if (a.department_id) a.department_id = '';
-                                    if (a.designation_id) a.designation_id = '';
-                                    delete this.formErrors[`accused[${idx}][department_id]`];
-                                    delete this.formErrors[`accused[${idx}][name]`];
-                                }
-                            });
-                        }
                     }, { deep: true });
                     this.$watch('complainants', () => {
                         if (this.step === 3) this.debouncedCheckDuplicates();
@@ -1201,21 +1190,12 @@
                         this.accused.forEach((a, idx) => {
                             const nameField = `accused[${idx}][name]`;
                             const deptField = `accused[${idx}][department_id]`;
-                            if (a && a.name && a.name.trim() !== '') {
-                                this.formErrors[nameField] = '';
-                                if (!a.department_id) {
-                                    this.formErrors[deptField] = 'Department is required when suspect name is entered.';
-                                    isValid = false;
-                                } else {
-                                    this.formErrors[deptField] = '';
-                                }
+                            this.formErrors[nameField] = '';
+                            if (!a || !a.department_id) {
+                                this.formErrors[deptField] = 'Department is mandatory.';
+                                isValid = false;
                             } else {
-                                this.formErrors[nameField] = '';
                                 this.formErrors[deptField] = '';
-                                if (a) {
-                                    a.department_id = '';
-                                    a.designation_id = '';
-                                }
                             }
                         });
                     }
@@ -1338,6 +1318,15 @@
                     // Check if this field is in Step 2 or Step 3
                     const stepContainer = el.closest('[x-show*="step === 2"], [x-show*="step === 3"]');
                     if (stepContainer) {
+                        if (fieldName.includes('[department_id]')) {
+                            if (!fieldValue) {
+                                this.formErrors[fieldName] = 'Department is mandatory.';
+                            } else {
+                                this.formErrors[fieldName] = '';
+                            }
+                            return;
+                        }
+
                         // For Step 2 and Step 3, only validate format if field has a value
                         if (fieldValue) {
                             if (fieldName.includes('[phone]') || fieldName === 'comp_phone' || fieldName === 'acc_phone') {
@@ -1605,15 +1594,7 @@
                     }
                 },
                 onAccusedNameChange(index) {
-                    const acc = this.accused[index];
-                    if (!acc.name || acc.name.trim() === '') {
-                        acc.department_id = '';
-                        acc.designation_id = '';
-                        delete this.formErrors[`accused[${index}][department_id]`];
-                        delete this.formErrors[`accused[${index}][name]`];
-                    } else {
-                        delete this.formErrors[`accused[${index}][name]`];
-                    }
+                    delete this.formErrors[`accused[${index}][name]`];
                 },
                 changeEntityType(accIndex, newType) {
                     let acc = this.accused[accIndex];

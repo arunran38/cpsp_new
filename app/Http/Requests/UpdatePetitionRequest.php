@@ -51,7 +51,7 @@ class UpdatePetitionRequest extends FormRequest
             $this->merge(['complainants' => $cleanedComplainants]);
         }
 
-        // Clean accused: trim strings, handle cleared accused
+        // Clean accused: trim strings, keep department even without name
         if ($this->has('accused') && is_array($this->accused)) {
             $cleanedAccused = [];
             foreach ($this->accused as $index => $acc) {
@@ -69,34 +69,22 @@ class UpdatePetitionRequest extends FormRequest
                     }
                 }
 
-                // If name is cleared/empty:
-                // Rule: Ensure that a department cannot be entered or selected without an accused person's name.
-                // If the accused name is cleared, automatically clear the associated department selection and its ID.
-                if ($name === '') {
-                    // If no other data either, completely drop it
-                    if ($phone === '' && $pen === '' && !$hasAddr) {
+                // If completely blank and there are other accused rows, drop extraneous row
+                if ($name === '' && $phone === '' && $pen === '' && !$hasAddr && empty($dept) && empty($desig)) {
+                    if (count($this->accused) > 1) {
                         continue;
                     }
-                    $cleanedAccused[] = [
-                        'entity_type' => $acc['entity_type'] ?? 'Person',
-                        'name' => null,
-                        'designation_id' => null,
-                        'department_id' => null,
-                        'phone' => $phone !== '' ? $phone : null,
-                        'pen_number' => $pen !== '' ? $pen : null,
-                        'addresses' => $acc['addresses'] ?? [],
-                    ];
-                } else {
-                    $cleanedAccused[] = [
-                        'entity_type' => $acc['entity_type'] ?? 'Person',
-                        'name' => $name,
-                        'designation_id' => $desig,
-                        'department_id' => $dept,
-                        'phone' => $phone !== '' ? $phone : null,
-                        'pen_number' => $pen !== '' ? $pen : null,
-                        'addresses' => $acc['addresses'] ?? [],
-                    ];
                 }
+
+                $cleanedAccused[] = [
+                    'entity_type' => $acc['entity_type'] ?? 'Person',
+                    'name' => $name !== '' ? $name : null,
+                    'designation_id' => $desig,
+                    'department_id' => $dept,
+                    'phone' => $phone !== '' ? $phone : null,
+                    'pen_number' => $pen !== '' ? $pen : null,
+                    'addresses' => $acc['addresses'] ?? [],
+                ];
             }
             $this->merge(['accused' => $cleanedAccused]);
         }
@@ -125,11 +113,11 @@ class UpdatePetitionRequest extends FormRequest
             'complainants.*.phone' => 'nullable|string',
             'complainants.*.email' => 'nullable|email',
             'complainants.*.addresses' => 'nullable|array',
-            'accused' => 'nullable|array',
+            'accused' => 'required|array|min:1',
             'accused.*.entity_type' => 'nullable|in:Person,Firm',
             'accused.*.name' => 'nullable|string|max:255',
             'accused.*.designation_id' => 'nullable|exists:designation_lists,id',
-            'accused.*.department_id' => 'nullable|required_with:accused.*.name|exists:department_lists,id',
+            'accused.*.department_id' => 'required|exists:department_lists,id',
             'accused.*.phone' => 'nullable|string',
             'accused.*.pen_number' => 'nullable|digits_between:6,7',
             'accused.*.addresses' => 'nullable|array',
@@ -165,7 +153,9 @@ class UpdatePetitionRequest extends FormRequest
     {
         return [
             'date_of_petition_received.before_or_equal' => 'Date of receipt cannot be in the future.',
-            'accused.*.department_id.required_with' => 'The department field is mandatory when suspect name is entered.',
+            'accused.required' => 'At least one suspect department is required.',
+            'accused.min' => 'At least one suspect department is required.',
+            'accused.*.department_id.required' => 'The department field is mandatory.',
             'accused.*.department_id.exists' => 'The selected suspect department is invalid.',
             'accused.*.designation_id.exists' => 'The selected suspect designation is invalid.',
             'accused.*.pen_number.digits_between' => 'The PEN number must be either 6 or 7 digits.',

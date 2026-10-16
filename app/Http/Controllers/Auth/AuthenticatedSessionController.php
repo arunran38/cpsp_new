@@ -32,7 +32,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        if ($request->user()->canAccess('default compliances home')) {
+        if ($request->user()->isPetitionComplianceRole()) {
             return redirect()->route('compliances.index');
         }
 

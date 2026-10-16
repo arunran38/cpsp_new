@@ -24,7 +24,7 @@ Route::get('/dashboard', function () {
 
 Route::get('/', function () {
     if (Auth::check()) {
-        if (Auth::user()->canAccess('default compliances home')) {
+        if (Auth::user()->isPetitionComplianceRole()) {
             return redirect()->route('compliances.index');
         }
         return redirect()->route('dashboard');

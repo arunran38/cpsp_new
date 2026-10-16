@@ -265,13 +265,22 @@
                         <div class="space-y-4">
                             @php
                                 $targetPetition = $petition->originalPetition ?? $petition;
-                                $complainants = $targetPetition->addresses->where('person_type', 'Complainant')->groupBy('person_name');
+                                $complainants = $targetPetition->addresses->where('person_type', 'Complainant')->groupBy(function($addr) {
+                                    if (in_array($addr->person_name, ['Unknown', 'Anonymous / Unknown', 'Unknown Suspect'])) {
+                                        return $addr->person_name . '_' . ($addr->phone ?? '') . '_' . ($addr->email ?? '');
+                                    }
+                                    return $addr->person_name;
+                                });
                             @endphp
 
-                            @forelse($complainants as $name => $addresses)
-                                @php $first = $addresses->first(); @endphp
+                            @forelse($complainants as $groupKey => $addresses)
+                                @php 
+                                    $first = $addresses->first(); 
+                                    $rawName = $first->person_name;
+                                    $displayName = in_array($rawName, ['Unknown', 'Anonymous / Unknown']) ? 'Anonymous / Unknown' : $rawName;
+                                @endphp
                                 <div class="bg-white border border-slate-200 rounded-lg p-5">
-                                    <h4 class="font-bold text-gray-900 mb-4">{{ $name }}</h4>
+                                    <h4 class="font-bold text-gray-900 mb-4">{{ $displayName }}</h4>
                                     <div class="grid grid-cols-2 gap-2 mb-4">
                                         <div class="text-xs"><span class="text-gray-600 block mb-0.5">Phone:</span> <span
                                                 class="font-semibold text-gray-900">{{ $first->phone ?? 'N/A' }}</span></div>
@@ -314,18 +323,27 @@
                         </h3>
                         <div class="space-y-4">
                             @php
-                                $accused = $targetPetition->addresses->where('person_type', 'Accused')->groupBy('person_name');
+                                $accused = $targetPetition->addresses->where('person_type', 'Accused')->groupBy(function($addr) {
+                                    if (in_array($addr->person_name, ['Unknown', 'Unknown Suspect', 'Anonymous / Unknown'])) {
+                                        return $addr->person_name . '_' . ($addr->department_id ?? '') . '_' . ($addr->designation_id ?? '') . '_' . ($addr->phone ?? '') . '_' . ($addr->pen_number ?? '') . '_' . ($addr->entity_type ?? '');
+                                    }
+                                    return $addr->person_name;
+                                });
                             @endphp
 
-                            @forelse($accused as $name => $addresses)
-                                @php $first = $addresses->first(); @endphp
+                            @forelse($accused as $groupKey => $addresses)
+                                @php 
+                                    $first = $addresses->first(); 
+                                    $rawName = $first->person_name;
+                                    $displayName = in_array($rawName, ['Unknown', 'Unknown Suspect', 'Anonymous / Unknown']) ? 'Unknown Suspect' : $rawName;
+                                @endphp
                                 <div class="bg-white border border-slate-200 rounded-lg p-5">
                                     @if(isset($first->entity_type) && $first->entity_type === 'Firm')
                                         <div class="mb-4">
                                             <span
                                                 class="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold tracking-widest uppercase rounded mb-1">Firm
                                                 / Project</span>
-                                            <h4 class="font-bold text-gray-900">{{ $name }}</h4>
+                                            <h4 class="font-bold text-gray-900">{{ $displayName }}</h4>
                                         </div>
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
                                             @if($first->designation)
@@ -345,7 +363,7 @@
                                         <div class="mb-4">
                                             <span
                                                 class="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold tracking-widest uppercase rounded mb-1">Person</span>
-                                            <h4 class="font-bold text-gray-900">{{ $name }}</h4>
+                                            <h4 class="font-bold text-gray-900">{{ $displayName }}</h4>
                                         </div>
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
                                             @if($first->designation)

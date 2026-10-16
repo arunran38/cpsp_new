@@ -11,6 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->redirectUsersTo(function () {
+            if (\Illuminate\Support\Facades\Auth::user()?->isPetitionComplianceRole()) {
+                return route('compliances.index');
+            }
+            return route('dashboard');
+        });
         $middleware->web(append: [
             \RealRashid\SweetAlert\ToSweetAlert::class,
         ]);

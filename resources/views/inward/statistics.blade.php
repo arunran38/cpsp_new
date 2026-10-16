@@ -143,7 +143,7 @@
                                     {{ $stat['occupant'] }}
                                 </td>
                                 <td class="px-4 py-4 text-center">
-                                    <a href="{{ route('petitions.index', ['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to')]) }}"
+                                    <a href="{{ route('inward.enter_petition', array_filter(['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'hide_form' => 1])) }}#view-inward-petitions"
                                         class="font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-indigo-700 px-2.5 py-0.5 rounded border border-slate-200 transition-colors block cursor-pointer text-center">
                                         {{ $stat['total_sent'] }}
                                     </a>
@@ -197,7 +197,7 @@
                             </td>
                             <td
                                 class="px-4 py-5 text-center font-black text-lg text-white hover:text-indigo-300 transition-colors">
-                                <a href="{{ route('petitions.index', ['date_from' => request('date_from'), 'date_to' => request('date_to')]) }}"
+                                <a href="{{ route('inward.enter_petition', array_filter(['date_from' => request('date_from'), 'date_to' => request('date_to'), 'hide_form' => 1])) }}#view-inward-petitions"
                                     class="block">
                                     {{ $summaryTotals['totalSent'] }}
                                 </a>

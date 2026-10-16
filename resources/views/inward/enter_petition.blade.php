@@ -441,14 +441,14 @@
                                 style="color: #1e40af !important;">
                         </div>
 
-                        @if(isset($inwardSeats) && $inwardSeats->count() > 1 && Auth::user()->canAccess('access admin dashboard'))
+                        @if(isset($seats) && $seats->count() > 0)
                             <div class="flex-1 min-w-[150px]">
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Seat</label>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">Concerned Seat</label>
                                 <select name="seat_id" @change="performLiveSearch()"
                                     class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold">
-                                    <option value="">All Inward Seats</option>
-                                    @foreach($inwardSeats as $seat)
-                                        <option value="{{ $seat->seat_id }}" {{ request('seat_id') == $seat->seat_id ? 'selected' : '' }}>
+                                    <option value="">All Concerned Seats</option>
+                                    @foreach($seats as $seat)
+                                        <option value="{{ $seat->seat_id }}" {{ (string)request('seat_id') === (string)$seat->seat_id ? 'selected' : '' }}>
                                             {{ $seat->seat_name }}
                                         </option>
                                     @endforeach
@@ -465,7 +465,7 @@
                                         $resetParams['hide_form'] = 1;
                                     }
                                 @endphp
-                                <a href="{{ route('inward.enter_petition', $resetParams) }}"
+                                <a href="{{ route('inward.enter_petition', $resetParams) }}#view-inward-petitions"
                                     class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold px-4 py-[9px] rounded-lg text-sm flex items-center gap-2 shadow-sm transition-all whitespace-nowrap"
                                     title="Clear all filters">
                                     <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
@@ -836,6 +836,13 @@
                 const formData = new FormData(form);
                 const params = new URLSearchParams(formData);
                 url.search = params.toString();
+
+                try {
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.search = params.toString();
+                    currentUrl.hash = 'view-inward-petitions';
+                    window.history.replaceState({}, '', currentUrl.toString());
+                } catch (e) {}
             }
 
             const tableContainer = document.getElementById('inward-table-container');

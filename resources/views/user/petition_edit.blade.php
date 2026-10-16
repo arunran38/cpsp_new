@@ -526,8 +526,7 @@
                                         </div>
                                         <div>
                                             <x-searchable-select
-                                                x-bind:disabled="!acc.name || acc.name.trim() === ''"
-                                                label="Department <span class='text-rose-500' x-show='acc.name && acc.name.trim()'>*</span><span class='text-xs text-slate-400 font-normal ml-1.5' x-show='!acc.name || !acc.name.trim()'>(Enter suspect name first)</span>"
+                                                label="Department <span class='text-rose-500'>*</span>"
                                                 x-bind:name="`accused[${index}][department_id]`" x-model="acc.department_id"
                                                 :options="$departments->pluck('department_name', 'id')->toArray()"
                                                 placeholder="Select Department" />
@@ -618,7 +617,7 @@
                     </template>
 
                     <div class="pt-2 text-center"
-                        x-show="accused.length > 0 && accused[accused.length - 1].name.trim() !== ''">
+                        x-show="accused.length > 0 && (accused[accused.length - 1].department_id || (accused[accused.length - 1].name && accused[accused.length - 1].name.trim() !== ''))">
                         <button type="button" @click="addAccused()"
                             class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 transition-all flex items-center justify-center gap-2 w-full">
                             <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Suspect
@@ -835,18 +834,8 @@
                 debounceTimer: null,
 
                 init() {
-                    this.$watch('accused', (newAccused) => {
+                    this.$watch('accused', () => {
                         if (this.step === 3) this.debouncedCheckDuplicates();
-                        if (Array.isArray(newAccused)) {
-                            newAccused.forEach((a, idx) => {
-                                if (!a.name || a.name.trim() === '') {
-                                    if (a.department_id) a.department_id = '';
-                                    if (a.designation_id) a.designation_id = '';
-                                    delete this.formErrors[`accused[${idx}][department_id]`];
-                                    delete this.formErrors[`accused[${idx}][name]`];
-                                }
-                            });
-                        }
                     }, { deep: true });
                     this.$watch('complainants', () => {
                         if (this.step === 3) this.debouncedCheckDuplicates();
@@ -1012,12 +1001,8 @@
 
                             if (step === 2 || step === 3) {
                                 if (step === 3 && el.name.includes('[department_id]')) {
-                                    const match = el.name.match(/accused\[(\d+)\]\[department_id\]/);
-                                    if (match) {
-                                        const index = parseInt(match[1]);
-                                        if (this.accused[index] && this.accused[index].name.trim() !== '' && !el.value) {
-                                            customError = 'This field is required.';
-                                        }
+                                    if (!el.value) {
+                                        customError = 'Department is mandatory.';
                                     }
                                 }
                                 if (customError) {
@@ -1090,22 +1075,12 @@
                         this.accused.forEach((a, idx) => {
                             const deptField = `accused[${idx}][department_id]`;
                             const nameField = `accused[${idx}][name]`;
-                            if (a && a.name && a.name.trim() !== '') {
-                                this.formErrors[nameField] = '';
-                                if (!a.department_id) {
-                                    this.formErrors[deptField] = 'Department is required when suspect name is entered.';
-                                    isValid = false;
-                                } else {
-                                    this.formErrors[deptField] = '';
-                                }
+                            this.formErrors[nameField] = '';
+                            if (!a || !a.department_id) {
+                                this.formErrors[deptField] = 'Department is mandatory.';
+                                isValid = false;
                             } else {
-                                // If accused name is cleared or empty, clear department error and clear stale department_id
                                 this.formErrors[deptField] = '';
-                                this.formErrors[nameField] = '';
-                                if (a) {
-                                    a.department_id = '';
-                                    a.designation_id = '';
-                                }
                             }
                         });
                     }
@@ -1135,6 +1110,15 @@
 
                     const stepContainer = el.closest('[x-show*="step === 2"], [x-show*="step === 3"]');
                     if (stepContainer) {
+                        if (fieldName.includes('[department_id]')) {
+                            if (!fieldValue) {
+                                this.formErrors[fieldName] = 'Department is mandatory.';
+                            } else {
+                                this.formErrors[fieldName] = '';
+                            }
+                            return;
+                        }
+
                         if (fieldValue) {
                             if (fieldName.includes('[phone]') || fieldName === 'comp_phone' || fieldName === 'acc_phone') {
                                 if (fieldValue && !/^\d{10}$/.test(fieldValue)) {
@@ -1166,19 +1150,7 @@
                                 this.formErrors[fieldName] = '';
                             }
                         } else {
-                            if (fieldName.includes('[department_id]')) {
-                                const match = fieldName.match(/accused\[(\d+)\]\[department_id\]/);
-                                if (match) {
-                                    const index = parseInt(match[1]);
-                                    if (this.accused[index] && this.accused[index].name && this.accused[index].name.trim() !== '') {
-                                        this.formErrors[fieldName] = 'This field is required.';
-                                    } else {
-                                        this.formErrors[fieldName] = '';
-                                    }
-                                }
-                            } else {
-                                this.formErrors[fieldName] = '';
-                            }
+                            this.formErrors[fieldName] = '';
                         }
                         return;
                     }
@@ -1240,17 +1212,7 @@
                                 this.formErrors[fieldName] = '';
                             }
                         } else if (fieldName.includes('[name]') || fieldName === 'comp_name') {
-                            if (fieldValue) {
-                                this.formErrors[fieldName] = '';
-                            } else if (fieldName.includes('accused')) {
-                                this.formErrors[fieldName] = '';
-                                const deptName = fieldName.replace('[name]', '[department_id]');
-                                this.formErrors[deptName] = '';
-                                const match = fieldName.match(/accused\[(\d+)\]\[name\]/);
-                                if (match && this.accused[match[1]]) {
-                                    this.accused[match[1]].department_id = '';
-                                }
-                            }
+                            this.formErrors[fieldName] = '';
                         } else {
                             if (fieldValue) {
                                 this.formErrors[fieldName] = '';
@@ -1326,15 +1288,7 @@
                     }
                 },
                 onAccusedNameChange(index) {
-                    const acc = this.accused[index];
-                    if (!acc.name || acc.name.trim() === '') {
-                        acc.department_id = '';
-                        acc.designation_id = '';
-                        delete this.formErrors[`accused[${index}][department_id]`];
-                        delete this.formErrors[`accused[${index}][name]`];
-                    } else {
-                        delete this.formErrors[`accused[${index}][name]`];
-                    }
+                    delete this.formErrors[`accused[${index}][name]`];
                 },
                 changeEntityType(accIndex, newType) {
                     let acc = this.accused[accIndex];

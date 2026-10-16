@@ -62,8 +62,8 @@ class PetitionController extends Controller
 
         $filters = $request->validate([
             'filter' => 'nullable|in:all,transferred,returned',
-            'date_from' => 'nullable|date_format:Y-m-d',
-            'date_to' => 'nullable|date_format:Y-m-d|after_or_equal:date_from',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
             'seat_id' => 'nullable|exists:seats,seat_id',
         ]);
         $filter = $filters['filter'] ?? 'all';
@@ -83,28 +83,24 @@ class PetitionController extends Controller
         $transfersQuery = Petition::with(['seat.activeAssignment.user', 'user', 'addresses', 'cpspOpenedByUser', 'cpspOpenedBySeat', 'returnedByUser', 'processedByUser', 'processedBySeat'])
             ->whereNull('linked_petition_id');
 
-        if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
-            if ($user->hasRole(['inward', 'Inward'])) {
-                // Shared Inward Visibility: Let Inward role users see all inward petitions created by ANY inward user
-                $inwardUserIds = \App\Models\User::role(['inward', 'Inward'])->pluck('user_id');
-                $transfersQuery->whereIn('user_id', $inwardUserIds);
-            } else {
-                // Regular user: only their own
-                $currentSeat = $user->currentSeatUser();
-                $transfersQuery->where(function($q) use ($user, $currentSeat) {
-                    $q->where('user_id', $user->user_id);
-                    if ($currentSeat) {
-                        $q->orWhere('seat_id', $currentSeat->seat_id);
-                    }
-                });
-            }
-        } else {
-            // Admin can view all (or filter by seat if requested)
-            if ($request->filled('seat_id')) {
-                $transfersQuery->whereHas('user.seatUsers', function($sq) use ($request) {
-                    $sq->where('seat_id', $request->seat_id);
-                });
-            }
+        $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
+            ($user->currentSeatUser()?->seat && (
+                $user->currentSeatUser()->seat->hasRole(['inward', 'Inward']) || 
+                str_contains(strtolower($user->currentSeatUser()->seat->seat_name), 'inward')
+            ));
+
+        if (!$user->canAccess('view all petitions') && !$isInwardUser) {
+            $currentSeat = $user->currentSeatUser();
+            $transfersQuery->where(function($q) use ($user, $currentSeat) {
+                $q->where('user_id', $user->user_id);
+                if ($currentSeat) {
+                    $q->orWhere('seat_id', $currentSeat->seat_id);
+                }
+            });
+        }
+
+        if ($request->filled('seat_id')) {
+            $transfersQuery->where('seat_id', $request->seat_id);
         }
 
         if ($request->filled('search')) {
@@ -126,11 +122,23 @@ class PetitionController extends Controller
         }
 
         if (!empty($filters['date_from'])) {
-            $transfersQuery->whereDate('created_at', '>=', $filters['date_from']);
+            $transfersQuery->where(function($q) use ($filters) {
+                $q->whereDate('date_of_petition_received', '>=', $filters['date_from'])
+                  ->orWhere(function($sub) use ($filters) {
+                      $sub->whereNull('date_of_petition_received')
+                          ->whereDate('created_at', '>=', $filters['date_from']);
+                  });
+            });
         }
 
         if (!empty($filters['date_to'])) {
-            $transfersQuery->whereDate('created_at', '<=', $filters['date_to']);
+            $transfersQuery->where(function($q) use ($filters) {
+                $q->whereDate('date_of_petition_received', '<=', $filters['date_to'])
+                  ->orWhere(function($sub) use ($filters) {
+                      $sub->whereNull('date_of_petition_received')
+                          ->whereDate('created_at', '<=', $filters['date_to']);
+                  });
+            });
         }
 
         $countsQuery = clone $transfersQuery;
@@ -174,6 +182,7 @@ class PetitionController extends Controller
         $filters = $request->validate([
             'date_from' => 'nullable|date',
             'date_to' => 'nullable|date|after_or_equal:date_from',
+            'seat_id' => 'nullable|exists:seats,seat_id',
         ]);
 
         $filter = $request->query('filter', 'all');
@@ -181,7 +190,13 @@ class PetitionController extends Controller
         $transfersQuery = Petition::with(['user', 'seat.activeAssignment.user', 'unit', 'addresses'])
             ->whereNull('linked_petition_id');
 
-        if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
+        $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
+            ($user->currentSeatUser()?->seat && (
+                $user->currentSeatUser()->seat->hasRole(['inward', 'Inward']) || 
+                str_contains(strtolower($user->currentSeatUser()->seat->seat_name), 'inward')
+            ));
+
+        if (!$user->canAccess('view all petitions') && !$isInwardUser) {
             $currentSeat = $user->currentSeatUser();
             $transfersQuery->where(function($q) use ($user, $currentSeat) {
                 $q->where('user_id', $user->user_id);
@@ -189,6 +204,10 @@ class PetitionController extends Controller
                     $q->orWhere('seat_id', $currentSeat->seat_id);
                 }
             });
+        }
+
+        if ($request->filled('seat_id')) {
+            $transfersQuery->where('seat_id', $request->seat_id);
         }
 
         if ($request->filled('search')) {
@@ -216,11 +235,23 @@ class PetitionController extends Controller
         }
 
         if (!empty($filters['date_from'])) {
-            $transfersQuery->whereDate('created_at', '>=', $filters['date_from']);
+            $transfersQuery->where(function($q) use ($filters) {
+                $q->whereDate('date_of_petition_received', '>=', $filters['date_from'])
+                  ->orWhere(function($sub) use ($filters) {
+                      $sub->whereNull('date_of_petition_received')
+                          ->whereDate('created_at', '>=', $filters['date_from']);
+                  });
+            });
         }
 
         if (!empty($filters['date_to'])) {
-            $transfersQuery->whereDate('created_at', '<=', $filters['date_to']);
+            $transfersQuery->where(function($q) use ($filters) {
+                $q->whereDate('date_of_petition_received', '<=', $filters['date_to'])
+                  ->orWhere(function($sub) use ($filters) {
+                      $sub->whereNull('date_of_petition_received')
+                          ->whereDate('created_at', '<=', $filters['date_to']);
+                  });
+            });
         }
 
         $transfers = $transfersQuery->latest('created_at')->get();
@@ -351,10 +382,22 @@ class PetitionController extends Controller
         $petitionsQuery = Petition::whereNull('linked_petition_id');
 
         if ($dateFrom) {
-            $petitionsQuery->whereDate('date_of_petition_received', '>=', $dateFrom);
+            $petitionsQuery->where(function($q) use ($dateFrom) {
+                $q->whereDate('date_of_petition_received', '>=', $dateFrom)
+                  ->orWhere(function($sub) use ($dateFrom) {
+                      $sub->whereNull('date_of_petition_received')
+                          ->whereDate('created_at', '>=', $dateFrom);
+                  });
+            });
         }
         if ($dateTo) {
-            $petitionsQuery->whereDate('date_of_petition_received', '<=', $dateTo);
+            $petitionsQuery->where(function($q) use ($dateTo) {
+                $q->whereDate('date_of_petition_received', '<=', $dateTo)
+                  ->orWhere(function($sub) use ($dateTo) {
+                      $sub->whereNull('date_of_petition_received')
+                          ->whereDate('created_at', '<=', $dateTo);
+                  });
+            });
         }
 
         $petitions = $petitionsQuery->get();
@@ -1195,17 +1238,24 @@ class PetitionController extends Controller
      */
     private function formatAddressesForAlpine(Petition $petition, string $type): array
     {
-        return $petition->addresses->where('person_type', $type)->groupBy('person_name')
-            ->map(function ($addresses, $name) {
+        return $petition->addresses->where('person_type', $type)->groupBy(function ($addr) {
+            if (in_array($addr->person_name, ['Unknown', 'Unknown Suspect', 'Anonymous / Unknown'])) {
+                return $addr->person_name . '_' . ($addr->department_id ?? '') . '_' . ($addr->designation_id ?? '') . '_' . ($addr->phone ?? '') . '_' . ($addr->pen_number ?? '') . '_' . ($addr->entity_type ?? '');
+            }
+            return $addr->person_name;
+        })
+            ->map(function ($addresses, $groupKey) {
                 $first = $addresses->first();
+                $rawName = $first->person_name;
+                $displayName = in_array($rawName, ['Unknown', 'Unknown Suspect', 'Anonymous / Unknown']) ? '' : (string) $rawName;
                 return [
                     'id' => rand(1000, 9999),
-                    'name' => (string) $name,
-                    'phone' => (string) $first->phone,
+                    'name' => $displayName,
+                    'phone' => (string) ($first->phone ?? ''),
                     'entity_type' => $first->entity_type ?? 'Person',
-                    'designation_id' => (string) $first->designation_id,
-                    'department_id' => (string) $first->department_id,
-                    'pen_number' => (string) $first->pen_number,
+                    'designation_id' => (string) ($first->designation_id ?? ''),
+                    'department_id' => (string) ($first->department_id ?? ''),
+                    'pen_number' => (string) ($first->pen_number ?? ''),
                     'addresses' => $addresses->map(fn($addr) => [
                         'address_type' => (string) $addr->address_type,
                         'address' => (string) ($addr->full_address === 'Not provided' ? '' : $addr->full_address),

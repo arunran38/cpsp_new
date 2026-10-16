@@ -166,4 +166,62 @@ class User extends Authenticatable
             return false;
         }
     }
+
+    /**
+     * Check if the user is in the Petition Compliance role.
+     */
+    public function isPetitionComplianceRole(): bool
+    {
+        // Admins, Super Admins, and Developers land on Dashboard
+        try {
+            if ($this->hasRole(['super admin', 'Super Admin', 'admin', 'Admin', 'developer', 'Developer'])) {
+                return false;
+            }
+        } catch (\Exception $e) { }
+
+        $currentSeatUser = $this->currentSeatUser();
+        $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
+
+        if ($currentSeat) {
+            try {
+                if ($currentSeat->hasRole(['super admin', 'Super Admin', 'admin', 'Admin', 'developer', 'Developer'])) {
+                    return false;
+                }
+            } catch (\Exception $e) { }
+        }
+
+        $complianceRoles = [
+            'petition compliances',
+            'petition compliance',
+            'Petition Compliances',
+            'Petition Compliance',
+        ];
+
+        // Check if user has the role directly
+        try {
+            if ($this->hasRole($complianceRoles)) {
+                return true;
+            }
+        } catch (\Exception $e) { }
+
+        // Check if user's active seat has the role
+        if ($currentSeat) {
+            try {
+                if ($currentSeat->hasRole($complianceRoles)) {
+                    return true;
+                }
+            } catch (\Exception $e) { }
+        }
+
+        // Check if any active assigned seat has the role
+        try {
+            foreach ($this->seatUsers()->where('is_active', true)->with('seat.roles')->get() as $su) {
+                if ($su->seat && $su->seat->hasRole($complianceRoles)) {
+                    return true;
+                }
+            }
+        } catch (\Exception $e) { }
+
+        return false;
+    }
 }
