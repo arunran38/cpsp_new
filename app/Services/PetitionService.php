@@ -152,8 +152,23 @@ class PetitionService
     public function processPersons(array $persons, string $type, int $petitionId): void
     {
         foreach ($persons as $person) {
+            $hasDetails = !empty($person['phone']) || !empty($person['email']) || !empty($person['pen_number']);
+            $hasAddress = false;
+            if (isset($person['addresses']) && is_array($person['addresses'])) {
+                foreach ($person['addresses'] as $addr) {
+                    if (!empty(trim($addr['address'] ?? ''))) {
+                        $hasAddress = true;
+                        break;
+                    }
+                }
+            }
+
             if (empty($person['name'])) {
-                continue;
+                if ($hasDetails || $hasAddress) {
+                    $person['name'] = ($type === 'Complainant') ? 'Anonymous / Unknown' : 'Unknown';
+                } else {
+                    continue;
+                }
             }
 
             $personName = $person['name'];

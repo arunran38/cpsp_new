@@ -18,6 +18,90 @@ class UpdatePetitionRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        // Clean complainants: trim strings and remove completely empty complainants
+        if ($this->has('complainants') && is_array($this->complainants)) {
+            $cleanedComplainants = [];
+            foreach ($this->complainants as $index => $comp) {
+                if (!is_array($comp)) continue;
+                $name = isset($comp['name']) ? trim($comp['name']) : '';
+                $phone = isset($comp['phone']) ? trim($comp['phone']) : '';
+                $email = isset($comp['email']) ? trim($comp['email']) : '';
+
+                $hasAddr = false;
+                if (!empty($comp['addresses']) && is_array($comp['addresses'])) {
+                    foreach ($comp['addresses'] as $addr) {
+                        if (!empty(trim($addr['address'] ?? ''))) { $hasAddr = true; break; }
+                    }
+                }
+
+                // If completely blank, drop it
+                if ($name === '' && $phone === '' && $email === '' && !$hasAddr) {
+                    continue;
+                }
+
+                $cleanedComplainants[] = [
+                    'name' => $name !== '' ? $name : null,
+                    'phone' => $phone !== '' ? $phone : null,
+                    'email' => $email !== '' ? $email : null,
+                    'addresses' => $comp['addresses'] ?? [],
+                ];
+            }
+            $this->merge(['complainants' => $cleanedComplainants]);
+        }
+
+        // Clean accused: trim strings, handle cleared accused
+        if ($this->has('accused') && is_array($this->accused)) {
+            $cleanedAccused = [];
+            foreach ($this->accused as $index => $acc) {
+                if (!is_array($acc)) continue;
+                $name = isset($acc['name']) ? trim($acc['name']) : '';
+                $phone = isset($acc['phone']) ? trim($acc['phone']) : '';
+                $pen = isset($acc['pen_number']) ? trim($acc['pen_number']) : '';
+                $dept = !empty($acc['department_id']) ? $acc['department_id'] : null;
+                $desig = !empty($acc['designation_id']) ? $acc['designation_id'] : null;
+
+                $hasAddr = false;
+                if (!empty($acc['addresses']) && is_array($acc['addresses'])) {
+                    foreach ($acc['addresses'] as $addr) {
+                        if (!empty(trim($addr['address'] ?? ''))) { $hasAddr = true; break; }
+                    }
+                }
+
+                // If name is cleared/empty:
+                // Rule: Ensure that a department cannot be entered or selected without an accused person's name.
+                // If the accused name is cleared, automatically clear the associated department selection and its ID.
+                if ($name === '') {
+                    // If no other data either, completely drop it
+                    if ($phone === '' && $pen === '' && !$hasAddr) {
+                        continue;
+                    }
+                    $cleanedAccused[] = [
+                        'entity_type' => $acc['entity_type'] ?? 'Person',
+                        'name' => null,
+                        'designation_id' => null,
+                        'department_id' => null,
+                        'phone' => $phone !== '' ? $phone : null,
+                        'pen_number' => $pen !== '' ? $pen : null,
+                        'addresses' => $acc['addresses'] ?? [],
+                    ];
+                } else {
+                    $cleanedAccused[] = [
+                        'entity_type' => $acc['entity_type'] ?? 'Person',
+                        'name' => $name,
+                        'designation_id' => $desig,
+                        'department_id' => $dept,
+                        'phone' => $phone !== '' ? $phone : null,
+                        'pen_number' => $pen !== '' ? $pen : null,
+                        'addresses' => $acc['addresses'] ?? [],
+                    ];
+                }
+            }
+            $this->merge(['accused' => $cleanedAccused]);
+        }
+    }
+
     public function rules(): array
     {
         $routePetition = $this->route('petition');
@@ -37,15 +121,15 @@ class UpdatePetitionRequest extends FormRequest
             'proposed_action' => 'nullable|string',
             'mode_others' => 'nullable|string',
             'complainants' => 'nullable|array',
-            'complainants.*.name' => 'nullable|string',
+            'complainants.*.name' => 'nullable|string|max:255',
             'complainants.*.phone' => 'nullable|string',
             'complainants.*.email' => 'nullable|email',
             'complainants.*.addresses' => 'nullable|array',
             'accused' => 'nullable|array',
             'accused.*.entity_type' => 'nullable|in:Person,Firm',
-            'accused.*.name' => 'nullable|string',
+            'accused.*.name' => 'nullable|string|max:255',
             'accused.*.designation_id' => 'nullable|exists:designation_lists,id',
-            'accused.*.department_id' => 'required_with:accused.*.name|exists:department_lists,id',
+            'accused.*.department_id' => 'nullable|required_with:accused.*.name|exists:department_lists,id',
             'accused.*.phone' => 'nullable|string',
             'accused.*.pen_number' => 'nullable|digits_between:6,7',
             'accused.*.addresses' => 'nullable|array',
@@ -56,12 +140,35 @@ class UpdatePetitionRequest extends FormRequest
         ];
     }
 
+    public function attributes(): array
+    {
+        return [
+            'receipt_no' => 'receipt number',
+            'date_of_petition_received' => 'date of receipt',
+            'nature_of_petition' => 'nature of petition',
+            'mode_of_petition_received' => 'mode of petition',
+            'description' => 'description',
+            'complainants' => 'complainants',
+            'complainants.*.name' => 'complainant full name',
+            'complainants.*.phone' => 'complainant phone number',
+            'complainants.*.email' => 'complainant email address',
+            'accused' => 'suspects',
+            'accused.*.name' => 'suspect full name',
+            'accused.*.department_id' => 'suspect department',
+            'accused.*.designation_id' => 'suspect designation',
+            'accused.*.phone' => 'suspect phone number',
+            'accused.*.pen_number' => 'suspect PEN number',
+        ];
+    }
+
     public function messages(): array
     {
         return [
-            'date_of_petition_received.before_or_equal' => 'Date cannot be in the future.',
+            'date_of_petition_received.before_or_equal' => 'Date of receipt cannot be in the future.',
+            'accused.*.department_id.required_with' => 'The department field is mandatory when suspect name is entered.',
+            'accused.*.department_id.exists' => 'The selected suspect department is invalid.',
+            'accused.*.designation_id.exists' => 'The selected suspect designation is invalid.',
             'accused.*.pen_number.digits_between' => 'The PEN number must be either 6 or 7 digits.',
-            'accused.*.department_id.required_with' => 'The department field is mandatory when accused name is entered.',
         ];
     }
 }

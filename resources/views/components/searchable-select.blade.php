@@ -1,4 +1,7 @@
 @props(['name' => null, 'label' => null, 'options' => [], 'selected' => null, 'placeholder' => 'Select an option...'])
+@php
+    $disabledExpr = $attributes->get('x-bind:disabled');
+@endphp
 
 <div class="w-full space-y-1.5" x-modelable="selected" {{ $attributes->whereStartsWith('x-model') }} x-data="{ 
         open: false, 
@@ -6,6 +9,13 @@
         selected: @js($selected),
         selectedLabel: '',
         options: @js($options),
+        get isDisabled() {
+            @if($disabledExpr)
+                return Boolean({{ $disabledExpr }});
+            @else
+                return false;
+            @endif
+        },
         get filteredOptions() {
             if (this.search === '') return this.options;
             return Object.fromEntries(
@@ -24,7 +34,22 @@
                 } else {
                     this.selectedLabel = '';
                 }
+                this.$nextTick(() => {
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                });
             });
+            @if($disabledExpr)
+            this.$watch('isDisabled', (disabled) => {
+                if (disabled) {
+                    this.open = false;
+                    if (this.selected) {
+                        this.select('', '');
+                    }
+                }
+            });
+            @endif
         },
         select(val, label) {
             this.selected = val;
@@ -45,25 +70,32 @@
     @endif
 
     <div class="relative group">
-        <div @click="open = !open; if(open) $nextTick(() => $refs.searchInput.focus())"
-            class="flex items-center justify-between w-full px-4 py-2.5 text-sm bg-white border rounded-xl text-slate-900 transition-all duration-200 cursor-pointer outline-none shadow-sm"
+        <div @click="if (isDisabled) return; open = !open; if(open) $nextTick(() => $refs.searchInput.focus())"
+            class="flex items-center justify-between w-full px-4 py-2.5 text-sm rounded-xl transition-all duration-200 outline-none shadow-sm"
             :class="[
-                (typeof formErrors !== 'undefined' && formErrors && $refs.hiddenInput && formErrors[$refs.hiddenInput.name]) 
-                    ? 'border-rose-500 ring-4 ring-rose-500/10' 
-                    : (open ? 'border-indigo-500 ring-4 ring-indigo-500/10' : 'border-slate-200 hover:border-slate-300')
+                isDisabled
+                    ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed select-none opacity-70'
+                    : 'bg-white text-slate-900 cursor-pointer ' + ((typeof formErrors !== 'undefined' && formErrors && $refs.hiddenInput && formErrors[$refs.hiddenInput.name]) 
+                        ? 'border-rose-500 ring-4 ring-rose-500/10' 
+                        : (open ? 'border-indigo-500 ring-4 ring-indigo-500/10' : 'border-slate-200 hover:border-slate-300'))
             ]">
 
             <div class="flex items-center gap-2 truncate">
-                <span x-text="selectedLabel || '{{ $placeholder }}'" class="font-medium truncate transition-colors"
-                    :class="!selectedLabel ? 'text-slate-400' : 'text-black'"></span>
+                <span x-text="selectedLabel || (isDisabled ? 'Enter suspect name first' : '{{ $placeholder }}')" class="font-medium truncate transition-colors"
+                    :class="(!selectedLabel || isDisabled) ? 'text-slate-400' : 'text-black'"></span>
             </div>
 
             <input type="hidden" x-ref="hiddenInput" @if($name) name="{{ $name }}" @endif {{ $attributes->whereStartsWith('x-bind:name') }}
                 :value="selected">
 
-            <div class="flex-shrink-0 ml-2">
+            <div class="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                <button type="button" x-show="selected && !isDisabled" @click.stop="select('', '')"
+                    class="text-slate-400 hover:text-rose-500 p-0.5 rounded-full hover:bg-slate-100 transition-colors"
+                    title="Clear selection">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
                 <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform duration-300"
-                    :class="open ? 'rotate-180 text-indigo-600' : ''"></i>
+                    :class="open && !isDisabled ? 'rotate-180 text-indigo-600' : ''"></i>
             </div>
         </div>
         <template x-if="typeof formErrors !== 'undefined' && formErrors && $refs.hiddenInput && formErrors[$refs.hiddenInput.name]">

@@ -32,8 +32,35 @@
 
 
 
+        @if ($errors->any())
+            <div
+                class="bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r-xl shadow-sm mb-6 animate-in fade-in slide-in-from-top-2">
+                <div class="flex items-start gap-3">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5"></i>
+                    <div>
+                        <h3 class="text-sm font-bold text-rose-800 mb-1">Please fix the following validation errors:</h3>
+                        <ul class="list-disc list-inside text-sm text-rose-700 space-y-1">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
 
-        <!-- Stepper Navigation (Catchy Dark Premium) -->
+        @if (session('error'))
+            <div
+                class="bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r-xl shadow-sm mb-6 animate-in fade-in slide-in-from-top-2">
+                <div class="flex items-start gap-3">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5"></i>
+                    <div>
+                        <h3 class="text-sm font-bold text-rose-800 mb-1">Error</h3>
+                        <p class="text-sm text-rose-700">{{ session('error') }}</p>
+                    </div>
+                </div>
+            </div>
+        @endif
         <div class="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl mb-6 py-4 px-6 sm:py-6 sm:px-10">
             <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
                 <div class="w-96 h-96 bg-blue-600/20 rounded-full blur-[80px]"></div>
@@ -105,8 +132,8 @@
 
         <!-- Form Sections (Minimalist Cards) -->
         <form method="POST" action="{{ route('petitions.store') }}" enctype="multipart/form-data"
-            class="bg-white rounded-2xl shadow-sm border border-slate-200" id="petitionFormElement"
-            @focusout="validateField($event)" @input="clearError($event)" @change="clearError($event)">
+            class="bg-white rounded-2xl shadow-sm border border-slate-200" id="petitionFormElement" novalidate
+            @submit="handleSubmit($event)" @focusout="validateField($event)" @input="clearError($event)" @change="clearError($event)">
             @csrf
             <input type="hidden" name="step" :value="step">
 
@@ -206,7 +233,7 @@
                                 <!-- Fields -->
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                     <div>
-                                        <x-input label="Name" name="comp_name" x-bind:name="`complainants[${index}][name]`"
+                                        <x-input label="Full Name" name="comp_name" x-bind:name="`complainants[${index}][name]`"
                                             x-model="comp.name" placeholder="Full Name" />
                                     </div>
                                     <div>
@@ -384,10 +411,16 @@
                             </div>
                         </div>
 
-                        <button type="button" @click="removeAccused(index)" x-show="accused.length > 1"
-                            class="text-rose-600 hover:text-rose-700 text-xs font-semibold flex items-center gap-1 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="clearAccused(index)" x-show="accused.length === 1 && (acc.name || acc.department_id || acc.phone || acc.pen_number)"
+                                class="text-amber-700 hover:text-amber-800 text-xs font-semibold flex items-center gap-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg transition-colors">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Clear Suspect Details
+                            </button>
+                            <button type="button" @click="removeAccused(index)" x-show="accused.length > 1"
+                                class="text-rose-600 hover:text-rose-700 text-xs font-semibold flex items-center gap-1 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove
+                            </button>
+                        </div>
                     </div>
 
                     <div class="p-6 pt-7">
@@ -396,14 +429,13 @@
                             <div class="grid gap-6 grid-cols-1"
                                 :class="acc.entity_type === 'Person' ? 'md:grid-cols-3' : 'md:grid-cols-2'">
                                 <div x-show="acc.entity_type === 'Person'">
-                                    <x-input label="Name" name="acc_name" x-bind:name="`accused[${index}][name]`"
-                                        x-model="acc.name" placeholder="Full Name"
-                                        x-bind:required="acc.entity_type === 'Person'" />
+                                    <x-input label="Full Name" name="acc_name" x-bind:name="`accused[${index}][name]`"
+                                        x-model="acc.name" @input="onAccusedNameChange(index)" placeholder="Legal Name" />
                                 </div>
                                 <div x-show="acc.entity_type === 'Firm'">
                                     <x-input label="Firm / Project Name" name="acc_firm_name"
                                         x-bind:name="`accused[${index}][name]`" x-model="acc.name"
-                                        placeholder="Firm / Project Name" x-bind:required="acc.entity_type === 'Firm'" />
+                                        @input="onAccusedNameChange(index)" placeholder="Firm / Project Name" />
                                 </div>
                                 <div>
                                     <x-input label="Phone Number" name="acc_phone" x-bind:name="`accused[${index}][phone]`"
@@ -426,8 +458,13 @@
                                         placeholder="Select Designation" />
                                 </div>
                                 <div>
-                                    <x-searchable-select label="Department <span class='text-rose-500' x-show='acc.name.trim().length > 0'>*</span>" x-bind:name="`accused[${index}][department_id]`"
-                                        x-model="acc.department_id" :options="$departments->pluck('department_name', 'id')->toArray()" placeholder="Select Department" />
+                                    <x-searchable-select 
+                                        x-bind:disabled="!acc.name || acc.name.trim() === ''"
+                                        label="Department <span class='text-rose-500' x-show='acc.name && acc.name.trim()'>*</span><span class='text-xs text-slate-400 font-normal ml-1.5' x-show='!acc.name || !acc.name.trim()'>(Enter suspect name first)</span>" 
+                                        x-bind:name="`accused[${index}][department_id]`"
+                                        x-model="acc.department_id" 
+                                        :options="$departments->pluck('department_name', 'id')->toArray()" 
+                                        placeholder="Select Department" />
                                 </div>
                             </div>
                         </div>
@@ -961,9 +998,19 @@
                 debounceTimer: null,
 
                 init() {
-                    this.$watch('accused', () => {
+                    this.$watch('accused', (newAccused) => {
                         if (this.step === 3) this.debouncedCheckDuplicates();
-                    });
+                        if (Array.isArray(newAccused)) {
+                            newAccused.forEach((a, idx) => {
+                                if (!a.name || a.name.trim() === '') {
+                                    if (a.department_id) a.department_id = '';
+                                    if (a.designation_id) a.designation_id = '';
+                                    delete this.formErrors[`accused[${idx}][department_id]`];
+                                    delete this.formErrors[`accused[${idx}][name]`];
+                                }
+                            });
+                        }
+                    }, { deep: true });
                     this.$watch('complainants', () => {
                         if (this.step === 3) this.debouncedCheckDuplicates();
                     });
@@ -1049,6 +1096,39 @@
                         this.scrollToTop();
                     }
                 },
+                handleSubmit(event) {
+                    // Validate step 1
+                    if (!this.validateStep(1)) {
+                        event.preventDefault();
+                        this.step = 1;
+                        this.scrollToTop();
+                        if (window.showToast) {
+                            window.showToast('error', 'Please fill in all required Petition Details before submitting.');
+                        }
+                        return false;
+                    }
+                    // Validate step 2
+                    if (!this.validateStep(2)) {
+                        event.preventDefault();
+                        this.step = 2;
+                        this.scrollToTop();
+                        if (window.showToast) {
+                            window.showToast('error', 'Please fix errors in Complainant details before submitting.');
+                        }
+                        return false;
+                    }
+                    // Validate step 3
+                    if (!this.validateStep(3)) {
+                        event.preventDefault();
+                        this.step = 3;
+                        this.scrollToTop();
+                        if (window.showToast) {
+                            window.showToast('error', 'Please fix errors in Suspect details before submitting.');
+                        }
+                        return false;
+                    }
+                    return true;
+                },
                 validateStep(step) {
                     let isValid = true;
                     const formElements = document.getElementById('petitionFormElement').querySelectorAll('input, select, textarea');
@@ -1066,39 +1146,11 @@
                                 }
                             }
 
-                            // For Step 2 and Step 3, skip required validation but still check format
-                            if (step === 2 || step === 3) {
-                                if (step === 3 && el.name.includes('[department_id]')) {
-                                    const match = el.name.match(/accused\[(\d+)\]\[department_id\]/);
-                                    if (match) {
-                                        const index = parseInt(match[1]);
-                                        if (this.accused[index] && this.accused[index].name.trim() !== '' && !el.value) {
-                                            customError = 'The department field is mandatory when accused name is entered.';
-                                        }
-                                    }
-                                }
-                                // Only validate format, not required status
-                                if (customError) {
-                                    isValid = false;
-                                    this.formErrors[el.name] = customError;
-                                } else if (el.value && !el.checkValidity()) {
-                                    isValid = false;
-                                    if (el.validity.patternMismatch) {
-                                        this.formErrors[el.name] = 'Invalid format.';
-                                    } else if (el.validity.typeMismatch) {
-                                        this.formErrors[el.name] = 'Please enter a valid value.';
-                                    } else {
-                                        this.formErrors[el.name] = el.validationMessage;
-                                    }
-                                } else {
-                                    this.formErrors[el.name] = '';
-                                }
-                            } else {
-                                // For other steps, validate normally
-                                if (customError) {
-                                    isValid = false;
-                                    this.formErrors[el.name] = customError;
-                                } else if (!el.checkValidity()) {
+                            if (customError) {
+                                isValid = false;
+                                this.formErrors[el.name] = customError;
+                            } else if (step === 1) {
+                                if (!el.checkValidity()) {
                                     isValid = false;
                                     if (el.validity.valueMissing) {
                                         this.formErrors[el.name] = 'This field is required.';
@@ -1117,6 +1169,56 @@
                             }
                         }
                     });
+
+                    // Explicit check for Step 1 required fields
+                    if (step === 1) {
+                        const step1Required = [
+                            { key: 'receipt_no', name: 'receipt_no' },
+                            { key: 'date', name: 'date_of_petition_received' },
+                            { key: 'nature', name: 'nature_of_petition' },
+                            { key: 'mode', name: 'mode_of_petition_received' },
+                            { key: 'description', name: 'description' }
+                        ];
+                        step1Required.forEach(f => {
+                            const val = this.petitionDetails[f.key];
+                            if (!val || String(val).trim() === '') {
+                                this.formErrors[f.name] = 'This field is required.';
+                                isValid = false;
+                            }
+                        });
+                        if (this.petitionDetails.mode === 'others') {
+                            if (!this.petitionDetails.mode_others || this.petitionDetails.mode_others.trim() === '') {
+                                this.formErrors['mode_others'] = 'This field is required.';
+                                isValid = false;
+                            }
+                        }
+                    } else if (step === 2) {
+                        this.complainants.forEach((c, idx) => {
+                            const nameField = `complainants[${idx}][name]`;
+                            this.formErrors[nameField] = '';
+                        });
+                    } else if (step === 3) {
+                        this.accused.forEach((a, idx) => {
+                            const nameField = `accused[${idx}][name]`;
+                            const deptField = `accused[${idx}][department_id]`;
+                            if (a && a.name && a.name.trim() !== '') {
+                                this.formErrors[nameField] = '';
+                                if (!a.department_id) {
+                                    this.formErrors[deptField] = 'Department is required when suspect name is entered.';
+                                    isValid = false;
+                                } else {
+                                    this.formErrors[deptField] = '';
+                                }
+                            } else {
+                                this.formErrors[nameField] = '';
+                                this.formErrors[deptField] = '';
+                                if (a) {
+                                    a.department_id = '';
+                                    a.designation_id = '';
+                                }
+                            }
+                        });
+                    }
 
                     // Check for duplicates in Step 2 (Complainants) - only if there are complainants
                     if (step === 2 && isValid && this.complainants.some(c => c.name.trim() || c.phone.trim())) {
@@ -1156,6 +1258,19 @@
                                 }
                             });
                         }
+                    }
+
+                    if (!isValid) {
+                        this.$nextTick(() => {
+                            const firstErrKey = Object.keys(this.formErrors).find(k => this.formErrors[k]);
+                            if (firstErrKey) {
+                                const el = document.querySelector(`[name="${firstErrKey}"]`);
+                                if (el) {
+                                    el.focus();
+                                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                            }
+                        });
                     }
 
                     return isValid;
@@ -1475,6 +1590,30 @@
                 },
                 removeAccused(index) {
                     if (this.accused.length > 1) this.accused.splice(index, 1);
+                },
+                clearAccused(index) {
+                    if (this.accused[index]) {
+                        this.accused[index].name = '';
+                        this.accused[index].phone = '';
+                        this.accused[index].pen_number = '';
+                        this.accused[index].department_id = '';
+                        this.accused[index].designation_id = '';
+                        this.accused[index].addresses = [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }];
+                        delete this.formErrors[`accused[${index}][name]`];
+                        delete this.formErrors[`accused[${index}][department_id]`];
+                        this.refreshIcons();
+                    }
+                },
+                onAccusedNameChange(index) {
+                    const acc = this.accused[index];
+                    if (!acc.name || acc.name.trim() === '') {
+                        acc.department_id = '';
+                        acc.designation_id = '';
+                        delete this.formErrors[`accused[${index}][department_id]`];
+                        delete this.formErrors[`accused[${index}][name]`];
+                    } else {
+                        delete this.formErrors[`accused[${index}][name]`];
+                    }
                 },
                 changeEntityType(accIndex, newType) {
                     let acc = this.accused[accIndex];

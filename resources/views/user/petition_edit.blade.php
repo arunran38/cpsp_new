@@ -161,7 +161,7 @@
         <!-- Form Sections (Minimalist Cards) -->
         <form method="POST" action="{{ route('petitions.update', $petition->hashid) }}" enctype="multipart/form-data"
             class="bg-white rounded-2xl shadow-sm border border-slate-200" id="petitionFormElement" novalidate
-            @focusout="validateField($event)" @input="clearError($event)" @change="clearError($event)">
+            @submit="handleSubmit($event)" @focusout="validateField($event)" @input="clearError($event)" @change="clearError($event)">
             @csrf
             @method('PUT')
 
@@ -292,7 +292,7 @@
                                     <div>
                                         <x-input label="Full Name" name="comp_name"
                                             x-bind:name="`complainants[${index}][name]`" x-model="comp.name"
-                                            x-bind:required="step === 2" placeholder="Legal Name" />
+                                            placeholder="Legal Name" />
                                     </div>
                                     <div>
                                         <x-input label="Phone Number (Optional)" name="comp_phone"
@@ -473,10 +473,16 @@
                                     </div>
                                 </div>
 
-                                <button type="button" @click="removeAccused(index)" x-show="accused.length > 1"
-                                    class="text-rose-600 hover:text-rose-700 text-xs font-semibold flex items-center gap-1 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors">
-                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove
-                                </button>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" @click="clearAccused(index)" x-show="accused.length === 1 && (acc.name || acc.department_id || acc.phone || acc.pen_number)"
+                                        class="text-amber-700 hover:text-amber-800 text-xs font-semibold flex items-center gap-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg transition-colors">
+                                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Clear Accused Details
+                                    </button>
+                                    <button type="button" @click="removeAccused(index)" x-show="accused.length > 1"
+                                        class="text-rose-600 hover:text-rose-700 text-xs font-semibold flex items-center gap-1 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="p-6 pt-7">
@@ -486,15 +492,15 @@
                                     <div class="grid gap-6 grid-cols-1"
                                         :class="acc.entity_type === 'Person' ? 'md:grid-cols-3' : 'md:grid-cols-2'">
                                         <div x-show="acc.entity_type === 'Person'">
-                                            <x-input label="Full Name *" name="acc_name"
+                                            <x-input label="Full Name" name="acc_name"
                                                 x-bind:name="`accused[${index}][name]`" x-model="acc.name"
-                                                x-bind:required="step === 3 && acc.entity_type === 'Person'"
+                                                @input="onAccusedNameChange(index)"
                                                 placeholder="Legal Name" />
                                         </div>
                                         <div x-show="acc.entity_type === 'Firm'">
-                                            <x-input label="Firm / Project Name *" name="acc_firm_name"
+                                            <x-input label="Firm / Project Name" name="acc_firm_name"
                                                 x-bind:name="`accused[${index}][name]`" x-model="acc.name"
-                                                x-bind:required="step === 3 && acc.entity_type === 'Firm'"
+                                                @input="onAccusedNameChange(index)"
                                                 placeholder="Firm / Project Name" />
                                         </div>
                                         <div>
@@ -520,7 +526,8 @@
                                         </div>
                                         <div>
                                             <x-searchable-select
-                                                label="Department <span class='text-rose-500' x-show='acc.name.trim().length > 0'>*</span>"
+                                                x-bind:disabled="!acc.name || acc.name.trim() === ''"
+                                                label="Department <span class='text-rose-500' x-show='acc.name && acc.name.trim()'>*</span><span class='text-xs text-slate-400 font-normal ml-1.5' x-show='!acc.name || !acc.name.trim()'>(Enter suspect name first)</span>"
                                                 x-bind:name="`accused[${index}][department_id]`" x-model="acc.department_id"
                                                 :options="$departments->pluck('department_name', 'id')->toArray()"
                                                 placeholder="Select Department" />
@@ -828,9 +835,19 @@
                 debounceTimer: null,
 
                 init() {
-                    this.$watch('accused', () => {
+                    this.$watch('accused', (newAccused) => {
                         if (this.step === 3) this.debouncedCheckDuplicates();
-                    });
+                        if (Array.isArray(newAccused)) {
+                            newAccused.forEach((a, idx) => {
+                                if (!a.name || a.name.trim() === '') {
+                                    if (a.department_id) a.department_id = '';
+                                    if (a.designation_id) a.designation_id = '';
+                                    delete this.formErrors[`accused[${idx}][department_id]`];
+                                    delete this.formErrors[`accused[${idx}][name]`];
+                                }
+                            });
+                        }
+                    }, { deep: true });
                     this.$watch('complainants', () => {
                         if (this.step === 3) this.debouncedCheckDuplicates();
                     });
@@ -946,6 +963,36 @@
                         this.scrollToTop();
                     }
                 },
+                handleSubmit(event) {
+                    if (!this.validateStep(1)) {
+                        event.preventDefault();
+                        this.step = 1;
+                        this.scrollToTop();
+                        if (window.showToast) {
+                            window.showToast('error', 'Please fill in all required Petition Details before updating.');
+                        }
+                        return false;
+                    }
+                    if (!this.validateStep(2)) {
+                        event.preventDefault();
+                        this.step = 2;
+                        this.scrollToTop();
+                        if (window.showToast) {
+                            window.showToast('error', 'Please fix errors in Complainant details before updating.');
+                        }
+                        return false;
+                    }
+                    if (!this.validateStep(3)) {
+                        event.preventDefault();
+                        this.step = 3;
+                        this.scrollToTop();
+                        if (window.showToast) {
+                            window.showToast('error', 'Please fix errors in Suspect details before updating.');
+                        }
+                        return false;
+                    }
+                    return true;
+                },
                 validateStep(step) {
                     let isValid = true;
                     const formElements = document.getElementById('petitionFormElement').querySelectorAll('input, select, textarea');
@@ -1037,23 +1084,27 @@
                     } else if (step === 2) {
                         this.complainants.forEach((c, idx) => {
                             const nameField = `complainants[${idx}][name]`;
-                            if (!c || !c.name || c.name.trim() === '') {
-                                this.formErrors[nameField] = 'This field is required.';
-                                isValid = false;
-                            } else {
-                                this.formErrors[nameField] = '';
-                            }
+                            this.formErrors[nameField] = '';
                         });
                     } else if (step === 3) {
                         this.accused.forEach((a, idx) => {
                             const deptField = `accused[${idx}][department_id]`;
                             const nameField = `accused[${idx}][name]`;
                             if (a && a.name && a.name.trim() !== '') {
+                                this.formErrors[nameField] = '';
                                 if (!a.department_id) {
-                                    this.formErrors[deptField] = 'This field is required.';
+                                    this.formErrors[deptField] = 'Department is required when suspect name is entered.';
                                     isValid = false;
                                 } else {
                                     this.formErrors[deptField] = '';
+                                }
+                            } else {
+                                // If accused name is cleared or empty, clear department error and clear stale department_id
+                                this.formErrors[deptField] = '';
+                                this.formErrors[nameField] = '';
+                                if (a) {
+                                    a.department_id = '';
+                                    a.designation_id = '';
                                 }
                             }
                         });
@@ -1191,6 +1242,14 @@
                         } else if (fieldName.includes('[name]') || fieldName === 'comp_name') {
                             if (fieldValue) {
                                 this.formErrors[fieldName] = '';
+                            } else if (fieldName.includes('accused')) {
+                                this.formErrors[fieldName] = '';
+                                const deptName = fieldName.replace('[name]', '[department_id]');
+                                this.formErrors[deptName] = '';
+                                const match = fieldName.match(/accused\[(\d+)\]\[name\]/);
+                                if (match && this.accused[match[1]]) {
+                                    this.accused[match[1]].department_id = '';
+                                }
                             }
                         } else {
                             if (fieldValue) {
@@ -1252,6 +1311,30 @@
                 },
                 removeAccused(index) {
                     if (this.accused.length > 1) this.accused.splice(index, 1);
+                },
+                clearAccused(index) {
+                    if (this.accused[index]) {
+                        this.accused[index].name = '';
+                        this.accused[index].designation_id = '';
+                        this.accused[index].department_id = '';
+                        this.accused[index].phone = '';
+                        this.accused[index].pen_number = '';
+                        this.accused[index].addresses = [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }];
+                        delete this.formErrors[`accused[${index}][name]`];
+                        delete this.formErrors[`accused[${index}][department_id]`];
+                        this.refreshIcons();
+                    }
+                },
+                onAccusedNameChange(index) {
+                    const acc = this.accused[index];
+                    if (!acc.name || acc.name.trim() === '') {
+                        acc.department_id = '';
+                        acc.designation_id = '';
+                        delete this.formErrors[`accused[${index}][department_id]`];
+                        delete this.formErrors[`accused[${index}][name]`];
+                    } else {
+                        delete this.formErrors[`accused[${index}][name]`];
+                    }
                 },
                 changeEntityType(accIndex, newType) {
                     let acc = this.accused[accIndex];
