@@ -7,7 +7,7 @@
 ])
 <div class="space-y-1.5" x-data="{}">
     @if($label)
-        <label @if($name) for="{{ $name }}" @endif class="block text-sm font-semibold text-slate-700">
+        <label @if($name) for="{{ $name }}" @endif class="block text-sm font-bold text-slate-800">
             {{ $label }}
         </label>
     @endif
@@ -24,13 +24,13 @@
             @change="validateField($event)"
         >
             @if($placeholder)
-                <option value="" {{ !$selected && !old($name) ? 'selected' : '' }} disabled class="py-2 text-base font-semibold text-slate-400 bg-white">
+                <option value="" {{ !$selected && !old($name) ? 'selected' : '' }} disabled class="py-2 text-sm font-medium text-slate-500 bg-white">
                     {{ $placeholder }}
                 </option>
             @endif
             @if(count($options) > 0)
                 @foreach($options as $value => $optionLabel)
-                    <option value="{{ $value }}" {{ $name && $value == old($name, $selected) ? 'selected' : '' }} class="py-2 text-base font-semibold text-slate-900 bg-white">
+                    <option value="{{ $value }}" {{ $name && $value == old($name, $selected) ? 'selected' : '' }} class="py-2 text-sm font-medium text-slate-900 bg-white">
                         {{ $optionLabel }}
                     </option>
                 @endforeach
@@ -44,10 +44,10 @@
     </div>
     @if($name)
         @error($name)
-            <p class="text-xs font-medium text-rose-500 mt-1">{{ $message }}</p>
+            <p class="text-xs font-semibold text-rose-600 mt-1">{{ $message }}</p>
         @enderror
     @endif
     <template x-if="typeof formErrors !== 'undefined' && formErrors && $refs.select && formErrors[$refs.select.name]">
-        <p class="text-xs font-medium text-rose-500 mt-1" x-text="formErrors[$refs.select.name]"></p>
+        <p class="text-xs font-semibold text-rose-600 mt-1" x-text="formErrors[$refs.select.name]"></p>
     </template>
 </div>

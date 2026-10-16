@@ -9,7 +9,7 @@
 
 <div class="space-y-1.5" x-data="{ count: 0 }" x-init="count = $refs.input.value.length">
     @if($label)
-        <label @if($name) for="{{ $name }}" @endif class="block text-sm font-semibold text-slate-700">
+        <label @if($name) for="{{ $name }}" @endif class="block text-sm font-bold text-slate-800">
             {{ $label }}
         </label>
     @endif
@@ -21,7 +21,7 @@
         @endif
         <input 
             {{ $attributes->merge([
-                'class' => 'block w-full ' . ($icon ? 'pl-11' : 'px-4') . ' py-2.5 text-sm bg-white border rounded-xl text-slate-900 transition-all duration-200 placeholder:text-slate-400 outline-none group-hover:border-slate-300',
+                'class' => 'block w-full ' . ($icon ? 'pl-11' : 'px-4') . ' py-2.5 text-sm font-medium bg-white border rounded-xl text-slate-900 transition-all duration-200 placeholder:text-slate-500 outline-none group-hover:border-slate-300',
                 'type' => $type,
                 'id' => $name,
                 'placeholder' => $placeholder
@@ -43,10 +43,10 @@
     </div>
     @if($name)
         @error($name)
-            <p class="text-xs font-medium text-rose-500 mt-1">{{ $message }}</p>
+            <p class="text-xs font-semibold text-rose-600 mt-1">{{ $message }}</p>
         @enderror
     @endif
     <template x-if="typeof formErrors !== 'undefined' && formErrors && $refs.input && formErrors[$refs.input.name]">
-        <p class="text-xs font-medium text-rose-500 mt-1" x-text="formErrors[$refs.input.name]"></p>
+        <p class="text-xs font-semibold text-rose-600 mt-1" x-text="formErrors[$refs.input.name]"></p>
     </template>
 </div>

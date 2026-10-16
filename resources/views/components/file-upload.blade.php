@@ -2,7 +2,7 @@
 
 <div class="pt-2" x-data="fileUploadComponent('{{ $name }}', {{ $multiple ? 'true' : 'false' }})">
     @if($label)
-        <label class="block text-sm font-semibold text-slate-700 mb-2">{{ $label }} @if($required)<span class="text-rose-500">*</span>@endif</label>
+        <label class="block text-sm font-bold text-slate-800 mb-2">{{ $label }} @if($required)<span class="text-rose-500">*</span>@endif</label>
     @endif
     
     <label for="{{ $name }}" class="flex flex-col items-center justify-center w-full py-8 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 hover:border-slate-400 transition-all group relative"
@@ -14,14 +14,14 @@
             <div class="bg-white text-slate-600 p-3 rounded-xl mb-3 border border-slate-200 shadow-sm group-hover:scale-105 transition-transform">
                 <i data-lucide="upload-cloud" class="w-6 h-6"></i>
             </div>
-            <p class="text-sm text-slate-700 mb-1"><span class="font-semibold text-indigo-600">Browse files</span> or drag and drop</p>
-            <p class="text-xs text-slate-500">Supports PDF, JPG, PNG up to 10MB</p>
+            <p class="text-sm font-medium text-slate-800 mb-1"><span class="font-bold text-indigo-600">Browse files</span> or drag and drop</p>
+            <p class="text-xs text-slate-600 font-medium">Supports PDF, JPG, PNG up to 10MB</p>
         </div>
         <input id="{{ $name }}" name="{{ $name }}" type="file" accept=".pdf,.jpg,.jpeg,.png" {{ $multiple ? 'multiple' : '' }} {{ $required ? 'required' : '' }} class="hidden" @change="handleFiles" x-ref="fileInput" />
     </label>
 
     <template x-if="errorMsg">
-        <p class="text-xs font-medium text-rose-500 mt-1" x-text="errorMsg"></p>
+        <p class="text-xs font-semibold text-rose-600 mt-1" x-text="errorMsg"></p>
     </template>
 
     <!-- Selected Files Preview -->
@@ -35,7 +35,7 @@
                         </div>
                         <div class="truncate">
                             <p class="text-xs font-semibold text-slate-900 truncate" x-text="file.name"></p>
-                            <p class="text-[10px] text-slate-500" x-text="(file.size / 1024 / 1024).toFixed(2) + ' MB'"></p>
+                            <p class="text-xs text-slate-600 font-medium" x-text="(file.size / 1024 / 1024).toFixed(2) + ' MB'"></p>
                         </div>
                     </div>
                     <button type="button" @click.prevent="removeFile(index)" class="shrink-0 p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors" title="Remove File">

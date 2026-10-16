@@ -9,14 +9,14 @@
 
 <div class="space-y-1.5" x-data="{ count: 0, max: {{ $max }} }" x-init="count = $refs.textarea.value ? $refs.textarea.value.length : 0">
     @if($label)
-        <label @if($name) for="{{ $name }}" @endif class="flex items-center justify-between text-sm font-semibold text-slate-700">
+        <label @if($name) for="{{ $name }}" @endif class="flex items-center justify-between text-sm font-bold text-slate-800">
             {{ $label }}
-            <span class="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-black font-bold" x-text="count + '/' + max"></span>
+            <span class="text-xs bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 font-bold" x-text="count + '/' + max"></span>
         </label>
     @endif
         <textarea 
         {{ $attributes->merge([
-            'class' => 'block w-full px-4 py-3 text-sm bg-white border rounded-xl text-black transition-all duration-200 placeholder:text-slate-400 outline-none group-hover:border-slate-300',
+            'class' => 'block w-full px-4 py-3 text-sm font-medium bg-white border rounded-xl text-slate-900 transition-all duration-200 placeholder:text-slate-500 outline-none group-hover:border-slate-300 leading-relaxed',
             'id' => $name,
             'rows' => $rows,
             'placeholder' => $placeholder
@@ -32,10 +32,10 @@
     >{{ $name ? old($name, $value) : $value }}</textarea>
     @if($name)
         @error($name)
-            <p class="text-xs font-medium text-rose-500 mt-1">{{ $message }}</p>
+            <p class="text-xs font-semibold text-rose-600 mt-1">{{ $message }}</p>
         @enderror
     @endif
     <template x-if="typeof formErrors !== 'undefined' && formErrors && $refs.textarea && formErrors[$refs.textarea.name]">
-        <p class="text-xs font-medium text-rose-500 mt-1" x-text="formErrors[$refs.textarea.name]"></p>
+        <p class="text-xs font-semibold text-rose-600 mt-1" x-text="formErrors[$refs.textarea.name]"></p>
     </template>
 </div>

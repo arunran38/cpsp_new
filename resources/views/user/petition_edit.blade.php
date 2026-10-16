@@ -15,7 +15,7 @@
 
             <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
                 <div class="text-center sm:text-left z-10">
-                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight mb-1">
                         Edit Petition
                     </h1>
                     <p class="text-slate-300 font-medium max-w-2xl text-sm">
@@ -113,7 +113,7 @@
                         </div>
                         <span
                             class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
-                            :class="step === 1 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : (step > 1 ? 'text-teal-500' : 'text-blue-500')">Petition
+                            :class="step === 1 ? 'text-teal-300' : (step > 1 ? 'text-teal-400' : 'text-slate-300')">Petition
                             Details</span>
                     </button>
 
@@ -127,7 +127,7 @@
                         </div>
                         <span
                             class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
-                            :class="step === 2 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : (step > 2 ? 'text-teal-500' : 'text-blue-500')">Complainant</span>
+                            :class="step === 2 ? 'text-teal-300' : (step > 2 ? 'text-teal-400' : 'text-slate-300')">Complainant</span>
                     </button>
 
                     <!-- Step 3 -->
@@ -140,7 +140,7 @@
                         </div>
                         <span
                             class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
-                            :class="step === 3 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : (step > 3 ? 'text-teal-500' : 'text-blue-500')">Suspect</span>
+                            :class="step === 3 ? 'text-teal-300' : (step > 3 ? 'text-teal-400' : 'text-slate-300')">Suspect</span>
                     </button>
 
                     <!-- Step 4 -->
@@ -152,7 +152,7 @@
                         </div>
                         <span
                             class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
-                            :class="step === 4 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : 'text-blue-500'">Complete</span>
+                            :class="step === 4 ? 'text-teal-300' : 'text-slate-300'">Complete</span>
                     </button>
                 </div>
             </div>
@@ -208,7 +208,7 @@
                     </div>
 
                     <div class="pt-4 mt-6 border-t border-slate-100">
-                        <label class="block text-sm font-semibold text-slate-700 mb-4">Supporting Evidence
+                        <label class="block text-sm font-bold text-slate-800 mb-4">Supporting Evidence
                             (Attachments)</label>
 
                         @if($petition->uploads->count() > 0)
@@ -224,19 +224,19 @@
                                                 <p class="text-xs font-semibold text-slate-900 truncate">
                                                     {{ $upload->original_filename }}
                                                 </p>
-                                                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-tight">
+                                                <p class="text-[10px] text-slate-600 uppercase font-bold tracking-tight">
                                                     {{ $upload->created_at->format('M d, Y') }}
                                                 </p>
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-1">
                                             <a href="{{ route('petitions.download', $upload->hashid) }}" target="_blank"
-                                                class="shrink-0 p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                                class="shrink-0 p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
                                                 title="View Document">
                                                 <i data-lucide="external-link" class="w-4 h-4"></i>
                                             </a>
                                             <button type="button" @click="removeExistingUpload({{ $upload->upload_id }})"
-                                                class="shrink-0 p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                                                class="shrink-0 p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
                                                 title="Remove Document">
                                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                                             </button>
@@ -258,7 +258,7 @@
 
                 <div class="mt-10 pt-6 border-t border-slate-200 flex justify-end">
                     <button type="button" @click="nextStep()"
-                        class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all flex items-center gap-2">
+                        class="px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all flex items-center gap-2">
                         Continue to Complainant <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -309,8 +309,8 @@
                                 <!-- Nested Addresses -->
                                 <div>
                                     <h4
-                                        class="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
-                                        <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i> Address Book
+                                        class="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                                        <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i> Address Book
                                     </h4>
 
                                     <div class="space-y-4">
@@ -324,29 +324,32 @@
                                                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
                                                     <div>
                                                         <label
-                                                            class="block text-sm font-semibold text-slate-700 mb-1.5">Address
+                                                            class="block text-sm font-bold text-slate-800 mb-1.5">Address
                                                             Type</label>
                                                         <div class="relative flex items-center">
                                                             <select
                                                                 :name="`complainants[${index}][addresses][${addrIndex}][address_type]`"
                                                                 x-model="addr.address_type"
-                                                                class="block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all appearance-none pr-10"
+                                                                class="block w-full px-3 py-2 text-sm font-medium bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all appearance-none pr-10"
                                                                 style="background-image: none !important;">
                                                                 <option value="Permanent"
-                                                                    :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')">
+                                                                    :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')"
+                                                                    class="font-medium text-slate-900 bg-white">
                                                                     Permanent</option>
                                                                 <option value="Temporary"
-                                                                    :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')">
+                                                                    :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')"
+                                                                    class="font-medium text-slate-900 bg-white">
                                                                     Temporary</option>
                                                                 <option value="Office"
-                                                                    :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')">
+                                                                    :disabled="comp.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')"
+                                                                    class="font-medium text-slate-900 bg-white">
                                                                     Office</option>
                                                             </select>
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                                                 viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                                                 stroke-width="2.5" stroke-linecap="round"
                                                                 stroke-linejoin="round"
-                                                                class="w-4 h-4 text-slate-400 absolute right-2 pointer-events-none">
+                                                                class="w-4 h-4 text-slate-500 absolute right-2 pointer-events-none">
                                                                 <path d="m6 9 6 6 6-6" />
                                                             </svg>
                                                         </div>
@@ -379,7 +382,7 @@
 
                                     <div class="mt-4" x-show="comp.addresses.length < 3">
                                         <button type="button" @click="addComplainantAddress(index)"
-                                            class="text-sm font-semibold text-indigo-600 bg-white hover:bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2 transition-all shadow-sm">
+                                            class="text-sm font-bold text-indigo-600 hover:text-indigo-700 bg-white hover:bg-indigo-50/50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2 transition-all shadow-sm">
                                             <i data-lucide="plus" class="w-4 h-4"></i> Add Additional Address
                                         </button>
                                     </div>
@@ -390,7 +393,7 @@
 
                     <div class="pt-2 text-center">
                         <button type="button" @click="addComplainant()"
-                            class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 transition-all flex items-center justify-center gap-2 w-full">
+                            class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-bold text-slate-700 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 hover:text-slate-900 transition-all flex items-center justify-center gap-2 w-full">
                             <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Complainant
                         </button>
                     </div>
@@ -398,11 +401,11 @@
 
                 <div class="mt-10 pt-6 border-t border-slate-200 flex justify-between items-center">
                     <button type="button" @click="prevStep()"
-                        class="px-6 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2">
+                        class="px-6 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-all flex items-center gap-2">
                         <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
                     </button>
                     <button type="button" @click="nextStep()"
-                        class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
+                        class="px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
                         Continue to Suspect <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -457,7 +460,7 @@
                                                 x-bind:name="`accused[${index}][entity_type]`"
                                                 @change="changeEntityType(index, 'Person')" class="sr-only">
                                             <div class="px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2"
-                                                :class="acc.entity_type === 'Person' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-100 hover:text-white'">
+                                                :class="acc.entity_type === 'Person' ? 'bg-white text-indigo-700 shadow-sm' : 'text-indigo-100 hover:text-white'">
                                                 <i data-lucide="user" class="w-4 h-4"></i> Person
                                             </div>
                                         </label>
@@ -466,7 +469,7 @@
                                                 x-bind:name="`accused[${index}][entity_type]`"
                                                 @change="changeEntityType(index, 'Firm')" class="sr-only">
                                             <div class="px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2"
-                                                :class="acc.entity_type === 'Firm' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-100 hover:text-white'">
+                                                :class="acc.entity_type === 'Firm' ? 'bg-white text-indigo-700 shadow-sm' : 'text-indigo-100 hover:text-white'">
                                                 <i data-lucide="building-2" class="w-4 h-4"></i> Firm / Project
                                             </div>
                                         </label>
@@ -475,11 +478,11 @@
 
                                 <div class="flex items-center gap-2">
                                     <button type="button" @click="clearAccused(index)" x-show="accused.length === 1 && (acc.name || acc.department_id || acc.phone || acc.pen_number)"
-                                        class="text-amber-700 hover:text-amber-800 text-xs font-semibold flex items-center gap-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg transition-colors">
+                                        class="text-amber-800 hover:text-amber-900 text-xs font-bold flex items-center gap-1 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-lg transition-colors">
                                         <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Clear Accused Details
                                     </button>
                                     <button type="button" @click="removeAccused(index)" x-show="accused.length > 1"
-                                        class="text-rose-600 hover:text-rose-700 text-xs font-semibold flex items-center gap-1 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors">
+                                        class="text-rose-700 hover:text-rose-800 text-xs font-bold flex items-center gap-1 bg-rose-50 hover:bg-rose-100 border border-rose-300 px-3 py-1.5 rounded-lg transition-colors">
                                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove
                                     </button>
                                 </div>
@@ -537,8 +540,8 @@
                                 <!-- Nested Addresses -->
                                 <div>
                                     <h4
-                                        class="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
-                                        <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i> Known Addresses
+                                        class="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                                        <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i> Known Addresses
                                     </h4>
 
                                     <div class="space-y-4">
@@ -552,29 +555,30 @@
                                                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
                                                     <div>
                                                         <label
-                                                            class="block text-sm font-semibold text-slate-700 mb-1.5">Address
+                                                            class="block text-sm font-bold text-slate-800 mb-1.5">Address
                                                             Type</label>
                                                         <div class="relative flex items-center">
                                                             <select
                                                                 :name="`accused[${index}][addresses][${addrIndex}][address_type]`"
                                                                 x-model="addr.address_type"
-                                                                :class="acc.entity_type === 'Firm' ? 'pointer-events-none bg-slate-50 text-slate-500 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none transition-all appearance-none pr-10' : 'block w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all appearance-none pr-10'"
+                                                                :class="acc.entity_type === 'Firm' ? 'pointer-events-none bg-slate-100 text-slate-700 font-semibold block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none transition-all appearance-none pr-10' : 'block w-full px-3 py-2 text-sm font-medium bg-white border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 outline-none transition-all appearance-none pr-10'"
                                                                 style="background-image: none !important;">
                                                                 <option value="Permanent"
                                                                     :disabled="acc.entity_type === 'Firm' || acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')"
-                                                                    x-show="acc.entity_type !== 'Firm'">Permanent</option>
+                                                                    x-show="acc.entity_type !== 'Firm'" class="font-medium text-slate-900 bg-white">Permanent</option>
                                                                 <option value="Temporary"
                                                                     :disabled="acc.entity_type === 'Firm' || acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')"
-                                                                    x-show="acc.entity_type !== 'Firm'">Temporary</option>
+                                                                    x-show="acc.entity_type !== 'Firm'" class="font-medium text-slate-900 bg-white">Temporary</option>
                                                                 <option value="Office"
-                                                                    :disabled="acc.entity_type !== 'Firm' && acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')">
+                                                                    :disabled="acc.entity_type !== 'Firm' && acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')"
+                                                                    class="font-medium text-slate-900 bg-white">
                                                                     Office</option>
                                                             </select>
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                                                 viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                                                 stroke-width="2.5" stroke-linecap="round"
                                                                 stroke-linejoin="round"
-                                                                class="w-4 h-4 text-slate-400 absolute right-2 pointer-events-none">
+                                                                class="w-4 h-4 text-slate-500 absolute right-2 pointer-events-none">
                                                                 <path d="m6 9 6 6 6-6" />
                                                             </svg>
                                                         </div>
@@ -607,7 +611,7 @@
 
                                     <div class="mt-4" x-show="acc.entity_type !== 'Firm' && acc.addresses.length < 3">
                                         <button type="button" @click="addAccusedAddress(index)"
-                                            class="text-sm font-semibold text-indigo-600 bg-white hover:bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2 transition-all shadow-sm">
+                                            class="text-sm font-bold text-indigo-600 hover:text-indigo-700 bg-white hover:bg-indigo-50/50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2 transition-all shadow-sm">
                                             <i data-lucide="plus" class="w-4 h-4"></i> Add Additional Address
                                         </button>
                                     </div>
@@ -619,7 +623,7 @@
                     <div class="pt-2 text-center"
                         x-show="accused.length > 0 && (accused[accused.length - 1].department_id || (accused[accused.length - 1].name && accused[accused.length - 1].name.trim() !== ''))">
                         <button type="button" @click="addAccused()"
-                            class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 transition-all flex items-center justify-center gap-2 w-full">
+                            class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-bold text-slate-700 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 hover:text-slate-900 transition-all flex items-center justify-center gap-2 w-full">
                             <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Suspect
                         </button>
                     </div>
@@ -627,11 +631,11 @@
 
                 <div class="mt-10 pt-6 border-t border-slate-200 flex justify-between items-center">
                     <button type="button" @click="prevStep()"
-                        class="px-6 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2">
+                        class="px-6 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-all flex items-center gap-2">
                         <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
                     </button>
                     <button type="button" @click="nextStep()"
-                        class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
+                        class="px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
                         Review Changes <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -651,7 +655,7 @@
 
                     <div class="flex justify-between items-center py-6 border-t border-slate-200 mt-6">
                         <button type="button" @click="prevStep()"
-                            class="px-6 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2">
+                            class="px-6 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-all flex items-center gap-2">
                             <i data-lucide="arrow-left" class="w-4 h-4"></i> Edit Details
                         </button>
                         <button type="submit"
