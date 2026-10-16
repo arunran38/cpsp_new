@@ -11,8 +11,8 @@
 
             <div class="flex items-center gap-4">
                 <div
-                    class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 border border-indigo-100">
-                    <i data-lucide="file-search" class="w-6 h-6"></i>
+                    class="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center text-teal-600 border border-teal-100 shadow-sm">
+                    <i data-lucide="scroll-text" class="w-6 h-6"></i>
                 </div>
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight text-gray-900">Petition Details:

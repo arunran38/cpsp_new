@@ -1,6 +1,6 @@
 @extends(auth()->user()->canAccess('access admin dashboard') && !session('is_impersonating_seat') ? 'layouts.admin' : 'layouts.user')
 
-@section('title', 'Dashboard - CPSP Portal')
+@section('title', 'Dashboard - CPSP')
 
 @section('content')
 @php
@@ -19,8 +19,10 @@
     $canSeeStatusChart = $user->canAccess('view petition status chart');
     $canSeeVacantSeats = $user->canAccess('view seats') || $user->canAccess('access admin dashboard');
     $canSeeRecentPetitions = $user->canAccess('view recent petitions');
+    $isInwardRole = $user->hasRole(['inward', 'Inward']) 
+        || ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || stripos($currentSeat->seat_name, 'Inward') !== false));
     $isInwardDesk = !$isExecutive && !$isCpspDesk
-        && ($user->canAccess('view file transfer') || ($currentSeat && stripos($currentSeat->seat_name, 'Inward') !== false));
+        && ($isInwardRole || $user->canAccess('view file transfer') || ($currentSeat && stripos($currentSeat->seat_name, 'Inward') !== false));
 
     // Date filters
     $fromDate = request('from_date', now()->subDays(6)->format('Y-m-d'));
@@ -209,7 +211,13 @@
 
             <!-- Header Quick Actions -->
             <div class="flex flex-wrap items-center gap-2.5">
-                @if($user->canAccess('create petitions') || $user->canAccess('create inward petitions') || $user->canAccess('inward form'))
+                @if($isInwardDesk)
+                    <a href="{{ route('inward.enter_petition') }}"
+                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold text-xs shadow-lg shadow-teal-500/20 hover:scale-105 transition-all">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>New Registration</span>
+                    </a>
+                @elseif($user->canAccess('create petitions') || $user->canAccess('create inward petitions') || $user->canAccess('inward form'))
                     <a href="{{ route('petitions.create') }}"
                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold text-xs shadow-lg shadow-teal-500/20 hover:scale-105 transition-all">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
@@ -504,15 +512,22 @@
                             </h2>
                             <p class="text-xs text-slate-500 mt-0.5">Daily submissions for the selected period</p>
                         </div>
-                        <form action="{{ route('dashboard') }}" method="GET" class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                        <form action="{{ url()->current() }}" method="GET" class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
                             <input type="date" name="start_date" value="{{ $startDate->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
                                    class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
                             <span class="text-slate-300 text-xs">—</span>
                             <input type="date" name="end_date" value="{{ $endDate->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
                                    class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
-                            <button type="submit" class="p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all" title="Filter Range">
+                            <button type="submit" class="p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all flex items-center justify-center cursor-pointer shadow-sm" title="Filter Range">
                                 <i data-lucide="filter" class="w-3.5 h-3.5"></i>
                             </button>
+                            @if(request()->filled('start_date') || request()->filled('end_date'))
+                                <a href="{{ request()->fullUrlWithQuery(['start_date' => null, 'end_date' => null]) }}"
+                                   class="p-1.5 bg-slate-200 hover:bg-rose-100 text-slate-600 hover:text-rose-600 rounded-lg transition-all flex items-center justify-center cursor-pointer shadow-sm"
+                                   title="Clear Filter">
+                                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                </a>
+                            @endif
                         </form>
                     </div>
                     <div class="relative h-[320px]">

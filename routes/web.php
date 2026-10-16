@@ -154,7 +154,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('admin/roles', RoleController::class)->names('admin.roles');
     Route::resource('admin/permissions', PermissionController::class)->names('admin.permissions');
 
-    // Compliances (IOP HQ workflow)
+    // Compliances (Petition Compliances workflow)
     Route::get('/compliances/reports', [ComplianceController::class, 'reports'])->name('compliances.reports');
     Route::get('/compliances/reports/export', [ComplianceController::class, 'exportReports'])->name('compliances.reports.export');
     Route::get('/compliances/export', [ComplianceController::class, 'export'])->name('compliances.export');

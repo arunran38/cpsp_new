@@ -15,19 +15,34 @@
             </div>
             
             <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
-                <div class="text-center sm:text-left z-10">
-                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
-                        Submitted Petitions
-                    </h1>
-                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
-                        Unified view of all petitions and workflow stages.
-                    </p>
+                <div class="flex items-center gap-4 z-10">
+                    <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-400/20 text-teal-400 shadow-inner shrink-0">
+                        <i data-lucide="scroll-text" class="w-6 h-6"></i>
+                    </div>
+                    <div class="text-center sm:text-left">
+                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                            Submitted Petitions
+                        </h1>
+                        <p class="text-slate-300 font-medium max-w-2xl text-sm">
+                            Unified view of all petitions and workflow stages.
+                        </p>
+                    </div>
                 </div>
                 <div class="flex items-center gap-3 z-10">
-                    @if(Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('create petition') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('create_inward_petitions'))
+                    @php
+                        $user = Auth::user();
+                        $currentSeat = $user?->currentSeatUser()?->seat;
+                        $isInward = $user && ($user->hasRole(['inward', 'Inward']) || ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || stripos($currentSeat->seat_name, 'Inward') !== false)));
+                    @endphp
+                    @if($isInward)
+                        <a href="{{ route('inward.enter_petition') }}"
+                            class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
+                            <i data-lucide="file-plus-2" class="w-4 h-4"></i> New Registration
+                        </a>
+                    @elseif(Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('create petition') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('create_inward_petitions'))
                         <a href="{{ route('petitions.create') }}"
                             class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
-                            <i data-lucide="plus" class="w-4 h-4"></i> New Petition
+                            <i data-lucide="file-plus-2" class="w-4 h-4"></i> New Petition
                         </a>
                     @endif
                 </div>

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>@yield('title', 'CPSP Portal')</title>
+    <title>@yield('title', 'CPSP')</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -212,17 +212,22 @@
                class="fixed inset-y-0 left-0 z-50 flex flex-col w-80 transition-transform duration-300 ease-out glass-sidebar shadow-2xl shadow-black/30 lg:translate-x-0">
             
             <!-- Sidebar Header -->
-            <div class="flex items-center h-16 px-6 border-b border-slate-800/80 bg-[#0f172a]">
-                <div class="flex items-center gap-3">
-                    <div class="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 shadow-lg shadow-teal-500/20 flex-shrink-0">
-                        <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
+            <div class="flex items-center justify-center h-16 px-6 border-b border-slate-800/80 bg-[#0f172a]">
+                <a href="{{ route('dashboard') }}" class="flex items-center justify-center gap-3.5 group">
+                    <div class="relative flex items-center justify-center flex-shrink-0">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-teal-500 to-indigo-500 rounded-2xl blur-sm opacity-40 group-hover:opacity-75 transition duration-300"></div>
+                        <div class="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900 via-[#0e1726] to-slate-950 p-[1px] ring-1 ring-white/10 shadow-xl group-hover:ring-teal-400/40 transition-all duration-300">
+                            <div class="flex items-center justify-center w-full h-full rounded-[11px] bg-gradient-to-br from-teal-500/10 via-slate-900 to-indigo-500/10">
+                                <i data-lucide="scroll-text" class="w-5 h-5 text-teal-400 group-hover:text-teal-300 transition-colors drop-shadow-[0_2px_8px_rgba(45,212,191,0.5)] stroke-[2.2]"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <a href="{{ route('dashboard') }}" class="text-[22px] tracking-tight text-white font-extrabold leading-none flex items-center">
-                            CPSP <span class="text-teal-400 font-black ml-1">PORTAL</span>
-                        </a>
+                    <div class="flex items-center">
+                        <span class="text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-teal-300 drop-shadow-sm select-none">
+                            CPSP
+                        </span>
                     </div>
-                </div>
+                </a>
             </div>
 
             <!-- Navigation Container -->
@@ -493,7 +498,7 @@
                         <a href="{{ route('inward.enter_petition') }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.enter_petition') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator shrink-0"></span>
-                           <i data-lucide="plus-circle" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.enter_petition') ? 'text-teal-400' : '' }}"></i>
+                           <i data-lucide="file-plus-2" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.enter_petition') ? 'text-teal-400' : '' }}"></i>
                            <span class="whitespace-nowrap">Inward Registration</span>
                         </a>
                         
@@ -501,7 +506,7 @@
                         <a href="{{ route('inward.enter_petition', ['hide_form' => 1]) }}#view-inward-petitions" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator shrink-0"></span>
-                           <i data-lucide="list" class="w-4 h-4 mr-2.5 shrink-0"></i>
+                           <i data-lucide="files" class="w-4 h-4 mr-2.5 shrink-0"></i>
                            <span class="whitespace-nowrap">View Inward Petitions</span>
                         </a>
                         @endif
@@ -535,7 +540,7 @@
                             class="nav-item-transition flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-xl group"
                             :class="(hoverOpen || clickOpen) ? 'bg-white/5 text-white' : 'inactive-nav'">
                         <div class="flex items-center gap-3">
-                            <i data-lucide="file-text" class="w-5 h-5 icon-bounce" :class="(hoverOpen || clickOpen) ? 'text-indigo-400' : ''"></i>
+                            <i data-lucide="scroll-text" class="w-5 h-5 icon-bounce" :class="(hoverOpen || clickOpen) ? 'text-indigo-400' : ''"></i>
                             <span>Petitions</span>
                         </div>
                         <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': hoverOpen || clickOpen }"></i>
@@ -547,16 +552,17 @@
                          x-transition:enter="slide-down-enter-active"
                          x-transition:enter-start="slide-down-enter-from"
                          x-transition:enter-end="slide-down-enter-to"
-                         x-transition:leave="slide-down-enter-active"
-                         x-transition:leave-start="slide-down-enter-to"
-                         x-transition:leave-end="slide-down-enter-from"
+                         x-transition:leave="slide-down-leave-active"
+                         x-transition:leave-start="slide-down-leave-from"
+                         x-transition:leave-end="slide-down-leave-to"
                          class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
                         
                         @if(Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('create petition') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('create_inward_petitions'))
                         <a href="{{ route('petitions.create') }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('petitions.create') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator shrink-0"></span>
-                           <span class="whitespace-nowrap">Add Petitions</span>
+                           <i data-lucide="file-plus-2" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('petitions.create') ? 'text-teal-400' : '' }}"></i>
+                           <span class="whitespace-nowrap">Add Petition</span>
                         </a>
                         @endif
                         
@@ -564,6 +570,7 @@
                         <a href="{{ route('petitions.index', ['tab' => 'all']) }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator shrink-0"></span>
+                           <i data-lucide="files" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('petitions.index') ? 'text-teal-400' : '' }}"></i>
                            <span class="whitespace-nowrap">View Petitions</span>
                         </a>
                         @endif

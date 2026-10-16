@@ -97,77 +97,82 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // 2. Admin: System administrator (operations, masters, reports, charts, dashboard)
         $admin = Role::firstOrCreate(['name' => 'admin']);
-        $adminPermissions = Permission::whereNotIn('name', [
-            'delete roles',
-            'delete permissions',
-        ])->get();
-        $admin->syncPermissions($adminPermissions);
+        if ($admin->wasRecentlyCreated || $admin->permissions()->count() === 0) {
+            $adminPermissions = Permission::whereNotIn('name', [
+                'delete roles',
+                'delete permissions',
+            ])->get();
+            $admin->syncPermissions($adminPermissions);
+        }
 
         // 3. Inward Desk: Reception, petition registration, transfers & statistics
         $inward = Role::firstOrCreate(['name' => 'Inward']);
-        $inward->syncPermissions([
-            'view file transfer', 
-            'inward form',
-            'inward statistics',
-            'export statistics',
-            'filter transfer',
-            'create inward petitions',
-            'create petitions',
-            'view petitions',
-            'view own petitions',
-            'view recent petitions',
-        ]);
+        if ($inward->wasRecentlyCreated || $inward->permissions()->count() === 0) {
+            $inward->syncPermissions([
+                'view file transfer', 
+                'inward form',
+                'inward statistics',
+                'export statistics',
+                'filter transfer',
+                'create inward petitions',
+                'create petitions',
+                'view petitions',
+                'view own petitions',
+                'view recent petitions',
+            ]);
+        }
 
         // 4. CPSP Desk: Grievance management, forwarding, compliances, duplicate linking, transfers
         $cpsp = Role::firstOrCreate(['name' => 'CPSP']);
-        $cpsp->syncPermissions([
-            'view petitions',
-            'view all petitions',
-            'view own petitions',
-            'view recent petitions',
-            'create petitions',
-            'update petitions',
-            'view file transfer',
-            'filter transfer',
-            'view compliances',
-            'create compliances',
-            'update compliances',
-            'view duplicate warnings',
-            'link petitions',
-            'view petition trends chart',
-            'view petition nature chart',
-        ]);
+        if ($cpsp->wasRecentlyCreated || $cpsp->permissions()->count() === 0) {
+            $cpsp->syncPermissions([
+                'view petitions',
+                'view all petitions',
+                'view recent petitions',
+                'create petitions',
+                'update petitions',
+                'view file transfer',
+                'filter transfer',
+                'view compliances',
+                'create compliances',
+                'update compliances',
+                'view duplicate warnings',
+                'link petitions',
+                'view petition trends chart',
+                'view petition nature chart',
+            ]);
+        }
 
-        // 5. IOP HQ: Petitions oversight and compliances
-        $iopHq = Role::firstOrCreate(['name' => 'IOP HQ']);
-        $iopHq->syncPermissions([
-            'view petitions',
-            'view all petitions',
-            'view recent petitions',
-            'view master reports',
-            'view seat distribution chart',
-            'view petition status chart',
-            'view compliances',
-            'create compliances',
-            'update compliances',
-            'delete compliances',
-            'default compliances home',
-        ]);
+        // 5. Petition Compliances: Petitions oversight and compliances
+        $petitionCompliances = Role::where('name', 'Petition Compliances')->first()
+            ?? Role::where('name', 'IOP HQ')->first();
+        if ($petitionCompliances) {
+            $petitionCompliances->update(['name' => 'Petition Compliances']);
+        } else {
+            $petitionCompliances = Role::firstOrCreate(['name' => 'Petition Compliances', 'guard_name' => 'web']);
+        }
+        if ($petitionCompliances->wasRecentlyCreated || $petitionCompliances->permissions()->count() === 0) {
+            $petitionCompliances->syncPermissions([
+                'view petitions',
+                'view all petitions',
+                'view recent petitions',
+                'view master reports',
+                'view seat distribution chart',
+                'view petition status chart',
+                'view compliances',
+                'create compliances',
+                'update compliances',
+                'delete compliances',
+                'default compliances home',
+            ]);
+        }
 
-        // 6. Director: Executive oversight, state-wide analytics & visual charts
-        $director = Role::firstOrCreate(['name' => 'Director']);
-        $director->syncPermissions([
-            'view petitions',
-            'view all petitions',
-            'view recent petitions',
-            'view master reports',
-            'view seat distribution chart',
-            'view petition status chart',
-            'view compliances',
-            'view file transfer',
-            'filter transfer',
-            'view duplicate warnings',
-        ]);
+        // Ensure deprecated Director role is removed if present
+        $deprecatedDirector = Role::where('name', 'Director')->first();
+        if ($deprecatedDirector) {
+            $deprecatedDirector->syncPermissions([]);
+            $deprecatedDirector->delete();
+        }
 
         // Ensure Director seat has super admin role
         $directorSeat = \App\Models\Seat::where('seat_name', 'like', '%Director%')->first();

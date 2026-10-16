@@ -13,13 +13,18 @@
             </div>
             
             <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
-                <div class="text-center sm:text-left z-10">
-                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
-                        New Petition
-                    </h1>
-                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
-                        Register a new petition with all necessary details.
-                    </p>
+                <div class="flex items-center gap-4 z-10">
+                    <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-400/20 text-teal-400 shadow-inner shrink-0">
+                        <i data-lucide="scroll-text" class="w-6 h-6"></i>
+                    </div>
+                    <div class="text-center sm:text-left">
+                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                            New Petition
+                        </h1>
+                        <p class="text-slate-300 font-medium max-w-2xl text-sm">
+                            Register a new petition with all necessary details.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
