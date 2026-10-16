@@ -41,7 +41,13 @@
                     @if($petition->isFromInward())
                         <div class="mt-2.5 flex flex-wrap items-center gap-2">
                             {{-- Updated / Processed by CPSP Seat Badge --}}
-                            @if($petition->processed_at || $petition->updated_by_user_id)
+                            @if($petition->is_returned_to_inward)
+                                <div
+                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-rose-50 border-rose-200 text-rose-800">
+                                    <i data-lucide="corner-up-left" class="w-4 h-4 text-rose-600"></i>
+                                    <span>Status: Returned to Inward</span>
+                                </div>
+                            @elseif($petition->processed_at || $petition->updated_by_user_id)
                                 <div
                                     class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-emerald-50 border-emerald-200 text-emerald-800">
                                     <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
@@ -62,7 +68,7 @@
                                 <div
                                     class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-amber-50 border-amber-200 text-amber-800">
                                     <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i>
-                                    <span>Status: Pending CPSP Updation</span>
+                                    <span>Status: Transferred to {{ $petition->seat->seat_name ?? 'CPSP Seat' }} (Pending Updation)</span>
                                 </div>
                             @endif
 
@@ -148,6 +154,17 @@
                         </form>
                     @endif
                 @endif
+                @php
+                    $authUser = Auth::user();
+                    $activeSeat = $authUser?->currentSeatUser()?->seat;
+                    $isInwardUser = $authUser && ($authUser->hasRole(['inward', 'Inward']) || ($activeSeat && ($activeSeat->hasRole(['inward', 'Inward']) || stripos($activeSeat->seat_name, 'Inward') !== false)));
+                @endphp
+                @if($petition->is_returned_to_inward && $isInwardUser)
+                    <a href="{{ route('inward.enter_petition', ['filter' => 'returned', 'hide_form' => 1]) . '#view-inward-petitions' }}"
+                        class="px-4 py-2.5 text-sm font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-all shadow-sm flex items-center gap-2">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4 text-rose-600"></i> Re-transfer to CPSP
+                    </a>
+                @endif
                 <a href="{{ url()->previous() }}"
                     class="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to List
@@ -169,9 +186,18 @@
                         </p>
                     </div>
                 </div>
-                <span
-                    class="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200 uppercase tracking-wider shrink-0">Returned
-                    to Inward</span>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span
+                        class="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200 uppercase tracking-wider">Returned
+                        to Inward</span>
+                    @if($isInwardUser)
+                        <a href="{{ route('inward.enter_petition', ['filter' => 'returned', 'hide_form' => 1]) . '#view-inward-petitions' }}"
+                            class="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold transition-colors shadow-sm text-xs">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                            <span>Re-transfer</span>
+                        </a>
+                    @endif
+                </div>
             </div>
         @endif
 
@@ -190,12 +216,15 @@
                         <div>
                             <span
                                 class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1">Status</span>
+                            @php
+                                $wf = $petition->workflow_status;
+                            @endphp
                             <span
-                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ $wf['pill_class'] }}">
                                 @if($petition->decision)
                                     Final : {{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}
                                 @else
-                                    {{ $petition->status }}
+                                    {{ $wf['label'] }}
                                 @endif
                             </span>
                         </div>

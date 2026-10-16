@@ -259,22 +259,17 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 text-center">
-                            @if($targetPetition->status === 'Closed' || $targetPetition->status === 'Sent_to_Govt' || $targetPetition->status === 'Internal_Vigilance')
-                                <span
-                                    class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-700">
-                                    Final : {{ $targetPetition->decision ? \App\Models\Decision::getDecisionLabel($targetPetition->decision->final_decision) : $targetPetition->status }}
-                                </span>
-                            @elseif(!$targetPetition->is_cpsp_processed && !$targetPetition->is_returned_to_inward)
-                                <span
-                                    class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-cyan-100 text-cyan-800 border border-cyan-200">
-                                    Inward Pending
-                                </span>
-                            @else
-                                <span
-                                    class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-amber-100 text-amber-700">
-                                    {{ $targetPetition->status }}
-                                </span>
-                            @endif
+                            @php
+                                $wf = $targetPetition->workflow_status;
+                            @endphp
+                            <span
+                                class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest {{ $wf['pill_class'] }}">
+                                @if($targetPetition->decision)
+                                    Final : {{ \App\Models\Decision::getDecisionLabel($targetPetition->decision->final_decision) }}
+                                @else
+                                    {{ $wf['label'] }}
+                                @endif
+                            </span>
                         </td>
                         <td class="px-6 py-4 text-center">
                             <div class="flex flex-col items-center justify-center gap-2">

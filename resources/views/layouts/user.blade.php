@@ -495,18 +495,18 @@
                          class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
                         
                         @if($canAccessInwardEntry)
-                        <a href="{{ route('inward.enter_petition') }}" 
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.enter_petition') ? 'active-submenu' : 'submenu-link' }}">
+                        <a href="{{ route('inward.enter_petition', ['show_form' => 1]) }}" 
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.enter_petition') && !request()->boolean('hide_form') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator shrink-0"></span>
-                           <i data-lucide="file-plus-2" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.enter_petition') ? 'text-teal-400' : '' }}"></i>
+                           <i data-lucide="file-plus-2" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.enter_petition') && !request()->boolean('hide_form') ? 'text-teal-400' : '' }}"></i>
                            <span class="whitespace-nowrap">Inward Registration</span>
                         </a>
                         
                         @if(Auth::user()->canAccess('view petitions'))
                         <a href="{{ route('inward.enter_petition', ['hide_form' => 1]) }}#view-inward-petitions" 
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('petitions.index') ? 'active-submenu' : 'submenu-link' }}">
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.enter_petition') && request()->boolean('hide_form') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator shrink-0"></span>
-                           <i data-lucide="files" class="w-4 h-4 mr-2.5 shrink-0"></i>
+                           <i data-lucide="files" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.enter_petition') && request()->boolean('hide_form') ? 'text-teal-400' : '' }}"></i>
                            <span class="whitespace-nowrap">View Inward Petitions</span>
                         </a>
                         @endif

@@ -45,11 +45,15 @@
         @foreach($transfers as $index => $item)
             @php
                 $complainant = $item->addresses->firstWhere('person_type', 'Complainant');
-                $status = 'Transferred';
-                if ($item->is_returned_to_inward)
+                $wf = $item->workflow_status;
+                $status = $wf['label'];
+                if ($wf['label'] === 'Transferred' && $item->seat) {
+                    $status = 'Transferred to ' . $item->seat->seat_name;
+                } elseif ($wf['label'] === 'Returned') {
                     $status = 'Returned to Inward';
-                elseif ($item->is_cpsp_processed)
+                } elseif ($wf['label'] === 'Processed') {
                     $status = 'Processed by CPSP';
+                }
             @endphp
             <tr>
                 <td>{{ $index + 1 }}</td>

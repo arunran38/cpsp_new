@@ -6,14 +6,27 @@
         $seatsList = $seats ?? \App\Models\Seat::role('CPSP')->where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
         $tab = 'inward';
-        $hideRegistrationForm = request()->boolean('hide_form') && !$errors->any();
+
+        $shouldHideForm = false;
+        if (!$errors->any() && !session('success')) {
+            if (request()->has('show_form')) {
+                $shouldHideForm = !request()->boolean('show_form');
+            } elseif (request()->has('hide_form')) {
+                $shouldHideForm = request()->boolean('hide_form');
+            } elseif (request()->cookie('inward_form_hidden') === '1') {
+                $shouldHideForm = true;
+            }
+        }
+        $hideRegistrationForm = $shouldHideForm;
     @endphp
 
     <div class="space-y-6" x-data="inwardPetitionForm()" @keydown.ctrl.enter.prevent="openConfirmationModal()"
         @keydown.cmd.enter.prevent="openConfirmationModal()">
 
         @if((Auth::user()->canAccess('create_inward_petitions') || Auth::user()->canAccess('create inward petitions')) && !Auth::user()->hasRole('super admin') && !Auth::user()->hasRole('admin'))
-        <div x-show="showRegistrationForm"
+        <div id="inward-registration-section"
+             x-show="showRegistrationForm"
+             x-cloak
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 -translate-y-2"
              x-transition:enter-end="opacity-100 translate-y-0"
@@ -47,7 +60,7 @@
                         </div>
                     </div>
                     <div class="z-10">
-                        <button type="button" @click="showRegistrationForm = false; $nextTick(() => { if (window.lucide) { lucide.createIcons(); } })"
+                        <button type="button" @click="setFormVisibility(false)"
                             class="px-4 py-2 text-xs font-bold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/50 rounded-xl transition-all flex items-center gap-2 shadow-sm backdrop-blur-sm cursor-pointer">
                             <i data-lucide="eye-off" class="w-4 h-4"></i> Hide Form
                         </button>
@@ -289,7 +302,7 @@
                 </div>
                 @if((Auth::user()->canAccess('create_inward_petitions') || Auth::user()->canAccess('create inward petitions')) && !Auth::user()->hasRole('super admin') && !Auth::user()->hasRole('admin'))
                     <div class="z-10">
-                        <button type="button" @click="showRegistrationForm = !showRegistrationForm; $nextTick(() => { if (window.lucide) { lucide.createIcons(); } })"
+                        <button type="button" @click="setFormVisibility(!showRegistrationForm)"
                             class="px-5 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center gap-2 shadow-md cursor-pointer"
                             :class="showRegistrationForm ? 'text-slate-300 bg-slate-800/80 hover:bg-slate-700 border border-slate-700/50' : 'text-white bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/30'">
                             <span x-show="!showRegistrationForm" class="flex items-center gap-1.5">
@@ -363,11 +376,20 @@
                 <div class="flex flex-col gap-4">
                     @if($canFilterTransfer)
                         <!-- Filter Pills: All Petitions, Transferred, Returned from CPSP -->
-                        <nav class="flex flex-nowrap items-center gap-2 overflow-x-auto hide-scrollbar mb-2" aria-label="Filter inward transactions">
+                        <nav id="inward-filter-nav" class="flex flex-nowrap items-center gap-2 overflow-x-auto hide-scrollbar mb-2" aria-label="Filter inward transactions">
                             @foreach($filterButtons as $filterKey => $filterLabel)
-                                <a href="{{ route('inward.enter_petition', array_merge(request()->except(['page', 'filter']), ['filter' => $filterKey])) }}#view-inward-petitions"
+                                @php
+                                    $linkParams = array_merge(request()->except(['page', 'filter']), ['filter' => $filterKey]);
+                                    if ($hideRegistrationForm) {
+                                        $linkParams['hide_form'] = 1;
+                                        unset($linkParams['show_form']);
+                                    }
+                                @endphp
+                                <a href="{{ route('inward.enter_petition', $linkParams) }}#view-inward-petitions"
+                                    data-filter-key="{{ $filterKey }}"
+                                    @click.prevent="switchFilterTab('{{ $filterKey }}')"
                                     @class([
-                                        'px-4 py-1.5 inline-flex items-center gap-2 text-xs font-bold rounded-full border transition-all shadow-sm',
+                                        'filter-pill px-4 py-1.5 inline-flex items-center gap-2 text-xs font-bold rounded-full border transition-all shadow-sm cursor-pointer',
                                         'bg-teal-600 text-white border-teal-600 shadow-sm' => $filter === $filterKey,
                                         'bg-indigo-50/50 text-indigo-700 border-indigo-200 hover:bg-indigo-100' => $filter !== $filterKey,
                                     ])>
@@ -389,7 +411,8 @@
 
                     <form id="search-form" method="GET" action="{{ route('inward.enter_petition') }}"
                         class="flex flex-wrap gap-4 items-end" x-data="{ searchTimer: null }">
-                        <input type="hidden" name="filter" value="{{ $filter }}">
+                        <input type="hidden" name="filter" id="filter-input" value="{{ $filter }}">
+                        <input type="hidden" name="hide_form" id="hide-form-input" value="{{ $hideRegistrationForm ? '1' : '0' }}">
                         
                         <div class="flex-1 min-w-[200px]">
                             <label class="block text-xs font-medium text-slate-700 mb-1">Search Petitions</label>
@@ -436,7 +459,13 @@
                         <div class="flex-none flex items-center gap-2">
                             <label class="block text-xs font-medium text-transparent mb-1">&nbsp;</label>
                             @if(request()->hasAny(['search', 'date_from', 'date_to', 'seat_id']))
-                                <a href="{{ route('inward.enter_petition', ['filter' => $filter]) }}"
+                                @php
+                                    $resetParams = ['filter' => $filter];
+                                    if ($hideRegistrationForm) {
+                                        $resetParams['hide_form'] = 1;
+                                    }
+                                @endphp
+                                <a href="{{ route('inward.enter_petition', $resetParams) }}"
                                     class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold px-4 py-[9px] rounded-lg text-sm flex items-center gap-2 shadow-sm transition-all whitespace-nowrap"
                                     title="Clear all filters">
                                     <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
@@ -538,8 +567,25 @@
 
     <script>
         function inwardPetitionForm() {
+            let initialHidden = {{ $hideRegistrationForm ? 'true' : 'false' }};
+            @if(!$errors->any() && !session('success'))
+                try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.has('show_form')) {
+                        initialHidden = urlParams.get('show_form') !== '1';
+                    } else if (urlParams.has('hide_form')) {
+                        initialHidden = urlParams.get('hide_form') === '1';
+                    } else {
+                        const stored = localStorage.getItem('inward_form_hidden');
+                        if (stored !== null) {
+                            initialHidden = stored === '1';
+                        }
+                    }
+                } catch (e) {}
+            @endif
+
             return {
-                showRegistrationForm: {{ $hideRegistrationForm ? 'false' : 'true' }},
+                showRegistrationForm: !initialHidden,
                 receiptNo: '{{ old('receipt_no') }}',
                 dateOfReceipt: '{{ old('date_of_petition_received', now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d')) }}',
                 complainantName: '{{ old('complainants.0.name') }}',
@@ -551,6 +597,45 @@
                 selectedUnitId: '{{ old('unit_id', '') }}',
                 dateOfPetitionReceivedAtUnit: '{{ old('date_of_petition_received_at_unit', '') }}',
                 showConfirmModal: false,
+
+                init() {
+                    window.inwardFormState = this;
+                    syncFilterLinks(!initialHidden);
+                },
+
+                setFormVisibility(visible) {
+                    this.showRegistrationForm = visible;
+                    const hiddenVal = visible ? '0' : '1';
+                    try {
+                        localStorage.setItem('inward_form_hidden', hiddenVal);
+                    } catch (e) {}
+                    document.cookie = "inward_form_hidden=" + hiddenVal + "; path=/; max-age=31536000; SameSite=Lax";
+
+                    const hideInput = document.getElementById('hide-form-input');
+                    if (hideInput) {
+                        hideInput.value = hiddenVal;
+                    }
+
+                    try {
+                        const currentUrl = new URL(window.location.href);
+                        if (visible) {
+                            currentUrl.searchParams.set('show_form', '1');
+                            currentUrl.searchParams.delete('hide_form');
+                        } else {
+                            currentUrl.searchParams.set('hide_form', '1');
+                            currentUrl.searchParams.delete('show_form');
+                        }
+                        window.history.replaceState({}, '', currentUrl.toString());
+                    } catch (e) {}
+
+                    syncFilterLinks(visible);
+
+                    this.$nextTick(() => {
+                        if (window.lucide) {
+                            lucide.createIcons();
+                        }
+                    });
+                },
 
                 formatDate(val) {
                     if (!val) return 'Not specified';
@@ -653,53 +738,183 @@
         }
     </script>
     <script>
-        function performLiveSearch() {
+        function syncFilterLinks(isFormVisible) {
+            const pills = document.querySelectorAll('#inward-filter-nav [data-filter-key]');
+            pills.forEach(pill => {
+                try {
+                    const url = new URL(pill.href, window.location.origin);
+                    if (isFormVisible) {
+                        url.searchParams.set('show_form', '1');
+                        url.searchParams.delete('hide_form');
+                    } else {
+                        url.searchParams.set('hide_form', '1');
+                        url.searchParams.delete('show_form');
+                    }
+                    pill.href = url.toString();
+                } catch (e) {}
+            });
+
+            const resetLink = document.querySelector('a[title="Clear all filters"]');
+            if (resetLink) {
+                try {
+                    const url = new URL(resetLink.href, window.location.origin);
+                    if (isFormVisible) {
+                        url.searchParams.set('show_form', '1');
+                        url.searchParams.delete('hide_form');
+                    } else {
+                        url.searchParams.set('hide_form', '1');
+                        url.searchParams.delete('show_form');
+                    }
+                    resetLink.href = url.toString();
+                } catch (e) {}
+            }
+        }
+
+        function switchFilterTab(filterKey) {
+            const filterInput = document.getElementById('filter-input');
+            if (filterInput) {
+                filterInput.value = filterKey;
+            }
+
+            updateFilterPillsUI(filterKey);
+
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.set('filter', filterKey);
+                url.searchParams.delete('page');
+
+                const isFormHidden = (window.inwardFormState && !window.inwardFormState.showRegistrationForm) ||
+                    localStorage.getItem('inward_form_hidden') === '1' ||
+                    url.searchParams.get('hide_form') === '1';
+
+                if (isFormHidden) {
+                    url.searchParams.set('hide_form', '1');
+                    url.searchParams.delete('show_form');
+                } else {
+                    url.searchParams.set('show_form', '1');
+                    url.searchParams.delete('hide_form');
+                }
+                url.hash = 'view-inward-petitions';
+                window.history.pushState({ filter: filterKey }, '', url.toString());
+            } catch (e) {}
+
+            performLiveSearch();
+        }
+
+        function updateFilterPillsUI(activeKey) {
+            const pills = document.querySelectorAll('#inward-filter-nav [data-filter-key]');
+            pills.forEach(pill => {
+                const key = pill.getAttribute('data-filter-key');
+                const badge = pill.querySelector('#badge-' + key);
+                if (key === activeKey) {
+                    pill.className = 'filter-pill px-4 py-1.5 inline-flex items-center gap-2 text-xs font-bold rounded-full border transition-all shadow-sm cursor-pointer bg-teal-600 text-white border-teal-600 shadow-sm';
+                    if (badge) {
+                        badge.className = 'inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-black px-1.5 transition-colors bg-white text-teal-700';
+                    }
+                } else {
+                    pill.className = 'filter-pill px-4 py-1.5 inline-flex items-center gap-2 text-xs font-bold rounded-full border transition-all shadow-sm cursor-pointer bg-indigo-50/50 text-indigo-700 border-indigo-200 hover:bg-indigo-100';
+                    if (badge) {
+                        const count = parseInt(badge.innerText.trim()) || 0;
+                        if (key === 'returned' && count > 0) {
+                            badge.className = 'inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-black px-1.5 transition-colors bg-rose-600 text-white animate-pulse shadow-[0_0_8px_rgba(225,29,72,0.5)]';
+                        } else {
+                            badge.className = 'inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-black px-1.5 transition-colors bg-indigo-600 text-white';
+                        }
+                    }
+                }
+            });
+        }
+
+        function performLiveSearch(customUrl) {
             const form = document.getElementById('search-form');
-            const url = new URL(form.action);
-            const formData = new FormData(form);
-            const params = new URLSearchParams(formData);
-            
-            url.search = params.toString();
-            
+            if (!form) return;
+            let url;
+            if (customUrl) {
+                url = new URL(customUrl, window.location.origin);
+            } else {
+                url = new URL(form.action);
+                const formData = new FormData(form);
+                const params = new URLSearchParams(formData);
+                url.search = params.toString();
+            }
+
+            const tableContainer = document.getElementById('inward-table-container');
+            if (tableContainer) {
+                tableContainer.style.opacity = '0.6';
+            }
+
             fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(res => res.text())
                 .then(html => {
-                    document.getElementById('inward-table-container').innerHTML = html;
-                    lucide.createIcons();
-                    
+                    if (tableContainer) {
+                        tableContainer.innerHTML = html;
+                        tableContainer.style.opacity = '1';
+                    }
+                    if (window.lucide) {
+                        lucide.createIcons();
+                    }
+
                     const countsData = document.getElementById('counts-data');
                     if (countsData) {
                         const counts = {
-                            all: parseInt(countsData.getAttribute('data-all')),
-                            transferred: parseInt(countsData.getAttribute('data-transferred')),
-                            returned: parseInt(countsData.getAttribute('data-returned'))
+                            all: parseInt(countsData.getAttribute('data-all')) || 0,
+                            transferred: parseInt(countsData.getAttribute('data-transferred')) || 0,
+                            returned: parseInt(countsData.getAttribute('data-returned')) || 0
                         };
-                        
+
+                        const currentFilter = document.getElementById('filter-input')?.value || 'all';
+
                         ['all', 'transferred', 'returned'].forEach(key => {
                             const badge = document.getElementById('badge-' + key);
                             if (badge) {
                                 badge.innerText = counts[key];
-                                
-                                // Special styling for 'returned'
-                                if (key === 'returned') {
-                                    const isSelected = badge.closest('a').classList.contains('bg-teal-600');
-                                    if (!isSelected) {
-                                        if (counts[key] > 0) {
-                                            badge.classList.add('bg-rose-600', 'animate-pulse', 'shadow-[0_0_8px_rgba(225,29,72,0.5)]');
-                                            badge.classList.remove('bg-indigo-600', 'bg-white', 'text-teal-700');
-                                            badge.classList.add('text-white');
-                                        } else {
-                                            badge.classList.remove('bg-rose-600', 'animate-pulse', 'shadow-[0_0_8px_rgba(225,29,72,0.5)]');
-                                            badge.classList.add('bg-indigo-600', 'text-white');
-                                            badge.classList.remove('bg-white', 'text-teal-700');
-                                        }
+                                if (key !== currentFilter) {
+                                    if (key === 'returned' && counts[key] > 0) {
+                                        badge.className = 'inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-black px-1.5 transition-colors bg-rose-600 text-white animate-pulse shadow-[0_0_8px_rgba(225,29,72,0.5)]';
+                                    } else {
+                                        badge.className = 'inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-black px-1.5 transition-colors bg-indigo-600 text-white';
                                     }
                                 }
                             }
                         });
                     }
+                })
+                .catch(() => {
+                    if (tableContainer) tableContainer.style.opacity = '1';
                 });
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const tableContainer = document.getElementById('inward-table-container');
+            if (tableContainer) {
+                tableContainer.addEventListener('click', function(e) {
+                    const link = e.target.closest('a');
+                    if (link && link.href && link.closest('.pagination, nav[role="navigation"]')) {
+                        e.preventDefault();
+                        try {
+                            const pageUrl = new URL(link.href, window.location.origin);
+                            const newUrl = new URL(window.location.href);
+                            if (pageUrl.searchParams.has('page')) {
+                                newUrl.searchParams.set('page', pageUrl.searchParams.get('page'));
+                            }
+                            window.history.pushState({}, '', newUrl.toString());
+                        } catch (e) {}
+                        performLiveSearch(link.href);
+                    }
+                });
+            }
+
+            window.addEventListener('popstate', function() {
+                try {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const filter = urlParams.get('filter') || 'all';
+                    const filterInput = document.getElementById('filter-input');
+                    if (filterInput) filterInput.value = filter;
+                    updateFilterPillsUI(filter);
+                    performLiveSearch();
+                } catch (e) {}
+            });
+        });
     </script>
 
     <!-- Reassign to CPSP Modal -->

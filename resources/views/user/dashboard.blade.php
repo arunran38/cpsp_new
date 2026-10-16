@@ -65,6 +65,7 @@
 
     if ($isInwardRole) {
         $totalInwardCount = $petitions->count();
+        $todayInwardCount = $petitions->filter(fn($p) => \Carbon\Carbon::parse($p->created_at)->isToday())->count();
         $sentToCpspCount = $petitions->filter(fn($p) => !$p->is_returned_to_inward)->count();
         $returnedFromCpspCount = $petitions->filter(fn($p) => (bool)$p->is_returned_to_inward)->count();
     }
@@ -193,7 +194,7 @@
         </div>
         <div class="flex items-center gap-3 z-10 hidden sm:flex">
             @if($isInwardRole)
-                <a href="{{ route('inward.enter_petition') }}" class="flex items-center gap-2 px-6 py-3 text-sm font-bold text-white transition-all rounded-xl shadow-lg shadow-indigo-500/30 bg-indigo-600 hover:bg-indigo-700 hover:-translate-y-0.5 focus:ring-4 focus:ring-indigo-500/20 active:translate-y-0">
+                <a href="{{ route('inward.enter_petition', ['show_form' => 1]) }}" class="flex items-center gap-2 px-6 py-3 text-sm font-bold text-white transition-all rounded-xl shadow-lg shadow-indigo-500/30 bg-indigo-600 hover:bg-indigo-700 hover:-translate-y-0.5 focus:ring-4 focus:ring-indigo-500/20 active:translate-y-0">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     New Registration
                 </a>
@@ -209,9 +210,9 @@
 
     <!-- Stats Grid -->
     @if($isInwardRole)
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 p-4">
-        <!-- Card 1: Total Inward Petitions -->
-        <a href="{{ route('inward.enter_petition', ['filter' => 'all', 'hide_form' => 1]) }}#view-inward-petitions"
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 p-4">
+        <!-- Card 1: Registered Today -->
+        <a href="{{ route('inward.enter_petition', ['filter' => 'all', 'date_from' => now()->toDateString(), 'date_to' => now()->toDateString(), 'hide_form' => 1]) }}#view-inward-petitions"
            class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-cyan-500/40 bg-gradient-to-br from-cyan-400 to-blue-500 border border-cyan-400/30 shadow-lg">
             <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
             
@@ -220,35 +221,54 @@
                     <i data-lucide="inbox" class="w-6 h-6 stroke-[2.5]"></i>
                 </div>
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
+                    Today
+                </span>
+            </div>
+            <div class="mt-4 relative z-10">
+                <p class="text-[10px] font-black text-cyan-50 uppercase tracking-widest leading-none mb-2">Registered Today</p>
+                <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $todayInwardCount }}</h3>
+            </div>
+        </a>
+
+        <!-- Card 2: Total Inward Petitions -->
+        <a href="{{ route('inward.enter_petition', ['filter' => 'all', 'hide_form' => 1]) }}#view-inward-petitions"
+           class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-500 to-teal-700 border border-emerald-400/30 shadow-lg">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+            
+            <div class="flex items-start justify-between relative z-10">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-teal-700 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                    <i data-lucide="layers" class="w-6 h-6 stroke-[2.5]"></i>
+                </div>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
                     Total
                 </span>
             </div>
             <div class="mt-4 relative z-10">
-                <p class="text-[10px] font-black text-cyan-50 uppercase tracking-widest leading-none mb-2">Total Inward Petitions</p>
+                <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none mb-2">Total Inward Petitions</p>
                 <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $totalInwardCount }}</h3>
             </div>
         </a>
 
-        <!-- Card 2: Sent/Transferred to CPSP -->
+        <!-- Card 3: Transferred to Seats -->
         <a href="{{ route('inward.enter_petition', ['filter' => 'transferred', 'hide_form' => 1]) }}#view-inward-petitions"
-           class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-500/40 bg-gradient-to-br from-emerald-500 to-teal-600 border border-emerald-400/30 shadow-lg">
+           class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/40 bg-gradient-to-br from-indigo-500 to-purple-600 border border-indigo-400/30 shadow-lg">
             <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
             
             <div class="flex items-start justify-between relative z-10">
-                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-emerald-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
-                    <i data-lucide="send" class="w-6 h-6 stroke-[2.5]"></i>
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-indigo-600 bg-white shadow-[0_4px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-all duration-500">
+                    <i data-lucide="corner-up-right" class="w-6 h-6 stroke-[2.5]"></i>
                 </div>
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black bg-white/20 text-white backdrop-blur-md border border-white/20 uppercase tracking-widest">
-                    Sent
+                    Dispatched
                 </span>
             </div>
             <div class="mt-4 relative z-10">
-                <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest leading-none mb-2">Sent/Transferred to CPSP</p>
+                <p class="text-[10px] font-black text-indigo-100 uppercase tracking-widest leading-none mb-2">Transferred to Seats</p>
                 <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $sentToCpspCount }}</h3>
             </div>
         </a>
 
-        <!-- Card 3: Returned from CPSP -->
+        <!-- Card 4: Returned from Seats -->
         <a href="{{ route('inward.enter_petition', ['filter' => 'returned', 'hide_form' => 1]) }}#view-inward-petitions"
            class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-rose-500/40 bg-gradient-to-br from-rose-400 to-pink-600 border border-rose-400/30 shadow-lg">
             <div class="absolute -top-24 -right-24 w-48 h-48 bg-white rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
@@ -262,7 +282,7 @@
                 </span>
             </div>
             <div class="mt-4 relative z-10">
-                <p class="text-[10px] font-black text-pink-100 uppercase tracking-widest leading-none mb-2">Returned from CPSP</p>
+                <p class="text-[10px] font-black text-pink-100 uppercase tracking-widest leading-none mb-2">Returned from Seats</p>
                 <h3 class="text-4xl font-black text-white tracking-tight transition-all duration-500">{{ $returnedFromCpspCount }}</h3>
             </div>
         </a>
@@ -463,24 +483,34 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt')
-                                             <span class="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-emerald-100 text-emerald-700">
-                                                Finalized
+                                        @php
+                                            $wf = $petition->workflow_status;
+                                        @endphp
+                                        <div class="inline-flex flex-col">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest {{ $wf['pill_class'] }}">
+                                                {{ $wf['label'] }}
                                             </span>
-                                        @elseif($petition->status === 'Forwarded' || $petition->status === 'VR_Received')
-                                            <span class="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-blue-100 text-blue-700">
-                                                In Progress
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-amber-100 text-amber-700">
-                                                {{ $petition->status }}
-                                            </span>
-                                        @endif
+                                            @if($wf['label'] === 'Transferred' && $petition->seat)
+                                                <span class="block text-[10px] text-slate-400 font-medium mt-0.5">To: {{ $petition->seat->seat_name }}</span>
+                                            @elseif($wf['label'] === 'Processed' && ($petition->processedBySeat || $petition->processedByUser))
+                                                <span class="block text-[10px] text-emerald-600 font-medium mt-0.5">{{ $petition->processedBySeat->seat_name ?? $petition->processedByUser->name }}</span>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right">
-                                        <a href="{{ route('petitions.show', $petition->hashid) }}" class="inline-flex items-center justify-center p-2 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-all">
-                                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                                        </a>
+                                        <div class="inline-flex items-center justify-end gap-1.5">
+                                            @if($petition->is_returned_to_inward && ($isInwardRole ?? false))
+                                                <a href="{{ route('inward.enter_petition', ['filter' => 'returned', 'hide_form' => 1]) . '#view-inward-petitions' }}"
+                                                   class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 font-bold rounded-lg transition-colors border border-rose-200 text-xs"
+                                                   title="Re-transfer to CPSP Seat">
+                                                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                                    <span>Re-transfer</span>
+                                                </a>
+                                            @endif
+                                            <a href="{{ route('petitions.show', $petition->hashid) }}" class="inline-flex items-center justify-center p-2 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-transparent hover:border-indigo-100 transition-all" title="View Details">
+                                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

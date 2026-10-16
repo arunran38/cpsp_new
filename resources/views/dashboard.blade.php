@@ -160,7 +160,7 @@
     $recentPetitions = collect([]);
     if ($canSeeRecentPetitions) {
         $recentPetitions = (clone $basePetitionsQuery)
-            ->with(['addresses', 'latestForwarding', 'decision', 'seat'])
+            ->with(['addresses', 'latestForwarding', 'decision', 'seat', 'processedBySeat', 'processedByUser'])
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
@@ -212,7 +212,7 @@
             <!-- Header Quick Actions -->
             <div class="flex flex-wrap items-center gap-2.5">
                 @if($isInwardDesk)
-                    <a href="{{ route('inward.enter_petition') }}"
+                    <a href="{{ route('inward.enter_petition', ['show_form' => 1]) }}"
                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold text-xs shadow-lg shadow-teal-500/20 hover:scale-105 transition-all">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
                         <span>New Registration</span>
@@ -367,74 +367,89 @@
     @elseif($isInwardDesk)
         {{-- Inward Desk Metrics Cards --}}
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <div class="p-5 rounded-3xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-md">
+            <!-- Card 1: Registered Today -->
+            <a href="{{ route('inward.enter_petition', ['filter' => 'all', 'date_from' => now()->toDateString(), 'date_to' => now()->toDateString(), 'hide_form' => 1]) }}#view-inward-petitions"
+               class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white shadow-md cursor-pointer border border-cyan-400/20">
                 <div class="flex items-center justify-between">
-                    <i data-lucide="inbox" class="w-6 h-6"></i>
+                    <i data-lucide="inbox" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Today</span>
                 </div>
                 <h3 class="text-3xl font-black mt-3">{{ $todayInward ?? 0 }}</h3>
                 <p class="text-xs text-cyan-100 mt-1 font-semibold">Registered Today</p>
-            </div>
-            <div class="p-5 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-md">
+            </a>
+
+            <!-- Card 2: Total Inward Petitions -->
+            <a href="{{ route('inward.enter_petition', ['filter' => 'all', 'hide_form' => 1]) }}#view-inward-petitions"
+               class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-md cursor-pointer border border-emerald-400/20">
                 <div class="flex items-center justify-between">
-                    <i data-lucide="layers" class="w-6 h-6"></i>
+                    <i data-lucide="layers" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Total</span>
                 </div>
                 <h3 class="text-3xl font-black mt-3">{{ $totalPetitions }}</h3>
                 <p class="text-xs text-emerald-100 mt-1 font-semibold">Total Inward Petitions</p>
-            </div>
-            <div class="p-5 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md">
+            </a>
+
+            <!-- Card 3: Transferred to Seats -->
+            <a href="{{ route('inward.enter_petition', ['filter' => 'transferred', 'hide_form' => 1]) }}#view-inward-petitions"
+               class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md cursor-pointer border border-indigo-400/20">
                 <div class="flex items-center justify-between">
-                    <i data-lucide="corner-up-right" class="w-6 h-6"></i>
+                    <i data-lucide="corner-up-right" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Dispatched</span>
                 </div>
                 <h3 class="text-3xl font-black mt-3">{{ $transferredToDesks ?? 0 }}</h3>
                 <p class="text-xs text-indigo-100 mt-1 font-semibold">Transferred to Seats</p>
-            </div>
-            <div class="p-5 rounded-3xl bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md">
+            </a>
+
+            <!-- Card 4: Returned from Seats -->
+            <a href="{{ route('inward.enter_petition', ['filter' => 'returned', 'hide_form' => 1]) }}#view-inward-petitions"
+               class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md cursor-pointer border border-rose-400/20">
                 <div class="flex items-center justify-between">
-                    <i data-lucide="corner-up-left" class="w-6 h-6"></i>
+                    <i data-lucide="corner-up-left" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Returned</span>
                 </div>
                 <h3 class="text-3xl font-black mt-3">{{ $returnedToInward ?? 0 }}</h3>
                 <p class="text-xs text-rose-100 mt-1 font-semibold">Returned from Seats</p>
-            </div>
+            </a>
         </div>
     @else
         {{-- CPSP Desk Seat Metrics Cards --}}
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <div class="p-5 rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md">
+            <a href="{{ route('petitions.index', ['tab' => 'all']) }}"
+               class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md cursor-pointer border border-blue-400/20">
                 <div class="flex items-center justify-between">
-                    <i data-lucide="folder" class="w-6 h-6"></i>
+                    <i data-lucide="folder" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Assigned</span>
                 </div>
                 <h3 class="text-3xl font-black mt-3">{{ $totalPetitions }}</h3>
                 <p class="text-xs text-blue-100 mt-1 font-semibold">Petitions in Seat</p>
-            </div>
-            <div class="p-5 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-md">
+            </a>
+            <a href="{{ route('petitions.index', ['tab' => 'received']) }}"
+               class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-md cursor-pointer border border-emerald-400/20">
                 <div class="flex items-center justify-between">
-                    <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                    <i data-lucide="check-circle-2" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Active</span>
                 </div>
                 <h3 class="text-3xl font-black mt-3">{{ $processed }}</h3>
                 <p class="text-xs text-emerald-100 mt-1 font-semibold">Processed by Desk</p>
-            </div>
-            <div class="p-5 rounded-3xl bg-gradient-to-br from-pink-500 to-rose-600 text-white shadow-md">
+            </a>
+            <a href="{{ route('petitions.index', ['tab' => 'forwarded']) }}"
+               class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white shadow-md cursor-pointer border border-pink-400/20">
                 <div class="flex items-center justify-between">
-                    <i data-lucide="send" class="w-6 h-6"></i>
+                    <i data-lucide="send" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Inquiry</span>
                 </div>
                 <h3 class="text-3xl font-black mt-3">{{ $forwarded }}</h3>
                 <p class="text-xs text-pink-100 mt-1 font-semibold">Forwarded to Units</p>
-            </div>
-            <div class="p-5 rounded-3xl bg-gradient-to-br from-purple-500 to-indigo-700 text-white shadow-md">
+            </a>
+            <a href="{{ route('petitions.index', ['tab' => 'decisions']) }}"
+               class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-purple-500 to-indigo-700 text-white shadow-md cursor-pointer border border-purple-400/20">
                 <div class="flex items-center justify-between">
-                    <i data-lucide="check-square" class="w-6 h-6"></i>
+                    <i data-lucide="check-square" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
                     <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Disposed</span>
                 </div>
                 <h3 class="text-3xl font-black mt-3">{{ $decisions }}</h3>
                 <p class="text-xs text-purple-100 mt-1 font-semibold">Final Decisions Taken</p>
-            </div>
+            </a>
         </div>
     @endif
 
@@ -586,6 +601,7 @@
                             @php
                                 $targetPetition = $petition->originalPetition ?? $petition;
                                 $complainant = $targetPetition->addresses->where('person_type', 'Complainant')->first();
+                                $wf = $petition->workflow_status;
                             @endphp
                             <tr class="hover:bg-slate-50/60 transition-colors">
                                 <td class="px-6 py-3.5">
@@ -599,27 +615,34 @@
                                     {{ $petition->nature_of_petition ?? 'General' }}
                                 </td>
                                 <td class="px-6 py-3.5 text-center">
-                                    @if(in_array($petition->status, ['Closed', 'Sent_to_Govt']))
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                                            Finalized
+                                    <div class="inline-flex flex-col items-center">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold {{ $wf['pill_class'] }}">
+                                            {{ $wf['label'] }}
                                         </span>
-                                    @elseif(in_array($petition->status, ['Forwarded', 'VR_Received']))
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
-                                            In Inquiry
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
-                                            {{ $petition->status }}
-                                        </span>
-                                    @endif
+                                        @if($wf['label'] === 'Transferred' && $petition->seat)
+                                            <span class="block text-[10px] text-slate-400 font-medium mt-0.5">To: {{ $petition->seat->seat_name }}</span>
+                                        @elseif($wf['label'] === 'Processed' && ($petition->processedBySeat || $petition->processedByUser))
+                                            <span class="block text-[10px] text-emerald-600 font-medium mt-0.5">{{ $petition->processedBySeat->seat_name ?? $petition->processedByUser->name }}</span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td class="px-6 py-3.5 text-center">
-                                    <a href="{{ route('petitions.show', $petition->hashid) }}"
-                                       class="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 font-bold rounded-lg transition-colors"
-                                       title="View Details">
-                                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                                        <span>View</span>
-                                    </a>
+                                    <div class="inline-flex items-center justify-center gap-1.5">
+                                        <a href="{{ route('petitions.show', $petition->hashid) }}"
+                                           class="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 font-bold rounded-lg transition-colors"
+                                           title="View Details">
+                                            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                                            <span>View</span>
+                                        </a>
+                                        @if($petition->is_returned_to_inward && ($isInwardDesk || $isInwardRole))
+                                            <a href="{{ route('inward.enter_petition', ['filter' => 'returned', 'hide_form' => 1]) . '#view-inward-petitions' }}"
+                                               class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 font-bold rounded-lg transition-colors border border-rose-200"
+                                               title="Re-transfer to CPSP Seat">
+                                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                                <span>Re-transfer</span>
+                                            </a>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

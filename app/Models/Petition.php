@@ -287,6 +287,109 @@ class Petition extends Model
         return static::findOrFail($id);
     }
 
+    /**
+     * Accessor for dynamic workflow status details.
+     * Accurately reflects current lifecycle state (Transferred, Returned, Processed, Forwarded, VR Received, Finalized).
+     */
+    public function getWorkflowStatusAttribute(): array
+    {
+        // 1. Returned to Inward
+        if ($this->is_returned_to_inward) {
+            return [
+                'label' => 'Returned',
+                'description' => 'Returned to Inward',
+                'badge_class' => 'bg-rose-50 text-rose-700 border border-rose-200',
+                'pill_class' => 'bg-rose-100 text-rose-800 border border-rose-200',
+                'dot_class' => 'bg-rose-500',
+                'color' => 'rose',
+            ];
+        }
+
+        // 2. Transferred from Inward, awaiting CPSP processing
+        if (!$this->is_cpsp_processed) {
+            return [
+                'label' => 'Transferred',
+                'description' => 'Transferred to Seat (Pending CPSP Updation)',
+                'badge_class' => 'bg-amber-50 text-amber-700 border border-amber-200',
+                'pill_class' => 'bg-amber-100 text-amber-800 border border-amber-200',
+                'dot_class' => 'bg-amber-500',
+                'color' => 'amber',
+            ];
+        }
+
+        // 3. Duplicate / Linked
+        if ($this->linked_petition_id || $this->status === self::STATUS_DUPLICATE) {
+            return [
+                'label' => 'Duplicate',
+                'description' => 'Linked Duplicate',
+                'badge_class' => 'bg-slate-50 text-slate-700 border border-slate-200',
+                'pill_class' => 'bg-slate-100 text-slate-700 border border-slate-200',
+                'dot_class' => 'bg-slate-400',
+                'color' => 'slate',
+            ];
+        }
+
+        // 4. Processed by CPSP, in initial received stage
+        if ($this->status === self::STATUS_RECEIVED) {
+            return [
+                'label' => 'Processed',
+                'description' => 'Updated by CPSP',
+                'badge_class' => 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+                'pill_class' => 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+                'dot_class' => 'bg-emerald-500',
+                'color' => 'emerald',
+            ];
+        }
+
+        // 5. Forwarded for Inquiry
+        if ($this->status === self::STATUS_FORWARDED) {
+            return [
+                'label' => 'Forwarded',
+                'description' => 'Forwarded for Inquiry',
+                'badge_class' => 'bg-blue-50 text-blue-700 border border-blue-200',
+                'pill_class' => 'bg-blue-100 text-blue-800 border border-blue-200',
+                'dot_class' => 'bg-blue-500',
+                'color' => 'blue',
+            ];
+        }
+
+        // 6. Verification Report (VR) Received
+        if ($this->status === self::STATUS_VR_RECEIVED) {
+            return [
+                'label' => 'VR Received',
+                'description' => 'Verification Report Received',
+                'badge_class' => 'bg-purple-50 text-purple-700 border border-purple-200',
+                'pill_class' => 'bg-purple-100 text-purple-800 border border-purple-200',
+                'dot_class' => 'bg-purple-500',
+                'color' => 'purple',
+            ];
+        }
+
+        // 7. Finalized / Decision Taken
+        if (in_array($this->status, [self::STATUS_CLOSED, self::STATUS_SENT_TO_GOVT, self::STATUS_INTERNAL_VIGILANCE, self::STATUS_CLOSED_BY_GOVT]) || $this->decision) {
+            $decisionLabel = $this->decision ? Decision::getDecisionLabel($this->decision->final_decision) : str_replace('_', ' ', $this->status);
+            return [
+                'label' => 'Finalized',
+                'description' => 'Final : ' . $decisionLabel,
+                'badge_class' => 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+                'pill_class' => 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+                'dot_class' => 'bg-emerald-600',
+                'color' => 'emerald',
+            ];
+        }
+
+        // Fallback
+        $formatted = str_replace('_', ' ', $this->status);
+        return [
+            'label' => $formatted,
+            'description' => $formatted,
+            'badge_class' => 'bg-amber-50 text-amber-700 border border-amber-200',
+            'pill_class' => 'bg-amber-100 text-amber-800 border border-amber-200',
+            'dot_class' => 'bg-amber-500',
+            'color' => 'amber',
+        ];
+    }
+
     // --- Scopes ---
 
     public function scopeFilterByTab(Builder $query, string $tab): Builder

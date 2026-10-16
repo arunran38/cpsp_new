@@ -35,7 +35,7 @@
                         $isInward = $user && ($user->hasRole(['inward', 'Inward']) || ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || stripos($currentSeat->seat_name, 'Inward') !== false)));
                     @endphp
                     @if($isInward)
-                        <a href="{{ route('inward.enter_petition') }}"
+                        <a href="{{ route('inward.enter_petition', ['show_form' => 1]) }}"
                             class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
                             <i data-lucide="file-plus-2" class="w-4 h-4"></i> New Registration
                         </a>
