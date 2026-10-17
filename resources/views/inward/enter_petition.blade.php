@@ -7,6 +7,24 @@
         $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
         $tab = 'inward';
 
+        $currentUser = Auth::user();
+        $hasInwardRole = $currentUser && (
+            $currentUser->hasRole(['inward', 'Inward']) || 
+            ($currentUser->currentSeatUser()?->seat && (
+                $currentUser->currentSeatUser()->seat->hasRole(['inward', 'Inward']) || 
+                str_contains(strtolower($currentUser->currentSeatUser()->seat->seat_name), 'inward')
+            ))
+        );
+
+        $canRegisterInward = $currentUser && (
+            $hasInwardRole ||
+            $currentUser->canAccess('create inward petitions') ||
+            $currentUser->canAccess('create_inward_petitions') ||
+            $currentUser->canAccess('inward form') ||
+            $currentUser->canAccess('inward_form') ||
+            $currentUser->hasRole(['inward', 'Inward', 'admin', 'Admin', 'super admin', 'Super Admin', 'developer', 'Developer'])
+        );
+
         $shouldHideForm = false;
         if (!$errors->any() && !session('success')) {
             if (request()->has('show_form')) {
@@ -23,7 +41,7 @@
     <div class="space-y-6" x-data="inwardPetitionForm()" @keydown.ctrl.enter.prevent="openConfirmationModal()"
         @keydown.cmd.enter.prevent="openConfirmationModal()">
 
-        @if((Auth::user()->canAccess('create_inward_petitions') || Auth::user()->canAccess('create inward petitions')) && !Auth::user()->hasRole('super admin') && !Auth::user()->hasRole('admin'))
+        @if($canRegisterInward)
         <div id="inward-registration-section"
              x-show="showRegistrationForm"
              x-cloak
@@ -306,7 +324,7 @@
                         Track and manage petitions registered through the inward section.
                     </p>
                 </div>
-                @if((Auth::user()->canAccess('create_inward_petitions') || Auth::user()->canAccess('create inward petitions')) && !Auth::user()->hasRole('super admin') && !Auth::user()->hasRole('admin'))
+                @if($canRegisterInward)
                     <div class="z-10">
                         <button type="button" @click="setFormVisibility(!showRegistrationForm)"
                             class="px-5 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center gap-2 shadow-md cursor-pointer"
@@ -579,8 +597,16 @@
                     const urlParams = new URLSearchParams(window.location.search);
                     if (urlParams.has('show_form')) {
                         initialHidden = urlParams.get('show_form') !== '1';
+                        if (!initialHidden) {
+                            try { localStorage.setItem('inward_form_hidden', '0'); } catch (e) {}
+                            document.cookie = "inward_form_hidden=0; path=/; max-age=31536000; SameSite=Lax";
+                        }
                     } else if (urlParams.has('hide_form')) {
                         initialHidden = urlParams.get('hide_form') === '1';
+                        if (initialHidden) {
+                            try { localStorage.setItem('inward_form_hidden', '1'); } catch (e) {}
+                            document.cookie = "inward_form_hidden=1; path=/; max-age=31536000; SameSite=Lax";
+                        }
                     } else {
                         const stored = localStorage.getItem('inward_form_hidden');
                         if (stored !== null) {

@@ -53,11 +53,12 @@ class PetitionController extends Controller
     {
         $user = Auth::user();
 
-        // Permission Check: Must have 'inward_form' or 'inward form' or 'Inward'/'inward' role
+        // Permission Check: Must have inward form access or appropriate role
         if (!$user->canAccess('inward_form') && 
             !$user->canAccess('inward form') && 
-            !$user->hasRole('inward') && 
-            !$user->hasRole('Inward')) {
+            !$user->canAccess('create inward petitions') && 
+            !$user->canAccess('create_inward_petitions') && 
+            !$user->hasRole(['inward', 'Inward', 'admin', 'Admin', 'super admin', 'Super Admin', 'developer', 'Developer'])) {
             abort(403, 'Unauthorized. Permission inward_form required to access Inward Petition Registration Form.');
         }
 
