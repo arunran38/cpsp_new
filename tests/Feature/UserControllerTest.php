@@ -99,7 +99,6 @@ class UserControllerTest extends TestCase
             'pen' => (string) $user->pen,
             'email' => 'updated@example.com',
             'mobile_number' => '1122334455',
-            'role' => 'admin',
             'designation' => 'SI',
             'status' => 'Transferred',
         ];

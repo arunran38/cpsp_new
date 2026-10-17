@@ -1,6 +1,9 @@
 @if(isset($counts))
     <div id="counts-data" data-all="{{ $counts['all'] ?? 0 }}" data-transferred="{{ $counts['transferred'] ?? 0 }}" data-returned="{{ $counts['returned'] ?? 0 }}" style="display:none;"></div>
 @endif
+@php
+    $showEnteredBy = Auth::user()->canAccess('access admin dashboard') && !$isSuperAdmin;
+@endphp
 <div class="overflow-x-auto">
     <table class="w-full text-left border-collapse">
         <thead>
@@ -12,7 +15,7 @@
                 <th class="px-6 py-4">Mode of Receipt</th>
                 <th class="px-6 py-4">Concerned Seat</th>
                 <th class="px-6 py-4">Transferred On</th>
-                @if(Auth::user()->canAccess('access admin dashboard'))
+                @if($showEnteredBy)
                     <th class="px-6 py-4">Entered By (Inward)</th>
                 @endif
                 @if(($filter ?? request('filter')) === 'returned')
@@ -71,7 +74,7 @@
                     <td class="px-5 py-3.5 font-medium text-blue-600 whitespace-nowrap">
                         {{ $item->created_at?->format('d M, Y') }}
                     </td>
-                    @if(Auth::user()->canAccess('access admin dashboard'))
+                    @if($showEnteredBy)
                     <td class="px-5 py-3.5">
                         <div class="flex flex-col">
                             <span class="font-bold text-blue-700">{{ $item->user?->name ?? 'Unknown' }}</span>
@@ -166,7 +169,7 @@
                 <tr>
                     @php
                         $colspan = 7;
-                        if (Auth::user()->canAccess('access admin dashboard')) $colspan++;
+                        if ($showEnteredBy) $colspan++;
                         if (($filter ?? request('filter')) === 'returned') $colspan++;
                     @endphp
                     <td colspan="{{ $colspan }}" class="px-6 py-10 text-center text-slate-400">

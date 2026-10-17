@@ -52,6 +52,7 @@ class PetitionController extends Controller
     public function inwardCreate(Request $request): View|string
     {
         $user = Auth::user();
+        $isSuperAdmin = $user->hasRole(['super admin', 'Super Admin']);
 
         // Permission Check: Must have inward form access or appropriate role
         if (!$user->canAccess('inward_form') && 
@@ -159,12 +160,12 @@ class PetitionController extends Controller
         $transfers = $transfersQuery->latest('created_at')->paginate(10)->appends($request->query());
 
         if ($request->ajax()) {
-            return view('inward.partials.inward_table', compact('transfers', 'filter', 'counts'))->render();
+            return view('inward.partials.inward_table', compact('transfers', 'filter', 'counts', 'isSuperAdmin'))->render();
         }
 
         $unifiedCounts = $this->getUnifiedCounts();
 
-        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments', 'transfers', 'filter', 'counts', 'unifiedCounts', 'inwardSeats'));
+        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments', 'transfers', 'filter', 'counts', 'unifiedCounts', 'inwardSeats', 'isSuperAdmin'));
     }
 
     /**

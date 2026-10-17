@@ -30,7 +30,6 @@ class UpdateUserRequest extends FormRequest
             'pen' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $userId . ',user_id',
             'mobile_number' => 'nullable|string|max:255',
-            'role' => 'required|string|max:255',
             'user_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'designation' => 'required|string|max:255',
             'other_designation' => 'nullable|string|max:255',

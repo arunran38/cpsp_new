@@ -342,7 +342,7 @@
         </div>
 
         <!-- Unified Tabs (Visible to users who can view all petitions) -->
-        @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view all petitions'))
+        @if(!$isSuperAdmin && (Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view all petitions')))
             @php $tab = 'inward'; @endphp
             <div
                 class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 p-1.5 rounded-2xl mb-6 w-full bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
@@ -383,9 +383,12 @@
         @php
             $currentUser = Auth::user();
             $canFilterTransfer = $currentUser && (
-                $currentUser->canAccess('filter_transfer') ||
-                $currentUser->canAccess('filter transfer')
-            ) && !$currentUser->canAccess('access admin dashboard');
+                $isSuperAdmin ||
+                (
+                    ($currentUser->canAccess('filter_transfer') || $currentUser->canAccess('filter transfer')) &&
+                    !$currentUser->canAccess('access admin dashboard')
+                )
+            );
 
             $filterButtons = [
                 'all' => 'All Petitions',
