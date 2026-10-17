@@ -314,6 +314,7 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
+            color: #ffffff !important;
             font-size: 15px;
             font-weight: 600;
         }
@@ -333,6 +334,7 @@
             pointer-events: none;
         }
 
+        .aurora-card .aurora-field input,
         .aurora-field input {
             width: 100%;
             height: 58px;
@@ -341,14 +343,28 @@
             border-radius: 12px;
             outline: none;
             background: var(--aurora-field);
-            color: white;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            caret-color: #ffffff;
             font: 500 17px 'Inter', system-ui, sans-serif;
             transition: border-color .2s, box-shadow .2s;
         }
 
+        .aurora-card .aurora-field input::placeholder,
         .aurora-field input::placeholder {
-            color: #9aacc9;
+            color: rgba(255, 255, 255, 0.65) !important;
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.65) !important;
             font-weight: 400;
+        }
+
+        .aurora-field input:-webkit-autofill,
+        .aurora-field input:-webkit-autofill:hover,
+        .aurora-field input:-webkit-autofill:focus,
+        .aurora-field input:-webkit-autofill:active {
+            -webkit-text-fill-color: #ffffff !important;
+            box-shadow: 0 0 0 1000px #07152e inset !important;
+            -webkit-box-shadow: 0 0 0 1000px #07152e inset !important;
+            transition: background-color 5000s ease-in-out 0s;
         }
 
         .aurora-field input:focus {

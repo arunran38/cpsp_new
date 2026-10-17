@@ -202,7 +202,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            color: #94a3b8;
+            color: #ffffff !important;
             margin-bottom: 0.5rem;
             margin-left: 0.25rem;
         }
@@ -214,7 +214,8 @@
             /* slate-950/50 */
             border: 1px solid rgba(51, 65, 85, 0.8);
             border-radius: 1rem;
-            color: #f1f5f9;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
             font-size: 0.9375rem;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
