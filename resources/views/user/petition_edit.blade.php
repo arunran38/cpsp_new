@@ -2,6 +2,9 @@
 @section('container_width', 'max-w-full')
 
 @section('content')
+    @php
+        $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
+    @endphp
     <div class="space-y-6" x-data="petitionForm()" @open-return-modal.window="showReturnModal = true">
         <!-- Premium Header Section -->
         <div
@@ -200,6 +203,63 @@
                         <x-input label="Specify Mode of Petition *" name="mode_others" x-model="petitionDetails.mode_others"
                             x-bind:required="petitionDetails.mode === 'others'"
                             placeholder="Type the custom mode of receipt..." />
+                    </div>
+
+                    <!-- NESTED SECTION: Appears ONLY if Mode of Receipt is "Unit" -->
+                    <div x-show="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
+                        x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 -translate-y-2"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        style="display: none;"
+                        class="bg-indigo-50/60 p-5 rounded-xl border border-indigo-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <!-- Concerned Unit Name -->
+                        <div class="space-y-1.5">
+                            <label for="unit_id"
+                                class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
+                                <i data-lucide="building-2" class="w-4 h-4 text-indigo-600"></i>
+                                Concerned Unit Name <span class="text-rose-500">*</span>
+                            </label>
+                            <select name="unit_id" id="unit_id" x-model="petitionDetails.unit_id"
+                                x-bind:required="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
+                                @change="validateField($event)"
+                                class="block w-full px-4 py-2.5 text-sm font-medium bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                                <option value="">-- Select Concerned Unit --</option>
+                                @foreach($unitsList as $unitItem)
+                                    <option value="{{ $unitItem->unit_id }}" {{ (old('unit_id', $petition->unit_id) == $unitItem->unit_id) ? 'selected' : '' }}>
+                                        {{ $unitItem->unit_name }} ({{ $unitItem->unit_code }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <template x-if="formErrors['unit_id']">
+                                <p class="text-xs font-semibold text-rose-500 mt-1" x-text="formErrors['unit_id']"></p>
+                            </template>
+                            @error('unit_id')
+                                <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Date of Petition Received at Unit -->
+                        <div class="space-y-1.5">
+                            <label for="date_of_petition_received_at_unit"
+                                class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
+                                <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
+                                Date of Petition Received at Unit <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="date" name="date_of_petition_received_at_unit"
+                                id="date_of_petition_received_at_unit" x-model="petitionDetails.date_of_petition_received_at_unit"
+                                x-bind:required="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
+                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                @input="clearError($event)"
+                                @blur="validateField($event)"
+                                class="block w-full px-4 py-2.5 text-sm bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                            <template x-if="formErrors['date_of_petition_received_at_unit']">
+                                <p class="text-xs font-semibold text-rose-500 mt-1" x-text="formErrors['date_of_petition_received_at_unit']"></p>
+                            </template>
+                            @error('date_of_petition_received_at_unit')
+                                <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
 
                     <div>
@@ -823,6 +883,8 @@
                     nature: {!! json_encode($petition->nature_of_petition) !!},
                     mode: {!! json_encode($petition->mode_of_petition_received) !!},
                     mode_others: {!! json_encode($petition->mode_of_petition_received_others ?? '') !!},
+                    unit_id: {!! json_encode(old('unit_id', $petition->unit_id ? (string)$petition->unit_id : '')) !!},
+                    date_of_petition_received_at_unit: {!! json_encode(old('date_of_petition_received_at_unit', $petition->date_of_petition_received_at_unit ? $petition->date_of_petition_received_at_unit->format('Y-m-d') : '')) !!},
                     description: {!! json_encode($petition->description ?? '') !!},
                     proposed_action: {!! json_encode($petition->proposed_action ?? '') !!}
                 },
@@ -838,6 +900,15 @@
                 debounceTimer: null,
 
                 init() {
+                    this.$watch('petitionDetails.mode', (newMode) => {
+                        if (!newMode || newMode.toLowerCase() !== 'unit') {
+                            delete this.formErrors['unit_id'];
+                            delete this.formErrors['date_of_petition_received_at_unit'];
+                        }
+                        if (newMode !== 'others') {
+                            delete this.formErrors['mode_others'];
+                        }
+                    });
                     this.$watch('accused', () => {
                         if (this.step === 3) this.debouncedCheckDuplicates();
                     }, { deep: true });
@@ -1070,6 +1141,19 @@
                                 isValid = false;
                             }
                         }
+                        if (this.petitionDetails.mode && this.petitionDetails.mode.toLowerCase() === 'unit') {
+                            if (!this.petitionDetails.unit_id || String(this.petitionDetails.unit_id).trim() === '') {
+                                this.formErrors['unit_id'] = 'Concerned Unit is required.';
+                                isValid = false;
+                            }
+                            if (!this.petitionDetails.date_of_petition_received_at_unit || String(this.petitionDetails.date_of_petition_received_at_unit).trim() === '') {
+                                this.formErrors['date_of_petition_received_at_unit'] = 'Date of petition received at unit is required.';
+                                isValid = false;
+                            }
+                        } else {
+                            delete this.formErrors['unit_id'];
+                            delete this.formErrors['date_of_petition_received_at_unit'];
+                        }
                     } else if (step === 2) {
                         this.complainants.forEach((c, idx) => {
                             const nameField = `complainants[${idx}][name]`;
@@ -1159,7 +1243,7 @@
                         return;
                     }
 
-                    if (fieldName === 'date_of_petition_received') {
+                    if (fieldName === 'date_of_petition_received' || fieldName === 'date_of_petition_received_at_unit') {
                         if (!fieldValue) {
                             this.formErrors[fieldName] = 'This field is required.';
                         } else {

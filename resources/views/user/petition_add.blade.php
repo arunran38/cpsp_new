@@ -2,6 +2,9 @@
 @section('container_width', 'max-w-full')
 
 @section('content')
+    @php
+        $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
+    @endphp
     <div class="space-y-6" x-data="petitionForm()">
         <!-- Premium Header Section -->
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2">
@@ -182,6 +185,64 @@
                         <x-input label="Specify Mode of Petition *" name="mode_others" x-model="petitionDetails.mode_others"
                             x-bind:required="petitionDetails.mode === 'others'"
                             placeholder="Type the custom mode of receipt..." />
+                    </div>
+
+                    <!-- NESTED SECTION: Appears ONLY if Mode of Receipt is "Unit" -->
+                    <div x-show="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
+                        x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 -translate-y-2"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        style="display: none;"
+                        class="bg-indigo-50/60 p-5 rounded-xl border border-indigo-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <!-- Concerned Unit Name -->
+                        <div class="space-y-1.5">
+                            <label for="unit_id"
+                                class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
+                                <i data-lucide="building-2" class="w-4 h-4 text-indigo-600"></i>
+                                Concerned Unit Name <span class="text-rose-500">*</span>
+                            </label>
+                            <select name="unit_id" id="unit_id" x-model="petitionDetails.unit_id"
+                                x-bind:required="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
+                                @change="validateField($event)"
+                                class="block w-full px-4 py-2.5 text-sm font-medium bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                                <option value="">-- Select Concerned Unit --</option>
+                                @foreach($unitsList as $unitItem)
+                                    <option value="{{ $unitItem->unit_id }}" {{ old('unit_id') == $unitItem->unit_id ? 'selected' : '' }}>
+                                        {{ $unitItem->unit_name }} ({{ $unitItem->unit_code }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <template x-if="formErrors['unit_id']">
+                                <p class="text-xs font-semibold text-rose-500 mt-1" x-text="formErrors['unit_id']"></p>
+                            </template>
+                            @error('unit_id')
+                                <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Date of Petition Received at Unit -->
+                        <div class="space-y-1.5">
+                            <label for="date_of_petition_received_at_unit"
+                                class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
+                                <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
+                                Date of Petition Received at Unit <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="date" name="date_of_petition_received_at_unit"
+                                id="date_of_petition_received_at_unit" x-model="petitionDetails.date_of_petition_received_at_unit"
+                                value="{{ old('date_of_petition_received_at_unit') }}"
+                                x-bind:required="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
+                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                @input="clearError($event)"
+                                @blur="validateField($event)"
+                                class="block w-full px-4 py-2.5 text-sm bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                            <template x-if="formErrors['date_of_petition_received_at_unit']">
+                                <p class="text-xs font-semibold text-rose-500 mt-1" x-text="formErrors['date_of_petition_received_at_unit']"></p>
+                            </template>
+                            @error('date_of_petition_received_at_unit')
+                                <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
 
                     <div>
@@ -680,6 +741,26 @@
                                         x-text="petitionDetails.mode || '-'"></p>
                                 </template>
                             </div>
+                            <template x-if="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'">
+                                <div class="p-5 border-t sm:border-t-0 sm:border-l border-slate-100">
+                                    <p
+                                        class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                        <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Concerned Unit
+                                    </p>
+                                    <p class="text-base font-semibold text-slate-900"
+                                        x-text="unitNames[petitionDetails.unit_id] || '-'"></p>
+                                </div>
+                            </template>
+                            <template x-if="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'">
+                                <div class="p-5 border-t sm:border-t-0 sm:border-l border-slate-100">
+                                    <p
+                                        class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Received at Unit Date
+                                    </p>
+                                    <p class="text-base font-semibold text-slate-900"
+                                        x-text="petitionDetails.date_of_petition_received_at_unit || '-'"></p>
+                                </div>
+                            </template>
                         </div>
                         <div class="p-6 bg-slate-50 border-t border-slate-100">
                             <p
@@ -974,6 +1055,7 @@
             return {
                 step: {{ old('step', 1) }},
                 districtNames: @json($districts->pluck('district_name', 'district_id')),
+                unitNames: @json($unitsList->pluck('unit_name', 'unit_id')),
                 formErrors: {},
 
                 showPreview: false,
@@ -983,6 +1065,8 @@
                     nature: '{{ old('nature_of_petition') }}',
                     mode: '{{ old('mode_of_petition_received') }}',
                     mode_others: '{{ old('mode_others') }}',
+                    unit_id: '{{ old('unit_id') }}',
+                    date_of_petition_received_at_unit: '{{ old('date_of_petition_received_at_unit') }}',
                     description: `{!! addslashes(old('description')) !!}`,
                     proposed_action: `{!! addslashes(old('proposed_action')) !!}`
                 },
@@ -997,6 +1081,15 @@
                 debounceTimer: null,
 
                 init() {
+                    this.$watch('petitionDetails.mode', (newMode) => {
+                        if (!newMode || newMode.toLowerCase() !== 'unit') {
+                            delete this.formErrors['unit_id'];
+                            delete this.formErrors['date_of_petition_received_at_unit'];
+                        }
+                        if (newMode !== 'others') {
+                            delete this.formErrors['mode_others'];
+                        }
+                    });
                     this.$watch('accused', () => {
                         if (this.step === 3) this.debouncedCheckDuplicates();
                     }, { deep: true });
@@ -1180,6 +1273,19 @@
                                 this.formErrors['mode_others'] = 'This field is required.';
                                 isValid = false;
                             }
+                        }
+                        if (this.petitionDetails.mode && this.petitionDetails.mode.toLowerCase() === 'unit') {
+                            if (!this.petitionDetails.unit_id || String(this.petitionDetails.unit_id).trim() === '') {
+                                this.formErrors['unit_id'] = 'Concerned Unit is required.';
+                                isValid = false;
+                            }
+                            if (!this.petitionDetails.date_of_petition_received_at_unit || String(this.petitionDetails.date_of_petition_received_at_unit).trim() === '') {
+                                this.formErrors['date_of_petition_received_at_unit'] = 'Date of petition received at unit is required.';
+                                isValid = false;
+                            }
+                        } else {
+                            delete this.formErrors['unit_id'];
+                            delete this.formErrors['date_of_petition_received_at_unit'];
                         }
                     } else if (step === 2) {
                         this.complainants.forEach((c, idx) => {
@@ -1392,7 +1498,7 @@
                         } else {
                             this.formErrors[fieldName] = '';
                         }
-                    } else if (fieldName === 'date_of_petition_received') {
+                    } else if (fieldName === 'date_of_petition_received' || fieldName === 'date_of_petition_received_at_unit') {
                         if (!fieldValue) {
                             this.formErrors[fieldName] = 'This field is required.';
                         } else {

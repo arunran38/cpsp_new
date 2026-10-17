@@ -101,9 +101,18 @@ class PetitionService
             $currentSeat = $user?->currentSeatUser();
             $currentSeatId = $currentSeat?->seat_id;
 
+            $unitId = null;
+            $unitReceivedDate = null;
+            if (!empty($data['mode_of_petition_received']) && strtolower($data['mode_of_petition_received']) === 'unit') {
+                $unitId = $data['unit_id'] ?? null;
+                $unitReceivedDate = $data['date_of_petition_received_at_unit'] ?? null;
+            }
+
             $updatePayload = [
                 'receipt_no' => $data['receipt_no'],
                 'date_of_petition_received' => $data['date_of_petition_received'],
+                'unit_id' => $unitId,
+                'date_of_petition_received_at_unit' => $unitReceivedDate,
                 'nature_of_petition' => $data['nature_of_petition'],
                 'mode_of_petition_received' => $data['mode_of_petition_received'],
                 'mode_of_petition_received_others' => $data['mode_others'] ?? null,

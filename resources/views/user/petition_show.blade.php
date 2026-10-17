@@ -21,6 +21,14 @@
                     <p class="text-sm font-medium text-gray-600 mt-0.5 flex flex-wrap items-center gap-2">
                         <span>Submitted on
                             {{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}</span>
+                        @if(strtolower($petition->mode_of_petition_received) === 'unit' && $petition->date_of_petition_received_at_unit)
+                            <span class="inline-block w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
+                            <span>Received at Unit: <span class="font-bold text-slate-800">{{ \Carbon\Carbon::parse($petition->date_of_petition_received_at_unit)->format('d M, Y') }}</span></span>
+                        @endif
+                        @if(strtolower($petition->mode_of_petition_received) === 'unit' && $petition->unit)
+                            <span class="inline-block w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
+                            <span>Unit: <span class="font-bold text-indigo-700">{{ $petition->unit->unit_name }}</span></span>
+                        @endif
                         @if($petition->user)
                             <span class="inline-block w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
                             <span>Created By: <span class="font-bold text-slate-800">{{ $petition->user->name }}</span></span>
@@ -240,6 +248,22 @@
         : $petition->mode_of_petition_received }}
                             </span>
                         </div>
+                        @if(strtolower($petition->mode_of_petition_received) === 'unit')
+                            <div>
+                                <span class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Concerned Unit Name</span>
+                                <span class="font-semibold text-gray-900 flex items-center gap-1.5">
+                                    <i data-lucide="building-2" class="w-4 h-4 text-indigo-600 shrink-0"></i>
+                                    <span>{{ $petition->unit ? $petition->unit->unit_name . ($petition->unit->unit_code ? ' (' . $petition->unit->unit_code . ')' : '') : 'N/A' }}</span>
+                                </span>
+                            </div>
+                            <div>
+                                <span class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Date of Petition Received at Unit</span>
+                                <span class="font-semibold text-gray-900 flex items-center gap-1.5">
+                                    <i data-lucide="calendar" class="w-4 h-4 text-indigo-600 shrink-0"></i>
+                                    <span>{{ $petition->date_of_petition_received_at_unit ? \Carbon\Carbon::parse($petition->date_of_petition_received_at_unit)->format('d M, Y') : 'N/A' }}</span>
+                                </span>
+                            </div>
+                        @endif
                         <div class="lg:col-span-4 bg-slate-50/80 p-5 rounded-xl border border-slate-200 mt-2">
                             <span class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Detailed
                                 Description</span>
@@ -1010,6 +1034,9 @@
                                     </td>
                                     <td class="px-6 py-4 text-slate-600">
                                         {{ $petition->originalPetition->mode_of_petition_received === 'others' ? $petition->originalPetition->mode_of_petition_received_others : $petition->originalPetition->mode_of_petition_received }}
+                                        @if(strtolower($petition->originalPetition->mode_of_petition_received) === 'unit' && $petition->originalPetition->unit)
+                                            <span class="block text-xs text-indigo-600 font-medium">({{ $petition->originalPetition->unit->unit_name }})</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4">
                                         <span
@@ -1050,6 +1077,9 @@
                                             {{ \Carbon\Carbon::parse($dup->date_of_petition_received)->format('d M, Y') }}</td>
                                         <td class="px-6 py-4 text-slate-600">
                                             {{ $dup->mode_of_petition_received === 'others' ? $dup->mode_of_petition_received_others : $dup->mode_of_petition_received }}
+                                            @if(strtolower($dup->mode_of_petition_received) === 'unit' && $dup->unit)
+                                                <span class="block text-xs text-indigo-600 font-medium">({{ $dup->unit->unit_name }})</span>
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4">
                                             <span

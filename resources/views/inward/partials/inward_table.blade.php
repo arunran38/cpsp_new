@@ -49,8 +49,13 @@
                         <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-100/80 text-blue-700 border border-blue-200/50">
                             {{ $item->mode_of_petition_received }}
                         </span>
-                        @if(strtolower($item->mode_of_petition_received) === 'unit' && $item->unit)
-                            <span class="block text-[11px] text-indigo-600 font-semibold mt-1">{{ $item->unit->unit_name }}</span>
+                        @if(strtolower($item->mode_of_petition_received) === 'unit')
+                            @if($item->unit)
+                                <span class="block text-[11px] text-indigo-600 font-semibold mt-1">{{ $item->unit->unit_name }}</span>
+                            @endif
+                            @if($item->date_of_petition_received_at_unit)
+                                <span class="block text-[10px] text-slate-500 font-medium">Recd: {{ \Carbon\Carbon::parse($item->date_of_petition_received_at_unit)->format('d/m/Y') }}</span>
+                            @endif
                         @endif
                     </td>
                     <td class="px-5 py-3.5">

@@ -180,19 +180,22 @@
                                     <label for="unit_id"
                                         class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
                                         <i data-lucide="building-2" class="w-4 h-4 text-indigo-600"></i>
-                                        Select Concerned Unit <span
+                                        Concerned Unit Name <span
                                             class="text-rose-500">*</span>
                                     </label>
                                     <select name="unit_id" id="unit_id" x-model="selectedUnitId"
                                         x-bind:required="modeOfPetition && modeOfPetition.toLowerCase() === 'unit'"
                                         class="block w-full px-4 py-2.5 text-sm font-medium bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
-                                        <option value="">-- Select Unit --</option>
+                                        <option value="">-- Select Concerned Unit --</option>
                                         @foreach($unitsList as $unitItem)
                                             <option value="{{ $unitItem->unit_id }}" {{ old('unit_id') == $unitItem->unit_id ? 'selected' : '' }}>
                                                 {{ $unitItem->unit_name }} ({{ $unitItem->unit_code }})
                                             </option>
                                         @endforeach
                                     </select>
+                                    @error('unit_id')
+                                        <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                                    @enderror
                                 </div>
 
                                 <!-- Date of Petition Received at Unit -->
@@ -200,7 +203,7 @@
                                     <label for="date_of_petition_received_at_unit"
                                         class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
                                         <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
-                                        Date of Petition Received at Unit<span
+                                        Date of Petition Received at Unit <span
                                             class="text-rose-500">*</span>
                                     </label>
                                     <input type="date" name="date_of_petition_received_at_unit"
@@ -209,6 +212,9 @@
                                         x-bind:required="modeOfPetition && modeOfPetition.toLowerCase() === 'unit'"
                                         max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                         class="block w-full px-4 py-2.5 text-sm bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                                    @error('date_of_petition_received_at_unit')
+                                        <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                                    @enderror
                                 </div>
                             </div>
 

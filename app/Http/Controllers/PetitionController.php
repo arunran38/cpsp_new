@@ -42,7 +42,8 @@ class PetitionController extends Controller
         $districts = \App\Models\District::orderBy('district_id')->get();
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
-        return view('user.petition_add', compact('districts', 'designations', 'departments'));
+        $units = \App\Models\Unit::orderBy('unit_name')->get();
+        return view('user.petition_add', compact('districts', 'designations', 'departments', 'units'));
     }
 
     /**
@@ -684,13 +685,15 @@ class PetitionController extends Controller
             'uploads', 
             'originalPetition.addresses.designation', 
             'originalPetition.addresses.department', 
-            'duplicates',
+            'originalPetition.unit',
+            'duplicates.unit',
             'cpspOpenedByUser',
             'cpspOpenedBySeat',
             'processedByUser',
             'processedBySeat',
             'updatedByUser',
             'updatedBySeat',
+            'unit',
         ])->findOrFail($realId);
         $this->authorize('view', $petition);
 
@@ -709,7 +712,7 @@ class PetitionController extends Controller
     public function edit($id): View|RedirectResponse
     {
         $realId = HashidService::decode($id) ?? $id;
-        $petition = Petition::with(['addresses', 'uploads'])->findOrFail($realId);
+        $petition = Petition::with(['addresses', 'uploads', 'unit'])->findOrFail($realId);
         $this->authorize('update', $petition);
 
         // Audit: Track when CPSP user opens/edits this petition for the first time
@@ -729,7 +732,8 @@ class PetitionController extends Controller
         $districts = \App\Models\District::orderBy('district_id')->get();
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
-        return view('user.petition_edit', compact('petition', 'complainants', 'accused', 'districts', 'designations', 'departments'));
+        $units = \App\Models\Unit::orderBy('unit_name')->get();
+        return view('user.petition_edit', compact('petition', 'complainants', 'accused', 'districts', 'designations', 'departments', 'units'));
     }
 
     /**
