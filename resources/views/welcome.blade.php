@@ -1,470 +1,919 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full">
+<!doctype html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Centralized Processing System of Petitions - Official Portal of Vigilance & Anti-Corruption Bureau, Government of Kerala">
-    <title>CPSP | Digital Workspace - Vigilance & Anti-Corruption Bureau</title>
-
-    <!-- Google Fonts: Inter and Playfair Display -->
+    <meta name="description"
+        content="Centralized Processing System of Petitions - Official Portal of Vigilance & Anti-Corruption Bureau, Government of Kerala">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>CPSP | Digital Workspace - Vigilance &amp; Anti-Corruption Bureau</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600&display=swap" rel="stylesheet">
-
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-
-    <!-- Vite Assets -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
     <style>
         [x-cloak] {
             display: none !important;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            color-scheme: dark;
+            font-family: 'Inter', system-ui, sans-serif;
+            font-synthesis: none;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            --aurora-bg: #07152e;
+            --aurora-fg: #f1f5ff;
+            --aurora-muted: #a8b8d4;
+            --aurora-step: #93c5fd;
+            --aurora-accent: #3b82f6;
+            --aurora-field: rgba(255, 255, 255, .07);
+            --aurora-border: rgba(255, 255, 255, .16);
+            --aurora-ring: rgba(59, 130, 246, .35);
         }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: #060d19;
-            color: #f1f5f9;
+            min-width: 320px;
             min-height: 100vh;
+            margin: 0;
             overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            color: var(--aurora-fg);
+            background:
+                radial-gradient(900px 500px at 12% 8%, rgba(37, 99, 235, .25), transparent 60%),
+                radial-gradient(800px 600px at 95% 90%, rgba(14, 165, 233, .2), transparent 60%),
+                var(--aurora-bg);
+            font-family: 'Inter', system-ui, sans-serif;
         }
 
-        .font-serif-display {
-            font-family: 'Playfair Display', Georgia, serif;
-        }
-
-        .metallic-brand-text {
-            color: #e2e8f0;
-            background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 28%, #f8fafc 48%, #94a3b8 51%, #e2e8f0 76%, #64748b 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 2px 12px rgba(203, 213, 225, 0.12);
-        }
-
-        /* Deep teal background with a subtle dotted grid */
-        .page-bg {
-            background-color: #003b4d;
-            background-image:
-                radial-gradient(circle, rgba(56, 189, 248, 0.2) 1px, transparent 1.2px);
-            background-size: 32px 32px;
+        .aurora-page {
             position: relative;
+            isolation: isolate;
+            min-height: 100vh;
         }
 
-        .workflow-node-pill {
+        .aurora-page::before {
+            position: fixed;
+            z-index: -1;
+            inset: 0;
+            pointer-events: none;
+            background-image: radial-gradient(rgba(255, 255, 255, .07) 1px, transparent 1px);
+            background-size: 26px 26px;
+            -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 30%, transparent 80%);
+            mask-image: radial-gradient(circle at 50% 50%, #000 30%, transparent 80%);
+            content: "";
+        }
+
+        .aurora-stage {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(480px, 540px);
+            align-items: center;
+            justify-content: center;
+            gap: clamp(48px, 6vw, 100px);
+            width: min(100%, 1600px);
+            min-height: 100vh;
+            margin: 0 auto;
+            padding: clamp(40px, 5vw, 80px) clamp(48px, 6vw, 96px);
+        }
+
+        .aurora-story {
+            max-width: 680px;
+            animation: aurora-enter .8s cubic-bezier(.2, .7, .2, 1) both;
+        }
+
+        .aurora-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 44px;
+        }
+
+        .aurora-logo {
+            display: grid;
+            flex: none;
+            width: 56px;
+            height: 56px;
+            place-items: center;
+            border-radius: 14px;
+            color: white;
+            background: linear-gradient(135deg, #60a5fa, #2563eb);
+            box-shadow: 0 8px 22px -8px rgba(59, 130, 246, .8);
+            transition: box-shadow .25s ease, transform .25s ease;
+        }
+
+        .aurora-logo:hover {
+            transform: translateY(-3px) rotate(-4deg);
+            box-shadow: 0 14px 28px -8px rgba(59, 130, 246, .95);
+        }
+
+        .aurora-logo svg {
+            width: 28px;
+            height: 28px;
+            animation: aurora-icon-float 4s ease-in-out 1s infinite;
+        }
+
+        .aurora-brand-name {
+            color: #e2e8f0;
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            line-height: 1;
+        }
+
+        .aurora-brand-org {
+            margin-top: 6px;
+            color: #a8b8d4;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .aurora-brand-sub {
+            margin-top: 2px;
+            color: var(--aurora-step);
+            font-size: 13px;
+            letter-spacing: .02em;
+        }
+
+        .aurora-headline {
+            max-width: none;
+            margin: 0;
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: clamp(42px, 5vw, 68px);
+            font-weight: 700;
+            letter-spacing: -.02em;
+            line-height: 1.04;
+        }
+
+        .aurora-headline em {
+            color: var(--aurora-step);
+            font-style: normal;
+            white-space: nowrap;
+        }
+
+        .aurora-lead {
+            max-width: 42ch;
+            margin: 18px 0 0;
+            color: #a8b8d4;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        .aurora-steps {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            width: 100%;
+            max-width: 460px;
+            margin: 48px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .aurora-step {
+            position: relative;
+            z-index: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0.625rem;
-            position: relative;
-            z-index: 1;
+            gap: 11px;
+            color: #a8b8d4;
+            font-size: 14px;
+            font-weight: 600;
         }
 
-        .workflow-node-pill:not(:last-child)::after {
-            content: "";
+        .aurora-step:not(:last-child)::after {
             position: absolute;
-            top: 1rem;
-            left: calc(50% + 1rem);
-            right: calc(-50% + 1rem);
+            z-index: -1;
+            top: 24px;
+            left: calc(50% + 28px);
+            width: calc(100% - 56px);
             height: 1px;
-            background: rgba(148, 163, 184, 0.45);
-            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            background: rgba(255, 255, 255, .18);
+            content: "";
+        }
+
+        .aurora-step-icon {
+            display: grid;
+            width: 48px;
+            height: 48px;
+            place-items: center;
+            border: 1px solid rgba(255, 255, 255, .18);
+            border-radius: 50%;
+            background: transparent;
+            color: #a8b8d4;
+            transition: border-color .25s ease, background-color .25s ease, color .25s ease, box-shadow .25s ease, transform .25s ease;
+        }
+
+        .aurora-step:hover .aurora-step-icon {
+            transform: translateY(-4px);
+            border-color: var(--aurora-step);
+            background: rgba(147, 197, 253, .1);
+            color: var(--aurora-step);
+            box-shadow: 0 0 0 5px var(--aurora-ring);
+        }
+
+        .aurora-step-icon svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .aurora-step:first-child {
+            color: var(--aurora-fg);
+        }
+
+        .aurora-step:first-child .aurora-step-icon {
+            border-color: var(--aurora-step);
+            color: var(--aurora-step);
+            box-shadow: 0 0 0 5px var(--aurora-ring);
+        }
+
+        .aurora-trust {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 26px;
+            margin-top: 46px;
+            color: #a8b8d4;
+            font-size: 15px;
+        }
+
+        .aurora-trust span {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            transition: color .2s ease, transform .2s ease;
+        }
+
+        .aurora-trust span:hover {
+            transform: translateY(-2px);
+            color: var(--aurora-fg);
+        }
+
+        .aurora-trust svg {
+            width: 18px;
+            height: 18px;
+            color: var(--aurora-step);
+        }
+
+        .aurora-formside {
+            display: grid;
+            place-items: center;
+        }
+
+        .aurora-card {
+            width: 100%;
+            max-width: 540px;
+            padding: 48px 42px;
+            border: 1px solid rgba(255, 255, 255, .14);
+            border-radius: 24px;
+            background: rgba(255, 255, 255, .06);
+            box-shadow: 0 30px 80px -30px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .12);
+            -webkit-backdrop-filter: blur(18px);
+            backdrop-filter: blur(18px);
+            animation: aurora-enter .8s cubic-bezier(.2, .7, .2, 1) .12s both;
+            transition: border-color .3s ease, box-shadow .3s ease;
+        }
+
+        .aurora-card:hover {
+            border-color: rgba(147, 197, 253, .3);
+            box-shadow: 0 34px 90px -30px rgba(0, 0, 0, .68), inset 0 1px 0 rgba(255, 255, 255, .14);
+        }
+
+        .aurora-eyebrow {
+            color: var(--aurora-step);
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+        }
+
+        .aurora-card h2 {
+            margin: 8px 0 0;
+            font-family: 'Fraunces', Georgia, serif;
+            font-size: 38px;
+            letter-spacing: -.01em;
+            line-height: 1.1;
+        }
+
+        .aurora-card-sub {
+            margin: 8px 0 0;
+            color: var(--aurora-muted);
+            font-size: 16px;
+            line-height: 1.55;
+        }
+
+        .aurora-login-form {
+            display: grid;
+            gap: 22px;
+            margin-top: 32px;
+        }
+
+        .aurora-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .aurora-field {
+            position: relative;
+        }
+
+        .aurora-field-icon {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            width: 20px;
+            height: 20px;
+            transform: translateY(-50%);
+            color: #9aacc9;
             pointer-events: none;
         }
 
-        .workflow-steps:hover .workflow-node-pill:not(:last-child)::after {
-            background: #34d399;
-            box-shadow: 0 0 8px rgba(52, 211, 153, 0.85);
+        .aurora-field input {
+            width: 100%;
+            height: 58px;
+            padding: 0 50px 0 48px;
+            border: 1px solid var(--aurora-border);
+            border-radius: 12px;
+            outline: none;
+            background: var(--aurora-field);
+            color: white;
+            font: 500 17px 'Inter', system-ui, sans-serif;
+            transition: border-color .2s, box-shadow .2s;
         }
 
-        .workflow-node-icon {
-            width: 2rem;
-            height: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #d1d5db;
-            position: relative;
-            z-index: 1;
-            transition: color 0.2s ease, filter 0.2s ease, transform 0.2s ease;
-        }
-
-        .workflow-node-pill:hover .workflow-node-icon {
-            color: #34d399;
-            filter: drop-shadow(0 0 7px rgba(52, 211, 153, 0.9));
-            transform: translateY(-2px);
-        }
-
-        /* ========================================================= */
-        /* NEUMORPHIC FLOATING CARD (Requested by user)              */
-        /* ========================================================= */
-        :root {
-            --neu-card-bg: #f5f6f8;
-            --neu-shadow-dark: #cbced4;
-            --neu-shadow-light: #ffffff;
-        }
-
-        .neu-login-card {
-            background-color: var(--neu-card-bg);
-            border-radius: 1.25rem;
-            padding: 2rem 1.75rem;
-            box-shadow: 
-                0 25px 60px -12px rgba(0, 0, 0, 0.75),
-                0 10px 25px -5px rgba(0, 0, 0, 0.4),
-                inset 1px 1px 2px rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.3s ease;
-        }
-
-        /* Inset Neumorphic Input Fields */
-        .neu-input-container {
-            background-color: #eceef2;
-            border-radius: 0.875rem;
-            box-shadow: 
-                inset 2px 2px 4px var(--neu-shadow-dark), 
-                inset -2px -2px 4px var(--neu-shadow-light);
-            padding: 0 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.625rem;
-            height: 3rem;
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-        }
-
-        .neu-input-container:focus-within {
-            box-shadow: 
-                inset 2px 2px 4px var(--neu-shadow-dark), 
-                inset -2px -2px 4px var(--neu-shadow-light);
-            border-color: rgba(13, 148, 136, 0.45);
-        }
-
-        .neu-input-container.has-error {
-            box-shadow: 
-                inset 2px 2px 4px #fca5a5, 
-                inset -2px -2px 4px var(--neu-shadow-light);
-            border-color: #f87171;
-        }
-
-        .neu-input-container .input-icon-left {
-            color: #3b82f6;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-        }
-
-        .neu-form-input,
-        .neu-input-container input[type="text"],
-        .neu-input-container input[type="password"] {
-            flex: 1 1 0% !important;
-            min-width: 0 !important;
-            height: 100% !important;
-            background: transparent !important;
-            border: 0 !important;
-            border-width: 0 !important;
-            outline: 0 !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            font-size: 0.9375rem !important;
-            font-family: inherit !important;
-            color: #1e293b !important;
-            font-weight: 500 !important;
-            -webkit-appearance: none !important;
-            appearance: none !important;
-            --tw-ring-color: transparent !important;
-            --tw-ring-shadow: none !important;
-            --tw-ring-offset-shadow: none !important;
-        }
-
-        .neu-form-input:focus,
-        .neu-input-container input[type="text"]:focus,
-        .neu-input-container input[type="password"]:focus {
-            border: 0 !important;
-            border-width: 0 !important;
-            outline: 0 !important;
-            box-shadow: none !important;
-            --tw-ring-color: transparent !important;
-            --tw-ring-shadow: none !important;
-            --tw-ring-offset-shadow: none !important;
-        }
-
-        .neu-form-input::placeholder {
-            color: #94a3b8;
+        .aurora-field input::placeholder {
+            color: #9aacc9;
             font-weight: 400;
         }
 
-        /* Neumorphic / Emerald Gradient Submit Button */
-        .btn-emerald-submit {
-            width: 100%;
-            height: 3.25rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            border-radius: 0.875rem;
-            background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
-            border: none;
+        .aurora-field input:focus {
+            border-color: var(--aurora-accent);
+            box-shadow: 0 0 0 4px var(--aurora-ring);
+        }
+
+        .aurora-field:focus-within .aurora-field-icon {
+            color: var(--aurora-step);
+        }
+
+        .aurora-field input[aria-invalid="true"] {
+            border-color: #ff8a80;
+        }
+
+        .aurora-eye {
+            position: absolute;
+            top: 50%;
+            right: 6px;
+            display: grid;
+            width: 42px;
+            height: 42px;
+            place-items: center;
+            transform: translateY(-50%);
+            border: 0;
+            border-radius: 9px;
+            background: transparent;
+            color: #9aacc9;
             cursor: pointer;
-            font-size: 1rem;
+            transition: color .2s ease, background-color .2s ease, transform .2s ease;
+        }
+
+        .aurora-eye:hover {
+            transform: translateY(-50%) scale(1.06);
+            background: rgba(127, 127, 127, .12);
+            color: var(--aurora-fg);
+        }
+
+        .aurora-eye:focus-visible,
+        .aurora-submit:focus-visible {
+            outline: 3px solid var(--aurora-step);
+            outline-offset: 3px;
+        }
+
+        .aurora-eye svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .aurora-hint {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 7px;
+            color: #ffd37a;
+            font-size: 14px;
+        }
+
+        .aurora-hint svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .aurora-error {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            border: 1px solid rgba(255, 138, 128, .3);
+            border-radius: 12px;
+            background: rgba(255, 90, 80, .14);
+            color: #ffb4ab;
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1.45;
+        }
+
+        .aurora-error svg {
+            flex: none;
+            width: 20px;
+            height: 20px;
+            margin-top: 1px;
+        }
+
+        .aurora-status {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 12px 14px;
+            border: 1px solid rgba(147, 197, 253, .25);
+            border-radius: 12px;
+            background: rgba(59, 130, 246, .12);
+            color: var(--aurora-step);
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1.45;
+        }
+
+        .aurora-status svg {
+            flex: none;
+            width: 20px;
+            height: 20px;
+        }
+
+        .aurora-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .aurora-check {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            color: var(--aurora-muted);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .aurora-check input {
+            display: grid;
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            appearance: none;
+            place-items: center;
+            border: 1.5px solid var(--aurora-border);
+            border-radius: 5px;
+            background: var(--aurora-field);
+            cursor: pointer;
+        }
+
+        .aurora-check input:checked {
+            border-color: var(--aurora-accent);
+            background: var(--aurora-accent);
+        }
+
+        .aurora-check input:checked::after {
+            width: 9px;
+            height: 5px;
+            transform: rotate(-45deg) translate(1px, -1px);
+            border-bottom: 2px solid white;
+            border-left: 2px solid white;
+            content: "";
+        }
+
+        .aurora-check input:focus-visible {
+            outline: 3px solid var(--aurora-ring);
+            outline-offset: 2px;
+        }
+
+        .aurora-forgot {
+            color: var(--aurora-step);
             font-weight: 600;
-            color: #ffffff;
-            box-shadow: 0 10px 22px -4px rgba(13, 148, 136, 0.45), 0 4px 8px -2px rgba(5, 150, 105, 0.3);
-            transition: all 0.2s ease;
-            outline: none;
             text-decoration: none;
         }
 
-        .btn-emerald-submit:hover:not(:disabled) {
-            background: linear-gradient(135deg, #0f766e 0%, #047857 100%);
-            box-shadow: 0 14px 28px -4px rgba(13, 148, 136, 0.55), 0 6px 12px -2px rgba(5, 150, 105, 0.4);
-            transform: translateY(-1px);
+        .aurora-forgot:hover {
+            text-decoration: underline;
         }
 
-        .btn-emerald-submit:active:not(:disabled) {
+        .aurora-submit {
+            display: flex;
+            height: 60px;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: 0;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #60a5fa, #2563eb);
+            box-shadow: 0 12px 24px -12px rgba(37, 99, 235, .85), inset 0 1px 0 rgba(255, 255, 255, .2);
+            color: #ffffff;
+            cursor: pointer;
+            font: 600 17px 'Inter', system-ui, sans-serif;
+            transition: filter .2s, transform .2s, box-shadow .2s;
+        }
+
+        .aurora-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            filter: brightness(1.06);
+            box-shadow: 0 16px 30px -12px rgba(37, 99, 235, .95), inset 0 1px 0 rgba(255, 255, 255, .25);
+        }
+
+        .aurora-submit:active:not(:disabled) {
             transform: translateY(1px);
-            box-shadow: 0 4px 10px -2px rgba(13, 148, 136, 0.4);
         }
 
-        .btn-emerald-submit:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
+        .aurora-submit:disabled {
+            cursor: progress;
+            opacity: .8;
         }
 
+        .aurora-submit svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .aurora-spinner {
+            width: 20px;
+            height: 20px;
+            animation: aurora-spin .7s linear infinite;
+            border: 2.5px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+        }
+
+        @keyframes aurora-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes aurora-enter {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes aurora-icon-float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-4px);
+            }
+        }
+
+        .aurora-legal {
+            display: flex;
+            gap: 9px;
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255, 255, 255, .12);
+            color: var(--aurora-muted);
+            font-size: 14px;
+            line-height: 1.55;
+        }
+
+        .aurora-legal svg {
+            flex: none;
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            color: var(--aurora-step);
+        }
+
+        .aurora-footer {
+            padding: 0 24px 24px;
+            color: rgba(168, 184, 212, .8);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .aurora-footer strong {
+            color: #cbd5e1;
+        }
+
+        @media (max-width: 960px) {
+            .aurora-stage {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 34px;
+                padding: 40px 18px;
+            }
+
+            .aurora-story {
+                width: min(100%, 680px);
+                margin: 0 auto;
+            }
+
+            .aurora-brand {
+                margin-bottom: 28px;
+            }
+
+            .aurora-headline {
+                font-size: 42px;
+            }
+
+            .aurora-steps {
+                margin-top: 28px;
+            }
+
+            .aurora-trust {
+                margin-top: 28px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .aurora-stage {
+                gap: 28px;
+                padding: 28px 16px;
+            }
+
+            .aurora-brand-org {
+                font-size: 12px;
+            }
+
+            .aurora-brand-sub {
+                font-size: 11px;
+            }
+
+            .aurora-brand-name {
+                font-size: 27px;
+            }
+
+            .aurora-headline {
+                font-size: 36px;
+            }
+
+            .aurora-headline em {
+                font-size: clamp(24px, 7.5vw, 36px);
+            }
+
+            .aurora-card {
+                padding: 34px 24px;
+                border-radius: 20px;
+            }
+
+            .aurora-row {
+                font-size: 12px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+            }
+        }
     </style>
 </head>
 
-<body class="h-full page-bg" x-data="{ showPassword: false, loading: false }">
-    <div class="min-h-screen flex flex-col relative z-10">
-        <main class="w-full flex-1 max-w-[1376px] mx-auto px-6 sm:px-8 py-10 lg:py-12 grid items-center gap-12 lg:grid-cols-[1fr_385px]">
-            <section class="w-full max-w-lg">
-                <div class="flex items-center gap-4 mb-12">
-                    <div class="w-12 h-12 shrink-0 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white shadow-md shadow-teal-500/30">
-                        <i data-lucide="layers" class="w-6 h-6"></i>
+<body>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <symbol id="aurora-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12 2 10 5-10 5L2 7l10-5Z" />
+            <path d="m2 17 10 5 10-5M2 12l10 5 10-5" />
+        </symbol>
+        <symbol id="aurora-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+            <path d="M14 2v6h6M12 18v-6m-3 3h6" />
+        </symbol>
+        <symbol id="aurora-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m21 21-4.3-4.3M11 8v6m-3-3h6" />
+        </symbol>
+        <symbol id="aurora-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="m22 2-7 20-4-9-9-4Z" />
+            <path d="M22 2 11 13" />
+        </symbol>
+        <symbol id="aurora-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="m8 12 3 3 5-6" />
+        </symbol>
+        <symbol id="aurora-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+            <path d="m9 12 2 2 4-4" />
+        </symbol>
+        <symbol id="aurora-id" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2.5" />
+            <circle cx="8.5" cy="11" r="2" />
+            <path d="M5.5 16c.6-1.6 1.8-2.4 3-2.4s2.4.8 3 2.4M14.5 10h4m-4 4h3" />
+        </symbol>
+        <symbol id="aurora-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="11" width="16" height="10" rx="2.5" />
+            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+        </symbol>
+        <symbol id="aurora-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+            <circle cx="12" cy="12" r="3" />
+        </symbol>
+        <symbol id="aurora-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.7 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10 10 0 0 0 5.4-1.6" />
+            <path d="m9.9 9.9 4.2 4.2M2 2l20 20" />
+        </symbol>
+        <symbol id="aurora-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14m-6-6 6 6-6 6" />
+        </symbol>
+        <symbol id="aurora-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v5m0 3.5h.01" />
+        </symbol>
+        <symbol id="aurora-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4m0-4h.01" />
+        </symbol>
+    </svg>
+
+    <div class="aurora-page" x-data="{ showPassword: false, loading: false, capsLock: false }">
+        <main class="aurora-stage">
+            <section class="aurora-story" aria-label="About CPSP">
+                <div class="aurora-brand">
+                    <div class="aurora-logo" aria-hidden="true">
+                        <svg><use href="#aurora-layers" /></svg>
                     </div>
-                    <div class="min-w-0 leading-tight">
-                        <h2 class="metallic-brand-text font-serif-display text-2xl sm:text-3xl font-bold tracking-wide">CPSP</h2>
-                        <p class="metallic-brand-text mt-1 text-base sm:text-lg font-semibold tracking-wide">Vigilance &amp; Anti-Corruption Bureau</p>
-                        <div class="mt-1 text-xs sm:text-sm text-sky-400 font-medium">Centralized Processing System of Petitions Cell</div>
+                    <div>
+                        <div class="aurora-brand-name">CPSP</div>
+                        <div class="aurora-brand-org">Vigilance &amp; Anti-Corruption Bureau</div>
+                        <div class="aurora-brand-sub">Centralized Processing System of Petitions Cell</div>
                     </div>
                 </div>
 
-                <div>
-                    <h1 class="text-4xl sm:text-5xl font-bold text-white tracking-tight leading-[1.12] font-serif-display">
-                        Process petitions.<br>Track every case.
-                    </h1>
-                    <p class="mt-4 text-slate-300 text-sm sm:text-base leading-relaxed max-w-md">
-                        Monitor updates across case types and generate reports—all in one secure workspace.
-                    </p>
-                </div>
+                <h1 class="aurora-headline">Process petitions. <em>Track every petition.</em></h1>
+                <p class="aurora-lead">
+                    Monitor updates across petitions and generate reports — all in one secure workspace.
+                </p>
 
-                <div class="workflow-steps grid grid-cols-4 mt-9 max-w-md text-center">
-                    <div class="workflow-node-pill">
-                        <div class="workflow-node-icon"><i data-lucide="file-plus-2" class="w-5 h-5"></i></div>
-                        <span class="text-xs font-semibold text-slate-300">Register</span>
-                    </div>
-                    <div class="workflow-node-pill">
-                        <div class="workflow-node-icon"><i data-lucide="search-check" class="w-5 h-5"></i></div>
-                        <span class="text-xs font-semibold text-slate-300">Review</span>
-                    </div>
-                    <div class="workflow-node-pill">
-                        <div class="workflow-node-icon"><i data-lucide="send" class="w-5 h-5"></i></div>
-                        <span class="text-xs font-semibold text-slate-300">Forward</span>
-                    </div>
-                    <div class="workflow-node-pill">
-                        <div class="workflow-node-icon"><i data-lucide="check-circle-2" class="w-5 h-5"></i></div>
-                        <span class="text-xs font-semibold text-slate-300">Resolve</span>
-                    </div>
-                </div>
+                <ol class="aurora-steps" aria-label="Petition lifecycle">
+                    <li class="aurora-step">
+                        <span class="aurora-step-icon"><svg><use href="#aurora-file" /></svg></span>
+                        <span>Register</span>
+                    </li>
+                    <li class="aurora-step">
+                        <span class="aurora-step-icon"><svg><use href="#aurora-search" /></svg></span>
+                        <span>Review</span>
+                    </li>
+                    <li class="aurora-step">
+                        <span class="aurora-step-icon"><svg><use href="#aurora-send" /></svg></span>
+                        <span>Forward</span>
+                    </li>
+                    <li class="aurora-step">
+                        <span class="aurora-step-icon"><svg><use href="#aurora-check" /></svg></span>
+                        <span>Resolve</span>
+                    </li>
+                </ol>
 
-                <div class="flex flex-wrap items-center gap-2.5 text-xs text-slate-400 font-medium mt-9">
-                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
-                    <span>Secure</span>
-                    <span class="text-slate-600">•</span>
-                    <span>Reliable</span>
-                    <span class="text-slate-600">•</span>
-                    <span>Accountable</span>
+                <div class="aurora-trust" aria-label="Security commitments">
+                    <span><svg><use href="#aurora-shield" /></svg>Secure</span>
+                    <span><svg><use href="#aurora-shield" /></svg>Reliable</span>
+                    <span><svg><use href="#aurora-shield" /></svg>Accountable</span>
                 </div>
             </section>
 
-            <!-- RIGHT SECTION: Neumorphic Floating Card (Matching Reference Specs) -->
-            <section class="w-full max-w-[360px] mx-auto z-10 lg:w-[385px] lg:max-w-none lg:-translate-x-10">
-                <div class="neu-login-card">
+            <section class="aurora-formside" aria-label="Sign in">
+                <div class="aurora-card">
+                    <div class="aurora-eyebrow">Officer sign in</div>
+                    <h2>Welcome back</h2>
+                    <p class="aurora-card-sub">Use your PEN and password to open your workspace.</p>
 
-                    <div class="flex justify-center mb-4">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white shadow-md shadow-teal-500/30">
-                            <i data-lucide="layers" class="w-5 h-5"></i>
-                        </div>
-                    </div>
-
-                    <!-- Welcome heading -->
-                    <div class="text-center mb-6">
-                        <h2 class="text-2xl sm:text-[1.75rem] font-bold text-slate-900 tracking-tight font-serif-display leading-tight">
-                            Welcome Back
-                        </h2>
-                        <p class="text-slate-500 text-xs sm:text-sm mt-1.5 leading-relaxed">
-                            Enter your credentials to continue to your workspace.
-                        </p>
-                    </div>
-
-                    <!-- Session Status or Global Alerts -->
                     @if (session('status'))
-                        <div class="mb-5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium flex items-center gap-2" role="status">
-                            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
+                        <div class="aurora-status" role="status">
+                            <svg><use href="#aurora-check" /></svg>
                             <span>{{ session('status') }}</span>
                         </div>
                     @endif
 
-                    <!-- Login Form -->
-                    <form method="POST" 
-                          action="{{ route('login') }}" 
-                          @submit="loading = true"
-                          class="space-y-4"
-                          novalidate>
+                    @if ($errors->any() && !$errors->has('pen') && !$errors->has('password'))
+                        <div class="aurora-error" role="alert" style="margin-top: 20px;">
+                            <svg><use href="#aurora-alert" /></svg>
+                            <span>{{ $errors->first() }}</span>
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('login') }}" @submit="loading = true" class="aurora-login-form">
                         @csrf
 
-                        <!-- PEN (Permanent Employee Number) Field -->
                         <div>
-                            <label for="pen" class="block text-xs font-semibold text-slate-700 mb-1.5 ml-0.5">
-                                PEN Number
-                            </label>
-                            <div class="neu-input-container {{ $errors->has('pen') ? 'has-error' : '' }}">
-                                <div class="input-icon-left">
-                                    <i data-lucide="mail" class="w-4 h-4"></i>
-                                </div>
-                                <input type="text" 
-                                       inputmode="numeric"
-                                       name="pen" 
-                                       id="pen" 
-                                       value="{{ old('pen') }}" 
-                                       placeholder="PEN Number" 
-                                       required 
-                                       autofocus 
-                                       autocomplete="username"
-                                       aria-label="PEN Number"
-                                       aria-invalid="{{ $errors->has('pen') ? 'true' : 'false' }}"
-                                       @if ($errors->has('pen')) aria-describedby="pen-error" @endif
-                                       class="neu-form-input">
+                            <label class="aurora-label" for="pen">PEN Number</label>
+                            <div class="aurora-field">
+                                <svg class="aurora-field-icon" aria-hidden="true"><use href="#aurora-id" /></svg>
+                                <input id="pen" name="pen" type="text" inputmode="numeric" autocomplete="username"
+                                    placeholder="Enter your PEN" value="{{ old('pen') }}" required autofocus
+                                    aria-invalid="{{ $errors->has('pen') ? 'true' : 'false' }}"
+                                    @if ($errors->has('pen')) aria-describedby="pen-error" @endif>
                             </div>
                             @error('pen')
-                                <p class="mt-1.5 text-xs font-medium text-rose-600 px-1" id="pen-error" role="alert">
-                                    {{ $message }}
+                                <p class="aurora-error" id="pen-error" role="alert" style="margin-top: 8px;">
+                                    <svg><use href="#aurora-alert" /></svg>
+                                    <span>{{ $message }}</span>
                                 </p>
                             @enderror
                         </div>
 
-                        <!-- Password Field with Accessible Show/Hide Toggle -->
                         <div>
-                            <label for="password" class="block text-xs font-semibold text-slate-700 mb-1.5 ml-0.5">
-                                Password
-                            </label>
-                            <div class="neu-input-container {{ $errors->has('password') ? 'has-error' : '' }}">
-                                <div class="input-icon-left">
-                                    <i data-lucide="lock" class="w-4 h-4"></i>
-                                </div>
-                                <input :type="showPassword ? 'text' : 'password'" 
-                                       name="password" 
-                                       id="password" 
-                                       placeholder="Enter your password" 
-                                       required 
-                                       autocomplete="current-password"
-                                       aria-label="Password"
-                                       aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}"
-                                       @if ($errors->has('password')) aria-describedby="password-error" @endif
-                                       class="neu-form-input">
-                                
-                                <button type="button" 
-                                        @click="showPassword = !showPassword" 
-                                        :aria-label="showPassword ? 'Hide password' : 'Show password'"
-                                        tabindex="-1"
-                                        class="text-blue-500 hover:text-blue-700 focus:outline-none transition-colors flex items-center flex-shrink-0">
-                                    <span x-show="!showPassword">
-                                        <i data-lucide="eye" class="w-4 h-4"></i>
-                                    </span>
-                                    <span x-show="showPassword" x-cloak>
-                                        <i data-lucide="eye-off" class="w-4 h-4"></i>
-                                    </span>
+                            <label class="aurora-label" for="password">Password</label>
+                            <div class="aurora-field">
+                                <svg class="aurora-field-icon" aria-hidden="true"><use href="#aurora-lock" /></svg>
+                                <input id="password" name="password" :type="showPassword ? 'text' : 'password'"
+                                    autocomplete="current-password" placeholder="Enter your password" required
+                                    aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}"
+                                    @if ($errors->has('password')) aria-describedby="password-error" @endif
+                                    @keydown="capsLock = $event.getModifierState && $event.getModifierState('CapsLock')"
+                                    @keyup="capsLock = $event.getModifierState && $event.getModifierState('CapsLock')"
+                                    @blur="capsLock = false">
+                                <button type="button" class="aurora-eye" @click="showPassword = !showPassword"
+                                    :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                                    :aria-pressed="showPassword.toString()">
+                                    <svg x-show="!showPassword"><use href="#aurora-eye" /></svg>
+                                    <svg x-show="showPassword" x-cloak><use href="#aurora-eye-off" /></svg>
                                 </button>
                             </div>
+                            <p class="aurora-hint" x-show="capsLock" x-cloak>
+                                <svg><use href="#aurora-info" /></svg>
+                                Caps Lock is on
+                            </p>
                             @error('password')
-                                <p class="mt-1.5 text-xs font-medium text-rose-600 px-1" id="password-error" role="alert">
-                                    {{ $message }}
+                                <p class="aurora-error" id="password-error" role="alert" style="margin-top: 8px;">
+                                    <svg><use href="#aurora-alert" /></svg>
+                                    <span>{{ $message }}</span>
                                 </p>
                             @enderror
                         </div>
 
-                        <!-- Remember Me & Forgot Password Row -->
-                        <div class="flex items-center justify-between pt-1">
-                            <label for="remember" class="inline-flex items-center gap-2 cursor-pointer select-none group">
-                                <input type="checkbox" 
-                                       name="remember" 
-                                       id="remember" 
-                                       {{ old('remember', true) ? 'checked' : '' }}
-                                       class="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer">
-                                <span class="text-xs text-slate-600 group-hover:text-slate-900 transition-colors">Remember me</span>
+                        <div class="aurora-row">
+                            <label class="aurora-check" for="remember">
+                                <input type="checkbox" name="remember" id="remember"
+                                    {{ old('remember', true) ? 'checked' : '' }}>
+                                <span>Remember me</span>
                             </label>
 
-                            @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}" 
-                                   class="text-xs font-semibold text-teal-700 hover:text-teal-800 hover:underline transition-colors">
-                                    Forgot password?
-                                </a>
-                            @endif
+                            {{-- @if (Route::has('password.request'))
+                                <a class="aurora-forgot" href="{{ route('password.request') }}">Forgot password?</a>
+                            @endif --}}
                         </div>
 
-                        <!-- Sign In Button (Vibrant Emerald Gradient Pill) -->
-                        <div class="pt-2">
-                            <button type="submit" 
-                                    :disabled="loading" 
-                                    class="btn-emerald-submit">
-                                <span x-show="!loading" class="inline-flex items-center gap-2">
-                                    <span>Sign In</span>
-                                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                                </span>
-                                <span x-show="loading" x-cloak class="inline-flex items-center gap-2">
-                                    <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-                                    <span>Authenticating...</span>
-                                </span>
-                            </button>
-                        </div>
+                        <button class="aurora-submit" type="submit" :disabled="loading">
+                            <span x-show="!loading" class="inline-flex items-center gap-2">
+                                <span>Sign in</span>
+                                <svg><use href="#aurora-arrow" /></svg>
+                            </span>
+                            <span x-show="loading" x-cloak class="inline-flex items-center gap-2">
+                                <span class="aurora-spinner" aria-hidden="true"></span>
+                                <span>Signing in...</span>
+                            </span>
+                        </button>
                     </form>
 
+                    <div class="aurora-legal">
+                        <svg><use href="#aurora-shield" /></svg>
+                        <span>Authorised personnel only. All activity in this system is logged and monitored.</span>
+                    </div>
                 </div>
             </section>
         </main>
 
-        <!-- ========================================================= -->
-        <!-- BOTTOM FOOTER: Official VACB Government Attribution      -->
-        <!-- ========================================================= -->
-        <footer class="w-full px-6 py-4 text-center text-xs text-slate-500 z-10">
-            <p>Designed by <span class="text-slate-300 font-semibold">Software Development Division</span><br>VACB Directorate, Kerala.</p>
+        <footer class="aurora-footer">
+            <p>Designed by <strong>Software Development Division</strong><br>VACB Directorate, Kerala.</p>
         </footer>
-
     </div>
-
-    <!-- SweetAlert Session Notifications -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @include('partials.sweetalert-session')
-
-    <!-- Lucide Icon Initialization -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
-        });
-    </script>
 </body>
 
 </html>

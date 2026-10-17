@@ -14,14 +14,14 @@ class DesignationController extends Controller
     {
         abort_unless(auth()->user()->canAccess('view designations'), 403, 'Unauthorized. Permission view designations required.');
         $designations = Designation::paginate(10);
-        return view('admin.designation_add', compact('designations'));
+        return view('admin.designations.index', compact('designations'));
     }
 
     public function create(): View
     {
         abort_unless(auth()->user()->canAccess('create designations'), 403, 'Unauthorized. Permission create designations required.');
         $designations = Designation::paginate(10);
-        return view('admin.designation_add', compact('designations'));
+        return view('admin.designations.index', compact('designations'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -42,7 +42,7 @@ class DesignationController extends Controller
     {
         abort_unless(auth()->user()->canAccess('update designations'), 403, 'Unauthorized. Permission update designations required.');
         $designation = Designation::findOrFail($id);
-        return view('admin.designation_edit', compact('designation'));
+        return view('admin.designations.edit', compact('designation'));
     }
 
     public function update(Request $request, int $id): RedirectResponse

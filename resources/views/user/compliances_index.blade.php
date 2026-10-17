@@ -159,10 +159,10 @@
                                class="w-40 sm:w-48 text-sm border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 pl-9 pr-3 shadow-sm text-slate-700 font-medium bg-white">
                     </div>
 
-                    <input type="date" name="date_from" x-model="fromDate" :max="today" @change="if(toDate && fromDate > toDate) toDate = fromDate" 
+                    <input type="date" id="date_from" name="date_from" x-model="fromDate" :max="today" @change="if(toDate && fromDate > toDate) toDate = fromDate" 
                            class="w-32 sm:w-36 text-sm border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 shadow-sm text-indigo-900 font-medium bg-white">
                     <span class="text-indigo-400 text-sm font-medium px-1">to</span>
-                    <input type="date" name="date_to" x-model="toDate" :min="fromDate" :max="today" 
+                    <input type="date" id="date_to" name="date_to" x-model="toDate" :min="fromDate" :max="today" 
                            class="w-32 sm:w-36 text-sm border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 shadow-sm text-indigo-900 font-medium bg-white">
                     
                     <!-- Unit Filter (Only for Complied) -->

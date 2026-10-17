@@ -130,4 +130,7 @@
             </div>
         </div>
     </div>
+@section('scripts')
+    @include('components.admin-form-validation-script')
+@endsection
 @endsection

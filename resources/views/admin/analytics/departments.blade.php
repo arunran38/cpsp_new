@@ -74,7 +74,7 @@
         <!-- Data Table -->
         <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
             <div id="tableContainer">
-                @include('admin.partials.department_table')
+                @include('admin.departments.partials.table')
             </div>
         </div>
     </div>

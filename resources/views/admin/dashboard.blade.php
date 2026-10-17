@@ -247,11 +247,13 @@
 
                         <form action="{{ route('admin.dashboard') }}" method="GET" class="flex flex-wrap items-center gap-2">
                             <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                                <input type="date" name="from_date" value="{{ $fromDate }}" placeholder="DD-MM-YYYY"
+                                <input type="date" id="from_date" name="from_date" value="{{ $fromDate }}" placeholder="DD-MM-YYYY"
+                                    max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                     class="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer"
                                     style="color: #1e40af !important;">
                                 <span class="text-slate-300 text-[10px] font-black mx-1">—</span>
-                                <input type="date" name="to_date" value="{{ $toDate }}" placeholder="DD-MM-YYYY"
+                                <input type="date" id="to_date" name="to_date" value="{{ $toDate }}" placeholder="DD-MM-YYYY"
+                                    max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                     class="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer"
                                     style="color: #1e40af !important;">
                             </div>

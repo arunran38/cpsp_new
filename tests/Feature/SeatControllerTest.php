@@ -26,7 +26,7 @@ class SeatControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.seats.index'));
 
         $response->assertStatus(200);
-        $response->assertViewIs('admin.seat_view');
+        $response->assertViewIs('admin.seats.index');
         $response->assertViewHas('seats');
     }
 
@@ -35,7 +35,7 @@ class SeatControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.seats.create'));
 
         $response->assertStatus(200);
-        $response->assertViewIs('admin.seat_add');
+        $response->assertViewIs('admin.seats.create');
         $response->assertViewHas('units');
     }
 
@@ -125,7 +125,7 @@ class SeatControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.seats.statistics'));
 
         $response->assertStatus(200);
-        $response->assertViewIs('admin.seat_statistics');
+        $response->assertViewIs('admin.analytics.seats');
         $response->assertViewHas('seats');
     }
 

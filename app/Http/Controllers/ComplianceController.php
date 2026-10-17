@@ -321,8 +321,8 @@ class ComplianceController extends Controller
     private function validateDateRange(Request $request): void
     {
         $request->validate([
-            'date_from' => 'nullable|date',
-            'date_to' => 'nullable|date|after_or_equal:date_from',
+            'date_from' => 'nullable|date|before_or_equal:today',
+            'date_to' => 'nullable|date|before_or_equal:today|after_or_equal:date_from',
         ]);
     }
 }

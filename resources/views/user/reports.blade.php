@@ -81,7 +81,7 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Date
                             From</label>
-                        <input type="date" placeholder="DD-MM-YYYY" name="date_from" value="{{ request('date_from') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                        <input type="date" id="date_from" placeholder="DD-MM-YYYY" name="date_from" value="{{ request('date_from') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                             class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2 transition-all bg-white text-slate-800 font-semibold"
                             style="color: #1e40af !important;">
                     </div>
@@ -89,9 +89,10 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">Date
                             To</label>
-                        <input type="date" placeholder="DD-MM-YYYY" name="date_to" value="{{ request('date_to') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                        <input type="date" id="date_to" placeholder="DD-MM-YYYY" name="date_to" value="{{ request('date_to') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                             class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm py-2 transition-all bg-white text-slate-800 font-semibold"
                             style="color: #1e40af !important;">
+                        <p id="dateRangeError" class="mt-1 text-xs text-rose-600 hidden" aria-live="polite"></p>
                     </div>
 
                     <div class="lg:col-span-1">

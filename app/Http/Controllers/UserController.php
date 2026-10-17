@@ -29,7 +29,7 @@ class UserController extends Controller
             ->orderBy('name', 'asc')
             ->paginate(10);
             
-        return view("admin.users_view", compact("users"));
+        return view("admin.users.index", compact("users"));
     }
 
     /**
@@ -39,7 +39,7 @@ class UserController extends Controller
     {
         abort_unless(auth()->user()->canAccess('create users'), 403, 'Unauthorized access to create users.');
 
-        return view("admin.user_registration");
+        return view("admin.users.create");
     }
 
     /**
@@ -83,7 +83,7 @@ class UserController extends Controller
 
         try {
             $user = User::findOrFail(decrypt($id));
-            return view("admin.edit_users", compact("user"));
+            return view("admin.users.edit", compact("user"));
         } catch (\Exception $e) {
             return redirect()->route("users.index")->with('error', 'Invalid user selection.');
         }

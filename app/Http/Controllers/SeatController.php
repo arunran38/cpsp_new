@@ -25,7 +25,7 @@ class SeatController extends Controller
         abort_unless(auth()->user()->canAccess('view seats'), 403, 'Unauthorized access to seats.');
 
         $seats = Seat::with(['units', 'roles', 'activeAssignments.user.profilePhoto'])->paginate(10);
-        return view('admin.seat_view', compact('seats'));
+        return view('admin.seats.index', compact('seats'));
     }
 
     /**
@@ -37,7 +37,7 @@ class SeatController extends Controller
 
         $units = Unit::all();
         $roles = Role::all();
-        return view('admin.seat_add', compact('units', 'roles'));
+        return view('admin.seats.create', compact('units', 'roles'));
     }
 
     /**
@@ -71,7 +71,7 @@ class SeatController extends Controller
         $seat = Seat::with('units')->findOrFail($id);
         $units = Unit::all();
         $roles = Role::all();
-        return view('admin.seat_edit', compact('seat', 'units', 'roles'));
+        return view('admin.seats.edit', compact('seat', 'units', 'roles'));
     }
 
     /**
@@ -120,7 +120,7 @@ class SeatController extends Controller
                      ->get()
                      ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
 
-        return view('admin.seat_statistics', compact('seats', 'dateFrom', 'dateTo'));
+        return view('admin.analytics.seats', compact('seats', 'dateFrom', 'dateTo'));
     }
 
     /**
@@ -169,8 +169,8 @@ class SeatController extends Controller
     private function validateDateRange(Request $request): void
     {
         $request->validate([
-            'date_from' => 'nullable|date',
-            'date_to' => 'nullable|date|after_or_equal:date_from',
+            'date_from' => 'nullable|date|before_or_equal:today',
+            'date_to' => 'nullable|date|before_or_equal:today|after_or_equal:date_from',
         ]);
     }
 
@@ -209,7 +209,7 @@ class SeatController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('admin.seat_history', compact('seat', 'assignments'));
+        return view('admin.seats.history', compact('seat', 'assignments'));
     }
 
     /**

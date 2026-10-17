@@ -891,6 +891,7 @@
         });
     </script>
     @yield('scripts')
+    @include('partials.date-validation')
     @include('sweetalert::alert')
     @include('partials.sweetalert-session')
 </body>

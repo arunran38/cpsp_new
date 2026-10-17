@@ -51,20 +51,28 @@
             ->whereNull('linked_petition_id');
     }
 
-    // High level metrics
-    $totalPetitions = (clone $basePetitionsQuery)->count();
-    $processed = (clone $basePetitionsQuery)->where('is_cpsp_processed', true)->count();
-    $unprocessed = (clone $basePetitionsQuery)->where('is_cpsp_processed', false)->where('is_returned_to_inward', false)->count();
-    $forwarded = (clone $basePetitionsQuery)->where('is_returned_to_inward', false)->where('status', 'Forwarded')->count();
-    $vrReports = (clone $basePetitionsQuery)->where('is_returned_to_inward', false)->where('status', 'VR_Received')->count();
-    $decisions = (clone $basePetitionsQuery)->where('is_returned_to_inward', false)->whereIn('status', [\App\Models\Petition::STATUS_SENT_TO_GOVT, \App\Models\Petition::STATUS_CLOSED])->count();
+    // Optimize: Single SQL aggregation for high level metrics instead of 9 separate count queries
+    $metrics = (clone $basePetitionsQuery)->selectRaw("
+        COUNT(*) as total_petitions,
+        COUNT(CASE WHEN is_cpsp_processed = 1 THEN 1 END) as processed,
+        COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 THEN 1 END) as unprocessed,
+        COUNT(CASE WHEN is_returned_to_inward = 0 AND status = 'Forwarded' THEN 1 END) as forwarded,
+        COUNT(CASE WHEN is_returned_to_inward = 0 AND status = 'VR_Received' THEN 1 END) as vr_reports,
+        COUNT(CASE WHEN is_returned_to_inward = 0 AND status IN ('Sent_to_Govt', 'Closed') THEN 1 END) as decisions,
+        COUNT(CASE WHEN created_at >= ? THEN 1 END) as today_inward,
+        COUNT(CASE WHEN seat_id IS NOT NULL AND is_returned_to_inward = 0 THEN 1 END) as transferred_to_desks,
+        COUNT(CASE WHEN is_returned_to_inward = 1 THEN 1 END) as returned_to_inward
+    ", [now()->startOfDay()->toDateTimeString()])->first();
 
-    // Inward Desk specific stats
-    if ($isInwardDesk) {
-        $todayInward = (clone $basePetitionsQuery)->whereDate('created_at', now()->toDateString())->count();
-        $transferredToDesks = (clone $basePetitionsQuery)->whereNotNull('seat_id')->where('is_returned_to_inward', false)->count();
-        $returnedToInward = (clone $basePetitionsQuery)->where('is_returned_to_inward', true)->count();
-    }
+    $totalPetitions = (int) ($metrics->total_petitions ?? 0);
+    $processed = (int) ($metrics->processed ?? 0);
+    $unprocessed = (int) ($metrics->unprocessed ?? 0);
+    $forwarded = (int) ($metrics->forwarded ?? 0);
+    $vrReports = (int) ($metrics->vr_reports ?? 0);
+    $decisions = (int) ($metrics->decisions ?? 0);
+    $todayInward = (int) ($metrics->today_inward ?? 0);
+    $transferredToDesks = (int) ($metrics->transferred_to_desks ?? 0);
+    $returnedToInward = (int) ($metrics->returned_to_inward ?? 0);
 
     // Vacant Seats mapping
     $vacantSeats = $canSeeVacantSeats ? \App\Models\Seat::whereDoesntHave('seatUsers', function ($q) {
@@ -473,10 +481,12 @@
 
                         <!-- Date Filter Form -->
                         <form action="{{ route('dashboard') }}" method="GET" class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                            <input type="date" name="from_date" value="{{ $fromDate }}"
+                            <input type="date" id="from_date" name="from_date" value="{{ $fromDate }}"
+                                   max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                    class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
                             <span class="text-slate-300 text-xs">—</span>
-                            <input type="date" name="to_date" value="{{ $toDate }}"
+                            <input type="date" id="to_date" name="to_date" value="{{ $toDate }}"
+                                   max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                    class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
                             <button type="submit" class="p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all" title="Filter Range">
                                 <i data-lucide="filter" class="w-3.5 h-3.5"></i>
@@ -530,10 +540,10 @@
                             <p class="text-xs text-slate-500 mt-0.5">Daily submissions for the selected period</p>
                         </div>
                         <form action="{{ url()->current() }}" method="GET" class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                            <input type="date" name="start_date" value="{{ $startDate->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
+                            <input type="date" id="start_date" name="start_date" value="{{ $startDate->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
                                    class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
                             <span class="text-slate-300 text-xs">—</span>
-                            <input type="date" name="end_date" value="{{ $endDate->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
+                            <input type="date" id="end_date" name="end_date" value="{{ $endDate->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}"
                                    class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
                             <button type="submit" class="p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all flex items-center justify-center cursor-pointer shadow-sm" title="Filter Range">
                                 <i data-lucide="filter" class="w-3.5 h-3.5"></i>

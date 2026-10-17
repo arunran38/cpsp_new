@@ -53,7 +53,7 @@
                                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                                         <i data-lucide="calendar" class="h-4 w-4 text-slate-400"></i>
                                     </div>
-                                    <input type="date" name="date_from" value="{{ $dateFrom }}" placeholder="DD-MM-YYYY"
+                                    <input type="date" name="date_from" id="date_from" value="{{ $dateFrom }}" placeholder="DD-MM-YYYY"
                                         max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                         class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300"
                                         style="color: #1e40af !important;">
@@ -66,11 +66,12 @@
                                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                                         <i data-lucide="calendar" class="h-4 w-4 text-slate-400"></i>
                                     </div>
-                                    <input type="date" name="date_to" value="{{ $dateTo }}" placeholder="DD-MM-YYYY"
+                                    <input type="date" name="date_to" id="date_to" value="{{ $dateTo }}" placeholder="DD-MM-YYYY"
                                         max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                         class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300"
                                         style="color: #1e40af !important;">
                                 </div>
+                                <p id="dateRangeError" class="text-xs text-rose-600 mt-1 hidden font-semibold"></p>
                             </div>
 
                             <div class="w-full sm:w-auto flex items-center gap-2">

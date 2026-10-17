@@ -24,7 +24,7 @@ class UnitControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.units.index'));
  
         $response->assertStatus(200);
-        $response->assertViewIs('admin.unit_add');
+        $response->assertViewIs('admin.units.index');
         $response->assertViewHas('units');
     }
  

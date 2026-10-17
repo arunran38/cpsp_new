@@ -31,7 +31,7 @@ class SeatUserController extends Controller
         $seats = Seat::where('is_active', true)->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $selectedSeatId = $request->get('seat_id');
         
-        return view('admin.seatuser_add', compact('users', 'seats', 'selectedSeatId'));
+        return view('admin.seats.assignments.create', compact('users', 'seats', 'selectedSeatId'));
     }
 
     /**

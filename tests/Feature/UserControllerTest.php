@@ -29,7 +29,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('users.index'));
 
         $response->assertStatus(200);
-        $response->assertViewIs('admin.users_view');
+        $response->assertViewIs('admin.users.index');
         $response->assertViewHas('users');
     }
 
@@ -38,7 +38,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('users.create'));
 
         $response->assertStatus(200);
-        $response->assertViewIs('admin.user_registration');
+        $response->assertViewIs('admin.users.create');
     }
 
     public function test_admin_can_store_user_with_photo(): void
@@ -82,7 +82,7 @@ class UserControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('users.edit', $encryptedId));
 
         $response->assertStatus(200);
-        $response->assertViewIs('admin.edit_users');
+        $response->assertViewIs('admin.users.edit');
         $response->assertViewHas('user');
     }
 

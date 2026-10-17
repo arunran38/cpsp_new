@@ -65,8 +65,8 @@ class PetitionController extends Controller
 
         $filters = $request->validate([
             'filter' => 'nullable|in:all,transferred,returned',
-            'date_from' => 'nullable|date',
-            'date_to' => 'nullable|date|after_or_equal:date_from',
+            'date_from' => 'nullable|date|before_or_equal:today',
+            'date_to' => 'nullable|date|before_or_equal:today|after_or_equal:date_from',
             'seat_id' => 'nullable|exists:seats,seat_id',
         ]);
         $filter = $filters['filter'] ?? 'all';
@@ -183,8 +183,8 @@ class PetitionController extends Controller
         }
 
         $filters = $request->validate([
-            'date_from' => 'nullable|date',
-            'date_to' => 'nullable|date|after_or_equal:date_from',
+            'date_from' => 'nullable|date|before_or_equal:today',
+            'date_to' => 'nullable|date|before_or_equal:today|after_or_equal:date_from',
             'seat_id' => 'nullable|exists:seats,seat_id',
         ]);
 
@@ -403,7 +403,24 @@ class PetitionController extends Controller
             });
         }
 
-        $petitions = $petitionsQuery->get();
+        // Optimize: Use SQL GROUP BY aggregation instead of loading all petitions into PHP memory
+        $statsBySeat = (clone $petitionsQuery)
+            ->selectRaw("
+                seat_id,
+                COUNT(*) as total_count,
+                COUNT(CASE WHEN status = 'Received' THEN 1 END) as received,
+                COUNT(CASE WHEN status = 'Forwarded' THEN 1 END) as forwarded,
+                COUNT(CASE WHEN status = 'VR_Received' THEN 1 END) as vrs,
+                COUNT(CASE WHEN status IN ('Sent_to_Govt', 'Closed') THEN 1 END) as decisions,
+                COUNT(CASE WHEN is_cpsp_processed = 1 THEN 1 END) as processed,
+                COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 THEN 1 END) as pending
+            ")
+            ->whereNotNull('seat_id')
+            ->groupBy('seat_id')
+            ->get()
+            ->keyBy('seat_id');
+
+        $totalAllPetitions = (clone $petitionsQuery)->count();
 
         // Calculate statistics per seat
         $seatStats = [];
@@ -411,36 +428,30 @@ class PetitionController extends Controller
         $totalForwarded = 0;
         $totalVrs = 0;
         $totalDecisions = 0;
-        $totalAllPetitions = $petitions->count();
+        $totalSentSum = 0;
+        $totalProcessedSum = 0;
+        $totalPendingSum = 0;
 
         foreach ($seats as $seat) {
-            $seatPetitions = $petitions->where('seat_id', $seat->seat_id);
-            $totalCount = $seatPetitions->count();
+            $seatData = $statsBySeat->get($seat->seat_id);
+            $totalCount = (int) ($seatData->total_count ?? 0);
+
             if (str_contains(strtolower($seat->seat_name), 'cpsp')) {
-                $received = $seatPetitions->where('status', Petition::STATUS_RECEIVED)->count();
-                $forwarded = $seatPetitions->where('status', Petition::STATUS_FORWARDED)->count();
-                $vrs = $seatPetitions->where('status', Petition::STATUS_VR_RECEIVED)->count();
-                $decisions = $seatPetitions->whereIn('status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_CLOSED])->count();
-                
-                // Pendency details
+                $received = (int) ($seatData->received ?? 0);
+                $forwarded = (int) ($seatData->forwarded ?? 0);
+                $vrs = (int) ($seatData->vrs ?? 0);
+                $decisions = (int) ($seatData->decisions ?? 0);
                 $totalSent = $totalCount;
-                $processed = $seatPetitions->where('is_cpsp_processed', true)->count();
-                $pending = $seatPetitions->where('is_cpsp_processed', false)->where('is_returned_to_inward', false)->count();
+                $processed = (int) ($seatData->processed ?? 0);
+                $pending = (int) ($seatData->pending ?? 0);
 
                 $totalReceived += $received;
                 $totalForwarded += $forwarded;
                 $totalVrs += $vrs;
                 $totalDecisions += $decisions;
-                
-                // Summary totals for pendency
-                if (!isset($summaryTotals['totalSent'])) {
-                    $summaryTotals['totalSent'] = 0;
-                    $summaryTotals['processed'] = 0;
-                    $summaryTotals['pending'] = 0;
-                }
-                $summaryTotals['totalSent'] += $totalSent;
-                $summaryTotals['processed'] += $processed;
-                $summaryTotals['pending'] += $pending;
+                $totalSentSum += $totalSent;
+                $totalProcessedSum += $processed;
+                $totalPendingSum += $pending;
 
                 $seatStats[] = [
                     'seat_id' => $seat->seat_id,
@@ -451,7 +462,6 @@ class PetitionController extends Controller
                     'forwarded' => $forwarded,
                     'vrs' => $vrs,
                     'decisions' => $decisions,
-                    // New Pendency Info
                     'total_sent' => $totalSent,
                     'processed' => $processed,
                     'pending' => $pending,
@@ -459,24 +469,16 @@ class PetitionController extends Controller
             }
         }
 
-        if (!isset($summaryTotals)) {
-            $summaryTotals = [
-                'total' => $totalAllPetitions,
-                'received' => $totalReceived,
-                'forwarded' => $totalForwarded,
-                'vrs' => $totalVrs,
-                'decisions' => $totalDecisions,
-                'totalSent' => 0,
-                'processed' => 0,
-                'pending' => 0,
-            ];
-        } else {
-            $summaryTotals['total'] = $totalAllPetitions;
-            $summaryTotals['received'] = $totalReceived;
-            $summaryTotals['forwarded'] = $totalForwarded;
-            $summaryTotals['vrs'] = $totalVrs;
-            $summaryTotals['decisions'] = $totalDecisions;
-        }
+        $summaryTotals = [
+            'total' => $totalAllPetitions,
+            'received' => $totalReceived,
+            'forwarded' => $totalForwarded,
+            'vrs' => $totalVrs,
+            'decisions' => $totalDecisions,
+            'totalSent' => $totalSentSum,
+            'processed' => $totalProcessedSum,
+            'pending' => $totalPendingSum,
+        ];
 
         // Handle Excel Export
         if ($request->input('export') === 'csv') {
@@ -1113,15 +1115,29 @@ class PetitionController extends Controller
         $query->whereNull('linked_petition_id')
               ->where('is_returned_to_inward', false);
 
-        $petitions = $query->get(['status', 'is_cpsp_processed', 'is_returned_to_inward', 'petition_id']);
-        
+        // Optimize: Perform single SQL aggregation instead of loading all models into PHP memory
+        $stats = $query->selectRaw("
+            COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 THEN 1 END) as inward,
+            COUNT(CASE WHEN is_cpsp_processed = 1 THEN 1 END) as all_count,
+            COUNT(CASE WHEN status = ? AND is_cpsp_processed = 1 THEN 1 END) as received,
+            COUNT(CASE WHEN status = ? THEN 1 END) as forwarded,
+            COUNT(CASE WHEN status = ? THEN 1 END) as vrs,
+            COUNT(CASE WHEN status IN (?, ?) THEN 1 END) as decisions
+        ", [
+            Petition::STATUS_RECEIVED,
+            Petition::STATUS_FORWARDED,
+            Petition::STATUS_VR_RECEIVED,
+            Petition::STATUS_SENT_TO_GOVT,
+            Petition::STATUS_CLOSED
+        ])->first();
+
         return [
-            'inward' => $petitions->filter(fn($p) => !$p->is_cpsp_processed && !$p->is_returned_to_inward)->count(),
-            'all' => $petitions->filter(fn($p) => $p->is_cpsp_processed)->count(),
-            'received' => $petitions->filter(fn($p) => $p->status === Petition::STATUS_RECEIVED && $p->is_cpsp_processed)->count(),
-            'forwarded' => $petitions->filter(fn($p) => $p->status === Petition::STATUS_FORWARDED)->count(),
-            'vrs' => $petitions->filter(fn($p) => $p->status === Petition::STATUS_VR_RECEIVED)->count(),
-            'decisions' => $petitions->filter(fn($p) => in_array($p->status, [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_CLOSED]))->count(),
+            'inward' => (int) ($stats->inward ?? 0),
+            'all' => (int) ($stats->all_count ?? 0),
+            'received' => (int) ($stats->received ?? 0),
+            'forwarded' => (int) ($stats->forwarded ?? 0),
+            'vrs' => (int) ($stats->vrs ?? 0),
+            'decisions' => (int) ($stats->decisions ?? 0),
         ];
     }
 
@@ -1132,32 +1148,45 @@ class PetitionController extends Controller
     {
         $user = Auth::user();
         $query = Petition::query()
-            ->whereIn('status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_CLOSED])
-            ->whereNull('linked_petition_id')
-            ->where('is_returned_to_inward', false);
+            ->whereIn('petitions.status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_CLOSED])
+            ->whereNull('petitions.linked_petition_id')
+            ->where('petitions.is_returned_to_inward', false);
 
         if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
             $currentSeat = $user->currentSeatUser();
             if ($currentSeat) {
-                $query->where('seat_id', $currentSeat->seat_id);
+                $query->where('petitions.seat_id', $currentSeat->seat_id);
             } else {
                 $query->where('petitions.user_id', $user->id);
             }
         }
 
-        $decisionsData = $query->with('decision')->get();
+        // Optimize: Join decisions table and aggregate in a single SQL query
+        $stats = $query->leftJoin('decisions', 'decisions.petition_id', '=', 'petitions.petition_id')
+            ->selectRaw("
+                COUNT(*) as total_all,
+                COUNT(CASE WHEN decisions.final_decision = 'VC' THEN 1 END) as count_vc,
+                COUNT(CASE WHEN decisions.final_decision = 'VE' THEN 1 END) as count_ve,
+                COUNT(CASE WHEN decisions.final_decision = 'PE' THEN 1 END) as count_pe,
+                COUNT(CASE WHEN decisions.final_decision = 'SC' THEN 1 END) as count_sc,
+                COUNT(CASE WHEN decisions.final_decision = 'CV' THEN 1 END) as count_cv,
+                COUNT(CASE WHEN decisions.final_decision = 'IV' THEN 1 END) as count_iv,
+                COUNT(CASE WHEN decisions.final_decision = 'ICell' THEN 1 END) as count_icell,
+                COUNT(CASE WHEN decisions.final_decision = 'Closed' THEN 1 END) as count_closed,
+                COUNT(CASE WHEN decisions.final_decision = 'Sent to Govt' THEN 1 END) as count_sent_to_govt
+            ")->first();
 
         return [
-            'All' => $decisionsData->count(),
-            'VC' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'VC')->count(),
-            'VE' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'VE')->count(),
-            'PE' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'PE')->count(),
-            'SC' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'SC')->count(),
-            'CV' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'CV')->count(),
-            'IV' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'IV')->count(),
-            'ICell' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'ICell')->count(),
-            'Closed' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'Closed')->count(),
-            'Sent to Govt' => $decisionsData->filter(fn($p) => optional($p->decision)->final_decision === 'Sent to Govt')->count(),
+            'All' => (int) ($stats->total_all ?? 0),
+            'VC' => (int) ($stats->count_vc ?? 0),
+            'VE' => (int) ($stats->count_ve ?? 0),
+            'PE' => (int) ($stats->count_pe ?? 0),
+            'SC' => (int) ($stats->count_sc ?? 0),
+            'CV' => (int) ($stats->count_cv ?? 0),
+            'IV' => (int) ($stats->count_iv ?? 0),
+            'ICell' => (int) ($stats->count_icell ?? 0),
+            'Closed' => (int) ($stats->count_closed ?? 0),
+            'Sent to Govt' => (int) ($stats->count_sent_to_govt ?? 0),
         ];
     }
 
@@ -1167,8 +1196,8 @@ class PetitionController extends Controller
     private function getPetitionsQuery(Request $request)
     {
         $request->validate([
-            'date_from' => 'nullable|date',
-            'date_to' => 'nullable|date|after_or_equal:date_from',
+            'date_from' => 'nullable|date|before_or_equal:today',
+            'date_to' => 'nullable|date|before_or_equal:today|after_or_equal:date_from',
         ]);
 
         $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user.seatUsers.seat', 'seat.activeAssignment.user', 'unit', 'originalPetition.addresses', 'returnedByUser', 'processedByUser', 'processedBySeat', 'updatedByUser', 'updatedBySeat']);

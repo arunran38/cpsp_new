@@ -25,8 +25,11 @@ class PetitionControllerTest extends TestCase
     {
         parent::setUp();
         
-        $this->admin = User::factory()->create(['role' => 'admin']);
-        $this->user = User::factory()->create(['role' => 'user']);
+        $this->admin = User::factory()->create();
+        $this->user = User::factory()->create();
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super admin', 'guard_name' => 'web']);
+        $this->admin->assignRole($role);
+        $this->user->assignRole($role);
         $this->seat = Seat::factory()->create();
         
         // Assign user to seat
@@ -252,5 +255,24 @@ class PetitionControllerTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/vnd.ms-excel');
         $response->assertHeader('Content-Disposition', 'attachment; filename="petitions_report_all_'.date('Y-m-d').'.xls"');
+    }
+
+    public function test_future_dates_are_rejected_in_date_filter(): void
+    {
+        $tomorrow = now()->addDay()->format('Y-m-d');
+        $response = $this->actingAs($this->user)->get(route('petitions.index', [
+            'date_from' => $tomorrow,
+            'date_to' => $tomorrow
+        ]));
+        $response->assertSessionHasErrors(['date_from', 'date_to']);
+    }
+
+    public function test_date_to_earlier_than_date_from_is_rejected(): void
+    {
+        $response = $this->actingAs($this->user)->get(route('petitions.index', [
+            'date_from' => '2024-05-10',
+            'date_to' => '2024-05-01'
+        ]));
+        $response->assertSessionHasErrors(['date_to']);
     }
 }

@@ -25,7 +25,7 @@ class SeatUserControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.seatuser.create'));
 
         $response->assertStatus(200);
-        $response->assertViewIs('admin.seatuser_add');
+        $response->assertViewIs('admin.seats.assignments.create');
         $response->assertViewHasAll(['users', 'seats']);
     }
 

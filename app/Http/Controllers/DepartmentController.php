@@ -14,13 +14,13 @@ class DepartmentController extends Controller
     {
         abort_unless(auth()->user()->canAccess('view departments'), 403, 'Unauthorized. Permission view departments required.');
         $departments = Department::paginate(10);
-        return view('admin.department_add', compact('departments'));
+        return view('admin.departments.index', compact('departments'));
     }
 
     public function create(): View
     {
         abort_unless(auth()->user()->canAccess('create departments'), 403, 'Unauthorized. Permission create departments required.');
-        return view('admin.department_create');
+        return view('admin.departments.create');
     }
 
     public function analysis(Request $request)
@@ -60,10 +60,10 @@ class DepartmentController extends Controller
         $total_sum = $all_data->sum('total_petitions');
 
         if ($request->ajax()) {
-            return view('admin.partials.department_table', compact('analysis', 'search', 'date_from', 'date_to', 'total_sum'))->render();
+            return view('admin.departments.partials.table', compact('analysis', 'search', 'date_from', 'date_to', 'total_sum'))->render();
         }
 
-        return view('admin.department_analysis', compact('analysis', 'search', 'date_from', 'date_to', 'total_sum'));
+        return view('admin.analytics.departments', compact('analysis', 'search', 'date_from', 'date_to', 'total_sum'));
     }
 
     public function exportAnalysis(Request $request)
@@ -142,7 +142,7 @@ class DepartmentController extends Controller
     {
         abort_unless(auth()->user()->canAccess('update departments'), 403, 'Unauthorized. Permission update departments required.');
         $department = Department::findOrFail($id);
-        return view('admin.department_edit', compact('department'));
+        return view('admin.departments.edit', compact('department'));
     }
 
     public function update(Request $request, int $id): RedirectResponse

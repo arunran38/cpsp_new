@@ -20,7 +20,7 @@ class UnitController extends Controller
     {
         abort_unless(auth()->user()->canAccess('view units'), 403, 'Unauthorized. Permission view units required.');
         $units = Unit::paginate(10);
-        return view('admin.unit_add', compact('units'));
+        return view('admin.units.index', compact('units'));
     }
 
     /**
@@ -30,7 +30,7 @@ class UnitController extends Controller
     {
         abort_unless(auth()->user()->canAccess('create units'), 403, 'Unauthorized. Permission create units required.');
         $units = Unit::paginate(10);
-        return view('admin.unit_add', compact('units'));
+        return view('admin.units.index', compact('units'));
     }
 
     /**
@@ -56,7 +56,7 @@ class UnitController extends Controller
     {
         abort_unless(auth()->user()->canAccess('update units'), 403, 'Unauthorized. Permission update units required.');
         $unit = Unit::findOrFail($id);
-        return view('admin.unit_edit', compact('unit'));
+        return view('admin.units.edit', compact('unit'));
     }
 
     /**

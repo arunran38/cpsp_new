@@ -50,30 +50,53 @@ class User extends Authenticatable
     }
 
     /**
+     * Runtime cache for current SeatUser to prevent redundant DB queries per request.
+     */
+    protected ?SeatUser $runtimeCurrentSeatUser = null;
+    protected bool $hasCheckedCurrentSeatUser = false;
+
+    /**
+     * Clear runtime seat cache.
+     */
+    public function flushCurrentSeatUserCache(): void
+    {
+        $this->runtimeCurrentSeatUser = null;
+        $this->hasCheckedCurrentSeatUser = false;
+    }
+
+    /**
      * Get the currently active SeatUser based on session state, 
      * or fallback to the primary active seat.
      */
     public function currentSeatUser(): ?SeatUser
     {
+        if ($this->hasCheckedCurrentSeatUser) {
+            return $this->runtimeCurrentSeatUser;
+        }
+
         $currentSeatId = session('current_seat_id');
 
         if ($currentSeatId) {
-            $seatUser = $this->seatUsers()->where('seat_id', $currentSeatId)->where('is_active', true)->first();
+            $seatUser = $this->seatUsers()->with('seat.roles', 'seat.permissions')->where('seat_id', $currentSeatId)->where('is_active', true)->first();
             if ($seatUser) {
-                return $seatUser;
+                $this->hasCheckedCurrentSeatUser = true;
+                return $this->runtimeCurrentSeatUser = $seatUser;
             }
         }
 
         $defaultSeatUser = $this->seatUsers()
+            ->with('seat.roles', 'seat.permissions')
             ->where('is_active', true)
             ->orderBy('is_additional', 'asc')
             ->first();
         if ($defaultSeatUser) {
             session(['current_seat_id' => $defaultSeatUser->seat_id]);
-            return $defaultSeatUser;
+            $this->hasCheckedCurrentSeatUser = true;
+            return $this->runtimeCurrentSeatUser = $defaultSeatUser;
         }
 
-        return null;
+        $this->hasCheckedCurrentSeatUser = true;
+        return $this->runtimeCurrentSeatUser = null;
     }
 
     /**

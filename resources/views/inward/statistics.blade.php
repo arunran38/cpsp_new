@@ -41,6 +41,7 @@
                         </label>
                         <div class="relative">
                             <input type="date" name="date_from" id="date_from" value="{{ $dateFrom }}"
+                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                 class="h-10 w-full px-4 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all">
                         </div>
                     </div>
@@ -54,6 +55,7 @@
                         </label>
                         <div class="relative">
                             <input type="date" name="date_to" id="date_to" value="{{ $dateTo }}"
+                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                 class="h-10 w-full px-4 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all">
                         </div>
                     </div>
