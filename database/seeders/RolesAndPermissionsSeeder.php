@@ -92,10 +92,18 @@ class RolesAndPermissionsSeeder extends Seeder
         // 2. Super Admin: Unrestricted full access
         $superAdmin = Role::firstOrCreate(['name' => 'super admin']);
         $superAdmin->syncPermissions(Permission::all());
-        $superAdminCap = Role::firstOrCreate(['name' => 'Super Admin']);
-        $superAdminCap->syncPermissions(Permission::all());
 
-        // 2. Admin: System administrator (operations, masters, reports, charts, dashboard)
+        // Cleanup legacy capitalized 'Super Admin' if it exists as a separate record
+        $legacySuperAdmin = Role::where('name', 'Super Admin')->first();
+        if ($legacySuperAdmin && $legacySuperAdmin->id !== $superAdmin->id) {
+            \Illuminate\Support\Facades\DB::table('model_has_roles')
+                ->where('role_id', $legacySuperAdmin->id)
+                ->update(['role_id' => $superAdmin->id]);
+            $legacySuperAdmin->syncPermissions([]);
+            $legacySuperAdmin->delete();
+        }
+
+        // 3. Admin: System administrator (operations, masters, reports, charts, dashboard)
         $admin = Role::firstOrCreate(['name' => 'admin']);
         if ($admin->wasRecentlyCreated || $admin->permissions()->count() === 0) {
             $adminPermissions = Permission::whereNotIn('name', [
@@ -105,7 +113,7 @@ class RolesAndPermissionsSeeder extends Seeder
             $admin->syncPermissions($adminPermissions);
         }
 
-        // 3. Inward Desk: Reception, petition registration, transfers & statistics
+        // 4. Inward Desk: Reception, petition registration, transfers & statistics
         $inward = Role::firstOrCreate(['name' => 'Inward']);
         if ($inward->wasRecentlyCreated || $inward->permissions()->count() === 0) {
             $inward->syncPermissions([
@@ -122,7 +130,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ]);
         }
 
-        // 4. CPSP Desk: Grievance management, forwarding, compliances, duplicate linking, transfers
+        // 5. CPSP Desk: Grievance management, forwarding, compliances, duplicate linking, transfers
         $cpsp = Role::firstOrCreate(['name' => 'CPSP']);
         if ($cpsp->wasRecentlyCreated || $cpsp->permissions()->count() === 0) {
             $cpsp->syncPermissions([
