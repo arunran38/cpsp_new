@@ -2,14 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Models\Unit;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class UnitSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        DB::table('units')->insert([
+        $units = [
             ['unit_code' => 'DVACB', 'unit_name' => 'Vigilance Directorate'],
             ['unit_code' => 'SRT', 'unit_name' => 'Southern Range, Trivandrum'],
             ['unit_code' => 'CRE', 'unit_name' => 'Central Range, Ernakulam'],
@@ -34,6 +34,13 @@ class UnitSeeder extends Seeder
             ['unit_code' => 'WYD', 'unit_name' => 'Wayanad Unit'],
             ['unit_code' => 'KNR', 'unit_name' => 'Kannur Unit'],
             ['unit_code' => 'KSD', 'unit_name' => 'Kasargode Unit'],
-        ]);
+        ];
+
+        foreach ($units as $unit) {
+            Unit::firstOrCreate(
+                ['unit_code' => $unit['unit_code']],
+                ['unit_name' => $unit['unit_name']]
+            );
+        }
     }
 }
