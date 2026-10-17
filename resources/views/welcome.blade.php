@@ -52,14 +52,12 @@
             text-shadow: 0 2px 12px rgba(203, 213, 225, 0.12);
         }
 
-        /* Deep navy background with subtle teal and blue light */
+        /* Deep teal background with a subtle dotted grid */
         .page-bg {
-            background-color: #060d19;
+            background-color: #003b4d;
             background-image:
-                radial-gradient(circle at 15% 50%, rgba(13, 148, 136, 0.12) 0%, transparent 45%),
-                radial-gradient(circle at 45% 65%, rgba(16, 185, 129, 0.10) 0%, transparent 40%),
-                radial-gradient(circle at 85% 15%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
-                linear-gradient(180deg, #040812 0%, #060d19 50%, #050b16 100%);
+                radial-gradient(circle, rgba(56, 189, 248, 0.2) 1px, transparent 1.2px);
+            background-size: 32px 32px;
             position: relative;
         }
 
@@ -68,6 +66,25 @@
             flex-direction: column;
             align-items: center;
             gap: 0.625rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .workflow-node-pill:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            top: 1rem;
+            left: calc(50% + 1rem);
+            right: calc(-50% + 1rem);
+            height: 1px;
+            background: rgba(148, 163, 184, 0.45);
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            pointer-events: none;
+        }
+
+        .workflow-steps:hover .workflow-node-pill:not(:last-child)::after {
+            background: #34d399;
+            box-shadow: 0 0 8px rgba(52, 211, 153, 0.85);
         }
 
         .workflow-node-icon {
@@ -77,6 +94,15 @@
             align-items: center;
             justify-content: center;
             color: #d1d5db;
+            position: relative;
+            z-index: 1;
+            transition: color 0.2s ease, filter 0.2s ease, transform 0.2s ease;
+        }
+
+        .workflow-node-pill:hover .workflow-node-icon {
+            color: #34d399;
+            filter: drop-shadow(0 0 7px rgba(52, 211, 153, 0.9));
+            transform: translateY(-2px);
         }
 
         /* ========================================================= */
@@ -221,7 +247,7 @@
 
 <body class="h-full page-bg" x-data="{ showPassword: false, loading: false }">
     <div class="min-h-screen flex flex-col relative z-10">
-        <main class="w-full flex-1 max-w-[1376px] mx-auto px-6 sm:px-8 py-10 lg:py-12 grid items-center gap-12 lg:grid-cols-[1fr_360px]">
+        <main class="w-full flex-1 max-w-[1376px] mx-auto px-6 sm:px-8 py-10 lg:py-12 grid items-center gap-12 lg:grid-cols-[1fr_385px]">
             <section class="w-full max-w-lg">
                 <div class="flex items-center gap-4 mb-12">
                     <div class="w-12 h-12 shrink-0 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white shadow-md shadow-teal-500/30">
@@ -243,7 +269,7 @@
                     </p>
                 </div>
 
-                <div class="grid grid-cols-4 gap-3 sm:gap-5 mt-9 max-w-md text-center">
+                <div class="workflow-steps grid grid-cols-4 mt-9 max-w-md text-center">
                     <div class="workflow-node-pill">
                         <div class="workflow-node-icon"><i data-lucide="file-plus-2" class="w-5 h-5"></i></div>
                         <span class="text-xs font-semibold text-slate-300">Register</span>
@@ -273,7 +299,7 @@
             </section>
 
             <!-- RIGHT SECTION: Neumorphic Floating Card (Matching Reference Specs) -->
-            <section class="w-full max-w-[360px] mx-auto z-10">
+            <section class="w-full max-w-[360px] mx-auto z-10 lg:w-[385px] lg:max-w-none lg:-translate-x-10">
                 <div class="neu-login-card">
 
                     <div class="flex justify-center mb-4">
@@ -322,7 +348,7 @@
                                        name="pen" 
                                        id="pen" 
                                        value="{{ old('pen') }}" 
-                                       placeholder="you@example.com / PEN" 
+                                       placeholder="PEN Number" 
                                        required 
                                        autofocus 
                                        autocomplete="username"
