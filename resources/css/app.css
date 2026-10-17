@@ -3,9 +3,54 @@
 @tailwind utilities;
 
 @layer base {
+    html {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+
+    body {
+        font-family: 'Inter', "Noto Sans Malayalam", system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+
+    input, select, textarea, button {
+        font-family: inherit;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+
     select, option {
         @apply text-slate-900;
+        color: #0f172a !important;
+        background-color: #ffffff;
     }
+}
+
+/* Global Crisp Placeholder Styling */
+::placeholder,
+::-webkit-input-placeholder,
+::-moz-placeholder,
+:-ms-input-placeholder {
+    color: #475569 !important; /* slate-600: strong WCAG AA contrast against white */
+    opacity: 1 !important;
+    font-weight: 400 !important;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Form element text sharpness and contrast */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+    color: #0f172a !important;
+    font-weight: 500;
+}
+
+input[type="date"] {
+    color: #0f172a !important;
 }
 
 /* Fix for @tailwindcss/forms double arrow issue - Move out of @layer for priority */
@@ -21,7 +66,7 @@ select[style*="background-image: none"] {
 /* Fix for broken date picker icon from Tailwind forms */
 [type='date']::-webkit-calendar-picker-indicator {
     display: block !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E") !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E") !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
     color: transparent !important;

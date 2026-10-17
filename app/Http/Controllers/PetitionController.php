@@ -42,7 +42,8 @@ class PetitionController extends Controller
         $districts = \App\Models\District::orderBy('district_id')->get();
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
-        return view('user.petition_add', compact('districts', 'designations', 'departments'));
+        $units = \App\Models\Unit::orderBy('unit_name')->get();
+        return view('user.petition_add', compact('districts', 'designations', 'departments', 'units'));
     }
 
     /**
@@ -51,12 +52,14 @@ class PetitionController extends Controller
     public function inwardCreate(Request $request): View|string
     {
         $user = Auth::user();
+        $isSuperAdmin = $user->hasRole(['super admin', 'Super Admin']);
 
-        // Permission Check: Must have 'inward_form' or 'inward form' or 'Inward'/'inward' role
+        // Permission Check: Must have inward form access or appropriate role
         if (!$user->canAccess('inward_form') && 
             !$user->canAccess('inward form') && 
-            !$user->hasRole('inward') && 
-            !$user->hasRole('Inward')) {
+            !$user->canAccess('create inward petitions') && 
+            !$user->canAccess('create_inward_petitions') && 
+            !$user->hasRole(['inward', 'Inward', 'admin', 'Admin', 'super admin', 'Super Admin', 'developer', 'Developer'])) {
             abort(403, 'Unauthorized. Permission inward_form required to access Inward Petition Registration Form.');
         }
 
@@ -157,12 +160,12 @@ class PetitionController extends Controller
         $transfers = $transfersQuery->latest('created_at')->paginate(10)->appends($request->query());
 
         if ($request->ajax()) {
-            return view('inward.partials.inward_table', compact('transfers', 'filter', 'counts'))->render();
+            return view('inward.partials.inward_table', compact('transfers', 'filter', 'counts', 'isSuperAdmin'))->render();
         }
 
         $unifiedCounts = $this->getUnifiedCounts();
 
-        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments', 'transfers', 'filter', 'counts', 'unifiedCounts', 'inwardSeats'));
+        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments', 'transfers', 'filter', 'counts', 'unifiedCounts', 'inwardSeats', 'isSuperAdmin'));
     }
 
     /**
@@ -684,13 +687,15 @@ class PetitionController extends Controller
             'uploads', 
             'originalPetition.addresses.designation', 
             'originalPetition.addresses.department', 
-            'duplicates',
+            'originalPetition.unit',
+            'duplicates.unit',
             'cpspOpenedByUser',
             'cpspOpenedBySeat',
             'processedByUser',
             'processedBySeat',
             'updatedByUser',
             'updatedBySeat',
+            'unit',
         ])->findOrFail($realId);
         $this->authorize('view', $petition);
 
@@ -709,7 +714,7 @@ class PetitionController extends Controller
     public function edit($id): View|RedirectResponse
     {
         $realId = HashidService::decode($id) ?? $id;
-        $petition = Petition::with(['addresses', 'uploads'])->findOrFail($realId);
+        $petition = Petition::with(['addresses', 'uploads', 'unit'])->findOrFail($realId);
         $this->authorize('update', $petition);
 
         // Audit: Track when CPSP user opens/edits this petition for the first time
@@ -729,7 +734,8 @@ class PetitionController extends Controller
         $districts = \App\Models\District::orderBy('district_id')->get();
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
-        return view('user.petition_edit', compact('petition', 'complainants', 'accused', 'districts', 'designations', 'departments'));
+        $units = \App\Models\Unit::orderBy('unit_name')->get();
+        return view('user.petition_edit', compact('petition', 'complainants', 'accused', 'districts', 'designations', 'departments', 'units'));
     }
 
     /**

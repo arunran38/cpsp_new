@@ -105,6 +105,22 @@ class DashboardTest extends TestCase
         );
     }
 
+    public function test_super_admin_cannot_see_petition_charts(): void
+    {
+        foreach (['super admin', 'Super Admin'] as $roleName) {
+            $superAdmin = User::factory()->create();
+            $superAdmin->assignRole($roleName);
+
+            $response = $this->actingAs($superAdmin)->get(route('admin.dashboard'));
+
+            $response->assertStatus(200);
+            $response->assertDontSee('Petition Trends');
+            $response->assertDontSee('By Nature');
+            $response->assertDontSee('id="petitionTrendsChart"', false);
+            $response->assertDontSee('id="petitionNatureChart"', false);
+        }
+    }
+
     public function test_user_dashboard_date_range_filtering(): void
     {
         Petition::factory()->create([

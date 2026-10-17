@@ -1,6 +1,9 @@
 @if(isset($counts))
     <div id="counts-data" data-all="{{ $counts['all'] ?? 0 }}" data-transferred="{{ $counts['transferred'] ?? 0 }}" data-returned="{{ $counts['returned'] ?? 0 }}" style="display:none;"></div>
 @endif
+@php
+    $showEnteredBy = Auth::user()->canAccess('access admin dashboard') && !$isSuperAdmin;
+@endphp
 <div class="overflow-x-auto">
     <table class="w-full text-left border-collapse">
         <thead>
@@ -12,7 +15,7 @@
                 <th class="px-6 py-4">Mode of Receipt</th>
                 <th class="px-6 py-4">Concerned Seat</th>
                 <th class="px-6 py-4">Transferred On</th>
-                @if(Auth::user()->canAccess('access admin dashboard'))
+                @if($showEnteredBy)
                     <th class="px-6 py-4">Entered By (Inward)</th>
                 @endif
                 @if(($filter ?? request('filter')) === 'returned')
@@ -49,8 +52,13 @@
                         <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-100/80 text-blue-700 border border-blue-200/50">
                             {{ $item->mode_of_petition_received }}
                         </span>
-                        @if(strtolower($item->mode_of_petition_received) === 'unit' && $item->unit)
-                            <span class="block text-[11px] text-indigo-600 font-semibold mt-1">{{ $item->unit->unit_name }}</span>
+                        @if(strtolower($item->mode_of_petition_received) === 'unit')
+                            @if($item->unit)
+                                <span class="block text-[11px] text-indigo-600 font-semibold mt-1">{{ $item->unit->unit_name }}</span>
+                            @endif
+                            @if($item->date_of_petition_received_at_unit)
+                                <span class="block text-[10px] text-slate-500 font-medium">Recd: {{ \Carbon\Carbon::parse($item->date_of_petition_received_at_unit)->format('d/m/Y') }}</span>
+                            @endif
                         @endif
                     </td>
                     <td class="px-5 py-3.5">
@@ -66,7 +74,7 @@
                     <td class="px-5 py-3.5 font-medium text-blue-600 whitespace-nowrap">
                         {{ $item->created_at?->format('d M, Y') }}
                     </td>
-                    @if(Auth::user()->canAccess('access admin dashboard'))
+                    @if($showEnteredBy)
                     <td class="px-5 py-3.5">
                         <div class="flex flex-col">
                             <span class="font-bold text-blue-700">{{ $item->user?->name ?? 'Unknown' }}</span>
@@ -161,7 +169,7 @@
                 <tr>
                     @php
                         $colspan = 7;
-                        if (Auth::user()->canAccess('access admin dashboard')) $colspan++;
+                        if ($showEnteredBy) $colspan++;
                         if (($filter ?? request('filter')) === 'returned') $colspan++;
                     @endphp
                     <td colspan="{{ $colspan }}" class="px-6 py-10 text-center text-slate-400">

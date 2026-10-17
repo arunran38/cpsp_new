@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StorePetitionRequest extends FormRequest
 {
@@ -99,8 +100,17 @@ class StorePetitionRequest extends FormRequest
             'transfer_remarks' => 'nullable|string',
             'seat_id' => $isInward ? 'required|exists:seats,seat_id' : 'nullable|exists:seats,seat_id',
             'is_inward_entry' => 'nullable|boolean',
-            'unit_id' => 'nullable|exists:units,unit_id',
-            'date_of_petition_received_at_unit' => 'nullable|date|before_or_equal:today',
+            'unit_id' => [
+                'nullable',
+                'exists:units,unit_id',
+                Rule::requiredIf(fn() => strtolower((string)$this->input('mode_of_petition_received')) === 'unit'),
+            ],
+            'date_of_petition_received_at_unit' => [
+                'nullable',
+                'date',
+                'before_or_equal:today',
+                Rule::requiredIf(fn() => strtolower((string)$this->input('mode_of_petition_received')) === 'unit'),
+            ],
             'mode_others' => 'nullable|string',
             'linked_petition_id' => 'nullable|exists:petitions,petition_id',
             'evidence_files' => 'nullable|array',
@@ -153,6 +163,8 @@ class StorePetitionRequest extends FormRequest
             'mode_of_petition_received' => 'mode of petition',
             'description' => 'description',
             'seat_id' => 'concerned seat',
+            'unit_id' => 'concerned unit',
+            'date_of_petition_received_at_unit' => 'date of petition received at unit',
             'complainants' => 'complainants',
             'complainants.*.name' => 'complainant full name',
             'complainants.*.phone' => 'complainant phone number',
@@ -177,6 +189,9 @@ class StorePetitionRequest extends FormRequest
             'accused.*.designation_id.exists' => 'The selected suspect designation is invalid.',
             'accused.*.pen_number.digits_between' => 'The PEN number must be either 6 or 7 digits.',
             'seat_id.required' => 'Concerned seat is mandatory for inward registration.',
+            'unit_id.required' => 'The concerned unit field is required when mode of receipt is Unit.',
+            'date_of_petition_received_at_unit.required' => 'The date of petition received at unit field is required when mode of receipt is Unit.',
+            'date_of_petition_received_at_unit.before_or_equal' => 'Date of petition received at unit cannot be in the future.',
         ];
     }
 }

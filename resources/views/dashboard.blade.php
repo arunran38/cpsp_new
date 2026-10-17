@@ -7,6 +7,8 @@
     $user = Auth::user();
     $currentSeatUser = $user->currentSeatUser();
     $currentSeat = $currentSeatUser?->seat;
+    $isSuperAdmin = $user->hasRole(['super admin', 'Super Admin'])
+        || ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin']));
     $isAdditional = $currentSeatUser?->is_additional;
     $seatName = $currentSeat?->seat_name ?? ($user->roles->first()?->name ?? 'User');
     
@@ -101,8 +103,8 @@
     $chartStatusData = json_encode($statusStats->values()->toArray());
 
     // Petition trends and nature are scoped to the same seat as the dashboard metrics.
-    $canSeeTrends = $user->canAccess('view petition trends chart');
-    $canSeeNature = $user->canAccess('view petition nature chart');
+    $canSeeTrends = !$isSuperAdmin && $user->canAccess('view petition trends chart');
+    $canSeeNature = !$isSuperAdmin && $user->canAccess('view petition nature chart');
     $chartPetitionsQuery = clone $basePetitionsQuery;
     if (!$isInwardDesk) {
         $chartPetitionsQuery->where('is_cpsp_processed', true);

@@ -106,7 +106,7 @@
                         'Suspect Address' => '<td>' . $getAddresses($accused) . '</td>',
                         'Nature' => '<td>' . $petition->nature_of_petition . '</td>',
                         'Description' => '<td>' . $petition->description . '</td>',
-                        'Mode' => '<td class="text-center">' . $petition->mode_of_petition_received . '</td>',
+                        'Mode' => '<td class="text-center">' . $petition->mode_of_petition_received . (strtolower($petition->mode_of_petition_received) === 'unit' && $petition->unit ? ' (' . $petition->unit->unit_name . ')' : '') . '</td>',
                         'Proposed Action' => '<td>' . $petition->proposed_action . '</td>',
                         'Present Status' => '<td class="text-center"><span class="bold">' . $petition->status . '</span></td>',
                         'Seat' => '<td>' . ($petition->seat->seat_name ?? 'N/A') . '</td>',

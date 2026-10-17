@@ -259,7 +259,7 @@ class SeatController extends Controller
         $user = auth()->user();
 
         // Check direct permissions, ignoring the impersonated seat
-        if (!$user->hasPermissionTo('access admin dashboard')) {
+        if (!$user->canAccess('access admin dashboard')) {
             return redirect()->route('dashboard')->with('error', 'Only admins can switch back.');
         }
 

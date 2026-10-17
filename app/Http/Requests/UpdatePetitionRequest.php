@@ -105,6 +105,17 @@ class UpdatePetitionRequest extends FormRequest
             'date_of_petition_received' => 'required|date|before_or_equal:today',
             'nature_of_petition' => 'required',
             'mode_of_petition_received' => 'required',
+            'unit_id' => [
+                'nullable',
+                'exists:units,unit_id',
+                Rule::requiredIf(fn() => strtolower((string)$this->input('mode_of_petition_received')) === 'unit'),
+            ],
+            'date_of_petition_received_at_unit' => [
+                'nullable',
+                'date',
+                'before_or_equal:today',
+                Rule::requiredIf(fn() => strtolower((string)$this->input('mode_of_petition_received')) === 'unit'),
+            ],
             'description' => 'required',
             'proposed_action' => 'nullable|string',
             'mode_others' => 'nullable|string',
@@ -135,6 +146,8 @@ class UpdatePetitionRequest extends FormRequest
             'date_of_petition_received' => 'date of receipt',
             'nature_of_petition' => 'nature of petition',
             'mode_of_petition_received' => 'mode of petition',
+            'unit_id' => 'concerned unit',
+            'date_of_petition_received_at_unit' => 'date of petition received at unit',
             'description' => 'description',
             'complainants' => 'complainants',
             'complainants.*.name' => 'complainant full name',
@@ -159,6 +172,9 @@ class UpdatePetitionRequest extends FormRequest
             'accused.*.department_id.exists' => 'The selected suspect department is invalid.',
             'accused.*.designation_id.exists' => 'The selected suspect designation is invalid.',
             'accused.*.pen_number.digits_between' => 'The PEN number must be either 6 or 7 digits.',
+            'unit_id.required' => 'The concerned unit field is required when mode of receipt is Unit.',
+            'date_of_petition_received_at_unit.required' => 'The date of petition received at unit field is required when mode of receipt is Unit.',
+            'date_of_petition_received_at_unit.before_or_equal' => 'Date of petition received at unit cannot be in the future.',
         ];
     }
 }

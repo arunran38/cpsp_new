@@ -2,6 +2,9 @@
 @section('container_width', 'max-w-full')
 
 @section('content')
+    @php
+        $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
+    @endphp
     <div class="space-y-6" x-data="petitionForm()">
         <!-- Premium Header Section -->
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2">
@@ -18,7 +21,7 @@
                         <i data-lucide="scroll-text" class="w-6 h-6"></i>
                     </div>
                     <div class="text-center sm:text-left">
-                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
+                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight mb-1">
                             New Petition
                         </h1>
                         <p class="text-slate-300 font-medium max-w-2xl text-sm">
@@ -86,45 +89,45 @@
                             <span x-show="step <= 1">1</span>
                         </div>
                         <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
-                            :class="step === 1 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : (step > 1 ? 'text-teal-500' : 'text-blue-500')">Petition Details</span>
+                            :class="step === 1 ? 'text-teal-300' : (step > 1 ? 'text-teal-400' : 'text-slate-300')">Petition Details</span>
                     </button>
 
                     <!-- Step 2 -->
                     <button type="button" @click="step >= 2 ? setStep(2) : null"
                         class="flex-1 flex flex-col items-center gap-3 focus:outline-none group bg-transparent"
-                        :class="{ 'cursor-not-allowed opacity-80': step < 2 }">
+                        :class="{ 'cursor-not-allowed': step < 2 }">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 ring-4 ring-slate-900 relative z-20"
                             :class="step === 2 ? 'bg-teal-400 text-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.8)] scale-110' : (step > 2 ? 'bg-teal-500 text-white shadow-[0_0_10px_rgba(20,184,166,0.6)]' : 'bg-blue-600 text-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500')">
                             <span x-show="step > 2"><i data-lucide="check" class="w-5 h-5"></i></span>
                             <span x-show="step <= 2">2</span>
                         </div>
                         <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
-                            :class="step === 2 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : (step > 2 ? 'text-teal-500' : 'text-blue-500')">Complainant</span>
+                            :class="step === 2 ? 'text-teal-300' : (step > 2 ? 'text-teal-400' : 'text-slate-300')">Complainant</span>
                     </button>
 
                     <!-- Step 3 -->
                     <button type="button" @click="step >= 3 ? setStep(3) : null"
                         class="flex-1 flex flex-col items-center gap-3 focus:outline-none group bg-transparent"
-                        :class="{ 'cursor-not-allowed opacity-80': step < 3 }">
+                        :class="{ 'cursor-not-allowed': step < 3 }">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 ring-4 ring-slate-900 relative z-20"
                             :class="step === 3 ? 'bg-teal-400 text-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.8)] scale-110' : (step > 3 ? 'bg-teal-500 text-white shadow-[0_0_10px_rgba(20,184,166,0.6)]' : 'bg-blue-600 text-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500')">
                             <span x-show="step > 3"><i data-lucide="check" class="w-5 h-5"></i></span>
                             <span x-show="step <= 3">3</span>
                         </div>
                         <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
-                            :class="step === 3 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : (step > 3 ? 'text-teal-500' : 'text-blue-500')">Suspect</span>
+                            :class="step === 3 ? 'text-teal-300' : (step > 3 ? 'text-teal-400' : 'text-slate-300')">Suspect</span>
                     </button>
 
                     <!-- Step 4 -->
                     <button type="button" @click="step >= 4 ? setStep(4) : null"
                         class="flex-1 flex flex-col items-center gap-3 focus:outline-none group bg-transparent"
-                        :class="{ 'cursor-not-allowed opacity-80': step < 4 }">
+                        :class="{ 'cursor-not-allowed': step < 4 }">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-500 ring-4 ring-slate-900 relative z-20"
                             :class="step === 4 ? 'bg-teal-400 text-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.8)] scale-110' : 'bg-blue-600 text-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500'">
                             <span>4</span>
                         </div>
                         <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
-                            :class="step === 4 ? 'text-teal-400 drop-shadow-[0_0_8px_rgba(45,212,191,0.5)] scale-105' : 'text-blue-500'">Complete</span>
+                            :class="step === 4 ? 'text-teal-300' : 'text-slate-300'">Complete</span>
                     </button>
                 </div>
             </div>
@@ -184,6 +187,64 @@
                             placeholder="Type the custom mode of receipt..." />
                     </div>
 
+                    <!-- NESTED SECTION: Appears ONLY if Mode of Receipt is "Unit" -->
+                    <div x-show="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
+                        x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 -translate-y-2"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        style="display: none;"
+                        class="bg-indigo-50/60 p-5 rounded-xl border border-indigo-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <!-- Concerned Unit Name -->
+                        <div class="space-y-1.5">
+                            <label for="unit_id"
+                                class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
+                                <i data-lucide="building-2" class="w-4 h-4 text-indigo-600"></i>
+                                Concerned Unit Name <span class="text-rose-500">*</span>
+                            </label>
+                            <select name="unit_id" id="unit_id" x-model="petitionDetails.unit_id"
+                                x-bind:required="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
+                                @change="validateField($event)"
+                                class="block w-full px-4 py-2.5 text-sm font-medium bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                                <option value="">-- Select Concerned Unit --</option>
+                                @foreach($unitsList as $unitItem)
+                                    <option value="{{ $unitItem->unit_id }}" {{ old('unit_id') == $unitItem->unit_id ? 'selected' : '' }}>
+                                        {{ $unitItem->unit_name }} ({{ $unitItem->unit_code }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <template x-if="formErrors['unit_id']">
+                                <p class="text-xs font-semibold text-rose-500 mt-1" x-text="formErrors['unit_id']"></p>
+                            </template>
+                            @error('unit_id')
+                                <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Date of Petition Received at Unit -->
+                        <div class="space-y-1.5">
+                            <label for="date_of_petition_received_at_unit"
+                                class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
+                                <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
+                                Date of Petition Received at Unit <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="date" name="date_of_petition_received_at_unit"
+                                id="date_of_petition_received_at_unit" x-model="petitionDetails.date_of_petition_received_at_unit"
+                                value="{{ old('date_of_petition_received_at_unit') }}"
+                                x-bind:required="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
+                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                @input="clearError($event)"
+                                @blur="validateField($event)"
+                                class="block w-full px-4 py-2.5 text-sm bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                            <template x-if="formErrors['date_of_petition_received_at_unit']">
+                                <p class="text-xs font-semibold text-rose-500 mt-1" x-text="formErrors['date_of_petition_received_at_unit']"></p>
+                            </template>
+                            @error('date_of_petition_received_at_unit')
+                                <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
                     <div>
                         <x-textarea label="Detailed Description *" name="description" x-model="petitionDetails.description"
                             rows="5" required placeholder="Type the complete factual description of the incident..." />
@@ -194,7 +255,7 @@
 
                 <div class="mt-10 pt-6 border-t border-slate-200 flex justify-end">
                     <button type="button" @click="nextStep()"
-                        class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all flex items-center gap-2">
+                        class="px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm transition-all flex items-center gap-2">
                         Continue to Complainant <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -252,8 +313,8 @@
                             <!-- Nested Addresses -->
                             <div>
                                 <h4
-                                    class="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
-                                    <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i> Complainant Address
+                                    class="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                                    <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i> Complainant Address
                                 </h4>
 
                                 <div class="space-y-4">
@@ -307,7 +368,7 @@
                                 <div class="mt-4"
                                     x-show="comp.addresses.length < 3 && comp.addresses[comp.addresses.length - 1].address.trim() !== ''">
                                     <button type="button" @click="addComplainantAddress(index)"
-                                        class="text-sm font-semibold text-indigo-600 bg-white hover:bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2 transition-all shadow-sm">
+                                        class="text-sm font-bold text-indigo-600 hover:text-indigo-700 bg-white hover:bg-indigo-50/50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2 transition-all shadow-sm">
                                         <i data-lucide="plus" class="w-4 h-4"></i> Add Additional Address
                                     </button>
                                 </div>
@@ -318,7 +379,7 @@
 
                 <div class="pt-2 text-center" x-show="complainants[complainants.length - 1].name.trim() !== ''">
                     <button type="button" @click="addComplainant()"
-                        class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 transition-all flex items-center justify-center gap-2 w-full">
+                        class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-bold text-slate-700 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 hover:text-slate-900 transition-all flex items-center justify-center gap-2 w-full">
                         <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Complainant
                     </button>
                 </div>
@@ -326,11 +387,11 @@
 
             <div class="mt-10 pt-6 border-t border-slate-200 flex justify-between items-center">
                 <button type="button" @click="prevStep()"
-                    class="px-6 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2">
+                    class="px-6 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-all flex items-center gap-2">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
                 </button>
                 <button type="button" @click="nextStep()"
-                    class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
+                    class="px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
                     Continue to Suspect <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
             </div>
@@ -395,7 +456,7 @@
                                         x-bind:name="`accused[${index}][entity_type]`"
                                         @change="changeEntityType(index, 'Person')" class="sr-only">
                                     <div class="px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2"
-                                        :class="acc.entity_type === 'Person' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-100 hover:text-white'">
+                                        :class="acc.entity_type === 'Person' ? 'bg-white text-indigo-700 shadow-sm' : 'text-indigo-100 hover:text-white'">
                                         <i data-lucide="user" class="w-4 h-4"></i> Person
                                     </div>
                                 </label>
@@ -404,7 +465,7 @@
                                         x-bind:name="`accused[${index}][entity_type]`"
                                         @change="changeEntityType(index, 'Firm')" class="sr-only">
                                     <div class="px-4 py-1.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2"
-                                        :class="acc.entity_type === 'Firm' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-100 hover:text-white'">
+                                        :class="acc.entity_type === 'Firm' ? 'bg-white text-indigo-700 shadow-sm' : 'text-indigo-100 hover:text-white'">
                                         <i data-lucide="building-2" class="w-4 h-4"></i> Firm / Project
                                     </div>
                                 </label>
@@ -413,11 +474,11 @@
 
                         <div class="flex items-center gap-2">
                             <button type="button" @click="clearAccused(index)" x-show="accused.length === 1 && (acc.name || acc.department_id || acc.phone || acc.pen_number)"
-                                class="text-amber-700 hover:text-amber-800 text-xs font-semibold flex items-center gap-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-lg transition-colors">
+                                class="text-amber-800 hover:text-amber-900 text-xs font-bold flex items-center gap-1 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-lg transition-colors">
                                 <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Clear Suspect Details
                             </button>
                             <button type="button" @click="removeAccused(index)" x-show="accused.length > 1"
-                                class="text-rose-600 hover:text-rose-700 text-xs font-semibold flex items-center gap-1 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors">
+                                class="text-rose-700 hover:text-rose-800 text-xs font-bold flex items-center gap-1 bg-rose-50 hover:bg-rose-100 border border-rose-300 px-3 py-1.5 rounded-lg transition-colors">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove
                             </button>
                         </div>
@@ -471,8 +532,8 @@
                         <!-- Nested Addresses -->
                         <div>
                             <h4
-                                class="text-sm font-semibold text-slate-800 flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
-                                <i data-lucide="map-pin" class="w-4 h-4 text-slate-400"></i> Suspect Addresses
+                                class="text-sm font-bold text-slate-800 flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-indigo-600"></i> Suspect Addresses
                             </h4>
 
                             <div class="space-y-4">
@@ -488,7 +549,7 @@
                                                 <x-select label="Address Type"
                                                     x-bind:name="`accused[${index}][addresses][${addrIndex}][address_type]`"
                                                     x-model="addr.address_type"
-                                                    x-bind:class="acc.entity_type === 'Firm' ? 'pointer-events-none bg-slate-50 text-slate-500' : ''"
+                                                    x-bind:class="acc.entity_type === 'Firm' ? 'pointer-events-none bg-slate-100 text-slate-700 font-semibold' : ''"
                                                     x-bind:tabindex="acc.entity_type === 'Firm' ? '-1' : '0'">
                                                     <option value="Permanent"
                                                         :disabled="acc.entity_type === 'Firm' || acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')"
@@ -527,9 +588,9 @@
                             </div>
 
                             <div class="mt-4"
-                                x-show="acc.entity_type !== 'Firm' && acc.addresses.length < 3 && acc.addresses[acc.addresses.length - 1].address.trim() !== ''">
+                                <x-show="acc.entity_type !== 'Firm' && acc.addresses.length < 3 && acc.addresses[acc.addresses.length - 1].address.trim() !== ''">
                                 <button type="button" @click="addAccusedAddress(index)"
-                                    class="text-sm font-semibold text-indigo-600 bg-white hover:bg-slate-50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2 transition-all shadow-sm">
+                                    class="text-sm font-bold text-indigo-600 hover:text-indigo-700 bg-white hover:bg-indigo-50/50 px-4 py-2 rounded-lg border border-slate-200 flex items-center gap-2 transition-all shadow-sm">
                                     <i data-lucide="plus" class="w-4 h-4"></i> Add Additional Address
                                 </button>
                             </div>
@@ -540,7 +601,7 @@
 
             <div class="pt-2 text-center" x-show="accused[accused.length - 1].department_id || (accused[accused.length - 1].name && accused[accused.length - 1].name.trim() !== '')">
                 <button type="button" @click="addAccused()"
-                    class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 transition-all flex items-center justify-center gap-2 w-full">
+                    class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-bold text-slate-700 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 hover:text-slate-900 transition-all flex items-center justify-center gap-2 w-full">
                     <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Suspect
                 </button>
             </div>
@@ -548,11 +609,11 @@
 
         <div class="mt-10 pt-6 border-t border-slate-200 flex justify-between items-center">
             <button type="button" @click="prevStep()"
-                class="px-6 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2">
+                class="px-6 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-all flex items-center gap-2">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
             </button>
             <button type="button" @click="nextStep()"
-                class="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
+                class="px-6 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-2">
                 Finalize Details <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
         </div>
@@ -574,18 +635,18 @@
 
                 <div class="flex gap-4 mb-4">
                     <button type="button" @click="togglePreview()"
-                        class="w-full px-6 py-3 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2 transition-all">
+                        class="w-full px-6 py-3 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2 transition-all">
                         <i data-lucide="eye" class="w-4 h-4"></i> Full-Preview
                     </button>
                 </div>
 
                 <div class="flex justify-between items-center py-6 border-t border-slate-200 mt-6">
                     <button type="button" @click="prevStep()"
-                        class="px-6 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all flex items-center gap-2">
+                        class="px-6 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-all flex items-center gap-2">
                         <i data-lucide="arrow-left" class="w-4 h-4"></i> Edit Petition
                     </button>
                     <button type="submit"
-                        class="px-8 py-2.5 text-sm font-semibold text-white bg-slate-900 rounded-lg shadow-md hover:bg-slate-800 focus:ring-4 focus:ring-slate-900/20 transition-all flex items-center gap-2">
+                        class="px-8 py-2.5 text-sm font-bold text-white bg-slate-900 rounded-lg shadow-md hover:bg-slate-800 focus:ring-4 focus:ring-slate-900/20 transition-all flex items-center gap-2">
                         <i data-lucide="shield-check" class="w-4 h-4"></i> Submit Petition
                     </button>
                 </div>
@@ -614,7 +675,7 @@
                             <i data-lucide="shield-check" class="w-8 h-8 text-indigo-200"></i>
                         </div>
                         <div>
-                            <h3 class="text-2xl font-black tracking-tight drop-shadow-sm">Verification Summary</h3>
+                            <h3 class="text-2xl font-black tracking-tight">Verification Summary</h3>
                             <p class="text-indigo-200 text-sm font-medium mt-1 flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                                 Ready for Final Authorization
@@ -645,7 +706,7 @@
                             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
                             <div class="p-5">
                                 <p
-                                    class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                    class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                                     <i data-lucide="hash" class="w-3.5 h-3.5"></i> Record Number
                                 </p>
                                 <p class="text-base font-bold text-slate-900 font-mono bg-slate-50 inline-block px-2 py-1 rounded"
@@ -653,14 +714,14 @@
                             </div>
                             <div class="p-5">
                                 <p
-                                    class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                    class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                                     <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Log Date
                                 </p>
                                 <p class="text-base font-semibold text-slate-900" x-text="petitionDetails.date || '-'"></p>
                             </div>
                             <div class="p-5">
                                 <p
-                                    class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                    class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                                     <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Nature
                                 </p>
                                 <p class="text-base font-semibold text-slate-900" x-text="petitionDetails.nature || '-'">
@@ -668,7 +729,7 @@
                             </div>
                             <div class="p-5">
                                 <p
-                                    class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                    class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                                     <i data-lucide="radio" class="w-3.5 h-3.5"></i> Origin Mode
                                 </p>
                                 <template x-if="petitionDetails.mode === 'others'">
@@ -680,6 +741,26 @@
                                         x-text="petitionDetails.mode || '-'"></p>
                                 </template>
                             </div>
+                            <template x-if="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'">
+                                <div class="p-5 border-t sm:border-t-0 sm:border-l border-slate-100">
+                                    <p
+                                        class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                        <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Concerned Unit
+                                    </p>
+                                    <p class="text-base font-semibold text-slate-900"
+                                        x-text="unitNames[petitionDetails.unit_id] || '-'"></p>
+                                </div>
+                            </template>
+                            <template x-if="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'">
+                                <div class="p-5 border-t sm:border-t-0 sm:border-l border-slate-100">
+                                    <p
+                                        class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                        <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Received at Unit Date
+                                    </p>
+                                    <p class="text-base font-semibold text-slate-900"
+                                        x-text="petitionDetails.date_of_petition_received_at_unit || '-'"></p>
+                                </div>
+                            </template>
                         </div>
                         <div class="p-6 bg-slate-50 border-t border-slate-100">
                             <p
@@ -725,11 +806,11 @@
                                         <div class="flex flex-wrap gap-x-8 gap-y-4 mb-4">
                                             <div>
                                                 <p
-                                                    class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                                    class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1">
                                                     Contact</p>
                                                 <p class="text-sm font-semibold text-slate-900"
                                                     x-text="comp.phone || 'N/A'"></p>
-                                                <p class="text-xs text-slate-500 font-medium">Email</p>
+                                                <p class="text-xs text-slate-600 font-medium">Email</p>
                                                 <p class="text-sm font-semibold text-slate-900"
                                                     x-text="comp.email || 'N/A'"></p>
                                             </div>
@@ -737,15 +818,15 @@
                                         </div>
                                         <div class="space-y-2 mt-4 pt-4 border-t border-slate-100">
                                             <p
-                                                class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                                class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-1">
                                                 <i data-lucide="map-pin" class="w-3 h-3 text-blue-500"></i> Localities
                                             </p>
                                             <template x-for="(addr, aIdx) in comp.addresses" :key="aIdx">
                                                 <div x-show="addr.address" class="flex gap-3 text-sm">
                                                     <span
-                                                        class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shadow-sm mt-0.5 w-16 text-center shrink-0"
+                                                        class="bg-slate-200 text-slate-800 border border-slate-300 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shadow-sm mt-0.5 w-16 text-center shrink-0"
                                                         x-text="addr.address_type"></span>
-                                                    <span class="font-medium text-slate-700"
+                                                    <span class="font-semibold text-slate-800"
                                                         x-text="`${addr.address}, ${districtNames[addr.district_id] || ''} — PIN:${addr.pincode}`"></span>
                                                 </div>
                                             </template>
@@ -786,7 +867,7 @@
                                         <div class="flex flex-wrap gap-x-8 gap-y-4 mb-4">
                                             <div>
                                                 <p
-                                                    class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                                    class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1">
                                                     Contact</p>
                                                 <p class="text-sm font-semibold text-slate-900" x-text="acc.phone || 'N/A'">
                                                 </p>
@@ -795,15 +876,15 @@
                                         </div>
                                         <div class="space-y-2 mt-4 pt-4 border-t border-slate-100">
                                             <p
-                                                class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                                class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-1">
                                                 <i data-lucide="map-pin" class="w-3 h-3 text-rose-500"></i> Localities
                                             </p>
                                             <template x-for="(addr, aIdx) in acc.addresses" :key="aIdx">
                                                 <div x-show="addr.address" class="flex gap-3 text-sm">
                                                     <span
-                                                        class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shadow-sm mt-0.5 w-16 text-center shrink-0"
+                                                        class="bg-slate-200 text-slate-800 border border-slate-300 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shadow-sm mt-0.5 w-16 text-center shrink-0"
                                                         x-text="addr.address_type"></span>
-                                                    <span class="font-medium text-slate-700"
+                                                    <span class="font-semibold text-slate-800"
                                                         x-text="`${addr.address}, ${districtNames[addr.district_id] || ''} — PIN:${addr.pincode}`"></span>
                                                 </div>
                                             </template>
@@ -827,7 +908,7 @@
 
                     <div class="bg-emerald-50/30 rounded-2xl border border-emerald-100 shadow-sm p-6">
                         <p
-                            class="text-[11px] font-bold text-emerald-600 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                            class="text-[11px] font-bold text-emerald-700 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                             <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i> Assessment Notes
                         </p>
                         <p class="text-sm font-medium text-slate-700 leading-relaxed"
@@ -842,7 +923,7 @@
                 <p class="text-xs text-slate-500 font-medium"></p>
                 <div class="flex items-center gap-3 w-full sm:w-auto">
                     <button type="button" @click="togglePreview()"
-                        class="w-full sm:w-auto px-6 py-2.5 text-sm font-bold text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-all focus:ring-4 focus:ring-slate-100 shadow-sm">
+                        class="w-full sm:w-auto px-6 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-all focus:ring-4 focus:ring-slate-100 shadow-sm">
                         Make Edits
                     </button>
                     <button type="submit"
@@ -974,6 +1055,7 @@
             return {
                 step: {{ old('step', 1) }},
                 districtNames: @json($districts->pluck('district_name', 'district_id')),
+                unitNames: @json($unitsList->pluck('unit_name', 'unit_id')),
                 formErrors: {},
 
                 showPreview: false,
@@ -983,6 +1065,8 @@
                     nature: '{{ old('nature_of_petition') }}',
                     mode: '{{ old('mode_of_petition_received') }}',
                     mode_others: '{{ old('mode_others') }}',
+                    unit_id: '{{ old('unit_id') }}',
+                    date_of_petition_received_at_unit: '{{ old('date_of_petition_received_at_unit') }}',
                     description: `{!! addslashes(old('description')) !!}`,
                     proposed_action: `{!! addslashes(old('proposed_action')) !!}`
                 },
@@ -997,6 +1081,15 @@
                 debounceTimer: null,
 
                 init() {
+                    this.$watch('petitionDetails.mode', (newMode) => {
+                        if (!newMode || newMode.toLowerCase() !== 'unit') {
+                            delete this.formErrors['unit_id'];
+                            delete this.formErrors['date_of_petition_received_at_unit'];
+                        }
+                        if (newMode !== 'others') {
+                            delete this.formErrors['mode_others'];
+                        }
+                    });
                     this.$watch('accused', () => {
                         if (this.step === 3) this.debouncedCheckDuplicates();
                     }, { deep: true });
@@ -1180,6 +1273,19 @@
                                 this.formErrors['mode_others'] = 'This field is required.';
                                 isValid = false;
                             }
+                        }
+                        if (this.petitionDetails.mode && this.petitionDetails.mode.toLowerCase() === 'unit') {
+                            if (!this.petitionDetails.unit_id || String(this.petitionDetails.unit_id).trim() === '') {
+                                this.formErrors['unit_id'] = 'Concerned Unit is required.';
+                                isValid = false;
+                            }
+                            if (!this.petitionDetails.date_of_petition_received_at_unit || String(this.petitionDetails.date_of_petition_received_at_unit).trim() === '') {
+                                this.formErrors['date_of_petition_received_at_unit'] = 'Date of petition received at unit is required.';
+                                isValid = false;
+                            }
+                        } else {
+                            delete this.formErrors['unit_id'];
+                            delete this.formErrors['date_of_petition_received_at_unit'];
                         }
                     } else if (step === 2) {
                         this.complainants.forEach((c, idx) => {
@@ -1392,7 +1498,7 @@
                         } else {
                             this.formErrors[fieldName] = '';
                         }
-                    } else if (fieldName === 'date_of_petition_received') {
+                    } else if (fieldName === 'date_of_petition_received' || fieldName === 'date_of_petition_received_at_unit') {
                         if (!fieldValue) {
                             this.formErrors[fieldName] = 'This field is required.';
                         } else {

@@ -7,6 +7,24 @@
         $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
         $tab = 'inward';
 
+        $currentUser = Auth::user();
+        $hasInwardRole = $currentUser && (
+            $currentUser->hasRole(['inward', 'Inward']) || 
+            ($currentUser->currentSeatUser()?->seat && (
+                $currentUser->currentSeatUser()->seat->hasRole(['inward', 'Inward']) || 
+                str_contains(strtolower($currentUser->currentSeatUser()->seat->seat_name), 'inward')
+            ))
+        );
+
+        $canRegisterInward = $currentUser && (
+            $hasInwardRole ||
+            $currentUser->canAccess('create inward petitions') ||
+            $currentUser->canAccess('create_inward_petitions') ||
+            $currentUser->canAccess('inward form') ||
+            $currentUser->canAccess('inward_form') ||
+            $currentUser->hasRole(['inward', 'Inward', 'admin', 'Admin', 'super admin', 'Super Admin', 'developer', 'Developer'])
+        );
+
         $shouldHideForm = false;
         if (!$errors->any() && !session('success')) {
             if (request()->has('show_form')) {
@@ -23,7 +41,7 @@
     <div class="space-y-6" x-data="inwardPetitionForm()" @keydown.ctrl.enter.prevent="openConfirmationModal()"
         @keydown.cmd.enter.prevent="openConfirmationModal()">
 
-        @if((Auth::user()->canAccess('create_inward_petitions') || Auth::user()->canAccess('create inward petitions')) && !Auth::user()->hasRole('super admin') && !Auth::user()->hasRole('admin'))
+        @if($canRegisterInward)
         <div id="inward-registration-section"
              x-show="showRegistrationForm"
              x-cloak
@@ -180,19 +198,22 @@
                                     <label for="unit_id"
                                         class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
                                         <i data-lucide="building-2" class="w-4 h-4 text-indigo-600"></i>
-                                        Select Concerned Unit <span
+                                        Concerned Unit Name <span
                                             class="text-rose-500">*</span>
                                     </label>
                                     <select name="unit_id" id="unit_id" x-model="selectedUnitId"
                                         x-bind:required="modeOfPetition && modeOfPetition.toLowerCase() === 'unit'"
                                         class="block w-full px-4 py-2.5 text-sm font-medium bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
-                                        <option value="">-- Select Unit --</option>
+                                        <option value="">-- Select Concerned Unit --</option>
                                         @foreach($unitsList as $unitItem)
                                             <option value="{{ $unitItem->unit_id }}" {{ old('unit_id') == $unitItem->unit_id ? 'selected' : '' }}>
                                                 {{ $unitItem->unit_name }} ({{ $unitItem->unit_code }})
                                             </option>
                                         @endforeach
                                     </select>
+                                    @error('unit_id')
+                                        <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                                    @enderror
                                 </div>
 
                                 <!-- Date of Petition Received at Unit -->
@@ -200,7 +221,7 @@
                                     <label for="date_of_petition_received_at_unit"
                                         class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
                                         <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
-                                        Date of Petition Received at Unit<span
+                                        Date of Petition Received at Unit <span
                                             class="text-rose-500">*</span>
                                     </label>
                                     <input type="date" name="date_of_petition_received_at_unit"
@@ -209,6 +230,9 @@
                                         x-bind:required="modeOfPetition && modeOfPetition.toLowerCase() === 'unit'"
                                         max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                         class="block w-full px-4 py-2.5 text-sm bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                                    @error('date_of_petition_received_at_unit')
+                                        <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                                    @enderror
                                 </div>
                             </div>
 
@@ -300,7 +324,7 @@
                         Track and manage petitions registered through the inward section.
                     </p>
                 </div>
-                @if((Auth::user()->canAccess('create_inward_petitions') || Auth::user()->canAccess('create inward petitions')) && !Auth::user()->hasRole('super admin') && !Auth::user()->hasRole('admin'))
+                @if($canRegisterInward)
                     <div class="z-10">
                         <button type="button" @click="setFormVisibility(!showRegistrationForm)"
                             class="px-5 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center gap-2 shadow-md cursor-pointer"
@@ -318,7 +342,7 @@
         </div>
 
         <!-- Unified Tabs (Visible to users who can view all petitions) -->
-        @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view all petitions'))
+        @if(!$isSuperAdmin && (Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view all petitions')))
             @php $tab = 'inward'; @endphp
             <div
                 class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 p-1.5 rounded-2xl mb-6 w-full bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
@@ -359,9 +383,12 @@
         @php
             $currentUser = Auth::user();
             $canFilterTransfer = $currentUser && (
-                $currentUser->canAccess('filter_transfer') ||
-                $currentUser->canAccess('filter transfer')
-            ) && !$currentUser->canAccess('access admin dashboard');
+                $isSuperAdmin ||
+                (
+                    ($currentUser->canAccess('filter_transfer') || $currentUser->canAccess('filter transfer')) &&
+                    !$currentUser->canAccess('access admin dashboard')
+                )
+            );
 
             $filterButtons = [
                 'all' => 'All Petitions',
@@ -573,8 +600,16 @@
                     const urlParams = new URLSearchParams(window.location.search);
                     if (urlParams.has('show_form')) {
                         initialHidden = urlParams.get('show_form') !== '1';
+                        if (!initialHidden) {
+                            try { localStorage.setItem('inward_form_hidden', '0'); } catch (e) {}
+                            document.cookie = "inward_form_hidden=0; path=/; max-age=31536000; SameSite=Lax";
+                        }
                     } else if (urlParams.has('hide_form')) {
                         initialHidden = urlParams.get('hide_form') === '1';
+                        if (initialHidden) {
+                            try { localStorage.setItem('inward_form_hidden', '1'); } catch (e) {}
+                            document.cookie = "inward_form_hidden=1; path=/; max-age=31536000; SameSite=Lax";
+                        }
                     } else {
                         const stored = localStorage.getItem('inward_form_hidden');
                         if (stored !== null) {

@@ -6,6 +6,11 @@
 @php
     $user = Auth::user();
     $currentSeat = $user->currentSeatUser();
+    $currentSeatModel = $currentSeat?->seat;
+    $isSuperAdmin = $user->hasRole(['super admin', 'Super Admin'])
+        || ($currentSeatModel && $currentSeatModel->hasRole(['super admin', 'Super Admin']));
+    $canSeeTrends = !$isSuperAdmin && $user->canAccess('view petition trends chart');
+    $canSeeNature = !$isSuperAdmin && $user->canAccess('view petition nature chart');
     $isImpersonating = session('is_impersonating_seat', false);
     
     // Role check
@@ -388,8 +393,9 @@
             </div>
     @endif
     <!-- Visualizations Grid -->
+    @if($canSeeTrends || $canSeeNature)
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        @if(Auth::user()->canAccess('view petition trends chart'))
+        @if($canSeeTrends)
         <!-- Monthly Trends Chart (Spans 2 columns on wide screens) -->
         <div class="xl:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden flex flex-col">
             <div class="flex items-center justify-between mb-6 relative z-10">
@@ -424,7 +430,7 @@
         </div>
         @endif
 
-        @if(Auth::user()->canAccess('view petition nature chart'))
+        @if($canSeeNature)
         <!-- Petition Natures Breakdown -->
         <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm relative overflow-hidden">
             <div class="flex items-center justify-between mb-6 relative z-10">
@@ -441,6 +447,7 @@
         </div>
         @endif
     </div>
+    @endif
 
     @if($canSeeRecentPetitions)
     <!-- Recent Petitions Activity -->
