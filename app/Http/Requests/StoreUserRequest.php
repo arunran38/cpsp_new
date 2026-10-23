@@ -28,4 +28,14 @@ class StoreUserRequest extends FormRequest
             'password' => 'required|string|min:8',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'pen.unique' => 'This PEN is already registered.',
+            'pen.regex' => 'The PEN must be 6 or 7 digits.',
+            'email.unique' => 'This email address is already registered.',
+            'mobile_number.regex' => 'The mobile number must be 10 digits.',
+        ];
+    }
 }

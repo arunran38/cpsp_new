@@ -43,10 +43,12 @@
     </div>
     @if($name)
         @error($name)
-            <p class="text-xs font-semibold text-rose-600 mt-1">{{ $message }}</p>
+            <div x-show="typeof formErrors === 'undefined'">
+                <p class="text-xs font-semibold text-rose-600 mt-1">{{ $message }}</p>
+            </div>
         @enderror
     @endif
     <template x-if="typeof formErrors !== 'undefined' && formErrors && $refs.input && formErrors[$refs.input.name]">
-        <p class="text-xs font-semibold text-rose-600 mt-1" x-text="formErrors[$refs.input.name]"></p>
+        <p class="text-xs font-semibold text-rose-600 mt-1" x-text="Array.isArray(formErrors[$refs.input.name]) ? formErrors[$refs.input.name][0] : formErrors[$refs.input.name]"></p>
     </template>
 </div>

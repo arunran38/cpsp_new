@@ -5,7 +5,7 @@
     'selected' => '',
     'placeholder' => null
 ])
-<div class="space-y-1.5" x-data="{}">
+<div class="space-y-1.5">
     @if($label)
         <label @if($name) for="{{ $name }}" @endif class="block text-sm font-bold text-slate-800">
             {{ $label }}
@@ -44,10 +44,12 @@
     </div>
     @if($name)
         @error($name)
-            <p class="text-xs font-semibold text-rose-600 mt-1">{{ $message }}</p>
+            <div x-show="typeof formErrors === 'undefined'">
+                <p class="text-xs font-semibold text-rose-600 mt-1">{{ $message }}</p>
+            </div>
         @enderror
     @endif
     <template x-if="typeof formErrors !== 'undefined' && formErrors && $refs.select && formErrors[$refs.select.name]">
-        <p class="text-xs font-semibold text-rose-600 mt-1" x-text="formErrors[$refs.select.name]"></p>
+        <p class="text-xs font-semibold text-rose-600 mt-1" x-text="Array.isArray(formErrors[$refs.select.name]) ? formErrors[$refs.select.name][0] : formErrors[$refs.select.name]"></p>
     </template>
 </div>

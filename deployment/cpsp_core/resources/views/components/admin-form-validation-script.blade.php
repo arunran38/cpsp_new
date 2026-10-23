@@ -1,8 +1,9 @@
 <script>
-    window.adminFormValidation = function () {
+    window.adminFormValidation = function (config = {}) {
         return {
-            formErrors: @json($errors->getMessages()),
-            designation: @json(old('designation', '')),
+            formErrors: @json(array_map(fn($msgs) => $msgs[0] ?? '', $errors->getMessages())),
+            designation: (config && config.designation !== undefined) ? config.designation : @json(old('designation', '')),
+            userId: (config && config.userId) ? config.userId : null,
 
             clearError(event) {
                 const target = event.target || event;
@@ -12,6 +13,7 @@
                 }
 
                 if (this.formErrors[name]) {
+                    this.formErrors[name] = null;
                     delete this.formErrors[name];
                 }
             },
@@ -34,11 +36,41 @@
                     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                     if (!emailPattern.test(value)) {
                         error = 'Enter a valid email address.';
+                    } else {
+                        const exists = await this.remoteCheck('{{ route('users.checkUnique') }}', {
+                            field: 'email',
+                            value,
+                            ignore_id: this.userId || undefined
+                        });
+                        if (exists) {
+                            error = 'This email address is already registered.';
+                        }
                     }
                 }
 
-                if (!error && name === 'password' && value !== '' && value.length < 3) {
-                    error = 'Password must be at least 3 characters.';
+                if (!error && name === 'pen' && value !== '') {
+                    if (!/^\d{6,7}$/.test(value)) {
+                        error = 'The PEN must be 6 or 7 digits.';
+                    } else {
+                        const exists = await this.remoteCheck('{{ route('users.checkUnique') }}', {
+                            field: 'pen',
+                            value,
+                            ignore_id: this.userId || undefined
+                        });
+                        if (exists) {
+                            error = 'This PEN is already registered.';
+                        }
+                    }
+                }
+
+                if (!error && name === 'mobile_number' && value !== '') {
+                    if (!/^\d{10}$/.test(value)) {
+                        error = 'Mobile number must be 10 digits.';
+                    }
+                }
+
+                if (!error && name === 'password' && value !== '' && value.length < 8) {
+                    error = 'The new password must be at least 8 characters.';
                 }
 
                 if (!error && name === 'other_designation' && this.designation === 'Others' && value === '') {
@@ -59,26 +91,13 @@
                     }
                 }
 
-                if (!error && name === 'email' && value !== '') {
-                    const exists = await this.remoteCheck('{{ route('users.checkUnique') }}', { field: 'email', value });
-                    if (exists) {
-                        error = 'This email address is already registered.';
-                    }
-                }
-
-                if (!error && name === 'pen' && value !== '') {
-                    const exists = await this.remoteCheck('{{ route('users.checkUnique') }}', { field: 'pen', value });
-                    if (exists) {
-                        error = 'This PEN is already registered.';
-                    }
-                }
-
                 if (error) {
                     this.formErrors[name] = error;
                     return false;
                 }
 
                 if (this.formErrors[name]) {
+                    this.formErrors[name] = null;
                     delete this.formErrors[name];
                 }
 

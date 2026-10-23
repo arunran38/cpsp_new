@@ -14,6 +14,7 @@ use Illuminate\View\View;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
 
 class UserController extends Controller
 {
@@ -109,6 +110,16 @@ class UserController extends Controller
                 }
                 
                 return redirect()->route("users.index")->with('success', 'User updated successfully.');
+            } catch (QueryException $e) {
+                if (isset($e->errorInfo[1]) && $e->errorInfo[1] == 1062) {
+                    if (str_contains($e->getMessage(), 'users_pen_unique')) {
+                        return back()->withErrors(['pen' => 'This PEN is already registered.'])->withInput();
+                    }
+                    if (str_contains($e->getMessage(), 'users_email_unique')) {
+                        return back()->withErrors(['email' => 'This email address is already registered.'])->withInput();
+                    }
+                }
+                return back()->with('error', 'Failed to update user due to a database error.')->withInput();
             } catch (\Exception $e) {
                 return back()->with('error', 'Failed to update user: ' . $e->getMessage())->withInput();
             }
@@ -202,9 +213,22 @@ class UserController extends Controller
         $request->validate([
             'field' => 'required|string|in:email,pen',
             'value' => 'required|string|max:255',
+            'ignore_id' => 'nullable|string',
         ]);
 
-        $exists = User::where($request->field, $request->value)->exists();
-        return response()->json(['exists' => $exists]);
+        $query = User::where($request->field, $request->value);
+
+        if ($request->filled('ignore_id')) {
+            try {
+                $ignoreId = decrypt($request->ignore_id);
+                $query->where('user_id', '!=', $ignoreId);
+            } catch (\Exception $e) {
+                if (is_numeric($request->ignore_id)) {
+                    $query->where('user_id', '!=', $request->ignore_id);
+                }
+            }
+        }
+
+        return response()->json(['exists' => $query->exists()]);
     }
 }

@@ -1,7 +1,8 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="max-w-4xl mx-auto">
+@php($selectedDesignation = old('designation', $user->designation))
+<div class="max-w-4xl mx-auto" x-data="adminFormValidation({ designation: @json($selectedDesignation), userId: @json(encrypt($user->user_id)) })">
     <div class="flex items-center justify-between mb-8">
         <div>
             <h1 class="text-2xl font-bold tracking-tight text-white">Edit User Profile</h1>
@@ -12,7 +13,7 @@
         </x-button>
     </div>
 
-    <div class="p-8 bg-white border border-slate-200 rounded-3xl shadow-sm" x-data="{ designation: '{{ $user->designation }}' }">
+    <div class="p-8 bg-white border border-slate-200 rounded-3xl shadow-sm">
         <form method="POST" action="{{ route('users.update', encrypt($user->user_id)) }}" enctype="multipart/form-data" class="space-y-8">
             @csrf
             @method('PUT')
@@ -26,8 +27,8 @@
                 </div>
 
                 <!-- PEN & Mobile -->
-                <x-input label="PEN" name="pen" :value="$user->pen" required icon="hash" />
-                <x-input label="Mobile Number" name="mobile_number" :value="$user->mobile_number" required icon="smartphone" />
+                <x-input label="PEN" name="pen" :value="$user->pen" required icon="hash" maxlength="7" minlength="6" />
+                <x-input label="Mobile Number" name="mobile_number" :value="$user->mobile_number" required icon="smartphone" maxlength="10" />
 
                 <!-- Email -->
                 <div class="sm:col-span-2">
@@ -36,7 +37,7 @@
 
                 <!-- Password -->
                 <div class="sm:col-span-2">
-                    <x-input label="Change Password" name="password" type="password" placeholder="Leave blank to keep current" icon="lock" />
+                    <x-input label="Change Password" name="password" type="password" placeholder="Leave blank to keep current" minlength="8" icon="lock" />
                 </div>
 
                 <!-- Current Photo -->
@@ -101,7 +102,7 @@
                     name="designation" 
                     x-model="designation"
                     required
-                    :selected="$user->designation"
+                    :selected="$selectedDesignation"
                     :options="['' => 'Select Designation', 'CPO' => 'CPO', 'SCPO' => 'SCPO', 'ASI' => 'ASI', 'SI' => 'SI', 'IP' => 'IP', 'Others' => 'Others']"
                 />
 
@@ -113,7 +114,7 @@
             </div>
 
             <div class="flex items-center justify-end gap-4 pt-6 border-t border-slate-100">
-                <x-button variant="primary" icon="refresh-cw" size="lg">
+                <x-button variant="primary" icon="refresh-cw" size="lg" type="submit">
                     Update Profile
                 </x-button>
                 <a href="{{ route('users.index') }}" 
@@ -125,4 +126,8 @@
         </form>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+    @include('components.admin-form-validation-script')
 @endsection
