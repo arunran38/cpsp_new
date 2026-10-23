@@ -317,9 +317,20 @@
             
             <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
                 <div class="text-center sm:text-left z-10">
-                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
-                        View Inward Petitions
-                    </h1>
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2.5 mb-1">
+                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
+                            View Inward Petitions
+                        </h1>
+                        @if($hasInwardRole && !($currentUser->canAccess('view all petitions') && !session('is_impersonating_seat')))
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                                <i data-lucide="user-check" class="w-3.5 h-3.5"></i> My Registrations
+                            </span>
+                        @elseif(isset($isSeatLocked) && $isSeatLocked && isset($currentSeatName))
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                <i data-lucide="shield" class="w-3.5 h-3.5"></i> {{ $currentSeatName }}
+                            </span>
+                        @endif
+                    </div>
                     <p class="text-slate-300 font-medium max-w-2xl text-sm">
                         Track and manage petitions registered through the inward section.
                     </p>
@@ -471,26 +482,48 @@
 
                         @if(isset($seats) && $seats->count() > 0)
                             <div class="flex-1 min-w-[150px]">
-                                <label class="block text-xs font-medium text-slate-700 mb-1">Concerned Seat</label>
-                                <select name="seat_id" @change="performLiveSearch()"
-                                    class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold">
-                                    <option value="">All Concerned Seats</option>
-                                    @foreach($seats as $seat)
-                                        <option value="{{ $seat->seat_id }}" {{ (string)request('seat_id') === (string)$seat->seat_id ? 'selected' : '' }}>
-                                            {{ $seat->seat_name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">
+                                    Concerned Seat
+                                    @if(isset($isSeatLocked) && $isSeatLocked)
+                                        <span class="text-[10px] font-normal text-slate-500">(Assigned)</span>
+                                    @endif
+                                </label>
+                                @if(isset($isSeatLocked) && $isSeatLocked)
+                                    <select disabled
+                                        class="w-full rounded-lg border-slate-300 bg-slate-100 text-slate-600 shadow-sm text-sm py-[9px] font-semibold cursor-not-allowed">
+                                        @foreach($seats as $seat)
+                                            <option value="{{ $seat->seat_id }}" {{ (string)($defaultSeatId ?? '') === (string)$seat->seat_id ? 'selected' : '' }}>
+                                                {{ $seat->seat_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @if(isset($defaultSeatId))
+                                        <input type="hidden" name="seat_id" value="{{ $defaultSeatId }}">
+                                    @endif
+                                @else
+                                    <select name="seat_id" @change="performLiveSearch()"
+                                        class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold">
+                                        <option value="">All Concerned Seats</option>
+                                        @foreach($seats as $seat)
+                                            <option value="{{ $seat->seat_id }}" {{ (string)request('seat_id') === (string)$seat->seat_id ? 'selected' : '' }}>
+                                                {{ $seat->seat_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                @endif
                             </div>
                         @endif
 
                         <div class="flex-none flex items-center gap-2">
                             <label class="block text-xs font-medium text-transparent mb-1">&nbsp;</label>
-                            @if(request()->hasAny(['search', 'date_from', 'date_to', 'seat_id']))
+                            @if(request()->hasAny(['search', 'date_from', 'date_to']) || (!isset($isSeatLocked) || !$isSeatLocked) && request()->has('seat_id'))
                                 @php
                                     $resetParams = ['filter' => $filter];
                                     if ($hideRegistrationForm) {
                                         $resetParams['hide_form'] = 1;
+                                    }
+                                    if (isset($isSeatLocked) && $isSeatLocked && isset($defaultSeatId)) {
+                                        $resetParams['seat_id'] = $defaultSeatId;
                                     }
                                 @endphp
                                 <a href="{{ route('inward.enter_petition', $resetParams) }}#view-inward-petitions"

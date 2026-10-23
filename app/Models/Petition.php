@@ -392,6 +392,129 @@ class Petition extends Model
 
     // --- Scopes ---
 
+    /**
+     * Get IDs of users whose assigned role is strictly Inward (excluding Admin, Super Admin, Developer, CPSP).
+     */
+    public static function getInwardCreatorUserIds(): array
+    {
+        static $cachedInwardUserIds = null;
+        if ($cachedInwardUserIds !== null) {
+            return $cachedInwardUserIds;
+        }
+
+        // 1. Users with direct 'Inward' or 'inward' role
+        $directInwardIds = User::role(['inward', 'Inward'])->pluck('user_id')->toArray();
+
+        // 2. Users assigned to Inward seats (active or historical)
+        $seatInwardIds = SeatUser::whereHas('seat', function ($sq) {
+            $sq->where(function ($q) {
+                $q->role(['inward', 'Inward'])
+                  ->orWhere('seat_name', 'like', '%inward%');
+            });
+        })->pluck('user_id')->toArray();
+
+        $allInwardIds = array_unique(array_merge($directInwardIds, $seatInwardIds));
+
+        // 3. Exclude users with Admin, Super Admin, Developer, CPSP roles (direct or seat-based)
+        $excludedDirectIds = User::role([
+            'super admin', 'Super Admin', 
+            'developer', 'Developer', 
+            'admin', 'Admin', 
+            'cpsp', 'CPSP'
+        ])->pluck('user_id')->toArray();
+
+        $excludedSeatIds = SeatUser::whereHas('seat', function ($sq) {
+            $sq->role([
+                'super admin', 'Super Admin', 
+                'developer', 'Developer', 
+                'admin', 'Admin', 
+                'cpsp', 'CPSP'
+            ]);
+        })->pluck('user_id')->toArray();
+
+        $allExcludedIds = array_unique(array_merge($excludedDirectIds, $excludedSeatIds));
+
+        $validIds = array_values(array_diff($allInwardIds, $allExcludedIds));
+
+        return $cachedInwardUserIds = (empty($validIds) ? [-1] : $validIds);
+    }
+
+    /**
+     * Scope: Filter petitions for the View Inward Petitions module based on user role and permissions.
+     * Enforces strictly that only petitions created or registered by users with the Inward role are returned.
+     * Excludes all petitions created by Admin, Super Admin, CPSP, and other roles.
+     */
+    public function scopeAccessibleInwardPetitions(Builder $query, User $user, ?string $scopeFilter = null): Builder
+    {
+        $inwardCreatorIds = self::getInwardCreatorUserIds();
+
+        // MANDATORY BASE: Only petitions created or registered by users whose assigned role is exactly Inward
+        $query->whereIn('petitions.user_id', $inwardCreatorIds);
+
+        $currentSeatUser = $user->currentSeatUser();
+        $currentSeat = $currentSeatUser?->seat;
+
+        // 1. Admin / Super Admin / Developer: View all inward petitions (strictly created by Inward role users)
+        $isAdminOrSuperAdmin = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
+            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin'])) ||
+            $user->canAccess('access admin dashboard');
+
+        if ($isAdminOrSuperAdmin) {
+            return $query;
+        }
+
+        // 2. Inward Role: View only inward petitions created or registered by their own user account
+        $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
+            ($currentSeat && (
+                $currentSeat->hasRole(['inward', 'Inward']) || 
+                str_contains(strtolower($currentSeat->seat_name), 'inward')
+            ));
+
+        if ($isInwardUser) {
+            if ($scopeFilter === 'all' && $user->canAccess('view all petitions')) {
+                return $query;
+            }
+            return $query->where('petitions.user_id', $user->user_id);
+        }
+
+        // 3. CPSP Role: View inward petitions transferred to their assigned seat (or all inward if granted global view)
+        $isCpspUser = $user->hasRole(['cpsp', 'CPSP']) || 
+            ($currentSeat && (
+                $currentSeat->hasRole(['cpsp', 'CPSP']) || 
+                str_contains(strtolower($currentSeat->seat_name), 'cpsp')
+            ));
+
+        if ($isCpspUser) {
+            if ($user->canAccess('view all petitions') && !session('is_impersonating_seat')) {
+                return $query;
+            }
+
+            // CPSP user restricted to assigned seat / own creations
+            return $query->where(function ($q) use ($user, $currentSeat) {
+                if ($currentSeat) {
+                    $q->where('petitions.seat_id', $currentSeat->seat_id)
+                      ->orWhere('petitions.user_id', $user->user_id);
+                } else {
+                    $q->where('petitions.user_id', $user->user_id);
+                }
+            });
+        }
+
+        // 4. Other Authorized Roles
+        if ($user->canAccess('view all petitions') && !session('is_impersonating_seat')) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($user, $currentSeat) {
+            if ($currentSeat) {
+                $q->where('petitions.seat_id', $currentSeat->seat_id)
+                  ->orWhere('petitions.user_id', $user->user_id);
+            } else {
+                $q->where('petitions.user_id', $user->user_id);
+            }
+        });
+    }
+
     public function scopeFilterByTab(Builder $query, string $tab): Builder
     {
         return match ($tab) {

@@ -53,14 +53,39 @@ class PetitionController extends Controller
     {
         $user = Auth::user();
         $isSuperAdmin = $user->hasRole(['super admin', 'Super Admin']);
+        $currentSeatUser = $user->currentSeatUser();
+        $currentSeat = $currentSeatUser?->seat;
 
-        // Permission Check: Must have inward form access or appropriate role
-        if (!$user->canAccess('inward_form') && 
-            !$user->canAccess('inward form') && 
-            !$user->canAccess('create inward petitions') && 
-            !$user->canAccess('create_inward_petitions') && 
-            !$user->hasRole(['inward', 'Inward', 'admin', 'Admin', 'super admin', 'Super Admin', 'developer', 'Developer'])) {
-            abort(403, 'Unauthorized. Permission inward_form required to access Inward Petition Registration Form.');
+        $isAdminOrSuperAdmin = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
+            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin'])) ||
+            $user->canAccess('access admin dashboard');
+
+        $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
+            ($currentSeat && (
+                $currentSeat->hasRole(['inward', 'Inward']) || 
+                str_contains(strtolower($currentSeat->seat_name), 'inward')
+            ));
+
+        $isCpspUser = $user->hasRole(['cpsp', 'CPSP']) || 
+            ($currentSeat && (
+                $currentSeat->hasRole(['cpsp', 'CPSP']) || 
+                str_contains(strtolower($currentSeat->seat_name), 'cpsp')
+            ));
+
+        // Permission Check: Must have inward form access, petition viewing access, or appropriate role
+        $canAccessInwardModule = $isAdminOrSuperAdmin ||
+            $isInwardUser ||
+            $isCpspUser ||
+            $user->canAccess('inward_form') || 
+            $user->canAccess('inward form') || 
+            $user->canAccess('create inward petitions') || 
+            $user->canAccess('create_inward_petitions') ||
+            $user->canAccess('view file transfer') ||
+            $user->canAccess('view petitions') ||
+            $user->canAccess('view all petitions');
+
+        if (!$canAccessInwardModule) {
+            abort(403, 'Unauthorized. Permission inward_form or petition viewing access required.');
         }
 
         $filters = $request->validate([
@@ -76,7 +101,20 @@ class PetitionController extends Controller
             $filter = 'all';
         }
 
-        $seats = Seat::role('CPSP')->where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+        // Seat locking for restricted CPSP users
+        $isSeatLocked = false;
+        $defaultSeatId = null;
+        $currentSeatName = null;
+
+        if ($isCpspUser && !$isAdminOrSuperAdmin && !$user->canAccess('view all petitions') && $currentSeat) {
+            $isSeatLocked = true;
+            $defaultSeatId = $currentSeat->seat_id;
+            $currentSeatName = $currentSeat->seat_name;
+            $seats = collect([$currentSeat]);
+        } else {
+            $seats = Seat::role('CPSP')->where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+        }
+
         $inwardSeats = Seat::where('seat_name', 'like', '%Inward%')->where('is_active', true)->get();
         $units = \App\Models\Unit::orderBy('unit_name')->get();
         $districts = \App\Models\District::orderBy('district_id')->get();
@@ -84,25 +122,12 @@ class PetitionController extends Controller
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
 
         $transfersQuery = Petition::with(['seat.activeAssignment.user', 'user', 'addresses', 'cpspOpenedByUser', 'cpspOpenedBySeat', 'returnedByUser', 'processedByUser', 'processedBySeat'])
-            ->whereNull('linked_petition_id');
+            ->whereNull('linked_petition_id')
+            ->accessibleInwardPetitions($user, $request->input('scope'));
 
-        $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
-            ($user->currentSeatUser()?->seat && (
-                $user->currentSeatUser()->seat->hasRole(['inward', 'Inward']) || 
-                str_contains(strtolower($user->currentSeatUser()->seat->seat_name), 'inward')
-            ));
-
-        if (!$user->canAccess('view all petitions') && !$isInwardUser) {
-            $currentSeat = $user->currentSeatUser();
-            $transfersQuery->where(function($q) use ($user, $currentSeat) {
-                $q->where('user_id', $user->user_id);
-                if ($currentSeat) {
-                    $q->orWhere('seat_id', $currentSeat->seat_id);
-                }
-            });
-        }
-
-        if ($request->filled('seat_id')) {
+        if ($isSeatLocked && $defaultSeatId) {
+            $transfersQuery->where('seat_id', $defaultSeatId);
+        } elseif ($request->filled('seat_id')) {
             $transfersQuery->where('seat_id', $request->seat_id);
         }
 
@@ -165,7 +190,12 @@ class PetitionController extends Controller
 
         $unifiedCounts = $this->getUnifiedCounts();
 
-        return view('inward.enter_petition', compact('seats', 'units', 'districts', 'designations', 'departments', 'transfers', 'filter', 'counts', 'unifiedCounts', 'inwardSeats', 'isSuperAdmin'));
+        return view('inward.enter_petition', compact(
+            'seats', 'units', 'districts', 'designations', 'departments', 
+            'transfers', 'filter', 'counts', 'unifiedCounts', 'inwardSeats', 
+            'isSuperAdmin', 'isSeatLocked', 'defaultSeatId', 'currentSeatName',
+            'isInwardUser', 'isCpspUser'
+        ));
     }
 
     /**
@@ -174,11 +204,35 @@ class PetitionController extends Controller
     public function inwardExport(Request $request)
     {
         $user = Auth::user();
+        $currentSeatUser = $user->currentSeatUser();
+        $currentSeat = $currentSeatUser?->seat;
 
-        if (!$user->canAccess('inward_form') && 
-            !$user->canAccess('inward form') && 
-            !$user->hasRole('inward') && 
-            !$user->hasRole('Inward')) {
+        $isAdminOrSuperAdmin = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
+            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin'])) ||
+            $user->canAccess('access admin dashboard');
+
+        $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
+            ($currentSeat && (
+                $currentSeat->hasRole(['inward', 'Inward']) || 
+                str_contains(strtolower($currentSeat->seat_name), 'inward')
+            ));
+
+        $isCpspUser = $user->hasRole(['cpsp', 'CPSP']) || 
+            ($currentSeat && (
+                $currentSeat->hasRole(['cpsp', 'CPSP']) || 
+                str_contains(strtolower($currentSeat->seat_name), 'cpsp')
+            ));
+
+        $canExport = $isAdminOrSuperAdmin ||
+            $isInwardUser ||
+            $isCpspUser ||
+            $user->canAccess('inward_form') || 
+            $user->canAccess('inward form') ||
+            $user->canAccess('view file transfer') ||
+            $user->canAccess('view petitions') ||
+            $user->canAccess('view all petitions');
+
+        if (!$canExport) {
             abort(403, 'Unauthorized.');
         }
 
@@ -191,25 +245,12 @@ class PetitionController extends Controller
         $filter = $request->query('filter', 'all');
 
         $transfersQuery = Petition::with(['user', 'seat.activeAssignment.user', 'unit', 'addresses'])
-            ->whereNull('linked_petition_id');
+            ->whereNull('linked_petition_id')
+            ->accessibleInwardPetitions($user, $request->input('scope'));
 
-        $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
-            ($user->currentSeatUser()?->seat && (
-                $user->currentSeatUser()->seat->hasRole(['inward', 'Inward']) || 
-                str_contains(strtolower($user->currentSeatUser()->seat->seat_name), 'inward')
-            ));
-
-        if (!$user->canAccess('view all petitions') && !$isInwardUser) {
-            $currentSeat = $user->currentSeatUser();
-            $transfersQuery->where(function($q) use ($user, $currentSeat) {
-                $q->where('user_id', $user->user_id);
-                if ($currentSeat) {
-                    $q->orWhere('seat_id', $currentSeat->seat_id);
-                }
-            });
-        }
-
-        if ($request->filled('seat_id')) {
+        if ($isCpspUser && !$isAdminOrSuperAdmin && !$user->canAccess('view all petitions') && $currentSeat) {
+            $transfersQuery->where('seat_id', $currentSeat->seat_id);
+        } elseif ($request->filled('seat_id')) {
             $transfersQuery->where('seat_id', $request->seat_id);
         }
 
@@ -1103,21 +1144,40 @@ class PetitionController extends Controller
         $user = Auth::user();
         $query = Petition::query();
 
-        if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
-            $currentSeat = $user->currentSeatUser();
-            if ($currentSeat) {
-                $query->where('seat_id', $currentSeat->seat_id);
-            } else {
-                $query->where('petitions.user_id', $user->id);
+        $currentSeatUser = $user->currentSeatUser();
+        $currentSeat = $currentSeatUser?->seat;
+
+        $isAdminOrSuperAdmin = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
+            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin'])) ||
+            $user->canAccess('access admin dashboard');
+
+        $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
+            ($currentSeat && (
+                $currentSeat->hasRole(['inward', 'Inward']) || 
+                str_contains(strtolower($currentSeat->seat_name), 'inward')
+            ));
+
+        if (!$isAdminOrSuperAdmin) {
+            if ($isInwardUser) {
+                $query->where('petitions.user_id', $user->user_id ?? $user->id);
+            } elseif (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
+                if ($currentSeat) {
+                    $query->where('seat_id', $currentSeat->seat_id);
+                } else {
+                    $query->where('petitions.user_id', $user->user_id ?? $user->id);
+                }
             }
         }
 
         $query->whereNull('linked_petition_id')
               ->where('is_returned_to_inward', false);
 
+        $inwardCreatorIds = Petition::getInwardCreatorUserIds();
+        $inwardIdsList = implode(',', $inwardCreatorIds);
+
         // Optimize: Perform single SQL aggregation instead of loading all models into PHP memory
         $stats = $query->selectRaw("
-            COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 THEN 1 END) as inward,
+            COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 AND user_id IN ({$inwardIdsList}) THEN 1 END) as inward,
             COUNT(CASE WHEN is_cpsp_processed = 1 THEN 1 END) as all_count,
             COUNT(CASE WHEN status = ? AND is_cpsp_processed = 1 THEN 1 END) as received,
             COUNT(CASE WHEN status = ? THEN 1 END) as forwarded,

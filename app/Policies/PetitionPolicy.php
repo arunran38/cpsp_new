@@ -69,23 +69,46 @@ class PetitionPolicy
      */
     private function authorizeView(User $user, Petition $petition): bool
     {
-        if ($user->canAccess('view all petitions') || $user->canAccess('access admin dashboard')) {
+        $currentSeatUser = $user->currentSeatUser();
+        $currentSeat = $currentSeatUser?->seat;
+
+        // Admin / Super Admin / Developer / Dashboard access
+        if ($user->canAccess('access admin dashboard') || 
+            $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
+            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']))) {
             return true;
         }
 
+        $userId = $user->user_id ?? $user->id;
+
         // Check if user is the creator
-        if ($petition->user_id === $user->id) {
+        if ($petition->user_id === $userId) {
+            return true;
+        }
+
+        // If user is Inward role and not admin: restricted to their own petitions
+        $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
+            ($currentSeat && (
+                $currentSeat->hasRole(['inward', 'Inward']) || 
+                str_contains(strtolower($currentSeat->seat_name), 'inward')
+            ));
+
+        if ($isInwardUser && !$user->canAccess('view all petitions')) {
+            return false;
+        }
+
+        // User with global view permission (e.g. CPSP with view all petitions)
+        if ($user->canAccess('view all petitions') && !session('is_impersonating_seat')) {
             return true;
         }
 
         // Check if user belongs to the seat assigned to this petition
-        $currentSeat = $user->currentSeatUser();
         if ($currentSeat && $petition->seat_id === $currentSeat->seat_id) {
             return true;
         }
 
-        // Any seat user can view an unprocessed inward petition
-        if (!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $currentSeat) {
+        // CPSP seat user can view an unprocessed inward petition transferred to their seat
+        if (!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $currentSeat && $petition->seat_id === $currentSeat->seat_id) {
             return true;
         }
 
@@ -93,7 +116,7 @@ class PetitionPolicy
         if ($petition->linked_petition_id) {
             $original = Petition::find($petition->linked_petition_id);
             if ($original) {
-                if ($original->user_id === $user->id) return true;
+                if ($original->user_id === $userId) return true;
                 if ($currentSeat && $original->seat_id === $currentSeat->seat_id) return true;
             }
         }
