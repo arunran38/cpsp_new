@@ -89,15 +89,15 @@ class PermissionController extends Controller
 
         $permission = Permission::findOrFail($id);
 
-        // Protect core security permissions from accidental deletion
-        $protected = [
+        // Protect core security and confidential T-Section permissions from accidental deletion
+        $protected = array_merge([
             'view users', 'create users', 'update users', 'delete users',
             'view roles', 'create roles', 'update roles', 'delete roles',
             'view permissions', 'create permissions', 'update permissions', 'delete permissions',
             'access admin dashboard'
-        ];
+        ], \App\Services\TSectionPermissionRegistry::all());
 
-        if (in_array(strtolower($permission->name), $protected)) {
+        if (in_array(strtolower($permission->name), $protected, true)) {
             return redirect()->route('admin.permissions.index')->with('error', "Cannot delete critical system capability '{$permission->name}'.");
         }
 

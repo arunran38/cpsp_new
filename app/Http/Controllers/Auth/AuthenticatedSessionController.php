@@ -36,6 +36,12 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('compliances.index');
         }
 
+        if ($request->user()->isTSectionRole()) {
+            return $request->user()->canAccess(\App\Services\TSectionPermissionRegistry::ACCESS_DASHBOARD)
+                ? redirect()->route('dashboard')
+                : redirect()->route('petitions.index', ['tab' => 'all']);
+        }
+
         return redirect()->route('dashboard');
     }
 

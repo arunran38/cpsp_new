@@ -20,9 +20,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::before(function ($user, $ability) {
-            // Strict toggle permissions like 'view recent petitions' must not be bypassed unconditionally
-            if (in_array(str_replace('_', ' ', trim($ability)), ['view recent petitions'])) {
+        Gate::before(function ($user, $ability, $arguments = []) {
+            // Never bypass authorization for T-Section confidential petitions
+            $target = is_array($arguments) ? ($arguments[0] ?? null) : $arguments;
+            if ($target instanceof \App\Models\Petition && $target->isTSection()) {
+                return null;
+            }
+
+            // Strict toggle & confidential permissions must not be bypassed unconditionally
+            $strictPermissions = array_merge([
+                'view recent petitions',
+            ], \App\Services\TSectionPermissionRegistry::all());
+
+            if (in_array(str_replace('_', ' ', trim($ability)), $strictPermissions, true)) {
                 return null;
             }
 

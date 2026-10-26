@@ -3,14 +3,14 @@
 
 @section('content')
 @php
-    // 7 High-Level System Modules matching Roles Index / Edit
+    // 8 High-Level System Modules matching Roles Index / Edit
     $modules = [
         'users' => [
             'key' => 'users',
             'title' => 'User & Access',
             'icon' => 'users',
             'badge' => 'bg-blue-50 text-blue-700 border-blue-200',
-            'filter' => fn($p) => str_contains($p, 'user') || str_contains($p, 'role') || str_contains($p, 'permission') || str_contains($p, 'dashboard')
+            'filter' => fn($p) => (str_contains($p, 'user') || str_contains($p, 'role') || str_contains($p, 'permission') || str_contains($p, 'dashboard')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
         ],
         'organization' => [
             'key' => 'organization',
@@ -24,7 +24,14 @@
             'title' => 'Petitions',
             'icon' => 'file-text',
             'badge' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-            'filter' => fn($p) => (str_contains($p, 'petition') && !str_contains($p, 'inward') && !str_contains($p, 'chart')) || str_contains($p, 'link') || str_contains($p, 'duplicate')
+            'filter' => fn($p) => ((str_contains($p, 'petition') && !str_contains($p, 'inward') && !str_contains($p, 'chart')) || str_contains($p, 'link') || str_contains($p, 'duplicate')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
+        ],
+        't_section' => [
+            'key' => 't_section',
+            'title' => 'T-Section (Confidential)',
+            'icon' => 'shield-alert',
+            'badge' => 'bg-rose-50 text-rose-700 border-rose-200',
+            'filter' => fn($p) => \App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
         ],
         'inward' => [
             'key' => 'inward',
@@ -45,7 +52,7 @@
             'title' => 'Reports & Charts',
             'icon' => 'pie-chart',
             'badge' => 'bg-purple-50 text-purple-700 border-purple-200',
-            'filter' => fn($p) => str_contains($p, 'stat') || str_contains($p, 'chart') || str_contains($p, 'export') || str_contains($p, 'master report')
+            'filter' => fn($p) => (str_contains($p, 'stat') || str_contains($p, 'chart') || str_contains($p, 'export') || str_contains($p, 'master report')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
         ],
         'system' => [
             'key' => 'system',
@@ -73,12 +80,12 @@
     };
 
     // Core protected permissions
-    $protectedPerms = [
+    $protectedPerms = array_merge([
         'view users', 'create users', 'update users', 'delete users',
         'view roles', 'create roles', 'update roles', 'delete roles',
         'view permissions', 'create permissions', 'update permissions', 'delete permissions',
         'access admin dashboard'
-    ];
+    ], \App\Services\TSectionPermissionRegistry::all());
 @endphp
 
 <div class="space-y-6" x-data="{
@@ -135,7 +142,7 @@
                         Permissions Directory
                     </h1>
                     <p class="text-slate-300 font-medium max-w-2xl text-sm mt-1">
-                        Manage system permissions and access levels across 7 functional modules.
+                        Manage system permissions and access levels across {{ count($modules) }} functional modules.
                     </p>
                 </div>
             </div>
@@ -183,7 +190,7 @@
                 </span>
                 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 shadow-2xs">
                     <i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-500"></i>
-                    <span>7 Modules</span>
+                    <span>{{ count($modules) }} Modules</span>
                 </span>
                 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 shadow-2xs">
                     <i data-lucide="shield" class="w-3.5 h-3.5 text-purple-500"></i>

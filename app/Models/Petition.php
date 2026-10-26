@@ -446,6 +446,9 @@ class Petition extends Model
      */
     public function scopeAccessibleInwardPetitions(Builder $query, User $user, ?string $scopeFilter = null): Builder
     {
+        // Strictly exclude T-Section confidential petitions if user does not have clearance
+        $query->excludeTSectionIfNotAuthorized($user);
+
         $inwardCreatorIds = self::getInwardCreatorUserIds();
 
         // MANDATORY BASE: Only petitions created or registered by users whose assigned role is exactly Inward
@@ -690,6 +693,39 @@ class Petition extends Model
     public function compliance(): HasOne
     {
         return $this->hasOne(Compliance::class, 'petition_id', 'petition_id');
+    }
+
+    /**
+     * Check if this petition belongs to a T-Section (Confidential) seat.
+     */
+    public function isTSection(): bool
+    {
+        if (!$this->seat_id) {
+            return false;
+        }
+        $tSeatIds = Seat::getTSectionSeatIds();
+        return in_array($this->seat_id, $tSeatIds);
+    }
+
+    /**
+     * Scope to exclude T-Section petitions for users without secret clearance.
+     */
+    public function scopeExcludeTSectionIfNotAuthorized(Builder $query, ?User $user = null): Builder
+    {
+        $user = $user ?? auth()->user();
+        if ($user && $user->canAccessTSection()) {
+            return $query;
+        }
+
+        $tSeatIds = Seat::getTSectionSeatIds();
+        if (!empty($tSeatIds)) {
+            $query->where(function ($q) use ($tSeatIds) {
+                $q->whereNotIn('petitions.seat_id', $tSeatIds)
+                  ->orWhereNull('petitions.seat_id');
+            });
+        }
+
+        return $query;
     }
 
     protected static function booted(): void

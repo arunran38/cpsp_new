@@ -181,5 +181,33 @@ class Seat extends Model
             ->whereDoesntHave('seatUsers', fn($q) => $q->where('is_active', true))
             ->get();
     }
+
+    /**
+     * Check if this seat belongs to T-Section (Confidential / Secret Section).
+     */
+    public function isTSection(): bool
+    {
+        try {
+            if ($this->hasRole(['T Section', 't section', 'T-Section', 't-section'])) {
+                return true;
+            }
+        } catch (\Exception $e) { }
+
+        return str_contains(strtolower($this->seat_name), 't section') || 
+               str_contains(strtolower($this->seat_name), 't-section');
+    }
+
+    /**
+     * Get all seat IDs belonging to T-Section.
+     */
+    public static function getTSectionSeatIds(): array
+    {
+        return static::whereHas('roles', function ($q) {
+            $q->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']);
+        })->orWhere('seat_name', 'like', '%T Section%')
+          ->orWhere('seat_name', 'like', '%T-Section%')
+          ->pluck('seat_id')
+          ->toArray();
+    }
 }
 

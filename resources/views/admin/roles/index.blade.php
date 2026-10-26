@@ -5,13 +5,13 @@
 @php
     $totalPermissionsCount = \Spatie\Permission\Models\Permission::count();
 
-    // 7 High-Level System Modules matching Create/Edit Role
+    // 8 High-Level System Modules matching Create/Edit Role
     $modules = [
         'users' => [
             'title' => 'User & Access',
             'icon' => 'users',
             'badge' => 'bg-blue-50 text-blue-700 border-blue-200',
-            'filter' => fn($p) => str_contains($p, 'user') || str_contains($p, 'role') || str_contains($p, 'permission') || str_contains($p, 'dashboard')
+            'filter' => fn($p) => (str_contains($p, 'user') || str_contains($p, 'role') || str_contains($p, 'permission') || str_contains($p, 'dashboard')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
         ],
         'organization' => [
             'title' => 'Organization',
@@ -23,7 +23,13 @@
             'title' => 'Petitions',
             'icon' => 'file-text',
             'badge' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-            'filter' => fn($p) => (str_contains($p, 'petition') && !str_contains($p, 'inward') && !str_contains($p, 'chart')) || str_contains($p, 'link') || str_contains($p, 'duplicate')
+            'filter' => fn($p) => ((str_contains($p, 'petition') && !str_contains($p, 'inward') && !str_contains($p, 'chart')) || str_contains($p, 'link') || str_contains($p, 'duplicate')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
+        ],
+        't_section' => [
+            'title' => 'T-Section (Confidential)',
+            'icon' => 'shield-alert',
+            'badge' => 'bg-rose-50 text-rose-700 border-rose-200',
+            'filter' => fn($p) => \App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
         ],
         'inward' => [
             'title' => 'Inward Desk',
@@ -41,7 +47,7 @@
             'title' => 'Reports & Charts',
             'icon' => 'pie-chart',
             'badge' => 'bg-purple-50 text-purple-700 border-purple-200',
-            'filter' => fn($p) => str_contains($p, 'stat') || str_contains($p, 'chart') || str_contains($p, 'export') || str_contains($p, 'master report')
+            'filter' => fn($p) => (str_contains($p, 'stat') || str_contains($p, 'chart') || str_contains($p, 'export') || str_contains($p, 'master report')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
         ],
         'system' => [
             'title' => 'Maintenance',
@@ -135,7 +141,7 @@
                 </span>
                 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 shadow-2xs">
                     <i data-lucide="layers" class="w-3.5 h-3.5 text-purple-500"></i>
-                    <span>7 Modules</span>
+                    <span>{{ count($modules) }} Modules</span>
                 </span>
             </div>
         </div>

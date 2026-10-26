@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
+use App\Services\TSectionPermissionRegistry;
 
 class RolesAndPermissionsSeeder extends Seeder
 {
@@ -75,6 +76,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'restore recycle bin',
             'update recycle bin', // Compatibility alias for restore
             'delete recycle bin', // Permanent purge
+
+            // T-Section (Confidential / Secret Section) Permissions
+            ...TSectionPermissionRegistry::all(),
         ];
 
         foreach ($specialPermissions as $perm) {
@@ -89,9 +93,12 @@ class RolesAndPermissionsSeeder extends Seeder
         $developer = Role::firstOrCreate(['name' => 'Developer']);
         $developer->syncPermissions(Permission::all());
 
-        // 2. Super Admin: Unrestricted full access
+        // 2. Super Admin: General administrative oversight (excluding confidential T-section permissions unless explicitly granted)
         $superAdmin = Role::firstOrCreate(['name' => 'super admin']);
-        $superAdmin->syncPermissions(Permission::all());
+        if ($superAdmin->wasRecentlyCreated) {
+            $superAdminPermissions = Permission::whereNotIn('name', TSectionPermissionRegistry::all())->get();
+            $superAdmin->syncPermissions($superAdminPermissions);
+        }
 
         // Cleanup legacy capitalized 'Super Admin' if it exists as a separate record
         $legacySuperAdmin = Role::where('name', 'Super Admin')->first();
@@ -103,13 +110,13 @@ class RolesAndPermissionsSeeder extends Seeder
             $legacySuperAdmin->delete();
         }
 
-        // 3. Admin: System administrator (operations, masters, reports, charts, dashboard)
+        // 3. Admin: System administrator (operations, masters, reports, charts, dashboard - strictly excluding secret T-section perms)
         $admin = Role::firstOrCreate(['name' => 'admin']);
         if ($admin->wasRecentlyCreated || $admin->permissions()->count() === 0) {
-            $adminPermissions = Permission::whereNotIn('name', [
+            $adminPermissions = Permission::whereNotIn('name', array_merge([
                 'delete roles',
                 'delete permissions',
-            ])->get();
+            ], TSectionPermissionRegistry::all()))->get();
             $admin->syncPermissions($adminPermissions);
         }
 
@@ -151,7 +158,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ]);
         }
 
-        // 5. Petition Compliances: Petitions oversight and compliances
+        // 6. Petition Compliances: Petitions oversight and compliances
         $petitionCompliances = Role::where('name', 'Petition Compliances')->first()
             ?? Role::where('name', 'IOP HQ')->first();
         if ($petitionCompliances) {
@@ -173,6 +180,32 @@ class RolesAndPermissionsSeeder extends Seeder
                 'delete compliances',
                 'default compliances home',
             ]);
+        }
+
+        // 7. T-Section Role: Confidential / Secret Section (Isolated CRUD, Strict NO Delete)
+        $tSection = Role::firstOrCreate(['name' => 'T Section']);
+        $tSection->syncPermissions([
+            'view petitions',
+            'view own petitions',
+            'create petitions',
+            'update petitions',
+            'view recent petitions',
+            'access t-section dashboard',
+            'view t-section petitions',
+            'create t-section petitions',
+            'update t-section petitions',
+            'forward t-section petitions',
+        ]);
+
+        // Ensure T Section Seat exists and is mapped to T Section Role & Unit 8 (Vigilance Directorate)
+        $tSectionSeat = \App\Models\Seat::firstOrCreate(
+            ['seat_name' => 'T Section'],
+            ['is_active' => true]
+        );
+        $tSectionSeat->syncRoles(['T Section']);
+        $directorateUnit = \App\Models\Unit::find(8);
+        if ($directorateUnit && !$tSectionSeat->units()->where('units.unit_id', 8)->exists()) {
+            $tSectionSeat->units()->attach(8);
         }
 
         // Ensure deprecated Director role is removed if present

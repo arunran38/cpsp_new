@@ -9,6 +9,7 @@ use App\Http\Requests\StorePetitionRequest;
 use App\Http\Requests\UpdatePetitionRequest;
 use App\Services\PetitionService;
 use App\Services\HashidService;
+use App\Services\TSectionPermissionRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -419,11 +420,17 @@ class PetitionController extends Controller
         // Fetch all active seats (prioritizing CPSP seats)
         $seats = Seat::with(['activeAssignment.user'])
             ->where('is_active', true)
-            ->get()
-            ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+            ->get();
+
+        if (!$user->canAccessTSection()) {
+            $tSeatIds = Seat::getTSectionSeatIds();
+            $seats = $seats->whereNotIn('seat_id', $tSeatIds);
+        }
+
+        $seats = $seats->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
 
         // Fetch petition data
-        $petitionsQuery = Petition::whereNull('linked_petition_id');
+        $petitionsQuery = Petition::whereNull('linked_petition_id')->excludeTSectionIfNotAuthorized($user);
 
         if ($dateFrom) {
             $petitionsQuery->where(function($q) use ($dateFrom) {
@@ -681,8 +688,11 @@ class PetitionController extends Controller
      */
     public function export(Request $request): HttpResponse
     {
+        $user = Auth::user();
         if (!Auth::user()->canAccess('export statistics') && !Auth::user()->canAccess('view master reports')) {
-            abort(403, 'Unauthorized to export petitions.');
+            if (!($user->isTSectionRole() && $user->canAccess(TSectionPermissionRegistry::EXPORT_PETITIONS))) {
+                abort(403, 'Unauthorized to export petitions.');
+            }
         }
 
         $tab = $request->input('tab', 'all');
@@ -812,6 +822,10 @@ class PetitionController extends Controller
         $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
 
+        if ($petition->isTSection() && !Auth::user()->canAccess(TSectionPermissionRegistry::DELETE_PETITIONS)) {
+            return redirect()->route('petitions.index', ['tab' => 'all'])->with('error', 'T-Section confidential petitions cannot be deleted.');
+        }
+
         if ($petition->isFromInward() ) {
             return redirect()->route('petitions.index', ['tab' => 'all'])->with('error', 'CPSP seats are not permitted to delete petitions received from Inward.');
         }
@@ -932,7 +946,7 @@ class PetitionController extends Controller
             return response()->json([]);
         }
 
-        $petitions = Petition::where(function($q) use ($query) {
+        $petitions = Petition::excludeTSectionIfNotAuthorized(Auth::user())->where(function($q) use ($query) {
             $q->where('receipt_no', 'LIKE', "%{$query}%")
               ->orWhere('nature_of_petition', 'LIKE', "%{$query}%")
               ->orWhereHas('addresses', function ($q2) use ($query) {
@@ -1037,7 +1051,7 @@ class PetitionController extends Controller
             return response()->json([]);
         }
 
-        $query = Petition::query()->with(['decision', 'addresses.district']);
+        $query = Petition::query()->excludeTSectionIfNotAuthorized(Auth::user())->with(['decision', 'addresses.district']);
         
         $description = $request->input('description');
         $nature = $request->input('nature_of_petition');
@@ -1142,7 +1156,7 @@ class PetitionController extends Controller
     private function getUnifiedCounts()
     {
         $user = Auth::user();
-        $query = Petition::query();
+        $query = Petition::query()->excludeTSectionIfNotAuthorized($user);
 
         $currentSeatUser = $user->currentSeatUser();
         $currentSeat = $currentSeatUser?->seat;
@@ -1208,6 +1222,7 @@ class PetitionController extends Controller
     {
         $user = Auth::user();
         $query = Petition::query()
+            ->excludeTSectionIfNotAuthorized($user)
             ->whereIn('petitions.status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_CLOSED])
             ->whereNull('petitions.linked_petition_id')
             ->where('petitions.is_returned_to_inward', false);
@@ -1260,8 +1275,9 @@ class PetitionController extends Controller
             'date_to' => 'nullable|date|before_or_equal:today|after_or_equal:date_from',
         ]);
 
-        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user.seatUsers.seat', 'seat.activeAssignment.user', 'unit', 'originalPetition.addresses', 'returnedByUser', 'processedByUser', 'processedBySeat', 'updatedByUser', 'updatedBySeat']);
         $user = Auth::user();
+        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user.seatUsers.seat', 'seat.activeAssignment.user', 'unit', 'originalPetition.addresses', 'returnedByUser', 'processedByUser', 'processedBySeat', 'updatedByUser', 'updatedBySeat'])
+            ->excludeTSectionIfNotAuthorized($user);
         $isInwardOnly = $user && ($user->hasRole(['inward', 'Inward']) || str_contains(strtolower($user->currentSeatUser()?->seat?->seat_name ?? ''), 'inward'));
         $defaultTab = $isInwardOnly ? 'inward' : 'all';
         $tab = $request->input('tab', $defaultTab);

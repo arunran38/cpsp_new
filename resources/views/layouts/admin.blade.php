@@ -311,11 +311,13 @@
             <nav class="flex-1 px-4 py-6 overflow-y-auto custom-scrollbar space-y-1.5">
                 
                 <!-- Dashboard Link -->
+                @if(!Auth::user()->isTSectionRole() || Auth::user()->canAccess(\App\Services\TSectionPermissionRegistry::ACCESS_DASHBOARD))
                 <a href="{{ route('dashboard') }}" 
                    class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') || request()->routeIs('user.dashboard') ? 'active-nav' : 'inactive-nav' }}">
                     <i data-lucide="layout-dashboard" class="w-5 h-5 icon-bounce {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') || request()->routeIs('user.dashboard') ? 'text-indigo-400' : '' }}"></i>
                     <span>Dashboard</span>
                 </a>
+                @endif
                 
                 <!-- Management Section -->
                 @if(Auth::user()->canAccess('view units') || Auth::user()->canAccess('view departments') || Auth::user()->canAccess('view designations') || Auth::user()->canAccess('view users') || Auth::user()->canAccess('view roles') || Auth::user()->canAccess('view permissions') || Auth::user()->canAccess('view seats'))

@@ -237,11 +237,13 @@
                  }">
 
                 <!-- Dashboard Link -->
+                @if(!Auth::user()->isTSectionRole() || Auth::user()->canAccess(\App\Services\TSectionPermissionRegistry::ACCESS_DASHBOARD))
                 <a href="{{ route('dashboard') }}" 
                    class="nav-item-transition flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl group {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') || request()->routeIs('user.dashboard') ? 'active-nav' : 'inactive-nav' }}">
                     <i data-lucide="layout-dashboard" class="w-5 h-5 icon-bounce {{ request()->routeIs('dashboard') || request()->routeIs('admin.dashboard') || request()->routeIs('user.dashboard') ? 'text-indigo-400' : '' }}"></i>
                     <span>Dashboard</span>
                 </a>
+                @endif
 
 
                 <!-- System Control Section -->

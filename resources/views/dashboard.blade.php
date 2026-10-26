@@ -13,26 +13,30 @@
     $seatName = $currentSeat?->seat_name ?? ($user->roles->first()?->name ?? 'User');
     
     // Permission-driven scopes
-    $isCpspDesk = $currentSeat
+    $isTSectionDesk = $user->isTSectionRole() || ($currentSeat && $currentSeat->isTSection());
+    $isCpspDesk = !$isTSectionDesk && ($currentSeat
         ? $currentSeat->hasRole('CPSP')
-        : $user->hasRole('CPSP');
-    $isExecutive = !$isCpspDesk && ($user->canAccess('view all petitions') || $user->canAccess('access admin dashboard'));
+        : $user->hasRole('CPSP'));
+    $isExecutive = !$isTSectionDesk && !$isCpspDesk && ($user->canAccess('view all petitions') || $user->canAccess('access admin dashboard'));
     $canSeeSeatChart = $user->canAccess('view seat distribution chart');
     $canSeeStatusChart = $user->canAccess('view petition status chart');
     $canSeeVacantSeats = $user->canAccess('view seats') || $user->canAccess('access admin dashboard');
     $canSeeRecentPetitions = $user->canAccess('view recent petitions');
     $isInwardRole = $user->hasRole(['inward', 'Inward']) 
         || ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || stripos($currentSeat->seat_name, 'Inward') !== false));
-    $isInwardDesk = !$isExecutive && !$isCpspDesk
+    $isInwardDesk = !$isExecutive && !$isCpspDesk && !$isTSectionDesk
         && ($isInwardRole || $user->canAccess('view file transfer') || ($currentSeat && stripos($currentSeat->seat_name, 'Inward') !== false));
 
     // Date filters
     $fromDate = request('from_date', now()->subDays(6)->format('Y-m-d'));
     $toDate = request('to_date', now()->format('Y-m-d'));
 
-    // Base query for executive vs desk
-    if ($isExecutive) {
-        $basePetitionsQuery = \App\Models\Petition::whereNull('linked_petition_id');
+    // Base query for executive vs desk vs T-section
+    if ($isTSectionDesk && $currentSeatUser) {
+        $basePetitionsQuery = \App\Models\Petition::where('seat_id', $currentSeatUser->seat_id)
+            ->whereNull('linked_petition_id');
+    } elseif ($isExecutive) {
+        $basePetitionsQuery = \App\Models\Petition::whereNull('linked_petition_id')->excludeTSectionIfNotAuthorized($user);
     } elseif ($isInwardDesk) {
         $inwardUserIds = \App\Models\User::role(['inward', 'Inward'])->pluck('user_id')->push($user->user_id)->unique();
         $basePetitionsQuery = \App\Models\Petition::where(function($q) use ($inwardUserIds, $currentSeatUser) {
@@ -40,7 +44,7 @@
             if ($currentSeatUser) {
                 $q->orWhere('seat_id', $currentSeatUser->seat_id);
             }
-        })->whereNull('linked_petition_id');
+        })->whereNull('linked_petition_id')->excludeTSectionIfNotAuthorized($user);
     } elseif ($currentSeatUser) {
         $basePetitionsQuery = \App\Models\Petition::where('seat_id', $currentSeatUser->seat_id)
             ->where('is_returned_to_inward', false)
@@ -100,9 +104,10 @@
     // Chart Data: Petition Status Distribution (Doughnut Chart)
     $statusStats = collect([]);
     if ($canSeeStatusChart) {
-        $statusStats = \App\Models\Petition::whereBetween('date_of_petition_received', [$fromDate, $toDate])
-            ->whereNull('linked_petition_id')
-            ->where('is_cpsp_processed', true)
+        $statusQuery = $isTSectionDesk ? (clone $basePetitionsQuery) : \App\Models\Petition::whereBetween('date_of_petition_received', [$fromDate, $toDate])
+            ->excludeTSectionIfNotAuthorized($user)
+            ->whereNull('linked_petition_id');
+        $statusStats = $statusQuery->where('is_cpsp_processed', true)
             ->groupBy('status')
             ->get(['status', \Illuminate\Support\Facades\DB::raw('count(*) as count')])
             ->pluck('count', 'status');
@@ -209,7 +214,9 @@
                     Welcome back, {{ $user->name }}
                 </h1>
                 <p class="text-slate-300 text-sm mt-1 max-w-2xl">
-                    @if($isExecutive)
+                    @if($isTSectionDesk)
+                        Confidential desk operations, sensitive inquiry files, verification reports, and classified petition tracking.
+                    @elseif($isExecutive)
                         State-wide executive petition intelligence, seat distribution, and grievance workflow overview.
                     @elseif($isInwardDesk)
                         Inward desk operations, new petition registration, and seat transfer dispatch center.
@@ -227,7 +234,7 @@
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
                         <span>New Registration</span>
                     </a>
-                @elseif($user->canAccess('create petitions') || $user->canAccess('create inward petitions') || $user->canAccess('inward form'))
+                @elseif($user->canAccess('create petitions') || $user->canAccess('create inward petitions') || $user->canAccess('inward form') || $user->canAccess(\App\Services\TSectionPermissionRegistry::CREATE_PETITIONS))
                     <a href="{{ route('petitions.create') }}"
                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold text-xs shadow-lg shadow-teal-500/20 hover:scale-105 transition-all">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
@@ -284,8 +291,8 @@
     @endif
 
     <!-- Dynamic Metrics Cards Grid -->
-    @if($isExecutive || $isCpspDesk)
-        {{-- Executive / State-Wide Metrics Cards --}}
+    @if($isExecutive || $isCpspDesk || $isTSectionDesk)
+        {{-- Executive / CPSP / T-Section Desk Metrics Cards --}}
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
 
             <!-- Card 1: Unprocessed -->

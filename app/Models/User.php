@@ -132,13 +132,13 @@ class User extends Authenticatable
         $currentSeatUser = $this->currentSeatUser();
         $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
 
-        // Permissions that are strict feature toggles (like 'view recent petitions')
+        // Permissions that are strict feature toggles or confidential (like T-Section permissions)
         // MUST be explicitly granted to the active seat / role and NEVER bypassed unconditionally.
-        $strictPermissions = [
+        $strictPermissions = array_merge([
             'view recent petitions',
-        ];
+        ], \App\Services\TSectionPermissionRegistry::all());
 
-        if (in_array($permission, $strictPermissions)) {
+        if (in_array($permission, $strictPermissions, true)) {
             if ($currentSeat && !session('is_impersonating_seat')) {
                 try {
                     return $currentSeat->hasPermissionTo($permission);
@@ -246,5 +246,50 @@ class User extends Authenticatable
         } catch (\Exception $e) { }
 
         return false;
+    }
+
+    /**
+     * Check if the user is in T-Section Role / Seat.
+     */
+    public function isTSectionRole(): bool
+    {
+        try {
+            if ($this->hasRole(['super admin', 'Super Admin', 'admin', 'Admin', 'developer', 'Developer'])) {
+                return false;
+            }
+        } catch (\Exception $e) { }
+
+        $currentSeatUser = $this->currentSeatUser();
+        $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
+
+        if ($currentSeat && $currentSeat->isTSection()) {
+            return true;
+        }
+
+        $tSectionRoles = ['t section', 'T Section', 't-section', 'T-Section'];
+
+        try {
+            if ($this->hasRole($tSectionRoles)) {
+                return true;
+            }
+        } catch (\Exception $e) { }
+
+        return false;
+    }
+
+    /**
+     * Check if user has clearance to access T-Section data.
+     * Strictly governed by RBAC: requires occupying a T-Section seat or holding 'view t-section petitions'.
+     */
+    public function canAccessTSection(): bool
+    {
+        $currentSeatUser = $this->currentSeatUser();
+        $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
+
+        if ($currentSeat && $currentSeat->isTSection()) {
+            return true;
+        }
+
+        return $this->canAccess(\App\Services\TSectionPermissionRegistry::VIEW_PETITIONS);
     }
 }

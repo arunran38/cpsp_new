@@ -4,7 +4,7 @@
 @section('content')
 @php
     // -------------------------------------------------------------
-    // Define the 7 High-Level System Modules & Their Capabilities
+    // Define the 8 High-Level System Modules & Their Capabilities
     // -------------------------------------------------------------
     $modules = [
         'users' => [
@@ -22,7 +22,7 @@
             'special' => [
                 'Admin Dashboard' => [
                     'desc' => 'Global administrative access',
-                    'filter' => fn($p) => str_contains(strtolower($p->name), 'dashboard')
+                    'filter' => fn($p) => str_contains(strtolower($p->name), 'dashboard') && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p->name)
                 ]
             ]
         ],
@@ -54,11 +54,26 @@
             'special' => [
                 'Visibility Scopes' => [
                     'desc' => 'Personal, recent, or department-wide visibility',
-                    'filter' => fn($p) => str_contains(strtolower($p->name), 'own') || str_contains(strtolower($p->name), 'all petitions') || str_contains(strtolower($p->name), 'recent')
+                    'filter' => fn($p) => (str_contains(strtolower($p->name), 'own') || str_contains(strtolower($p->name), 'all petitions') || str_contains(strtolower($p->name), 'recent')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p->name)
                 ],
                 'Duplicate Management' => [
                     'desc' => 'Duplicate detection warnings, linking and unlinking records',
-                    'filter' => fn($p) => str_contains(strtolower($p->name), 'duplicate') || str_contains(strtolower($p->name), 'link')
+                    'filter' => fn($p) => (str_contains(strtolower($p->name), 'duplicate') || str_contains(strtolower($p->name), 'link')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p->name)
+                ]
+            ]
+        ],
+        't_section' => [
+            'key' => 't_section',
+            'title' => 'T-Section',
+            'desc' => 'Confidential & Intelligence Desk',
+            'icon' => 'shield-alert',
+            'gradient' => 'from-rose-600 to-red-700 shadow-rose-600/25',
+            'accent' => 'rose',
+            'crud' => [],
+            'special' => [
+                'T-Section Permissions' => [
+                    'desc' => '',
+                    'filter' => fn($p) => \App\Services\TSectionPermissionRegistry::isTSectionPermission($p->name)
                 ]
             ]
         ],
@@ -113,7 +128,7 @@
                 ],
                 'Operational Statistics' => [
                     'desc' => 'Inward metrics & data exports',
-                    'filter' => fn($p) => (str_contains(strtolower($p->name), 'stat') || str_contains(strtolower($p->name), 'export')) && !str_contains(strtolower($p->name), 'chart')
+                    'filter' => fn($p) => (str_contains(strtolower($p->name), 'stat') || str_contains(strtolower($p->name), 'export')) && !str_contains(strtolower($p->name), 'chart') && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p->name)
                 ],
                 'Visual Analytics Charts' => [
                     'desc' => 'Trends, nature, status & seat distribution charts',
@@ -479,7 +494,9 @@
                                             <div class="flex items-center gap-2.5">
                                                 <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
                                                 <h4 class="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider">{{ $groupTitle }}</h4>
-                                                <span class="text-xs font-semibold text-slate-600">({{ $groupInfo['desc'] }})</span>
+                                                @if(!empty($groupInfo['desc']))
+                                                    <span class="text-xs font-semibold text-slate-600">({{ $groupInfo['desc'] }})</span>
+                                                @endif
                                             </div>
                                             <span class="text-xs font-bold text-slate-700 bg-white px-2.5 py-1 rounded-md border border-slate-300 shadow-2xs">
                                                 {{ count($groupInfo['permissions']) }} items
@@ -495,7 +512,7 @@
                                                            value="{{ $perm->name }}"
                                                            {{ in_array($perm->name, $oldPerms) ? 'checked' : '' }}
                                                            @change="onCheckboxChange('{{ $subSlug }}', '{{ $modKey }}')"
-                                                           class="perm-checkbox perm-mod-{{ $modKey }} perm-row-{{ $subSlug }} w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/30 cursor-pointer">
+                                                           class="perm-checkbox perm-mod-{{ $modKey }} perm-row-{{ $subSlug }} w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/30 cursor-pointer shrink-0">
                                                     <span class="text-xs sm:text-sm font-bold text-slate-900 select-none leading-snug">
                                                         {{ $perm->name }}
                                                     </span>
