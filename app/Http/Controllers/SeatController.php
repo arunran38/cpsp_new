@@ -110,17 +110,22 @@ class SeatController extends Controller
 
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
+        $section = $request->input('section', 'all');
 
         $from = $dateFrom ? Carbon::parse($dateFrom)->startOfDay() : null;
         $to = $dateTo ? Carbon::parse($dateTo)->endOfDay() : null;
 
-        $seats = Seat::with('activeAssignment.user')
-                     ->where('seat_name', 'like', '%CPSP%')
+        $canViewTSection = auth()->user()->canAccessTSectionDiagnostics();
+        if (!$canViewTSection && $section === 't_section') {
+            abort(403, 'Unauthorized. Special clearance required to access T-Section diagnostics.');
+        }
+
+        $seats = $this->getFilteredSeatsQuery($section, $canViewTSection)
                      ->withStatistics($from, $to)
                      ->get()
                      ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
 
-        return view('admin.analytics.seats', compact('seats', 'dateFrom', 'dateTo'));
+        return view('admin.analytics.seats', compact('seats', 'dateFrom', 'dateTo', 'section', 'canViewTSection'));
     }
 
     /**
@@ -134,28 +139,43 @@ class SeatController extends Controller
 
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
+        $section = $request->input('section', 'all');
 
         $from = $dateFrom ? Carbon::parse($dateFrom)->startOfDay() : null;
         $to = $dateTo ? Carbon::parse($dateTo)->endOfDay() : null;
 
-        $seats = Seat::with('activeAssignment.user')
-                     ->where('seat_name', 'like', '%CPSP%')
+        $canViewTSection = auth()->user()->canAccessTSectionDiagnostics();
+        if (!$canViewTSection && $section === 't_section') {
+            abort(403, 'Unauthorized. Special clearance required to export T-Section statistics.');
+        }
+
+        $seats = $this->getFilteredSeatsQuery($section, $canViewTSection)
                      ->withStatistics($from, $to)
                      ->get()
                      ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
 
         // Filename generation
         $filenameDateText = $dateFrom && $dateTo ? "{$dateFrom}_to_{$dateTo}" : ($dateFrom ? "from_{$dateFrom}" : ($dateTo ? "up_to_{$dateTo}" : "all_time"));
-        $filename = "seat_wise_details_" . $filenameDateText . ".xls";
+        $sectionSuffix = match ($section) {
+            'cpsp' => '_cpsp',
+            't_section' => '_t_section',
+            default => '',
+        };
+        $filename = "seat_wise_details" . $sectionSuffix . "_" . $filenameDateText . ".xls";
         
         // Heading text
         $dFrom = $dateFrom ? date('d/m/Y', strtotime($dateFrom)) : '';
         $dTo = $dateTo ? date('d/m/Y', strtotime($dateTo)) : '';
+        $sectionHeading = match ($section) {
+            'cpsp' => 'CPSP SEATS',
+            't_section' => 'T-SECTION',
+            default => 'SEAT WISE',
+        };
         $mainHeading = match (true) {
-            (bool)$dateFrom && (bool)$dateTo => "SEAT WISE DETAILS OF PETITIONS from $dFrom to $dTo",
-            (bool)$dateFrom => "SEAT WISE DETAILS OF PETITIONS from $dFrom onwards",
-            (bool)$dateTo => "SEAT WISE DETAILS OF PETITIONS up to $dTo",
-            default => "SEAT WISE DETAILS OF PETITIONS (All Time)",
+            (bool)$dateFrom && (bool)$dateTo => "{$sectionHeading} DETAILS OF PETITIONS from $dFrom to $dTo",
+            (bool)$dateFrom => "{$sectionHeading} DETAILS OF PETITIONS from $dFrom onwards",
+            (bool)$dateTo => "{$sectionHeading} DETAILS OF PETITIONS up to $dTo",
+            default => "{$sectionHeading} DETAILS OF PETITIONS (All Time)",
         };
 
         $content = view('exports.seat_statistics_export', compact('seats', 'mainHeading'))->render();
@@ -166,11 +186,43 @@ class SeatController extends Controller
             ->header('Cache-Control', 'max-age=0');
     }
 
+    /**
+     * Build base query for seats based on section filter and T-Section clearance.
+     */
+    private function getFilteredSeatsQuery(string $section = 'all', bool $canViewTSection = true): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Seat::with('activeAssignment.user');
+
+        if ($section === 't_section' && $canViewTSection) {
+            $tSeatIds = Seat::getTSectionSeatIds();
+            $query->where(function ($q) use ($tSeatIds) {
+                $q->whereIn('seat_id', $tSeatIds)
+                  ->orWhere('seat_name', 'like', '%T Section%')
+                  ->orWhere('seat_name', 'like', '%T-Section%');
+            });
+        } elseif ($section === 'all' && $canViewTSection) {
+            // All: CPSP and T-Section
+            $tSeatIds = Seat::getTSectionSeatIds();
+            $query->where(function ($q) use ($tSeatIds) {
+                $q->where('seat_name', 'like', '%CPSP%')
+                  ->orWhereIn('seat_id', $tSeatIds)
+                  ->orWhere('seat_name', 'like', '%T Section%')
+                  ->orWhere('seat_name', 'like', '%T-Section%');
+            });
+        } else {
+            // CPSP only
+            $query->where('seat_name', 'like', '%CPSP%');
+        }
+
+        return $query;
+    }
+
     private function validateDateRange(Request $request): void
     {
         $request->validate([
             'date_from' => 'nullable|date|before_or_equal:today',
             'date_to' => 'nullable|date|before_or_equal:today|after_or_equal:date_from',
+            'section' => 'nullable|string|in:all,cpsp,t_section',
         ]);
     }
 

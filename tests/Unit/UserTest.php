@@ -5,6 +5,8 @@ namespace Tests\Unit;
 use App\Models\User;
 use App\Models\Seat;
 use App\Models\SeatUser;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,5 +46,36 @@ class UserTest extends TestCase
         // Test switching via session
         session(['current_seat_id' => $seat2->seat_id]);
         $this->assertEquals($su2->seat_id, $user->currentSeatUser()->seat_id);
+    }
+
+    public function test_super_admin_requires_explicit_statistics_permissions(): void
+    {
+        $superAdmin = User::factory()->create();
+        $role = Role::create(['name' => 'super admin', 'guard_name' => 'web']);
+        $superAdmin->assignRole($role);
+
+        $this->assertFalse($superAdmin->canAccess('view seat diagnostics'));
+        $this->assertFalse($superAdmin->canAccess('inward_statistics'));
+        $this->assertFalse($superAdmin->canAccessTSectionDiagnostics());
+        $this->assertFalse($superAdmin->canAccessTSectionPending());
+
+        $role->givePermissionTo(Permission::create([
+            'name' => 'view t-section petitions',
+            'guard_name' => 'web',
+        ]));
+        $this->assertFalse($superAdmin->canAccessTSectionDiagnostics());
+        $this->assertFalse($superAdmin->canAccessTSectionPending());
+
+        $role->givePermissionTo(
+            Permission::create(['name' => 'view seat diagnostics', 'guard_name' => 'web']),
+            Permission::create(['name' => 'inward statistics', 'guard_name' => 'web']),
+            Permission::create(['name' => 'view t-section diagnostics', 'guard_name' => 'web']),
+            Permission::create(['name' => 'view t-section pending details', 'guard_name' => 'web'])
+        );
+
+        $this->assertTrue($superAdmin->canAccess('view seat diagnostics'));
+        $this->assertTrue($superAdmin->canAccess('inward_statistics'));
+        $this->assertTrue($superAdmin->canAccessTSectionDiagnostics());
+        $this->assertTrue($superAdmin->canAccessTSectionPending());
     }
 }

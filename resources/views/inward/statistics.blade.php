@@ -27,51 +27,72 @@
 
         <!-- Date Range Filter Form (Print Hidden) -->
         <div
-            class="print:hidden bg-white py-4 px-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10">
+            class="print:hidden bg-white py-4 px-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10 overflow-x-auto">
             <form method="GET" action="{{ route('inward.statistics') }}"
-                class="flex flex-col md:flex-row md:items-end justify-between gap-5 w-full">
+                class="flex items-end justify-between gap-4 w-full min-w-max">
 
-                <div class="flex flex-wrap items-end gap-5">
+                <div class="flex items-end gap-3 flex-nowrap">
+                    <!-- Section Filter -->
+                    <div class="w-[280px] shrink-0">
+                        <label for="section"
+                            class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                            <i data-lucide="layers" class="w-4 h-4 text-teal-600"></i>
+                            Section
+                        </label>
+                        <div class="relative">
+                            <select name="section" id="section"
+                                class="h-10 w-full px-3.5 text-sm font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all cursor-pointer">
+                                @if($canViewTSection ?? false)
+                                    <option value="all" {{ ($section ?? 'all') === 'all' ? 'selected' : '' }}>All Sections (CPSP & T-Section)</option>
+                                @endif
+                                <option value="cpsp" {{ ($section ?? '') === 'cpsp' || !($canViewTSection ?? false) ? 'selected' : '' }}>CPSP Sections</option>
+                                @if($canViewTSection ?? false)
+                                    <option value="t_section" {{ ($section ?? '') === 't_section' ? 'selected' : '' }}>T-Section</option>
+                                @endif
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- Date From -->
-                    <div class="w-full sm:w-56">
+                    <div class="w-[155px] shrink-0">
                         <label for="date_from"
-                            class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+                            class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
                             <i data-lucide="calendar" class="w-4 h-4 text-teal-600"></i>
                             Date From
                         </label>
                         <div class="relative">
                             <input type="date" name="date_from" id="date_from" value="{{ $dateFrom }}"
                                 max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                class="h-10 w-full px-4 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all">
+                                class="h-10 w-full px-3 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all">
                         </div>
                     </div>
 
                     <!-- Date To -->
-                    <div class="w-full sm:w-56">
+                    <div class="w-[155px] shrink-0">
                         <label for="date_to"
-                            class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+                            class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
                             <i data-lucide="calendar" class="w-4 h-4 text-teal-600"></i>
                             Date To
                         </label>
                         <div class="relative">
                             <input type="date" name="date_to" id="date_to" value="{{ $dateTo }}"
                                 max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                class="h-10 w-full px-4 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all">
+                                class="h-10 w-full px-3 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all">
                         </div>
                     </div>
 
                     <!-- Filter Actions -->
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2 shrink-0">
                         <button type="submit"
-                            class="h-10 px-5 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 outline-none focus:ring-4 focus:ring-slate-900/20">
+                            class="h-10 px-4 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 outline-none focus:ring-4 focus:ring-slate-900/20 whitespace-nowrap">
                             <i data-lucide="filter" class="w-4 h-4 text-teal-400"></i>
                             Apply Filter
                         </button>
 
-                        @if($dateFrom || $dateTo)
+                        @if($dateFrom || $dateTo || (($section ?? 'all') !== 'all'))
                             <a href="{{ route('inward.statistics') }}"
-                                class="h-10 px-4 text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-xl transition-all flex items-center gap-2 outline-none focus:ring-4 focus:ring-slate-100"
-                                title="Reset date filter">
+                                class="h-10 px-3.5 text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-xl transition-all flex items-center gap-1.5 outline-none focus:ring-4 focus:ring-slate-100 whitespace-nowrap"
+                                title="Reset filters">
                                 <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                                 Reset
                             </a>
@@ -80,11 +101,11 @@
                 </div>
 
                 <!-- Export Actions -->
-                <div class="flex items-center gap-3 mt-3 md:mt-0">
-                    @if(Auth::user()->canAccess('export_statistics') || Auth::user()->canAccess('export statistics') || Auth::user()->canAccess('access admin dashboard'))
+                <div class="shrink-0 pl-2">
+                    @if(Auth::user()->canAccess('export statistics') || Auth::user()->canAccess('access admin dashboard'))
                         <a href="{{ route('inward.statistics.export', request()->query()) }}"
-                            class="h-10 px-5 text-sm font-bold text-teal-700 bg-teal-50 border border-teal-100 hover:bg-teal-100 hover:border-teal-200 rounded-xl transition-all flex items-center gap-2 outline-none focus:ring-4 focus:ring-teal-500/20 shadow-sm whitespace-nowrap">
-                            <i data-lucide="file-spreadsheet" class="w-4.5 h-4.5"></i>
+                            class="h-10 px-4 text-sm font-bold text-teal-700 bg-teal-50 border border-teal-100 hover:bg-teal-100 hover:border-teal-200 rounded-xl transition-all flex items-center gap-2 outline-none focus:ring-4 focus:ring-teal-500/20 shadow-sm whitespace-nowrap">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                             Export Excel
                         </a>
                     @endif
@@ -100,7 +121,15 @@
             <div
                 class="px-8 py-6 border-b border-slate-100 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:p-0 print:border-b-2 print:border-slate-800">
                 <div>
-                    <h2 class="text-lg font-extrabold text-slate-900">Seat-Wise Petition Statistics Data Sheet</h2>
+                    <h2 class="text-lg font-extrabold text-slate-900">
+                        @if(($section ?? '') === 'cpsp')
+                            CPSP Seats - Petition Statistics Data Sheet
+                        @elseif(($section ?? '') === 't_section')
+                            T-Section - Petition Statistics Data Sheet
+                        @else
+                            Seat-Wise Petition Statistics Data Sheet
+                        @endif
+                    </h2>
                     @if($dateFrom || $dateTo)
                         <div class="flex items-center gap-2 mt-1.5">
                             <span class="px-2 py-1 bg-slate-100 rounded text-xs font-semibold text-slate-600">Report
@@ -114,7 +143,15 @@
                             </p>
                         </div>
                     @else
-                        <p class="text-sm text-slate-500 mt-1 font-medium">Overall petition summary assigned to CPSP seats.</p>
+                        <p class="text-sm text-slate-500 mt-1 font-medium">
+                            @if(($section ?? '') === 'cpsp')
+                                Overall petition summary assigned to CPSP seats.
+                            @elseif(($section ?? '') === 't_section')
+                                Overall petition summary assigned to T-Section.
+                            @else
+                                Overall petition summary assigned to CPSP and T-Section seats.
+                            @endif
+                        </p>
                     @endif
                 </div>
 

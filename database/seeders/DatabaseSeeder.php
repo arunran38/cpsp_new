@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             UnitSeeder::class,
             RolesAndPermissionsSeeder::class,
             DuplicatePetitionPermissionSeeder::class,
+            TSectionDiagnosticsPermissionsSeeder::class,
         ]);
     }
 }

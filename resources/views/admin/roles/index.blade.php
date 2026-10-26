@@ -53,7 +53,7 @@
             'title' => 'Maintenance',
             'icon' => 'activity',
             'badge' => 'bg-rose-50 text-rose-700 border-rose-200',
-            'filter' => fn($p) => str_contains($p, 'diagnostic') || str_contains($p, 'recycle')
+            'filter' => fn($p) => (str_contains($p, 'diagnostic') || str_contains($p, 'recycle')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
         ]
     ];
 @endphp
@@ -172,12 +172,16 @@
                             foreach ($modules as $mKey => $mConfig) {
                                 $matchedPerms = array_values(array_filter($rolePermNames, $mConfig['filter']));
                                 if (count($matchedPerms) > 0) {
+                                    $displayPerms = $matchedPerms;
+                                    if ($mKey === 't_section') {
+                                        $displayPerms = array_values(array_map(fn($p) => ucwords(preg_replace('/\s+/', ' ', trim(preg_replace('/\b(t-section|t section)\b/i', '', $p)))), $matchedPerms));
+                                    }
                                     $roleModuleData[$mKey] = [
                                         'title' => $mConfig['title'],
                                         'icon' => $mConfig['icon'],
                                         'badge' => $mConfig['badge'],
                                         'count' => count($matchedPerms),
-                                        'permissions' => $matchedPerms,
+                                        'permissions' => $displayPerms,
                                     ];
                                 }
                             }

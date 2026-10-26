@@ -95,13 +95,13 @@ class PetitionPolicy
 
         // 1. T-Section Confidential / Secret Section Enforcement
         if ($petition->isTSection()) {
-            if (!$user->canAccessTSection()) {
+            if (!$user->canAccessTSection() && !$user->canAccessTSectionPending()) {
                 return false;
             }
             if ($currentSeat && $currentSeat->isTSection()) {
                 return $petition->seat_id === $currentSeat->seat_id;
             }
-            return $user->canAccess(TSectionPermissionRegistry::VIEW_PETITIONS);
+            return $user->canAccess(TSectionPermissionRegistry::VIEW_PETITIONS) || $user->canAccessTSectionPending();
         }
 
         // T-Section desk users cannot view non-T-Section general petitions

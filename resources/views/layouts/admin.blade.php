@@ -500,7 +500,7 @@
                 </div>
                 @endif
 
-                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view master reports') || Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin') || Auth::user()->canAccess('inward_form') || Auth::user()->canAccess('view compliances'))
+                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view master reports') || Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin') || Auth::user()->canAccess('inward form') || Auth::user()->canAccess('view compliances'))
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-xs font-bold tracking-wider text-blue-500 uppercase">Operations</p>
                 </div>
@@ -643,7 +643,7 @@
                 </a>
                 @endif
 
-                @if(Auth::user()->canAccess('view seat diagnostics'))
+                @if(Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('inward statistics'))
                 <!-- Statistical Reports Dropdown -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -674,6 +674,7 @@
                          x-transition:leave-end="slide-down-leave-to"
                          class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
                         
+                        @if(Auth::user()->canAccess('view seat diagnostics'))
                         <a href="{{ route('admin.seats.statistics') }}" 
                            @click="reportsOpen = true"
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.seats.statistics') ? 'active-submenu' : 'submenu-link' }}">
@@ -681,7 +682,9 @@
                             <i data-lucide="laptop" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('admin.seats.statistics') ? 'text-teal-400' : '' }}"></i>
                             <span class="whitespace-nowrap">Seat Diagnostics</span>
                         </a>
+                        @endif
                         
+                        @if(Auth::user()->canAccess('view seat diagnostics'))
                         <a href="{{ route('admin.departments.analysis') }}" 
                            @click="reportsOpen = true"
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.departments.analysis') ? 'active-submenu' : 'submenu-link' }}">
@@ -689,8 +692,9 @@
                             <i data-lucide="building-2" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('admin.departments.analysis') ? 'text-teal-400' : '' }}"></i>
                             <span class="whitespace-nowrap">Department wise</span>
                         </a>
+                        @endif
 
-                        @if(Auth::user()->canAccess('inward_statistics') || Auth::user()->canAccess('inward statistics'))
+                        @if(Auth::user()->canAccess('inward statistics'))
                         <a href="{{ route('inward.statistics') }}" 
                            @click="reportsOpen = true"
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">

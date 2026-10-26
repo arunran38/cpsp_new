@@ -62,7 +62,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'inward statistics',
             'export statistics',
             'view processed statistics',
-            'default compliances home',
 
             // Visual Analytics Charts (View-only)
             'view seat distribution chart',
@@ -74,7 +73,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'view seat diagnostics',
             'view recycle bin',
             'restore recycle bin',
-            'update recycle bin', // Compatibility alias for restore
             'delete recycle bin', // Permanent purge
 
             // T-Section (Confidential / Secret Section) Permissions
@@ -178,7 +176,6 @@ class RolesAndPermissionsSeeder extends Seeder
                 'create compliances',
                 'update compliances',
                 'delete compliances',
-                'default compliances home',
             ]);
         }
 
@@ -195,6 +192,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'create t-section petitions',
             'update t-section petitions',
             'forward t-section petitions',
+            TSectionPermissionRegistry::VIEW_DIAGNOSTICS,
+            TSectionPermissionRegistry::VIEW_PENDING_DETAILS,
         ]);
 
         // Ensure T Section Seat exists and is mapped to T Section Role & Unit 8 (Vigilance Directorate)

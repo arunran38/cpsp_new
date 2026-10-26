@@ -3,7 +3,7 @@
 
 @section('content')
     @php
-        $seatsList = $seats ?? \App\Models\Seat::role('CPSP')->where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+        $seatsList = $seats ?? \App\Models\Seat::where('is_active', true)->where(function($q) { $q->where('seat_name', 'like', '%CPSP%')->orWhere('seat_name', 'like', '%T Section%')->orWhere('seat_name', 'like', '%T-Section%')->orWhereHas('roles', fn($r) => $r->whereIn('name', ['CPSP', 'T Section', 't section', 'T-Section', 't-section'])); })->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
         $tab = 'inward';
 
@@ -21,7 +21,7 @@
             $currentUser->canAccess('create inward petitions') ||
             $currentUser->canAccess('create_inward_petitions') ||
             $currentUser->canAccess('inward form') ||
-            $currentUser->canAccess('inward_form') ||
+            $currentUser->canAccess('inward form') ||
             $currentUser->hasRole(['inward', 'Inward', 'admin', 'Admin', 'super admin', 'Super Admin', 'developer', 'Developer'])
         );
 
@@ -396,7 +396,7 @@
             $canFilterTransfer = $currentUser && (
                 $isSuperAdmin ||
                 (
-                    ($currentUser->canAccess('filter_transfer') || $currentUser->canAccess('filter transfer')) &&
+                    $currentUser->canAccess('filter transfer') &&
                     !$currentUser->canAccess('access admin dashboard')
                 )
             );

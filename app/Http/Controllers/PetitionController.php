@@ -113,7 +113,16 @@ class PetitionController extends Controller
             $currentSeatName = $currentSeat->seat_name;
             $seats = collect([$currentSeat]);
         } else {
-            $seats = Seat::role('CPSP')->where('is_active', true)->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+            $seats = Seat::where('is_active', true)
+                ->where(function($q) {
+                    $q->where('seat_name', 'like', '%CPSP%')
+                      ->orWhere('seat_name', 'like', '%T Section%')
+                      ->orWhere('seat_name', 'like', '%T-Section%')
+                      ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['CPSP', 'T Section', 't section', 'T-Section', 't-section']));
+                })
+                ->with(['activeAssignment.user'])
+                ->get()
+                ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         }
 
         $inwardSeats = Seat::where('seat_name', 'like', '%Inward%')->where('is_active', true)->get();
@@ -407,8 +416,7 @@ class PetitionController extends Controller
     {
         $user = Auth::user();
         
-        $canAccessStats = $user->canAccess('inward_statistics') || 
-                          $user->canAccess('inward statistics');
+        $canAccessStats = $user->canAccess('inward statistics');
 
         if (!$canAccessStats) {
             abort(403, 'Unauthorized access to Inward Statistics.');
@@ -416,21 +424,48 @@ class PetitionController extends Controller
 
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
+        $section = $request->input('section', 'all');
 
-        // Fetch all active seats (prioritizing CPSP seats)
-        $seats = Seat::with(['activeAssignment.user'])
-            ->where('is_active', true)
-            ->get();
-
-        if (!$user->canAccessTSection()) {
-            $tSeatIds = Seat::getTSectionSeatIds();
-            $seats = $seats->whereNotIn('seat_id', $tSeatIds);
+        $canViewTSection = $user->canAccessTSectionPending();
+        if (!$canViewTSection && $section === 't_section') {
+            abort(403, 'Unauthorized. Special clearance required to access T-Section statistics.');
         }
 
-        $seats = $seats->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+        $tSeatIds = Seat::getTSectionSeatIds();
+
+        // Fetch active seats based on section filter (CPSP and/or T-Section)
+        $seatsQuery = Seat::with(['activeAssignment.user'])
+            ->where('is_active', true);
+
+        if ($section === 'cpsp' || !$canViewTSection) {
+            $seatsQuery->where('seat_name', 'like', '%CPSP%');
+            if (!$canViewTSection && $section === 'all') {
+                $section = 'cpsp';
+            }
+        } elseif ($section === 't_section') {
+            $seatsQuery->where(function ($q) use ($tSeatIds) {
+                $q->whereIn('seat_id', $tSeatIds)
+                  ->orWhere('seat_name', 'like', '%T Section%')
+                  ->orWhere('seat_name', 'like', '%T-Section%')
+                  ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']));
+            });
+        } else {
+            // All: CPSP & T-Section (when authorized)
+            $seatsQuery->where(function ($q) use ($tSeatIds) {
+                $q->where('seat_name', 'like', '%CPSP%')
+                  ->orWhereIn('seat_id', $tSeatIds)
+                  ->orWhere('seat_name', 'like', '%T Section%')
+                  ->orWhere('seat_name', 'like', '%T-Section%')
+                  ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']));
+            });
+        }
+
+        $seats = $seatsQuery->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+        $includedSeatIds = $seats->pluck('seat_id')->toArray();
 
         // Fetch petition data
-        $petitionsQuery = Petition::whereNull('linked_petition_id')->excludeTSectionIfNotAuthorized($user);
+        $petitionsQuery = Petition::whereNull('linked_petition_id')
+            ->whereIn('seat_id', $includedSeatIds);
 
         if ($dateFrom) {
             $petitionsQuery->where(function($q) use ($dateFrom) {
@@ -484,37 +519,35 @@ class PetitionController extends Controller
             $seatData = $statsBySeat->get($seat->seat_id);
             $totalCount = (int) ($seatData->total_count ?? 0);
 
-            if (str_contains(strtolower($seat->seat_name), 'cpsp')) {
-                $received = (int) ($seatData->received ?? 0);
-                $forwarded = (int) ($seatData->forwarded ?? 0);
-                $vrs = (int) ($seatData->vrs ?? 0);
-                $decisions = (int) ($seatData->decisions ?? 0);
-                $totalSent = $totalCount;
-                $processed = (int) ($seatData->processed ?? 0);
-                $pending = (int) ($seatData->pending ?? 0);
+            $received = (int) ($seatData->received ?? 0);
+            $forwarded = (int) ($seatData->forwarded ?? 0);
+            $vrs = (int) ($seatData->vrs ?? 0);
+            $decisions = (int) ($seatData->decisions ?? 0);
+            $totalSent = $totalCount;
+            $processed = (int) ($seatData->processed ?? 0);
+            $pending = (int) ($seatData->pending ?? 0);
 
-                $totalReceived += $received;
-                $totalForwarded += $forwarded;
-                $totalVrs += $vrs;
-                $totalDecisions += $decisions;
-                $totalSentSum += $totalSent;
-                $totalProcessedSum += $processed;
-                $totalPendingSum += $pending;
+            $totalReceived += $received;
+            $totalForwarded += $forwarded;
+            $totalVrs += $vrs;
+            $totalDecisions += $decisions;
+            $totalSentSum += $totalSent;
+            $totalProcessedSum += $processed;
+            $totalPendingSum += $pending;
 
-                $seatStats[] = [
-                    'seat_id' => $seat->seat_id,
-                    'seat_name' => $seat->seat_name,
-                    'occupant' => $seat->activeAssignment?->user?->name ?? 'Vacant',
-                    'total' => $totalCount,
-                    'received' => $received,
-                    'forwarded' => $forwarded,
-                    'vrs' => $vrs,
-                    'decisions' => $decisions,
-                    'total_sent' => $totalSent,
-                    'processed' => $processed,
-                    'pending' => $pending,
-                ];
-            }
+            $seatStats[] = [
+                'seat_id' => $seat->seat_id,
+                'seat_name' => $seat->seat_name,
+                'occupant' => $seat->activeAssignment?->user?->name ?? 'Vacant',
+                'total' => $totalCount,
+                'received' => $received,
+                'forwarded' => $forwarded,
+                'vrs' => $vrs,
+                'decisions' => $decisions,
+                'total_sent' => $totalSent,
+                'processed' => $processed,
+                'pending' => $pending,
+            ];
         }
 
         $summaryTotals = [
@@ -530,8 +563,7 @@ class PetitionController extends Controller
 
         // Handle Excel Export
         if ($request->input('export') === 'csv') {
-            if (!$user->canAccess('export_statistics') && 
-                !$user->canAccess('export statistics')) {
+            if (!$user->canAccess('export statistics')) {
                 abort(403, 'Unauthorized. Permission export_statistics required to export statistics.');
             }
             $periodSuffix = '';
@@ -542,18 +574,25 @@ class PetitionController extends Controller
             } elseif ($dateTo) {
                 $periodSuffix = "_to_{$dateTo}";
             }
-            $filename = "inward_seat_statistics{$periodSuffix}_" . now()->format('Ymd_His') . ".xlsx";
+            $sectionSuffix = match ($section) {
+                'cpsp' => '_cpsp',
+                't_section' => '_t_section',
+                default => '',
+            };
+            $filename = "inward_seat_statistics{$sectionSuffix}{$periodSuffix}_" . now()->format('Ymd_His') . ".xlsx";
             
-            $canViewProcessed = $user->canAccess('view_processed_statistics') || $user->canAccess('view processed statistics');
+            $canViewProcessed = $user->canAccess('view processed statistics');
 
-            return Excel::download(new InwardStatisticsExport($seatStats, $summaryTotals, $dateFrom, $dateTo, $canViewProcessed), $filename);
+            return Excel::download(new InwardStatisticsExport($seatStats, $summaryTotals, $dateFrom, $dateTo, $canViewProcessed, $section), $filename);
         }
 
         return view('inward.statistics', compact(
             'seatStats', 
             'dateFrom', 
             'dateTo', 
-            'summaryTotals'
+            'summaryTotals',
+            'section',
+            'canViewTSection'
         ));
     }
 
@@ -563,8 +602,7 @@ class PetitionController extends Controller
     public function inwardStatisticsExport(Request $request): StreamedResponse|View|\Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         $user = Auth::user();
-        if (!$user->canAccess('export_statistics') && 
-            !$user->canAccess('export statistics')) {
+        if (!$user->canAccess('export statistics')) {
             abort(403, 'Unauthorized. Permission export_statistics required to export statistics.');
         }
 

@@ -16,13 +16,15 @@ class TSectionPermissionRegistry
     public const MODULE_ICON = 'shield-alert';
 
     // Granular T-Section Permission Constants
-    public const ACCESS_DASHBOARD  = 'access t-section dashboard';
-    public const VIEW_PETITIONS    = 'view t-section petitions';
-    public const CREATE_PETITIONS  = 'create t-section petitions';
-    public const UPDATE_PETITIONS  = 'update t-section petitions';
-    public const DELETE_PETITIONS  = 'delete t-section petitions';
-    public const FORWARD_PETITIONS = 'forward t-section petitions';
-    public const EXPORT_PETITIONS  = 'export t-section petitions';
+    public const ACCESS_DASHBOARD      = 'access t-section dashboard';
+    public const VIEW_PETITIONS        = 'view t-section petitions';
+    public const CREATE_PETITIONS      = 'create t-section petitions';
+    public const UPDATE_PETITIONS      = 'update t-section petitions';
+    public const DELETE_PETITIONS      = 'delete t-section petitions';
+    public const FORWARD_PETITIONS     = 'forward t-section petitions';
+    public const EXPORT_PETITIONS      = 'export t-section petitions';
+    public const VIEW_DIAGNOSTICS     = 'view t-section diagnostics';
+    public const VIEW_PENDING_DETAILS = 'view t-section pending details';
 
     /**
      * Get all T-Section permission keys.
@@ -39,6 +41,8 @@ class TSectionPermissionRegistry
             self::DELETE_PETITIONS,
             self::FORWARD_PETITIONS,
             self::EXPORT_PETITIONS,
+            self::VIEW_DIAGNOSTICS,
+            self::VIEW_PENDING_DETAILS,
         ];
     }
 
@@ -113,6 +117,20 @@ class TSectionPermissionRegistry
                 'badge' => 'Export Clearance',
                 'badge_color' => 'purple',
             ],
+            self::VIEW_DIAGNOSTICS => [
+                'name' => self::VIEW_DIAGNOSTICS,
+                'label' => 'View T-Section Diagnostics',
+                'desc' => 'Access and view T-Section performance, diagnostic metrics, and seat reports',
+                'badge' => 'Diagnostics',
+                'badge_color' => 'indigo',
+            ],
+            self::VIEW_PENDING_DETAILS => [
+                'name' => self::VIEW_PENDING_DETAILS,
+                'label' => 'View T-Section Pending Details',
+                'desc' => 'Access and inspect pending petition statistics and file lists for T-Section',
+                'badge' => 'Audit',
+                'badge_color' => 'amber',
+            ],
         ];
     }
 
@@ -132,8 +150,8 @@ class TSectionPermissionRegistry
             'accent' => 'rose',
             'crud' => [],
             'special' => [
-                'T-Section Permissions' => [
-                    'desc' => '',
+                'Confidential Capabilities' => [
+                    'desc' => 'Confidential desk operations and intelligence controls',
                     'filter' => fn($p) => self::isTSectionPermission($p->name),
                 ],
             ],

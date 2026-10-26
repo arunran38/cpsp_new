@@ -71,8 +71,8 @@
             'accent' => 'rose',
             'crud' => [],
             'special' => [
-                'T-Section Permissions' => [
-                    'desc' => '',
+                'Confidential Capabilities' => [
+                    'desc' => 'Confidential desk operations and intelligence controls',
                     'filter' => fn($p) => \App\Services\TSectionPermissionRegistry::isTSectionPermission($p->name)
                 ]
             ]
@@ -107,10 +107,6 @@
                 'compliances' => ['name' => 'Compliances', 'desc' => 'Directives & compliance records', 'icon' => 'clipboard-check'],
             ],
             'special' => [
-                'Default Home Page' => [
-                    'desc' => 'Landing page on login',
-                    'filter' => fn($p) => str_contains(strtolower($p->name), 'default compliances home')
-                ]
             ]
         ],
         'analytics' => [
@@ -126,9 +122,9 @@
                     'desc' => 'Consolidated master reporting',
                     'filter' => fn($p) => str_contains(strtolower($p->name), 'master report')
                 ],
-                'Operational Statistics' => [
-                    'desc' => 'Inward metrics & data exports',
-                    'filter' => fn($p) => (str_contains(strtolower($p->name), 'stat') || str_contains(strtolower($p->name), 'export')) && !str_contains(strtolower($p->name), 'chart') && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p->name)
+                'Statistics, Diagnostics & Exports' => [
+                    'desc' => 'Operational statistics, seat diagnostics, and data exports',
+                    'filter' => fn($p) => (str_contains(strtolower($p->name), 'stat') || str_contains(strtolower($p->name), 'export') || str_contains(strtolower($p->name), 'diagnostic')) && !str_contains(strtolower($p->name), 'chart') && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p->name)
                 ],
                 'Visual Analytics Charts' => [
                     'desc' => 'Trends, nature, status & seat distribution charts',
@@ -138,16 +134,16 @@
         ],
         'system' => [
             'key' => 'system',
-            'title' => 'System Maintenance & Recovery',
-            'desc' => 'Seat diagnostics, health audits, and deleted record recovery',
+            'title' => 'Deleted Record Recovery',
+            'desc' => 'View, restore, and permanently remove deleted petition records',
             'icon' => 'activity',
             'gradient' => 'from-rose-500 to-orange-600 shadow-rose-500/25',
             'accent' => 'rose',
             'crud' => [],
             'special' => [
                 'Health & Recovery' => [
-                    'desc' => 'Diagnostic logs and trash recovery',
-                    'filter' => fn($p) => str_contains(strtolower($p->name), 'recycle') || str_contains(strtolower($p->name), 'diagnostic')
+                    'desc' => 'View, restore, or permanently delete soft-deleted petitions',
+                    'filter' => fn($p) => str_contains(strtolower($p->name), 'recycle') && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p->name)
                 ]
             ]
         ]
@@ -517,8 +513,13 @@
                                                            {{ $role->hasPermissionTo($perm->name) ? 'checked' : '' }}
                                                            @change="onCheckboxChange('{{ $subSlug }}', '{{ $modKey }}')"
                                                            class="perm-checkbox perm-mod-{{ $modKey }} perm-row-{{ $subSlug }} w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/30 cursor-pointer shrink-0">
-                                                    <span class="text-xs sm:text-sm font-bold text-slate-900 select-none leading-snug">
-                                                        {{ $perm->name }}
+                                                    <span class="select-none leading-snug">
+                                                        <span class="block text-xs sm:text-sm font-bold text-slate-900">
+                                                            {{ \App\Services\PermissionCatalog::label($perm->name) }}
+                                                        </span>
+                                                        <span class="mt-0.5 block text-[11px] leading-snug text-slate-600">
+                                                            {{ \App\Services\PermissionCatalog::description($perm->name) }}
+                                                        </span>
                                                     </span>
                                                 </label>
                                             @endforeach

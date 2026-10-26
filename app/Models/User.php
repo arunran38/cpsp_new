@@ -136,6 +136,8 @@ class User extends Authenticatable
         // MUST be explicitly granted to the active seat / role and NEVER bypassed unconditionally.
         $strictPermissions = array_merge([
             'view recent petitions',
+            'view seat diagnostics',
+            'inward statistics',
         ], \App\Services\TSectionPermissionRegistry::all());
 
         if (in_array($permission, $strictPermissions, true)) {
@@ -291,5 +293,21 @@ class User extends Authenticatable
         }
 
         return $this->canAccess(\App\Services\TSectionPermissionRegistry::VIEW_PETITIONS);
+    }
+
+    /**
+     * Check if user has clearance to access T-Section diagnostics and statistics.
+     */
+    public function canAccessTSectionDiagnostics(): bool
+    {
+        return $this->canAccess(\App\Services\TSectionPermissionRegistry::VIEW_DIAGNOSTICS);
+    }
+
+    /**
+     * Check if user has clearance to inspect T-Section pending petition details.
+     */
+    public function canAccessTSectionPending(): bool
+    {
+        return $this->canAccess(\App\Services\TSectionPermissionRegistry::VIEW_PENDING_DETAILS);
     }
 }

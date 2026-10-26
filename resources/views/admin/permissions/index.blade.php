@@ -3,80 +3,11 @@
 
 @section('content')
 @php
-    // 8 High-Level System Modules matching Roles Index / Edit
-    $modules = [
-        'users' => [
-            'key' => 'users',
-            'title' => 'User & Access',
-            'icon' => 'users',
-            'badge' => 'bg-blue-50 text-blue-700 border-blue-200',
-            'filter' => fn($p) => (str_contains($p, 'user') || str_contains($p, 'role') || str_contains($p, 'permission') || str_contains($p, 'dashboard')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
-        ],
-        'organization' => [
-            'key' => 'organization',
-            'title' => 'Organization',
-            'icon' => 'building-2',
-            'badge' => 'bg-cyan-50 text-cyan-700 border-cyan-200',
-            'filter' => fn($p) => str_contains($p, 'unit') || str_contains($p, 'department') || str_contains($p, 'designation') || (str_contains($p, 'seat') && !str_contains($p, 'diagnostic') && !str_contains($p, 'chart'))
-        ],
-        'petitions' => [
-            'key' => 'petitions',
-            'title' => 'Petitions',
-            'icon' => 'file-text',
-            'badge' => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-            'filter' => fn($p) => ((str_contains($p, 'petition') && !str_contains($p, 'inward') && !str_contains($p, 'chart')) || str_contains($p, 'link') || str_contains($p, 'duplicate')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
-        ],
-        't_section' => [
-            'key' => 't_section',
-            'title' => 'T-Section (Confidential)',
-            'icon' => 'shield-alert',
-            'badge' => 'bg-rose-50 text-rose-700 border-rose-200',
-            'filter' => fn($p) => \App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
-        ],
-        'inward' => [
-            'key' => 'inward',
-            'title' => 'Inward Desk',
-            'icon' => 'inbox',
-            'badge' => 'bg-teal-50 text-teal-700 border-teal-200',
-            'filter' => fn($p) => (str_contains($p, 'inward') && !str_contains($p, 'stat')) || str_contains($p, 'transfer')
-        ],
-        'compliances' => [
-            'key' => 'compliances',
-            'title' => 'Petition Compliances',
-            'icon' => 'clipboard-check',
-            'badge' => 'bg-indigo-50 text-indigo-700 border-indigo-200',
-            'filter' => fn($p) => str_contains($p, 'compliance')
-        ],
-        'analytics' => [
-            'key' => 'analytics',
-            'title' => 'Reports & Charts',
-            'icon' => 'pie-chart',
-            'badge' => 'bg-purple-50 text-purple-700 border-purple-200',
-            'filter' => fn($p) => (str_contains($p, 'stat') || str_contains($p, 'chart') || str_contains($p, 'export') || str_contains($p, 'master report')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
-        ],
-        'system' => [
-            'key' => 'system',
-            'title' => 'Maintenance',
-            'icon' => 'activity',
-            'badge' => 'bg-rose-50 text-rose-700 border-rose-200',
-            'filter' => fn($p) => str_contains($p, 'diagnostic') || str_contains($p, 'recycle')
-        ]
-    ];
+    $modules = \App\Services\PermissionCatalog::categories();
 
-    // Helper to identify module for a permission
     $getModuleInfo = function($permName) use ($modules) {
-        $p = strtolower($permName);
-        foreach ($modules as $k => $m) {
-            if ($m['filter']($p)) {
-                return $m;
-            }
-        }
-        return [
-            'key' => 'general',
-            'title' => 'System General',
-            'icon' => 'key',
-            'badge' => 'bg-slate-50 text-slate-700 border-slate-200'
-        ];
+        $key = \App\Services\PermissionCatalog::categoryFor($permName);
+        return ['key' => $key] + $modules[$key];
     };
 
     // Core protected permissions
@@ -266,8 +197,8 @@
                             $rolesString = implode(' ', $roleNames);
                             $isProtected = in_array(strtolower($permission->name), $protectedPerms);
                             
-                            // Human formatted title
-                            $formattedTitle = ucwords($permission->name);
+                            $formattedTitle = \App\Services\PermissionCatalog::label($permission->name);
+                            $permissionDescription = \App\Services\PermissionCatalog::description($permission->name);
                         @endphp
 
                         <tr class="hover:bg-indigo-50/20 transition-colors"
@@ -285,6 +216,7 @@
                                 <span class="font-bold text-slate-900 text-sm leading-snug">
                                     {{ $formattedTitle }}
                                 </span>
+                                <p class="mt-1 text-xs leading-snug text-slate-600">{{ $permissionDescription }}</p>
                             </td>
 
                             <!-- Module Badge -->

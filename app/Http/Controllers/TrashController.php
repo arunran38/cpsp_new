@@ -30,7 +30,7 @@ class TrashController extends Controller
      */
     public function restore(int $id): RedirectResponse
     {
-        if (!Auth::user()->canAccess('restore recycle bin') && !Auth::user()->canAccess('update recycle bin')) {
+        if (!Auth::user()->canAccess('restore recycle bin')) {
             abort(403, 'Unauthorized to restore petitions.');
         }
 
