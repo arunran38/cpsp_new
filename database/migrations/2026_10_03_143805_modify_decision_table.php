@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('decisions', function (Blueprint $table) {
-            //
+            $table->string('directorate_order_number')->nullable()->after('decision_remarks');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('decisions', function (Blueprint $table) {
-            //
+            $table->dropColumn('directorate_order_number');
         });
     }
 };

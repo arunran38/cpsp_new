@@ -23,7 +23,8 @@
                             {{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}</span>
                         @if(strtolower($petition->mode_of_petition_received) === 'unit' && $petition->date_of_petition_received_at_unit)
                             <span class="inline-block w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
-                            <span>Received at Unit: <span class="font-bold text-slate-800">{{ \Carbon\Carbon::parse($petition->date_of_petition_received_at_unit)->format('d M, Y') }}</span></span>
+                            <span>Received at Unit: <span
+                                    class="font-bold text-slate-800">{{ \Carbon\Carbon::parse($petition->date_of_petition_received_at_unit)->format('d M, Y') }}</span></span>
                         @endif
                         @if(strtolower($petition->mode_of_petition_received) === 'unit' && $petition->unit)
                             <span class="inline-block w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
@@ -76,7 +77,8 @@
                                 <div
                                     class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-amber-50 border-amber-200 text-amber-800">
                                     <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i>
-                                    <span>Status: Transferred to {{ $petition->seat->seat_name ?? 'CPSP Seat' }} (Pending Updation)</span>
+                                    <span>Status: Transferred to {{ $petition->seat->seat_name ?? 'CPSP Seat' }} (Pending
+                                        Updation)</span>
                                 </div>
                             @endif
 
@@ -250,14 +252,17 @@
                         </div>
                         @if(strtolower($petition->mode_of_petition_received) === 'unit')
                             <div>
-                                <span class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Concerned Unit Name</span>
+                                <span
+                                    class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Concerned
+                                    Unit Name</span>
                                 <span class="font-semibold text-gray-900 flex items-center gap-1.5">
                                     <i data-lucide="building-2" class="w-4 h-4 text-indigo-600 shrink-0"></i>
                                     <span>{{ $petition->unit ? $petition->unit->unit_name . ($petition->unit->unit_code ? ' (' . $petition->unit->unit_code . ')' : '') : 'N/A' }}</span>
                                 </span>
                             </div>
                             <div>
-                                <span class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Date of Petition Received at Unit</span>
+                                <span class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Date of
+                                    Petition Received at Unit</span>
                                 <span class="font-semibold text-gray-900 flex items-center gap-1.5">
                                     <i data-lucide="calendar" class="w-4 h-4 text-indigo-600 shrink-0"></i>
                                     <span>{{ $petition->date_of_petition_received_at_unit ? \Carbon\Carbon::parse($petition->date_of_petition_received_at_unit)->format('d M, Y') : 'N/A' }}</span>
@@ -289,7 +294,7 @@
                         <div class="space-y-4">
                             @php
                                 $targetPetition = $petition->originalPetition ?? $petition;
-                                $complainants = $targetPetition->addresses->where('person_type', 'Complainant')->groupBy(function($addr) {
+                                $complainants = $targetPetition->addresses->where('person_type', 'Complainant')->groupBy(function ($addr) {
                                     if (in_array($addr->person_name, ['Unknown', 'Anonymous / Unknown', 'Unknown Suspect'])) {
                                         return $addr->person_name . '_' . ($addr->phone ?? '') . '_' . ($addr->email ?? '');
                                     }
@@ -299,7 +304,7 @@
 
                             @forelse($complainants as $groupKey => $addresses)
                                 @php 
-                                    $first = $addresses->first(); 
+                                                                    $first = $addresses->first();
                                     $rawName = $first->person_name;
                                     $displayName = in_array($rawName, ['Unknown', 'Anonymous / Unknown']) ? 'Anonymous / Unknown' : $rawName;
                                 @endphp
@@ -347,7 +352,7 @@
                         </h3>
                         <div class="space-y-4">
                             @php
-                                $accused = $targetPetition->addresses->where('person_type', 'Accused')->groupBy(function($addr) {
+                                $accused = $targetPetition->addresses->where('person_type', 'Accused')->groupBy(function ($addr) {
                                     if (in_array($addr->person_name, ['Unknown', 'Unknown Suspect', 'Anonymous / Unknown'])) {
                                         return $addr->person_name . '_' . ($addr->department_id ?? '') . '_' . ($addr->designation_id ?? '') . '_' . ($addr->phone ?? '') . '_' . ($addr->pen_number ?? '') . '_' . ($addr->entity_type ?? '');
                                     }
@@ -357,7 +362,7 @@
 
                             @forelse($accused as $groupKey => $addresses)
                                 @php 
-                                    $first = $addresses->first(); 
+                                                                    $first = $addresses->first();
                                     $rawName = $first->person_name;
                                     $displayName = in_array($rawName, ['Unknown', 'Unknown Suspect', 'Anonymous / Unknown']) ? 'Unknown Suspect' : $rawName;
                                 @endphp
@@ -909,7 +914,7 @@
                                         </div>
                                         @if($petition->decision->processedBy)
                                             <div>
-                                                <span class="text-gray-600 font-semibold">Decision Taken By:</span>
+                                                <span class="text-gray-600 font-semibold">Processed By:</span>
                                                 <span
                                                     class="text-rose-700 font-bold uppercase text-[11px] block mt-1">{{ $petition->decision->processedBy->name }}</span>
                                             </div>
@@ -1035,7 +1040,8 @@
                                     <td class="px-6 py-4 text-slate-600">
                                         {{ $petition->originalPetition->mode_of_petition_received === 'others' ? $petition->originalPetition->mode_of_petition_received_others : $petition->originalPetition->mode_of_petition_received }}
                                         @if(strtolower($petition->originalPetition->mode_of_petition_received) === 'unit' && $petition->originalPetition->unit)
-                                            <span class="block text-xs text-indigo-600 font-medium">({{ $petition->originalPetition->unit->unit_name }})</span>
+                                            <span
+                                                class="block text-xs text-indigo-600 font-medium">({{ $petition->originalPetition->unit->unit_name }})</span>
                                         @endif
                                     </td>
                                     <td class="px-6 py-4">
@@ -1050,10 +1056,10 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 text-right">
-                                        <form action="{{ route('petitions.unlinkDuplicate', $petition->hashid) }}"
-                                            method="POST" class="inline-block unlink-form"
+                                        <form action="{{ route('petitions.unlinkDuplicate', $petition->hashid) }}" method="POST"
+                                            class="inline-block unlink-form"
                                             data-message="Are you sure you want to unlink this petition?">
-                                             @csrf
+                                            @csrf
                                             <button type="submit"
                                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 font-medium text-xs rounded-md transition-colors border border-rose-100">
                                                 <i data-lucide="unlink" class="w-3.5 h-3.5"></i> Unlink
@@ -1074,7 +1080,8 @@
                                             </a>
                                         </td>
                                         <td class="px-6 py-4 text-slate-600">
-                                            {{ \Carbon\Carbon::parse($dup->date_of_petition_received)->format('d M, Y') }}</td>
+                                            {{ \Carbon\Carbon::parse($dup->date_of_petition_received)->format('d M, Y') }}
+                                        </td>
                                         <td class="px-6 py-4 text-slate-600">
                                             {{ $dup->mode_of_petition_received === 'others' ? $dup->mode_of_petition_received_others : $dup->mode_of_petition_received }}
                                             @if(strtolower($dup->mode_of_petition_received) === 'unit' && $dup->unit)
@@ -1127,53 +1134,53 @@
                 class="bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-lg rounded-3xl overflow-visible flex flex-col relative">
 
                 <div x-data="{
-                            searchQuery: '',
-                            results: [],
-                            isOpen: false,
-                            selectedPetition: '',
-                            isLoading: false,
-                            errorMessage: '',
-                            fetchResults() {
-                                if (this.searchQuery.length < 2) {
+                                searchQuery: '',
+                                results: [],
+                                isOpen: false,
+                                selectedPetition: '',
+                                isLoading: false,
+                                errorMessage: '',
+                                fetchResults() {
+                                    if (this.searchQuery.length < 2) {
+                                        this.results = [];
+                                        this.isOpen = false;
+                                        return;
+                                    }
+
+                                    this.isLoading = true;
+                                    this.errorMessage = '';
+
+                                    fetch(`{{ route('petitions.searchDuplicates') }}?q=${encodeURIComponent(this.searchQuery)}&exclude={{ $petition->hashid }}`)
+                                        .then(response => {
+                                            if (!response.ok) throw new Error('Network error');
+                                            return response.json();
+                                        })
+                                        .then(data => {
+                                            this.results = data || [];
+                                            this.isOpen = true;
+                                        })
+                                        .catch(error => {
+                                            console.error('Error fetching duplicates:', error);
+                                            this.errorMessage = 'An error occurred while searching.';
+                                            this.results = [];
+                                            this.isOpen = true;
+                                        })
+                                        .finally(() => {
+                                            this.isLoading = false;
+                                        });
+                                },
+                                selectResult(result) {
+                                    this.selectedPetition = result.id;
+                                    this.searchQuery = result.text;
+                                    this.isOpen = false;
+                                },
+                                resetSearch() {
+                                    this.selectedPetition = '';
+                                    this.searchQuery = '';
                                     this.results = [];
                                     this.isOpen = false;
-                                    return;
                                 }
-
-                                this.isLoading = true;
-                                this.errorMessage = '';
-
-                                fetch(`{{ route('petitions.searchDuplicates') }}?q=${encodeURIComponent(this.searchQuery)}&exclude={{ $petition->hashid }}`)
-                                    .then(response => {
-                                        if (!response.ok) throw new Error('Network error');
-                                        return response.json();
-                                    })
-                                    .then(data => {
-                                        this.results = data || [];
-                                        this.isOpen = true;
-                                    })
-                                    .catch(error => {
-                                        console.error('Error fetching duplicates:', error);
-                                        this.errorMessage = 'An error occurred while searching.';
-                                        this.results = [];
-                                        this.isOpen = true;
-                                    })
-                                    .finally(() => {
-                                        this.isLoading = false;
-                                    });
-                            },
-                            selectResult(result) {
-                                this.selectedPetition = result.id;
-                                this.searchQuery = result.text;
-                                this.isOpen = false;
-                            },
-                            resetSearch() {
-                                this.selectedPetition = '';
-                                this.searchQuery = '';
-                                this.results = [];
-                                this.isOpen = false;
-                            }
-                        }" @click.away="isOpen = false" class="relative w-full text-left">
+                            }" @click.away="isOpen = false" class="relative w-full text-left">
                     <form action="{{ route('petitions.linkDuplicate', $petition->hashid) }}" method="POST">
                         @csrf
 
