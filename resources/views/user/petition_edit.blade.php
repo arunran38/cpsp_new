@@ -187,11 +187,13 @@
                         <div class="lg:col-span-1">
                             <x-select label="Nature of Petition *" name="nature_of_petition"
                                 x-model="petitionDetails.nature" required
+                                :selected="old('nature_of_petition', $petition->nature_of_petition ?? '')"
                                 :options="['' => 'Select Category', 'Amassment of Wealth' => 'Amassment of Wealth', 'Bribery' => 'Bribery', 'Misuse of authority' => 'Misuse of authority', 'Fraud / financial irregularities' => 'Fraud / financial irregularities', 'Serious negligence' => 'Serious negligence', 'others' => 'Others']" />
                         </div>
                         <div class="lg:col-span-1">
                             <x-select label="Mode of Petition *" name="mode_of_petition_received"
                                 x-model="petitionDetails.mode" required
+                                :selected="old('mode_of_petition_received', $petition->mode_of_petition_received ?? '')"
                                 :options="['' => 'Select Origin', 'Email' => 'Email', 'Whatsapp' => 'Whatsapp', 'Tollfree' => 'Tollfree', 'Direct' => 'Direct', 'Unit' => 'Unit', 'Tapal' => 'Tapal', 'iaps' => 'iAPS', 'others' => 'Others']" />
                         </div>
                     </div>
@@ -880,13 +882,13 @@
                 petitionDetails: {
                     receipt_no: {!! json_encode($petition->receipt_no) !!},
                     date: {!! json_encode($petition->date_of_petition_received) !!},
-                    nature: {!! json_encode($petition->nature_of_petition) !!},
-                    mode: {!! json_encode($petition->mode_of_petition_received) !!},
-                    mode_others: {!! json_encode($petition->mode_of_petition_received_others ?? '') !!},
+                    nature: {!! json_encode(old('nature_of_petition', $petition->nature_of_petition ?? '')) !!},
+                    mode: {!! json_encode(old('mode_of_petition_received', $petition->mode_of_petition_received ?? '')) !!},
+                    mode_others: {!! json_encode(old('mode_others', $petition->mode_of_petition_received_others ?? '')) !!},
                     unit_id: {!! json_encode(old('unit_id', $petition->unit_id ? (string)$petition->unit_id : '')) !!},
                     date_of_petition_received_at_unit: {!! json_encode(old('date_of_petition_received_at_unit', $petition->date_of_petition_received_at_unit ? $petition->date_of_petition_received_at_unit->format('Y-m-d') : '')) !!},
-                    description: {!! json_encode($petition->description ?? '') !!},
-                    proposed_action: {!! json_encode($petition->proposed_action ?? '') !!}
+                    description: {!! json_encode(old('description', $petition->description ?? '')) !!},
+                    proposed_action: {!! json_encode(old('proposed_action', $petition->proposed_action ?? '')) !!}
                 },
                 complainants: {!! json_encode($complainants) !!}.length > 0 ? {!! json_encode($complainants) !!} : [{ id: Date.now(), name: '', phone: '', email: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
                 accused: {!! json_encode($accused) !!}.length > 0 ? {!! json_encode($accused) !!} : [{ id: Date.now() + 1, entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
@@ -901,12 +903,20 @@
 
                 init() {
                     this.$watch('petitionDetails.mode', (newMode) => {
+                        if (newMode && String(newMode).trim() !== '') {
+                            delete this.formErrors['mode_of_petition_received'];
+                        }
                         if (!newMode || newMode.toLowerCase() !== 'unit') {
                             delete this.formErrors['unit_id'];
                             delete this.formErrors['date_of_petition_received_at_unit'];
                         }
                         if (newMode !== 'others') {
                             delete this.formErrors['mode_others'];
+                        }
+                    });
+                    this.$watch('petitionDetails.nature', (newNature) => {
+                        if (newNature && String(newNature).trim() !== '') {
+                            delete this.formErrors['nature_of_petition'];
                         }
                     });
                     this.$watch('accused', () => {
@@ -1102,7 +1112,13 @@
                                 } else if (!el.checkValidity()) {
                                     isValid = false;
                                     if (el.validity.valueMissing) {
-                                        this.formErrors[el.name] = 'This field is required.';
+                                        if (el.name === 'nature_of_petition') {
+                                            this.formErrors[el.name] = 'Nature of Petition is required.';
+                                        } else if (el.name === 'mode_of_petition_received') {
+                                            this.formErrors[el.name] = 'Mode of Petition is required.';
+                                        } else {
+                                            this.formErrors[el.name] = 'This field is required.';
+                                        }
                                     } else if (el.validity.rangeOverflow) {
                                         this.formErrors[el.name] = 'Date cannot be in the future.';
                                     } else if (el.validity.patternMismatch) {
@@ -1113,7 +1129,7 @@
                                         this.formErrors[el.name] = el.validationMessage;
                                     }
                                 } else {
-                                    this.formErrors[el.name] = '';
+                                    delete this.formErrors[el.name];
                                 }
                             }
                         }
@@ -1122,17 +1138,19 @@
                     // Explicit check for step 1 required fields in Alpine model
                     if (step === 1) {
                         const step1Required = [
-                            { key: 'receipt_no', name: 'receipt_no' },
-                            { key: 'date', name: 'date_of_petition_received' },
-                            { key: 'nature', name: 'nature_of_petition' },
-                            { key: 'mode', name: 'mode_of_petition_received' },
-                            { key: 'description', name: 'description' }
+                            { key: 'receipt_no', name: 'receipt_no', message: 'This field is required.' },
+                            { key: 'date', name: 'date_of_petition_received', message: 'This field is required.' },
+                            { key: 'nature', name: 'nature_of_petition', message: 'Nature of Petition is required.' },
+                            { key: 'mode', name: 'mode_of_petition_received', message: 'Mode of Petition is required.' },
+                            { key: 'description', name: 'description', message: 'This field is required.' }
                         ];
                         step1Required.forEach(f => {
                             const val = this.petitionDetails[f.key];
                             if (!val || String(val).trim() === '') {
-                                this.formErrors[f.name] = 'This field is required.';
+                                this.formErrors[f.name] = f.message;
                                 isValid = false;
+                            } else if (this.formErrors[f.name] === f.message) {
+                                delete this.formErrors[f.name];
                             }
                         });
                         if (this.petitionDetails.mode === 'others') {
@@ -1243,6 +1261,23 @@
                         return;
                     }
 
+                    if (fieldName === 'nature_of_petition') {
+                        if (!fieldValue) {
+                            this.formErrors[fieldName] = 'Nature of Petition is required.';
+                        } else {
+                            delete this.formErrors[fieldName];
+                        }
+                        return;
+                    }
+                    if (fieldName === 'mode_of_petition_received') {
+                        if (!fieldValue) {
+                            this.formErrors[fieldName] = 'Mode of Petition is required.';
+                        } else {
+                            delete this.formErrors[fieldName];
+                        }
+                        return;
+                    }
+
                     if (fieldName === 'date_of_petition_received' || fieldName === 'date_of_petition_received_at_unit') {
                         if (!fieldValue) {
                             this.formErrors[fieldName] = 'This field is required.';
@@ -1307,12 +1342,24 @@
                             }
                         }
                     } else {
+                        if (fieldName === 'nature_of_petition' || fieldName === 'mode_of_petition_received') {
+                            if (fieldValue) {
+                                delete this.formErrors[fieldName];
+                            }
+                            return;
+                        }
                         if (fieldValue || !el.hasAttribute('required')) {
-                            this.formErrors[fieldName] = '';
+                            delete this.formErrors[fieldName];
                         }
                     }
                 },
                 setStep(target) {
+                    // Prevent moving forward if Step 1 is invalid
+                    if (target > 1 && !this.validateStep(1)) {
+                        this.step = 1;
+                        this.scrollToTop();
+                        return;
+                    }
                     if (target < this.step || this.validateStep(this.step)) {
                         if (target >= 1 && target <= 4) {
                             this.step = target;

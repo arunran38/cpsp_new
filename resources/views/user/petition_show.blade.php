@@ -304,7 +304,7 @@
 
                             @forelse($complainants as $groupKey => $addresses)
                                 @php 
-                                                                    $first = $addresses->first();
+                                                                                                    $first = $addresses->first();
                                     $rawName = $first->person_name;
                                     $displayName = in_array($rawName, ['Unknown', 'Anonymous / Unknown']) ? 'Anonymous / Unknown' : $rawName;
                                 @endphp
@@ -362,7 +362,7 @@
 
                             @forelse($accused as $groupKey => $addresses)
                                 @php 
-                                                                    $first = $addresses->first();
+                                                                                                    $first = $addresses->first();
                                     $rawName = $first->person_name;
                                     $displayName = in_array($rawName, ['Unknown', 'Unknown Suspect', 'Anonymous / Unknown']) ? 'Unknown Suspect' : $rawName;
                                 @endphp
@@ -527,17 +527,16 @@
                                     <div class="relative flex items-center">
                                         <select name="action" id="fwd_action_select"
                                             class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
-                                            style="background-image: none !important;" required
-                                            onchange="
-                                                document.getElementById('unit-select-div').style.display = this.value === 'Forward_To_Unit' ? 'block' : 'none';
-                                                document.getElementById('final-doc-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Sent_to_SPC') ? 'block' : 'none';
-                                                document.getElementById('fwd_order_number').required = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Sent_to_SPC');
-                                                document.getElementById('govt-rec-div-fwd').style.display = this.value === 'Sent_to_Govt' ? 'block' : 'none';
-                                                if (this.value !== 'Sent_to_Govt') {
-                                                    document.getElementById('fwd_govt_rec_type').value = '';
-                                                    document.getElementById('fwd-govt-rec-error').style.display = 'none';
-                                                }
-                                            ">
+                                            style="background-image: none !important;" required onchange="
+                                                        document.getElementById('unit-select-div').style.display = this.value === 'Forward_To_Unit' ? 'block' : 'none';
+                                                        document.getElementById('final-doc-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Sent_to_SPC') ? 'block' : 'none';
+                                                        document.getElementById('fwd_order_number').required = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Sent_to_SPC');
+                                                        document.getElementById('govt-rec-div-fwd').style.display = this.value === 'Sent_to_Govt' ? 'block' : 'none';
+                                                        if (this.value !== 'Sent_to_Govt') {
+                                                            document.getElementById('fwd_govt_rec_type').value = '';
+                                                            document.getElementById('fwd-govt-rec-error').style.display = 'none';
+                                                        }
+                                                    ">
                                             <option value="">Select Action...</option>
                                             <option value="Forward_To_Unit">Forward to Unit</option>
                                             <option value="Sent_to_Govt">Send to Govt (Decision)</option>
@@ -554,7 +553,8 @@
                                 </div>
 
                                 <div id="govt-rec-div-fwd" style="display: none;">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Recommendation Type <span class="text-red-500">*</span></label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Recommendation Type <span
+                                            class="text-red-500">*</span></label>
                                     <div class="relative flex items-center">
                                         <select name="govt_recommendation_type" id="fwd_govt_rec_type"
                                             onchange="if(this.value) document.getElementById('fwd-govt-rec-error').style.display = 'none';"
@@ -572,7 +572,8 @@
                                             <path d="m6 9 6 6 6-6" />
                                         </svg>
                                     </div>
-                                    <p id="fwd-govt-rec-error" class="text-xs font-semibold text-rose-600 mt-1" style="display: none;">Recommendation Type is required.</p>
+                                    <p id="fwd-govt-rec-error" class="text-xs font-semibold text-rose-600 mt-1"
+                                        style="display: none;">Recommendation Type is required.</p>
                                 </div>
 
                                 <div>
@@ -871,14 +872,13 @@
                                         <div class="relative flex items-center">
                                             <select name="final_decision" id="final_decision_select"
                                                 class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 appearance-none pr-10 py-2 text-sm text-gray-900"
-                                                style="background-image: none !important;" required
-                                                onchange="
-                                                    document.getElementById('final-govt-rec-div').style.display = this.value === 'Sent to Govt' ? 'block' : 'none';
-                                                    if (this.value !== 'Sent to Govt') {
-                                                        document.getElementById('final_govt_rec_type').value = '';
-                                                        document.getElementById('final-govt-rec-error').style.display = 'none';
-                                                    }
-                                                ">
+                                                style="background-image: none !important;" required onchange="
+                                                            document.getElementById('final-govt-rec-div').style.display = this.value === 'Sent to Govt' ? 'block' : 'none';
+                                                            if (this.value !== 'Sent to Govt') {
+                                                                document.getElementById('final_govt_rec_type').value = '';
+                                                                document.getElementById('final-govt-rec-error').style.display = 'none';
+                                                            }
+                                                        ">
                                                 <option value="">Select...</option>
                                                 <option value="VC">Vigilance Case (VC)</option>
                                                 <option value="VE">Vigilance Enquiry (VE)</option>
@@ -901,7 +901,8 @@
                                     </div>
 
                                     <div id="final-govt-rec-div" style="display: none;">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Recommendation Type <span class="text-red-500">*</span></label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Recommendation Type <span
+                                                class="text-red-500">*</span></label>
                                         <div class="relative flex items-center">
                                             <select name="govt_recommendation_type" id="final_govt_rec_type"
                                                 onchange="if(this.value) document.getElementById('final-govt-rec-error').style.display = 'none';"
@@ -919,7 +920,8 @@
                                                 <path d="m6 9 6 6 6-6" />
                                             </svg>
                                         </div>
-                                        <p id="final-govt-rec-error" class="text-xs font-semibold text-rose-600 mt-1" style="display: none;">Recommendation Type is required.</p>
+                                        <p id="final-govt-rec-error" class="text-xs font-semibold text-rose-600 mt-1"
+                                            style="display: none;">Recommendation Type is required.</p>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Decision Date</label>
@@ -969,7 +971,7 @@
                                         </div>
                                         @if($petition->decision->govt_recommendation_type)
                                             <div>
-                                                <span class="text-gray-600 font-semibold">Recommendation Type:</span>
+                                                <span class="text-gray-600 font-semibold">Recommendation :</span>
                                                 <span
                                                     class="text-rose-900 font-bold block mt-1">{{ $petition->decision->govt_recommendation_type }}</span>
                                             </div>
@@ -1206,53 +1208,53 @@
                 class="bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-lg rounded-3xl overflow-visible flex flex-col relative">
 
                 <div x-data="{
-                                searchQuery: '',
-                                results: [],
-                                isOpen: false,
-                                selectedPetition: '',
-                                isLoading: false,
-                                errorMessage: '',
-                                fetchResults() {
-                                    if (this.searchQuery.length < 2) {
+                                    searchQuery: '',
+                                    results: [],
+                                    isOpen: false,
+                                    selectedPetition: '',
+                                    isLoading: false,
+                                    errorMessage: '',
+                                    fetchResults() {
+                                        if (this.searchQuery.length < 2) {
+                                            this.results = [];
+                                            this.isOpen = false;
+                                            return;
+                                        }
+
+                                        this.isLoading = true;
+                                        this.errorMessage = '';
+
+                                        fetch(`{{ route('petitions.searchDuplicates') }}?q=${encodeURIComponent(this.searchQuery)}&exclude={{ $petition->hashid }}`)
+                                            .then(response => {
+                                                if (!response.ok) throw new Error('Network error');
+                                                return response.json();
+                                            })
+                                            .then(data => {
+                                                this.results = data || [];
+                                                this.isOpen = true;
+                                            })
+                                            .catch(error => {
+                                                console.error('Error fetching duplicates:', error);
+                                                this.errorMessage = 'An error occurred while searching.';
+                                                this.results = [];
+                                                this.isOpen = true;
+                                            })
+                                            .finally(() => {
+                                                this.isLoading = false;
+                                            });
+                                    },
+                                    selectResult(result) {
+                                        this.selectedPetition = result.id;
+                                        this.searchQuery = result.text;
+                                        this.isOpen = false;
+                                    },
+                                    resetSearch() {
+                                        this.selectedPetition = '';
+                                        this.searchQuery = '';
                                         this.results = [];
                                         this.isOpen = false;
-                                        return;
                                     }
-
-                                    this.isLoading = true;
-                                    this.errorMessage = '';
-
-                                    fetch(`{{ route('petitions.searchDuplicates') }}?q=${encodeURIComponent(this.searchQuery)}&exclude={{ $petition->hashid }}`)
-                                        .then(response => {
-                                            if (!response.ok) throw new Error('Network error');
-                                            return response.json();
-                                        })
-                                        .then(data => {
-                                            this.results = data || [];
-                                            this.isOpen = true;
-                                        })
-                                        .catch(error => {
-                                            console.error('Error fetching duplicates:', error);
-                                            this.errorMessage = 'An error occurred while searching.';
-                                            this.results = [];
-                                            this.isOpen = true;
-                                        })
-                                        .finally(() => {
-                                            this.isLoading = false;
-                                        });
-                                },
-                                selectResult(result) {
-                                    this.selectedPetition = result.id;
-                                    this.searchQuery = result.text;
-                                    this.isOpen = false;
-                                },
-                                resetSearch() {
-                                    this.selectedPetition = '';
-                                    this.searchQuery = '';
-                                    this.results = [];
-                                    this.isOpen = false;
-                                }
-                            }" @click.away="isOpen = false" class="relative w-full text-left">
+                                }" @click.away="isOpen = false" class="relative w-full text-left">
                     <form action="{{ route('petitions.linkDuplicate', $petition->hashid) }}" method="POST">
                         @csrf
 

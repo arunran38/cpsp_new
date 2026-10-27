@@ -234,7 +234,7 @@
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
                         <span>New Registration</span>
                     </a>
-                @elseif($user->canAccess('create petitions') || $user->canAccess('create inward petitions') || $user->canAccess('inward form') || $user->canAccess(\App\Services\TSectionPermissionRegistry::CREATE_PETITIONS))
+                @elseif($user->canAccess('create petitions') || $user->canAccess('create inward petitions') || $user->canAccess('inward form'))
                     <a href="{{ route('petitions.create') }}"
                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold text-xs shadow-lg shadow-teal-500/20 hover:scale-105 transition-all">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>

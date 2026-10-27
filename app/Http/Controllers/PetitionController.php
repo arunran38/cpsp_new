@@ -861,7 +861,7 @@ class PetitionController extends Controller
         $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
 
-        if ($petition->isTSection() && !Auth::user()->canAccess(TSectionPermissionRegistry::DELETE_PETITIONS)) {
+        if ($petition->isTSection() && (!Auth::user()->canAccess('delete petitions') || !Auth::user()->canAccessTSection())) {
             return redirect()->route('petitions.index', ['tab' => 'all'])->with('error', 'T-Section confidential petitions cannot be deleted.');
         }
 

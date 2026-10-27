@@ -281,7 +281,7 @@ class User extends Authenticatable
 
     /**
      * Check if user has clearance to access T-Section data.
-     * Strictly governed by RBAC: requires occupying a T-Section seat or holding 'view t-section petitions'.
+     * Strictly governed by RBAC: requires occupying a T-Section seat, holding a T-Section role, or having 'access t-section dashboard'.
      */
     public function canAccessTSection(): bool
     {
@@ -292,7 +292,11 @@ class User extends Authenticatable
             return true;
         }
 
-        return $this->canAccess(\App\Services\TSectionPermissionRegistry::VIEW_PETITIONS);
+        if ($this->isTSectionRole()) {
+            return true;
+        }
+
+        return $this->canAccess(\App\Services\TSectionPermissionRegistry::ACCESS_DASHBOARD);
     }
 
     /**

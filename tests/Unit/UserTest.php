@@ -16,15 +16,21 @@ class UserTest extends TestCase
 
     public function test_user_can_count_users(): void
     {
-        User::factory()->count(3)->create(['role' => 'user']);
-        User::factory()->create(['role' => 'admin']);
+        $roleUser = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
+        $roleAdmin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $users = User::factory()->count(3)->create();
+        foreach ($users as $u) {
+            $u->assignRole($roleUser);
+        }
+        $admin = User::factory()->create();
+        $admin->assignRole($roleAdmin);
 
         $this->assertEquals(3, User::countUser());
     }
 
     public function test_user_current_seat_user_logic(): void
     {
-        $user = User::factory()->create(['role' => 'user']);
+        $user = User::factory()->create();
         $seat1 = Seat::factory()->create(['seat_name' => 'Seat 1']);
         $seat2 = Seat::factory()->create(['seat_name' => 'Seat 2']);
 
@@ -45,6 +51,7 @@ class UserTest extends TestCase
 
         // Test switching via session
         session(['current_seat_id' => $seat2->seat_id]);
+        $user->flushCurrentSeatUserCache();
         $this->assertEquals($su2->seat_id, $user->currentSeatUser()->seat_id);
     }
 
@@ -60,7 +67,7 @@ class UserTest extends TestCase
         $this->assertFalse($superAdmin->canAccessTSectionPending());
 
         $role->givePermissionTo(Permission::create([
-            'name' => 'view t-section petitions',
+            'name' => 'access t-section dashboard',
             'guard_name' => 'web',
         ]));
         $this->assertFalse($superAdmin->canAccessTSectionDiagnostics());

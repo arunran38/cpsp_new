@@ -30,10 +30,6 @@ class PetitionPolicy
      */
     public function create(User $user): bool
     {
-        if ($user->isTSectionRole()) {
-            return $user->canAccess(TSectionPermissionRegistry::CREATE_PETITIONS) || $user->canAccess('create petitions');
-        }
-
         return $user->canAccess('create petitions');
     }
 
@@ -42,17 +38,6 @@ class PetitionPolicy
      */
     public function update(User $user, Petition $petition): bool
     {
-        if ($petition->isTSection()) {
-            if (!$user->canAccessTSection()) {
-                return false;
-            }
-            $currentSeat = $user->currentSeatUser()?->seat;
-            if ($currentSeat && $petition->seat_id === $currentSeat->seat_id) {
-                return $user->canAccess(TSectionPermissionRegistry::UPDATE_PETITIONS) || $user->canAccess('update petitions');
-            }
-            return $user->canAccess(TSectionPermissionRegistry::UPDATE_PETITIONS);
-        }
-
         if (!$user->canAccess('update petitions')) {
             return false;
         }
@@ -69,13 +54,13 @@ class PetitionPolicy
      */
     public function delete(User $user, Petition $petition): bool
     {
-        // T-Section secret files can NEVER be deleted without explicit 'delete t-section petitions' permission
-        if ($petition->isTSection()) {
-            return $user->canAccess(TSectionPermissionRegistry::DELETE_PETITIONS);
-        }
-
         if (!$user->canAccess('delete petitions')) {
             return false;
+        }
+
+        // T-Section confidential files require both delete permission, T-Section clearance, and admin access
+        if ($petition->isTSection()) {
+            return $user->canAccessTSection() && $user->canAccess('access admin dashboard');
         }
 
         if ($user->canAccess('access admin dashboard')) {
@@ -98,10 +83,13 @@ class PetitionPolicy
             if (!$user->canAccessTSection() && !$user->canAccessTSectionPending()) {
                 return false;
             }
+            if ($user->canAccess('access admin dashboard')) {
+                return true;
+            }
             if ($currentSeat && $currentSeat->isTSection()) {
                 return $petition->seat_id === $currentSeat->seat_id;
             }
-            return $user->canAccess(TSectionPermissionRegistry::VIEW_PETITIONS) || $user->canAccessTSectionPending();
+            return true;
         }
 
         // T-Section desk users cannot view non-T-Section general petitions
@@ -171,10 +159,7 @@ class PetitionPolicy
                 return false;
             }
             $currentSeat = $user->currentSeatUser()?->seat;
-            if ($currentSeat && $petition->seat_id === $currentSeat->seat_id) {
-                return $user->canAccess(TSectionPermissionRegistry::UPDATE_PETITIONS) || $user->canAccess('update petitions');
-            }
-            return $user->canAccess(TSectionPermissionRegistry::UPDATE_PETITIONS);
+            return $currentSeat && $petition->seat_id === $currentSeat->seat_id;
         }
 
         // Creator can modify
