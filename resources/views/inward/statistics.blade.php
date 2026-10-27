@@ -22,116 +22,120 @@
                         Detailed seat-wise data sheet of petitions registered in Inward.
                     </p>
                 </div>
-            </div>
-        </div>
-
-        <!-- Date Range Filter Form (Print Hidden) -->
-        <div
-            class="print:hidden bg-white py-4 px-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10 overflow-x-auto">
-            <form method="GET" action="{{ route('inward.statistics') }}"
-                class="flex items-end justify-between gap-4 w-full min-w-max">
-
-                <div class="flex items-end gap-3 flex-nowrap">
-                    <!-- Section Filter -->
-                    <div class="shrink-0 space-y-1.5">
-                        <label
-                            class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
-                            <i data-lucide="layers" class="w-4 h-4 text-teal-600"></i>
-                            Section
-                        </label>
-                        <div class="inline-flex items-center p-1 bg-slate-100/90 border border-slate-200 rounded-xl h-10">
-                            @if($canViewTSection ?? false)
-                                <label class="cursor-pointer">
-                                    <input type="radio" name="section" value="all" class="sr-only peer"
-                                        {{ ($section ?? 'all') === 'all' ? 'checked' : '' }}
-                                        onchange="this.form.submit()">
-                                    <span class="px-3.5 h-8 text-xs font-bold text-slate-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-slate-900">
-                                        All Sections
-                                    </span>
-                                </label>
-                            @endif
-
-                            <label class="cursor-pointer">
-                                <input type="radio" name="section" value="cpsp" class="sr-only peer"
-                                    {{ ($section ?? '') === 'cpsp' || !($canViewTSection ?? false) ? 'checked' : '' }}
-                                    onchange="this.form.submit()">
-                                <span class="px-3.5 h-8 text-xs font-bold text-slate-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-slate-900">
-                                    CPSP
-                                </span>
-                            </label>
-
-                            @if($canViewTSection ?? false)
-                                <label class="cursor-pointer">
-                                    <input type="radio" name="section" value="t_section" class="sr-only peer"
-                                        {{ ($section ?? '') === 't_section' ? 'checked' : '' }}
-                                        onchange="this.form.submit()">
-                                    <span class="px-3.5 h-8 text-xs font-bold text-slate-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-slate-900">
-                                        T-Section
-                                    </span>
-                                </label>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- Date From -->
-                    <div class="w-[155px] shrink-0">
-                        <label for="date_from"
-                            class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
-                            <i data-lucide="calendar" class="w-4 h-4 text-teal-600"></i>
-                            Date From
-                        </label>
-                        <div class="relative">
-                            <input type="date" name="date_from" id="date_from" value="{{ $dateFrom }}"
-                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                class="h-10 w-full px-3 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all">
-                        </div>
-                    </div>
-
-                    <!-- Date To -->
-                    <div class="w-[155px] shrink-0">
-                        <label for="date_to"
-                            class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
-                            <i data-lucide="calendar" class="w-4 h-4 text-teal-600"></i>
-                            Date To
-                        </label>
-                        <div class="relative">
-                            <input type="date" name="date_to" id="date_to" value="{{ $dateTo }}"
-                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                class="h-10 w-full px-3 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all">
-                        </div>
-                    </div>
-
-                    <!-- Filter Actions -->
-                    <div class="flex items-center gap-2 shrink-0">
-                        <button type="submit"
-                            class="h-10 px-4 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 outline-none focus:ring-4 focus:ring-slate-900/20 whitespace-nowrap">
-                            <i data-lucide="filter" class="w-4 h-4 text-teal-400"></i>
-                            Apply Filter
-                        </button>
-
-                        @if($dateFrom || $dateTo || (($section ?? 'all') !== 'all'))
-                            <a href="{{ route('inward.statistics') }}"
-                                class="h-10 px-3.5 text-sm font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 rounded-xl transition-all flex items-center gap-1.5 outline-none focus:ring-4 focus:ring-slate-100 whitespace-nowrap"
-                                title="Reset filters">
-                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                                Reset
-                            </a>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Export Actions -->
-                <div class="shrink-0 pl-2">
+                <div class="flex items-center gap-3 z-10">
                     @if(Auth::user()->canAccess('export statistics') || Auth::user()->canAccess('access admin dashboard'))
                         <a href="{{ route('inward.statistics.export', request()->query()) }}"
-                            class="h-10 px-4 text-sm font-bold text-teal-700 bg-teal-50 border border-teal-100 hover:bg-teal-100 hover:border-teal-200 rounded-xl transition-all flex items-center gap-2 outline-none focus:ring-4 focus:ring-teal-500/20 shadow-sm whitespace-nowrap">
+                            class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 rounded-xl hover:bg-emerald-500/20 transition-all font-semibold text-sm shadow-sm">
                             <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-                            Export Excel
+                            Excel Export
                         </a>
                     @endif
                 </div>
+            </div>
+        </div>
 
-            </form>
+        <!-- Advanced Filters -->
+        <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden print-hide mb-6">
+            <div class="p-4 sm:p-5 bg-slate-50/50">
+                <div class="flex items-center gap-2 mb-3">
+                    <i data-lucide="filter" class="w-4 h-4 text-teal-600"></i>
+                    <h3 class="text-xs font-bold text-blue-600 uppercase tracking-wider">Filter Statistics</h3>
+                </div>
+                <form method="GET" action="{{ route('inward.statistics') }}" class="w-full">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 xl:gap-4 items-end w-full">
+                        <!-- Section Filter (Segmented Control) -->
+                        <div class="sm:col-span-2 lg:col-span-4 flex flex-col justify-end">
+                            <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
+                                <i data-lucide="layers" class="h-3.5 w-3.5 text-blue-500"></i>
+                                <span>Section</span>
+                            </label>
+                            <div class="flex items-center p-1 bg-blue-50/50 border border-blue-200/80 rounded-xl w-full h-11 shadow-inner">
+                                @if($canViewTSection ?? false)
+                                    <label class="flex-1 cursor-pointer h-full">
+                                        <input type="radio" name="section" value="all" class="sr-only peer"
+                                            {{ ($section ?? 'all') === 'all' ? 'checked' : '' }}
+                                            onchange="this.form.submit()">
+                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-3">
+                                            All Sections
+                                        </span>
+                                    </label>
+                                @endif
+
+                                <label class="flex-1 cursor-pointer h-full">
+                                    <input type="radio" name="section" value="cpsp" class="sr-only peer"
+                                        {{ ($section ?? '') === 'cpsp' || !($canViewTSection ?? false) ? 'checked' : '' }}
+                                        onchange="this.form.submit()">
+                                    <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-3">
+                                        CPSP
+                                    </span>
+                                </label>
+
+                                @if($canViewTSection ?? false)
+                                    <label class="flex-1 cursor-pointer h-full">
+                                        <input type="radio" name="section" value="t_section" class="sr-only peer"
+                                            {{ ($section ?? '') === 't_section' ? 'checked' : '' }}
+                                            onchange="this.form.submit()">
+                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-3">
+                                            T-Section
+                                        </span>
+                                    </label>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Date From -->
+                        <div class="sm:col-span-1 lg:col-span-3 flex flex-col justify-end">
+                            <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
+                                <span>Date From</span>
+                            </label>
+                            <div class="relative w-full">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <i data-lucide="calendar" class="h-4 w-4 text-blue-400"></i>
+                                </div>
+                                <input type="date" name="date_from" id="date_from" value="{{ $dateFrom }}" placeholder="DD-MM-YYYY"
+                                    max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                    class="w-full pl-10 pr-3 h-11 bg-white border border-blue-200/80 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300"
+                                    style="color: #1e40af !important;">
+                            </div>
+                        </div>
+
+                        <!-- Date To -->
+                        <div class="sm:col-span-1 lg:col-span-3 flex flex-col justify-end">
+                            <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
+                                <span>Date To</span>
+                            </label>
+                            <div class="relative w-full">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <i data-lucide="calendar" class="h-4 w-4 text-blue-400"></i>
+                                </div>
+                                <input type="date" name="date_to" id="date_to" value="{{ $dateTo }}" placeholder="DD-MM-YYYY"
+                                    max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                    class="w-full pl-10 pr-3 h-11 bg-white border border-blue-200/80 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300"
+                                    style="color: #1e40af !important;">
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="sm:col-span-2 lg:col-span-2 flex flex-col justify-end">
+                            <div class="h-4 mb-1.5 hidden lg:block"></div>
+                            <div class="flex items-center gap-2 w-full h-11">
+                                <button type="submit"
+                                    class="flex-1 h-11 px-4 text-sm font-bold text-white bg-teal-600 border border-teal-600 rounded-xl hover:bg-teal-700 hover:border-teal-700 shadow-sm shadow-teal-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer">
+                                    <i data-lucide="filter" class="w-4 h-4 text-white"></i>
+                                    <span>Apply</span>
+                                </button>
+
+                                @if($dateFrom || $dateTo || (($section ?? 'all') !== 'all'))
+                                    <a href="{{ route('inward.statistics') }}" title="Clear Filters"
+                                        class="w-11 h-11 shrink-0 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-rose-600 shadow-sm flex items-center justify-center transition-all">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
 
 
