@@ -33,23 +33,43 @@
 
                 <div class="flex items-end gap-3 flex-nowrap">
                     <!-- Section Filter -->
-                    <div class="w-[280px] shrink-0">
-                        <label for="section"
-                            class="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
+                    <div class="shrink-0 space-y-1.5">
+                        <label
+                            class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap">
                             <i data-lucide="layers" class="w-4 h-4 text-teal-600"></i>
                             Section
                         </label>
-                        <div class="relative">
-                            <select name="section" id="section"
-                                class="h-10 w-full px-3.5 text-sm font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 outline-none transition-all cursor-pointer">
-                                @if($canViewTSection ?? false)
-                                    <option value="all" {{ ($section ?? 'all') === 'all' ? 'selected' : '' }}>All Sections (CPSP & T-Section)</option>
-                                @endif
-                                <option value="cpsp" {{ ($section ?? '') === 'cpsp' || !($canViewTSection ?? false) ? 'selected' : '' }}>CPSP Sections</option>
-                                @if($canViewTSection ?? false)
-                                    <option value="t_section" {{ ($section ?? '') === 't_section' ? 'selected' : '' }}>T-Section</option>
-                                @endif
-                            </select>
+                        <div class="inline-flex items-center p-1 bg-slate-100/90 border border-slate-200 rounded-xl h-10">
+                            @if($canViewTSection ?? false)
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="section" value="all" class="sr-only peer"
+                                        {{ ($section ?? 'all') === 'all' ? 'checked' : '' }}
+                                        onchange="this.form.submit()">
+                                    <span class="px-3.5 h-8 text-xs font-bold text-slate-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-slate-900">
+                                        All Sections
+                                    </span>
+                                </label>
+                            @endif
+
+                            <label class="cursor-pointer">
+                                <input type="radio" name="section" value="cpsp" class="sr-only peer"
+                                    {{ ($section ?? '') === 'cpsp' || !($canViewTSection ?? false) ? 'checked' : '' }}
+                                    onchange="this.form.submit()">
+                                <span class="px-3.5 h-8 text-xs font-bold text-slate-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-slate-900">
+                                    CPSP
+                                </span>
+                            </label>
+
+                            @if($canViewTSection ?? false)
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="section" value="t_section" class="sr-only peer"
+                                        {{ ($section ?? '') === 't_section' ? 'checked' : '' }}
+                                        onchange="this.form.submit()">
+                                    <span class="px-3.5 h-8 text-xs font-bold text-slate-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-slate-900">
+                                        T-Section
+                                    </span>
+                                </label>
+                            @endif
                         </div>
                     </div>
 

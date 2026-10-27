@@ -4,119 +4,140 @@
 @section('content')
 
     <div class="space-y-6">
-        <!-- Page Header & Filters -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden print-hide">
-            <div class="flex flex-col lg:flex-row">
-
-                <!-- Premium Header Section -->
-                <div
-                    class="relative overflow-hidden bg-gradient-to-r from-[#1e293b] to-[#0f172a] flex-1 flex flex-col sm:flex-row items-center justify-between p-5 lg:p-6 gap-4">
-                    <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
-                        <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
+        <!-- Premium Header Section -->
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2 print-hide">
+            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+                <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+                <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            
+            <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
+                <div class="text-center sm:text-left z-10">
+                    <div class="flex flex-wrap justify-center sm:justify-start items-center gap-2.5 mb-1">
+                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
+                            Diagnostics
+                        </h1>
+                        <span
+                            class="px-2.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/30">
+                            @if(($section ?? '') === 'cpsp')
+                                CPSP Seats
+                            @elseif(($section ?? '') === 't_section')
+                                T-Section
+                            @else
+                                Seat-wise
+                            @endif
+                        </span>
                     </div>
-                    <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
-                        <div class="w-72 h-72 bg-blue-500/20 rounded-full blur-[60px]"></div>
-                    </div>
-
-                    <div class="relative text-center sm:text-left z-10">
-                        <div class="flex flex-wrap justify-center sm:justify-start items-center gap-2 mb-1">
-                            <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
-                                Diagnostics
-                            </h1>
-                            <span
-                                class="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/30">
-                                @if(($section ?? '') === 'cpsp')
-                                    CPSP Seats
-                                @elseif(($section ?? '') === 't_section')
-                                    T-Section
-                                @else
-                                    Seat-wise
-                                @endif
-                            </span>
-                        </div>
-                        <p class="text-slate-300 font-medium max-w-2xl text-sm">
-                            Comprehensive view of office performance per unit/seat.
-                        </p>
-                    </div>
-
-                    <div class="relative shrink-0 z-10">
-                        <a href="{{ route('admin.seats.statistics.export', ['date_from' => $dateFrom, 'date_to' => $dateTo, 'section' => $section ?? 'all']) }}"
-                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all text-sm">
-                            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
-                            <span>Excel Export</span>
-                        </a>
-                    </div>
+                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
+                        Filter and analyze petition data
+                    </p>
                 </div>
+                <div class="flex items-center gap-3 z-10">
+                    <a href="{{ route('admin.seats.statistics.export', ['date_from' => $dateFrom, 'date_to' => $dateTo, 'section' => $section ?? 'all']) }}"
+                        class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 rounded-xl hover:bg-emerald-500/20 transition-all font-semibold text-sm shadow-sm">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                        Excel Export
+                    </a>
+                </div>
+            </div>
+        </div>
 
-                <!-- Right Section: Filters -->
-                <div
-                    class="bg-slate-50/50 border-t lg:border-t-0 lg:border-l border-slate-200 p-5 lg:p-6 flex items-center justify-center relative">
-                    <form method="GET" action="{{ route('admin.seats.statistics') }}" class="w-full">
-                        <div class="flex flex-col sm:flex-row items-end gap-3 w-full">
-                            <div class="w-full sm:w-auto flex-1 space-y-1.5 min-w-[270px]">
-                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Section</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                        <i data-lucide="layers" class="h-4 w-4 text-slate-400"></i>
-                                    </div>
-                                    <select name="section" id="section"
-                                        class="w-full pl-10 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300 cursor-pointer"
-                                        style="color: #1e40af !important;">
-                                        @if($canViewTSection ?? false)
-                                            <option value="all" {{ ($section ?? 'all') === 'all' ? 'selected' : '' }}>All Sections (CPSP & T-Section)</option>
-                                        @endif
-                                        <option value="cpsp" {{ ($section ?? '') === 'cpsp' || !($canViewTSection ?? false) ? 'selected' : '' }}>CPSP Sections</option>
-                                        @if($canViewTSection ?? false)
-                                            <option value="t_section" {{ ($section ?? '') === 't_section' ? 'selected' : '' }}>T-Section</option>
-                                        @endif
-                                    </select>
-                                </div>
-                            </div>
+        <!-- Advanced Filters -->
+        <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden print-hide mb-6">
+            <div class="p-4 sm:p-5 bg-slate-50/50">
+                <div class="flex items-center gap-2 mb-3">
+                    <i data-lucide="filter" class="w-4 h-4 text-indigo-500"></i>
+                    <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Filter Statistics</h3>
+                </div>
+                <form method="GET" action="{{ route('admin.seats.statistics') }}" class="w-full">
+                    <div class="flex flex-col md:flex-row items-end gap-3.5 w-full">
+                        <!-- Section Filter (Segmented Control) -->
+                        <div class="w-full md:w-auto space-y-1.5">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                <i data-lucide="layers" class="h-3.5 w-3.5 text-slate-400"></i>
+                                <span>Section</span>
+                            </label>
+                            <div class="inline-flex items-center p-1 bg-slate-100/90 border border-slate-200/80 rounded-xl w-full md:w-auto h-[42px]">
+                                @if($canViewTSection ?? false)
+                                    <label class="flex-1 md:flex-initial cursor-pointer">
+                                        <input type="radio" name="section" value="all" class="sr-only peer"
+                                            {{ ($section ?? 'all') === 'all' ? 'checked' : '' }}
+                                            onchange="this.form.submit()">
+                                        <span class="px-3.5 h-[34px] text-xs font-bold text-slate-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-indigo-600 peer-checked:shadow-sm hover:text-slate-900">
+                                            All Sections
+                                        </span>
+                                    </label>
+                                @endif
 
-                            <div class="w-full sm:w-auto flex-1 space-y-1.5">
-                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Date From</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                        <i data-lucide="calendar" class="h-4 w-4 text-slate-400"></i>
-                                    </div>
-                                    <input type="date" name="date_from" id="date_from" value="{{ $dateFrom }}" placeholder="DD-MM-YYYY"
-                                        max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300"
-                                        style="color: #1e40af !important;">
-                                </div>
-                            </div>
+                                <label class="flex-1 md:flex-initial cursor-pointer">
+                                    <input type="radio" name="section" value="cpsp" class="sr-only peer"
+                                        {{ ($section ?? '') === 'cpsp' || !($canViewTSection ?? false) ? 'checked' : '' }}
+                                        onchange="this.form.submit()">
+                                        <span class="px-3.5 h-[34px] text-xs font-bold text-slate-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-indigo-600 peer-checked:shadow-sm hover:text-slate-900">
+                                            CPSP
+                                        </span>
+                                    </label>
 
-                            <div class="w-full sm:w-auto flex-1 space-y-1.5">
-                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Date To</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                        <i data-lucide="calendar" class="h-4 w-4 text-slate-400"></i>
-                                    </div>
-                                    <input type="date" name="date_to" id="date_to" value="{{ $dateTo }}" placeholder="DD-MM-YYYY"
-                                        max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300"
-                                        style="color: #1e40af !important;">
-                                </div>
-                                <p id="dateRangeError" class="text-xs text-rose-600 mt-1 hidden font-semibold"></p>
-                            </div>
-
-                            <div class="w-full sm:w-auto flex items-center gap-2">
-                                <button type="submit"
-                                    class="w-full sm:w-auto px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 border border-indigo-600 rounded-xl hover:bg-indigo-700 hover:border-indigo-700 shadow-sm shadow-indigo-200 flex items-center justify-center gap-2 transition-all">
-                                    <i data-lucide="filter" class="w-4 h-4"></i> Apply
-                                </button>
-
-                                @if($dateFrom || $dateTo || (($section ?? 'all') !== 'all'))
-                                    <a href="{{ route('admin.seats.statistics') }}" title="Clear Filters"
-                                        class="px-3.5 py-2.5 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-rose-600 shadow-sm flex items-center justify-center transition-all">
-                                        <i data-lucide="x" class="w-4 h-4"></i>
-                                    </a>
+                                @if($canViewTSection ?? false)
+                                    <label class="flex-1 md:flex-initial cursor-pointer">
+                                        <input type="radio" name="section" value="t_section" class="sr-only peer"
+                                            {{ ($section ?? '') === 't_section' ? 'checked' : '' }}
+                                            onchange="this.form.submit()">
+                                        <span class="px-3.5 h-[34px] text-xs font-bold text-slate-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-indigo-600 peer-checked:shadow-sm hover:text-slate-900">
+                                            T-Section
+                                        </span>
+                                    </label>
                                 @endif
                             </div>
                         </div>
-                    </form>
-                </div>
 
+                        <!-- Date From -->
+                        <div class="w-full md:w-auto flex-1 space-y-1.5">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Date From</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <i data-lucide="calendar" class="h-4 w-4 text-slate-400"></i>
+                                </div>
+                                <input type="date" name="date_from" id="date_from" value="{{ $dateFrom }}" placeholder="DD-MM-YYYY"
+                                    max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                    class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300 h-[42px]"
+                                    style="color: #1e40af !important;">
+                            </div>
+                        </div>
+
+                        <!-- Date To -->
+                        <div class="w-full md:w-auto flex-1 space-y-1.5">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">Date To</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <i data-lucide="calendar" class="h-4 w-4 text-slate-400"></i>
+                                </div>
+                                <input type="date" name="date_to" id="date_to" value="{{ $dateTo }}" placeholder="DD-MM-YYYY"
+                                    max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                    class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-slate-300 h-[42px]"
+                                    style="color: #1e40af !important;">
+                            </div>
+                            <p id="dateRangeError" class="text-xs text-rose-600 mt-1 hidden font-semibold"></p>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="w-full md:w-auto flex items-center gap-2">
+                            <button type="submit"
+                                class="w-full md:w-auto px-5 h-[42px] text-sm font-bold text-white bg-indigo-600 border border-indigo-600 rounded-xl hover:bg-indigo-700 hover:border-indigo-700 shadow-sm shadow-indigo-200 flex items-center justify-center gap-2 transition-all cursor-pointer">
+                                <i data-lucide="filter" class="w-4 h-4"></i> Apply
+                            </button>
+
+                            @if($dateFrom || $dateTo || (($section ?? 'all') !== 'all'))
+                                <a href="{{ route('admin.seats.statistics') }}" title="Clear Filters"
+                                    class="px-3.5 h-[42px] text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-rose-600 shadow-sm flex items-center justify-center transition-all">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
 
