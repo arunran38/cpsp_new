@@ -36,7 +36,12 @@ class StoreForwardingRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     $petitionId = \App\Services\HashidService::decode($this->petition_id) ?? $this->petition_id;
                     $petition = \App\Models\Petition::find($petitionId);
-                    if ($petition && $petition->date_of_petition_received) {
+                    if ($this->file_created_date) {
+                        $fileDate = \Carbon\Carbon::parse($this->file_created_date)->format('Y-m-d');
+                        if ($value < $fileDate) {
+                            $fail('Action date cannot be earlier than file date (' . \Carbon\Carbon::parse($this->file_created_date)->format('d-m-Y') . ').');
+                        }
+                    } elseif ($petition && $petition->date_of_petition_received) {
                         $regDate = \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d');
                         if ($value < $regDate) {
                             $fail('Action date cannot be earlier than petition registration date (' . \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d-m-Y') . ').');
