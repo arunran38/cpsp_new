@@ -578,7 +578,9 @@
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Action Date</label>
-                                    <input type="date" name="forwarded_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                                    <input type="date" name="forwarded_date"
+                                        min="{{ $petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d') : ($petition->created_at ? $petition->created_at->format('Y-m-d') : '') }}"
+                                        max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                                         style="color: #1e40af !important;" required>
                                 </div>

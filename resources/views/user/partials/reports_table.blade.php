@@ -23,6 +23,7 @@
                         $targetPetition = $petition->originalPetition ?? $petition;
                         $complainants = $targetPetition->addresses->where('person_type', 'Complainant')->unique('person_name');
                         $seatUser = $petition->seat?->activeAssignment?->user;
+                        $regDate = $petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d') : ($petition->created_at ? $petition->created_at->format('Y-m-d') : '');
                     @endphp
                     <tr class="hover:bg-blue-50/30 transition-colors">
                         <td class="px-6 py-4 text-center font-bold text-blue-600 text-sm">
@@ -291,7 +292,7 @@
                                 @if(Auth::user()->canAccess('update petitions'))
                                     @if(!$petition->linked_petition_id)
                                         @if($petition->status === 'Received' && $petition->is_cpsp_processed)
-                                            <button @click="showForwardModal = true; activePetitionId = {{ $petition->petition_id }}"
+                                            <button @click="showForwardModal = true; activePetitionId = {{ $petition->petition_id }}; activePetitionDate = '{{ $regDate }}'"
                                                 class="px-3 py-1 text-xs font-bold text-white bg-amber-500 rounded hover:bg-amber-600 transition-colors shadow-sm">
                                                 Forward
                                             </button>
@@ -310,7 +311,7 @@
                                         @endif
                                         
                                         @if($petition->status === 'VR_Received')
-                                            <button @click="showDecisionModal = true; activePetitionId = {{ $petition->petition_id }}"
+                                            <button @click="showDecisionModal = true; activePetitionId = {{ $petition->petition_id }}; activePetitionDate = '{{ $regDate }}'"
                                                 class="px-3 py-1 text-xs font-bold text-white bg-rose-500 rounded hover:bg-rose-600 transition-colors shadow-sm">
                                                 Decision
                                             </button>
