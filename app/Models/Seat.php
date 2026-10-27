@@ -131,7 +131,7 @@ class Seat extends Model
             },
             
             'petitionsReceived as decisions_made_count' => function($q) use ($from, $to) {
-                $q->whereIn('status', [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]);
+                $q->whereIn('status', [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC]);
                 if ($from || $to) {
                     $q->whereHas('decision', fn($d) => $this->filterDates($d, $from, $to, 'decision_date'));
                 }
@@ -147,6 +147,7 @@ class Seat extends Model
             'petitionsReceived as decisions_icell_count' => fn($q) => $this->filterDecisionType($q, 'ICell', $from, $to),
             'petitionsReceived as decisions_closed_count' => fn($q) => $this->filterDecisionType($q, 'Closed', $from, $to),
             'petitionsReceived as decisions_sent_count' => fn($q) => $this->filterDecisionType($q, 'Sent to Govt', $from, $to),
+            'petitionsReceived as decisions_sent_to_spc_count' => fn($q) => $this->filterDecisionType($q, 'Sent to SPC', $from, $to),
         ]);
     }
 
@@ -159,7 +160,7 @@ class Seat extends Model
 
     private function filterDecisionType($query, $type, $from, $to)
     {
-        $query->whereIn('status', [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]);
+        $query->whereIn('status', [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC]);
         return $query->whereHas('decision', function($q) use ($type, $from, $to) {
             $q->where('final_decision', $type);
             $this->filterDates($q, $from, $to, 'decision_date');

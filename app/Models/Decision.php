@@ -13,10 +13,21 @@ class Decision extends Model
 
     protected $primaryKey = 'decision_id';
 
+    public const GOVT_REC_17A = '17 A Sanction';
+    public const GOVT_REC_WITH_RECOMMENDATIONS = 'Report with Recommendations';
+    public const GOVT_REC_NO_RECOMMENDATIONS = 'No Recommendations';
+
+    public const GOVT_RECOMMENDATION_OPTIONS = [
+        self::GOVT_REC_17A => '17 A Sanction',
+        self::GOVT_REC_WITH_RECOMMENDATIONS => 'Report with Recommendations',
+        self::GOVT_REC_NO_RECOMMENDATIONS => 'No Recommendations',
+    ];
+
     protected $fillable = [
         'petition_id',
         'decided_by_seat_id',
         'final_decision',
+        'govt_recommendation_type',
         'directorate_order_number',
         'final_remarks',
         'decision_date',
@@ -63,7 +74,8 @@ class Decision extends Model
             'IV' => 'Internal Vigilance (IV)',
             'ICell' => 'Intelligence Cell (I Cell)',
             'Closed' => 'Closed',
-            'Sent to Govt' => 'Sent to Govt'
+            'Sent to Govt' => 'Sent to Govt',
+            'Sent to SPC' => 'Sent to SPC',
         ];
         return $labels[$code] ?? $code;
     }

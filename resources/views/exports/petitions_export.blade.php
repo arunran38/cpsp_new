@@ -116,9 +116,9 @@
                         'VR Date' => '<td class="text-center">' . ($petition->latestForwarding?->vr_date ? date('d-m-Y', strtotime($petition->latestForwarding->vr_date)) : 'N/A') . '</td>',
                         'VR Received At CPSP' => '<td class="text-center">' . ($petition->latestForwarding?->vr_received_at_cpsp_date ? date('d-m-Y', strtotime($petition->latestForwarding->vr_received_at_cpsp_date)) : 'N/A') . '</td>',
                         'VR Remarks' => '<td>' . ($petition->latestForwarding->vr_remarks ?? 'N/A') . '</td>',
-                        'Decision' => '<td>' . ($petition->decision->final_decision ?? 'N/A') . '</td>',
+                        'Decision' => '<td>' . ($petition->decision ? (\App\Models\Decision::getDecisionLabel($petition->decision->final_decision) . ($petition->decision->govt_recommendation_type ? ' (' . $petition->decision->govt_recommendation_type . ')' : '')) : 'N/A') . '</td>',
                         'Final Decision Date' => '<td class="text-center">' . ($petition->decision?->decision_date ? date('d-m-Y', strtotime($petition->decision->decision_date)) : 'N/A') . '</td>',
-                        'Final Recommendation' => '<td>' . ($petition->decision->final_decision ?? 'N/A') . '</td>',
+                        'Final Recommendation' => '<td>' . ($petition->decision ? ($petition->decision->final_decision . ($petition->decision->govt_recommendation_type ? ' (' . $petition->decision->govt_recommendation_type . ')' : '')) : 'N/A') . '</td>',
                         'Directorate Order No' => '<td>' . ($petition->decision->directorate_order_number ?? 'N/A') . '</td>',
                     ];
                 @endphp

@@ -23,7 +23,9 @@ class DecisionControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->admin = User::factory()->create(['role' => 'admin']);
+        $this->admin = User::factory()->create();
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super admin', 'guard_name' => 'web']);
+        $this->admin->assignRole($role);
         $this->seat = Seat::factory()->create();
         
         SeatUser::factory()->create([
@@ -68,12 +70,37 @@ class DecisionControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->post(route('decisions.store'), [
             'petition_id' => $petition->petition_id,
             'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => 'Report with Recommendations',
             'final_remarks' => 'Sent to higher authorities.',
             'decision_date' => '2024-03-01',
         ]);
 
         $response->assertStatus(302);
         $this->assertDatabaseHas('petitions', ['petition_id' => $petition->petition_id, 'status' => 'Sent_to_Govt']);
+        $this->assertDatabaseHas('decisions', [
+            'petition_id' => $petition->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => 'Report with Recommendations'
+        ]);
+    }
+
+    public function test_admin_can_record_sent_to_spc_decision(): void
+    {
+        $petition = Petition::factory()->create(['status' => 'VR_Received']);
+
+        $response = $this->actingAs($this->admin)->post(route('decisions.store'), [
+            'petition_id' => $petition->petition_id,
+            'final_decision' => 'Sent to SPC',
+            'final_remarks' => 'Sent to State Police Chief.',
+            'decision_date' => '2024-03-01',
+        ]);
+
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('petitions', ['petition_id' => $petition->petition_id, 'status' => 'Sent_to_SPC']);
+        $this->assertDatabaseHas('decisions', [
+            'petition_id' => $petition->petition_id,
+            'final_decision' => 'Sent to SPC',
+        ]);
     }
 
     public function test_decision_validation_errors(): void
@@ -84,6 +111,20 @@ class DecisionControllerTest extends TestCase
         ]);
 
         $response->assertSessionHasErrors(['petition_id', 'final_decision']);
+    }
+
+    public function test_sent_to_govt_decision_requires_recommendation_type(): void
+    {
+        $petition = Petition::factory()->create(['status' => 'VR_Received']);
+
+        $response = $this->actingAs($this->admin)->post(route('decisions.store'), [
+            'petition_id' => $petition->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => '',
+            'decision_date' => '2024-03-01',
+        ]);
+
+        $response->assertSessionHasErrors(['govt_recommendation_type']);
     }
 
     public function test_admin_can_pullback_decision(): void

@@ -353,7 +353,7 @@ class PetitionController extends Controller
             return back()->with('error', 'Cannot return a petition that has already been processed.');
         }
 
-        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_INTERNAL_VIGILANCE])) {
+        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC, Petition::STATUS_INTERNAL_VIGILANCE])) {
             return back()->with('error', 'Cannot return a petition that has been finalized.');
         }
 
@@ -680,11 +680,12 @@ class PetitionController extends Controller
 
         $unifiedCounts = $this->getUnifiedCounts();
         $decisionCounts = [];
+        $govtRecCounts = [];
         if ($tab === 'decisions') {
-            $decisionCounts = $this->getDecisionCounts();
+            [$decisionCounts, $govtRecCounts] = $this->getDecisionCounts();
         }
 
-        return view('user.petition_view', compact('petitions', 'tab', 'unifiedCounts', 'decisionCounts'));
+        return view('user.petition_view', compact('petitions', 'tab', 'unifiedCounts', 'decisionCounts', 'govtRecCounts'));
     }
 
     /**
@@ -814,7 +815,7 @@ class PetitionController extends Controller
             $petition->markAsOpenedByCpsp($user, $user->currentSeatUser());
         }
 
-        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) ) {
+        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC]) ) {
             return redirect()->route('petitions.index')->with('error', 'Cannot edit a petition once a final decision has been taken.');
         }
 
@@ -870,7 +871,7 @@ class PetitionController extends Controller
 
         $this->authorize('delete', $petition);
 
-        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT]) ) {
+        if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC]) ) {
             return redirect()->route('petitions.index', ['tab' => 'all'])->with('error', 'Cannot delete a petition after a final decision has been issued.');
         }
 
@@ -1229,17 +1230,18 @@ class PetitionController extends Controller
 
         // Optimize: Perform single SQL aggregation instead of loading all models into PHP memory
         $stats = $query->selectRaw("
-            COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 AND user_id IN ({$inwardIdsList}) THEN 1 END) as inward,
-            COUNT(CASE WHEN is_cpsp_processed = 1 THEN 1 END) as all_count,
-            COUNT(CASE WHEN status = ? AND is_cpsp_processed = 1 THEN 1 END) as received,
-            COUNT(CASE WHEN status = ? THEN 1 END) as forwarded,
-            COUNT(CASE WHEN status = ? THEN 1 END) as vrs,
-            COUNT(CASE WHEN status IN (?, ?) THEN 1 END) as decisions
+            COUNT(DISTINCT CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 AND user_id IN ({$inwardIdsList}) THEN petitions.petition_id END) as inward,
+            COUNT(DISTINCT CASE WHEN is_cpsp_processed = 1 THEN petitions.petition_id END) as all_count,
+            COUNT(DISTINCT CASE WHEN status = ? AND is_cpsp_processed = 1 THEN petitions.petition_id END) as received,
+            COUNT(DISTINCT CASE WHEN status = ? THEN petitions.petition_id END) as forwarded,
+            COUNT(DISTINCT CASE WHEN status = ? THEN petitions.petition_id END) as vrs,
+            COUNT(DISTINCT CASE WHEN status IN (?, ?, ?) THEN petitions.petition_id END) as decisions
         ", [
             Petition::STATUS_RECEIVED,
             Petition::STATUS_FORWARDED,
             Petition::STATUS_VR_RECEIVED,
             Petition::STATUS_SENT_TO_GOVT,
+            Petition::STATUS_SENT_TO_SPC,
             Petition::STATUS_CLOSED
         ])->first();
 
@@ -1261,46 +1263,77 @@ class PetitionController extends Controller
         $user = Auth::user();
         $query = Petition::query()
             ->excludeTSectionIfNotAuthorized($user)
-            ->whereIn('petitions.status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_CLOSED])
+            ->whereIn('petitions.status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC, Petition::STATUS_CLOSED])
             ->whereNull('petitions.linked_petition_id')
             ->where('petitions.is_returned_to_inward', false);
 
+        $currentSeat = $user->currentSeatUser();
         if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
-            $currentSeat = $user->currentSeatUser();
-            if ($currentSeat) {
+            if ($user->hasRole(['inward', 'Inward'])) {
+                $inwardUserIds = \App\Models\User::role(['inward', 'Inward'])->pluck('user_id');
+                $query->where(function($q) use ($inwardUserIds, $currentSeat) {
+                    $q->whereIn('petitions.user_id', $inwardUserIds);
+                    if ($currentSeat) {
+                        $q->orWhere('petitions.seat_id', $currentSeat->seat_id);
+                    }
+                });
+            } elseif ($currentSeat) {
                 $query->where('petitions.seat_id', $currentSeat->seat_id);
             } else {
-                $query->where('petitions.user_id', $user->id);
+                $query->where('petitions.user_id', $user->user_id ?? $user->id);
             }
         }
 
-        // Optimize: Join decisions table and aggregate in a single SQL query
-        $stats = $query->leftJoin('decisions', 'decisions.petition_id', '=', 'petitions.petition_id')
-            ->selectRaw("
-                COUNT(*) as total_all,
-                COUNT(CASE WHEN decisions.final_decision = 'VC' THEN 1 END) as count_vc,
-                COUNT(CASE WHEN decisions.final_decision = 'VE' THEN 1 END) as count_ve,
-                COUNT(CASE WHEN decisions.final_decision = 'PE' THEN 1 END) as count_pe,
-                COUNT(CASE WHEN decisions.final_decision = 'SC' THEN 1 END) as count_sc,
-                COUNT(CASE WHEN decisions.final_decision = 'CV' THEN 1 END) as count_cv,
-                COUNT(CASE WHEN decisions.final_decision = 'IV' THEN 1 END) as count_iv,
-                COUNT(CASE WHEN decisions.final_decision = 'ICell' THEN 1 END) as count_icell,
-                COUNT(CASE WHEN decisions.final_decision = 'Closed' THEN 1 END) as count_closed,
-                COUNT(CASE WHEN decisions.final_decision = 'Sent to Govt' THEN 1 END) as count_sent_to_govt
-            ")->first();
+        // Optimize: Join only the latest active (non-deleted) decision per petition to prevent duplicates
+        $stats = $query->leftJoin('decisions', function ($join) {
+            $join->on('decisions.decision_id', '=', \Illuminate\Support\Facades\DB::raw('(
+                SELECT d.decision_id 
+                FROM decisions d 
+                WHERE d.petition_id = petitions.petition_id 
+                  AND d.deleted_at IS NULL 
+                ORDER BY d.decision_id DESC 
+                LIMIT 1
+            )'));
+        })->selectRaw("
+            COUNT(DISTINCT petitions.petition_id) as total_all,
+            COUNT(DISTINCT CASE WHEN decisions.final_decision = 'VC' THEN petitions.petition_id END) as count_vc,
+            COUNT(DISTINCT CASE WHEN decisions.final_decision = 'VE' THEN petitions.petition_id END) as count_ve,
+            COUNT(DISTINCT CASE WHEN decisions.final_decision = 'PE' THEN petitions.petition_id END) as count_pe,
+            COUNT(DISTINCT CASE WHEN decisions.final_decision = 'SC' THEN petitions.petition_id END) as count_sc,
+            COUNT(DISTINCT CASE WHEN decisions.final_decision = 'CV' THEN petitions.petition_id END) as count_cv,
+            COUNT(DISTINCT CASE WHEN decisions.final_decision IN ('IV', 'Internal Vigilance') THEN petitions.petition_id END) as count_iv,
+            COUNT(DISTINCT CASE WHEN decisions.final_decision = 'ICell' THEN petitions.petition_id END) as count_icell,
+            COUNT(DISTINCT CASE WHEN decisions.final_decision = 'Closed' THEN petitions.petition_id END) as count_closed,
+            COUNT(DISTINCT CASE WHEN decisions.final_decision = 'Sent to Govt' THEN petitions.petition_id END) as count_sent_to_govt,
+            COUNT(DISTINCT CASE WHEN decisions.final_decision = 'Sent to SPC' THEN petitions.petition_id END) as count_sent_to_spc,
+            COUNT(DISTINCT CASE WHEN decisions.final_decision = 'Sent to Govt' AND decisions.govt_recommendation_type = '17 A Sanction' THEN petitions.petition_id END) as count_17a,
+            COUNT(DISTINCT CASE WHEN decisions.final_decision = 'Sent to Govt' AND decisions.govt_recommendation_type = 'Report with Recommendations' THEN petitions.petition_id END) as count_rep_with_rec,
+            COUNT(DISTINCT CASE WHEN decisions.final_decision = 'Sent to Govt' AND decisions.govt_recommendation_type = 'No Recommendations' THEN petitions.petition_id END) as count_no_rec
+        ")->first();
 
-        return [
+        $decisionCounts = [
             'All' => (int) ($stats->total_all ?? 0),
             'VC' => (int) ($stats->count_vc ?? 0),
             'VE' => (int) ($stats->count_ve ?? 0),
             'PE' => (int) ($stats->count_pe ?? 0),
             'SC' => (int) ($stats->count_sc ?? 0),
             'CV' => (int) ($stats->count_cv ?? 0),
+            'Internal Vigilance' => (int) ($stats->count_iv ?? 0),
             'IV' => (int) ($stats->count_iv ?? 0),
             'ICell' => (int) ($stats->count_icell ?? 0),
             'Closed' => (int) ($stats->count_closed ?? 0),
             'Sent to Govt' => (int) ($stats->count_sent_to_govt ?? 0),
+            'Sent to SPC' => (int) ($stats->count_sent_to_spc ?? 0),
         ];
+
+        $govtRecCounts = [
+            'All' => (int) ($stats->count_sent_to_govt ?? 0),
+            '17 A Sanction' => (int) ($stats->count_17a ?? 0),
+            'Report with Recommendations' => (int) ($stats->count_rep_with_rec ?? 0),
+            'No Recommendations' => (int) ($stats->count_no_rec ?? 0),
+        ];
+
+        return [$decisionCounts, $govtRecCounts];
     }
 
     /**
@@ -1341,6 +1374,7 @@ class PetitionController extends Controller
         // Apply filters using scopes
         $query->filterByTab($tab)
               ->filterByStatus($request->status, $tab)
+              ->filterByRecommendationType($request->recommendation_type, $request->status)
               ->search($request->search, $request->search_type)
               ->filterDates($request->date_from, $request->date_to, $request->status, $tab);
 

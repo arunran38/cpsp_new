@@ -3,6 +3,9 @@
 
 @section('content')
 @php
+    /** @var \Spatie\Permission\Models\Role $role */
+    /** @var \Illuminate\Database\Eloquent\Collection<int, \Spatie\Permission\Models\Permission> $permissions */
+
     // -------------------------------------------------------------
     // Define the 8 High-Level System Modules & Their Capabilities
     // -------------------------------------------------------------
@@ -330,7 +333,7 @@
                 @php 
                     $modInfo = $data['info']; 
                     $modTotal = count($data['all_permissions']);
-                    $allPermNames = array_map(fn($p) => $p->name, $data['all_permissions']);
+                    $allPermNames = array_map(fn($p) => is_object($p) ? $p->name : (string) ($p['name'] ?? ''), $data['all_permissions']);
                     $searchData = strtolower($modInfo['title'] . ' ' . $modInfo['desc'] . ' ' . implode(' ', $allPermNames));
                 @endphp
 

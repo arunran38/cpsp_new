@@ -124,6 +124,7 @@
                                     <option value="ICell" {{ request('status') == 'ICell' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Intelligence Cell (I Cell)</option>
                                     <option value="Closed" {{ request('status') == 'Closed' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Closed</option>
                                     <option value="Sent to Govt" {{ request('status') == 'Sent to Govt' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Sent to Govt</option>
+                                    <option value="Sent to SPC" {{ request('status') == 'Sent to SPC' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Sent to SPC</option>
                                 </optgroup>
                             </select>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
@@ -239,10 +240,32 @@
                     </button>
                 </div>
 
-                <form action="{{ route('forwardings.store') }}" method="POST">
+                <form action="{{ route('forwardings.store') }}" method="POST"
+                    x-data="{ 
+                        action: '', 
+                        recommendationType: '',
+                        recommendationTypeError: '',
+                        validateForm(e) {
+                            this.recommendationTypeError = '';
+                            if (this.action === 'Sent_to_Govt' && !this.recommendationType) {
+                                this.recommendationTypeError = 'Recommendation Type is required.';
+                                if (e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }
+                                return false;
+                            }
+                            return true;
+                        }
+                    }"
+                    x-init="
+                        $watch('action', val => { if (val !== 'Sent_to_Govt') { recommendationType = ''; recommendationTypeError = ''; } });
+                        $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
+                    "
+                    @submit="if (!validateForm($event)) return false;">
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
-                    <div x-data="{ action: '' }" class="space-y-4">
+                    <div class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1">File Number <span class="text-red-500">*</span></label>
@@ -268,12 +291,24 @@
                                     <option value="">Select Action...</option>
                                     <option value="Forward_To_Unit">Forward to Unit</option>
                                     <option value="Sent_to_Govt">Send to Govt (Decision)</option>
+                                    <option value="Sent_to_SPC">Send to SPC (Decision)</option>
                                     <option value="Close">Close Petition (Decision)</option>
                                 </select>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
                             </div>
                         </div>
 
+                        <div x-show="action === 'Sent_to_Govt'" x-cloak class="pt-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Recommendation Type <span class="text-red-500">*</span></label>
+                            <select name="govt_recommendation_type" x-model="recommendationType"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black">
+                                <option value="">Select Recommendation Type...</option>
+                                <option value="17 A Sanction">17 A Sanction</option>
+                                <option value="Report with Recommendations">Report with Recommendations</option>
+                                <option value="No Recommendations">No Recommendations</option>
+                            </select>
+                            <p x-show="recommendationTypeError" x-text="recommendationTypeError" x-cloak class="mt-1 text-xs font-semibold text-rose-600"></p>
+                        </div>
 
                         <div x-show="action === 'Forward_To_Unit'" x-cloak class="pt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Select Unit</label>
@@ -298,7 +333,7 @@
                                 style="color: #1e40af !important;" required>
                         </div>
 
-                        <div x-show="action === 'Close' || action === 'Sent_to_Govt'" x-cloak class="pt-2">
+                        <div x-show="action === 'Close' || action === 'Sent_to_Govt' || action === 'Sent_to_SPC'" x-cloak class="pt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order</label>
                             <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
                                 class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
@@ -313,7 +348,7 @@
                         <div class="flex justify-end gap-3 pt-6">
                             <button type="button" @click="showForwardModal = false"
                                 class="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-transparent rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>
-                            <button type="submit"
+                            <button type="submit" @click="if (!validateForm($event)) return false;"
                                 class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 shadow-sm transition-colors flex items-center gap-2">
                                 Submit Action <i data-lucide="arrow-right" class="w-4 h-4"></i>
                             </button>
@@ -371,6 +406,7 @@
                                 <option value="ICell">Intelligence Cell (I Cell)</option>
                                 <option value="Closed">Closed</option>
                                 <option value="Sent to Govt">Sent to Govt</option>
+                                <option value="Sent to SPC">Sent to SPC</option>
                             </select>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
                         </div>
@@ -416,12 +452,34 @@
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <form action="{{ route('decisions.store') }}" method="POST" class="space-y-4">
+                <form action="{{ route('decisions.store') }}" method="POST" class="space-y-4"
+                    x-data="{ 
+                        finalDecision: '', 
+                        recommendationType: '',
+                        recommendationTypeError: '',
+                        validateDecision(e) {
+                            this.recommendationTypeError = '';
+                            if (this.finalDecision === 'Sent to Govt' && !this.recommendationType) {
+                                this.recommendationTypeError = 'Recommendation Type is required.';
+                                if (e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }
+                                return false;
+                            }
+                            return true;
+                        }
+                    }"
+                    x-init="
+                        $watch('finalDecision', val => { if (val !== 'Sent to Govt') { recommendationType = ''; recommendationTypeError = ''; } });
+                        $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
+                    "
+                    @submit="if (!validateDecision($event)) return false;">
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Final Decision</label>
-                        <select name="final_decision"
+                        <select name="final_decision" x-model="finalDecision"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-black"
                             required>
                             <option value="">Select...</option>
@@ -430,11 +488,23 @@
                             <option value="PE">Preliminary Enquiry (PE)</option>
                             <option value="SC">Surprise Check (SC)</option>
                             <option value="CV">Confidential Verification (CV)</option>
-                                                    <option value="IV">Internal Vigilance (IV)</option>
+                            <option value="IV">Internal Vigilance (IV)</option>
                             <option value="ICell">Intelligence Cell (I Cell)</option>
                             <option value="Closed">Closed</option>
                             <option value="Sent to Govt">Sent to Govt</option>
+                            <option value="Sent to SPC">Sent to SPC</option>
                         </select>
+                    </div>
+                    <div x-show="finalDecision === 'Sent to Govt'" x-cloak class="pt-2">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Recommendation Type <span class="text-red-500">*</span></label>
+                        <select name="govt_recommendation_type" x-model="recommendationType"
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-black">
+                            <option value="">Select Recommendation Type...</option>
+                            <option value="17 A Sanction">17 A Sanction</option>
+                            <option value="Report with Recommendations">Report with Recommendations</option>
+                            <option value="No Recommendations">No Recommendations</option>
+                        </select>
+                        <p x-show="recommendationTypeError" x-text="recommendationTypeError" x-cloak class="mt-1 text-xs font-semibold text-rose-600"></p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Decision Date</label>
@@ -451,7 +521,7 @@
                     <div class="flex justify-end gap-3 pt-6">
                         <button type="button" @click="showDecisionModal = false"
                             class="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-transparent rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>
-                        <button type="submit"
+                        <button type="submit" @click="if (!validateDecision($event)) return false;"
                             class="px-4 py-2 text-sm font-medium text-white bg-rose-600 border border-transparent rounded-lg hover:bg-rose-700 shadow-sm transition-colors flex items-center gap-2">
                             Submit Decision <i data-lucide="arrow-right" class="w-4 h-4"></i>
                         </button>

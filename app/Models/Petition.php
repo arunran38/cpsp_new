@@ -20,6 +20,7 @@ class Petition extends Model
     public const STATUS_FORWARDED = 'Forwarded';
     public const STATUS_VR_RECEIVED = 'VR_Received';
     public const STATUS_SENT_TO_GOVT = 'Sent_to_Govt';
+    public const STATUS_SENT_TO_SPC = 'Sent_to_SPC';
     public const STATUS_INTERNAL_VIGILANCE = 'Internal_Vigilance';
     public const STATUS_CLOSED = 'Closed';
     public const STATUS_CLOSED_BY_GOVT = 'Closed_by_Govt';
@@ -137,7 +138,7 @@ class Petition extends Model
      */
     public function decision(): HasOne
     {
-        return $this->hasOne(Decision::class, 'petition_id', 'petition_id');
+        return $this->hasOne(Decision::class, 'petition_id', 'petition_id')->latestOfMany('decision_id');
     }
 
     /**
@@ -366,7 +367,7 @@ class Petition extends Model
         }
 
         // 7. Finalized / Decision Taken
-        if (in_array($this->status, [self::STATUS_CLOSED, self::STATUS_SENT_TO_GOVT, self::STATUS_INTERNAL_VIGILANCE, self::STATUS_CLOSED_BY_GOVT]) || $this->decision) {
+        if (in_array($this->status, [self::STATUS_CLOSED, self::STATUS_SENT_TO_GOVT, self::STATUS_SENT_TO_SPC, self::STATUS_INTERNAL_VIGILANCE, self::STATUS_CLOSED_BY_GOVT]) || $this->decision) {
             $decisionLabel = $this->decision ? Decision::getDecisionLabel($this->decision->final_decision) : str_replace('_', ' ', $this->status);
             return [
                 'label' => 'Finalized',
@@ -525,7 +526,7 @@ class Petition extends Model
             'received' => $query->where('status', self::STATUS_RECEIVED)->where('is_cpsp_processed', true),
             'forwarded' => $query->where('status', self::STATUS_FORWARDED),
             'vrs' => $query->where('status', self::STATUS_VR_RECEIVED),
-            'decisions' => $query->whereIn('status', [self::STATUS_SENT_TO_GOVT, self::STATUS_CLOSED]),
+            'decisions' => $query->whereIn('status', [self::STATUS_SENT_TO_GOVT, self::STATUS_SENT_TO_SPC, self::STATUS_CLOSED]),
             'all' => $query->where('is_cpsp_processed', true),
             default => $query->where('is_cpsp_processed', true),
         };
@@ -535,7 +536,7 @@ class Petition extends Model
     {
         if (empty($status)) return $query;
 
-        $finalDecisionStatuses = ['VC', 'VE', 'PE', 'SC', 'CV', 'ICell', 'Closed', 'Sent to Govt'];
+        $finalDecisionStatuses = ['VC', 'VE', 'PE', 'SC', 'CV', 'IV', 'Internal Vigilance', 'ICell', 'Closed', 'Sent to Govt', 'Sent to SPC'];
 
         if ($status === self::STATUS_FORWARDED) {
             return $query->where('status', self::STATUS_FORWARDED);
@@ -561,11 +562,30 @@ class Petition extends Model
             return $query->doesntHave('decision');
         }
 
+        if ($status === 'IV' || $status === 'Internal Vigilance') {
+            return $query->whereHas('decision', fn($q) => $q->whereIn('final_decision', ['IV', 'Internal Vigilance']));
+        }
+
         if (in_array($status, $finalDecisionStatuses)) {
             return $query->whereHas('decision', fn($q) => $q->where('final_decision', $status));
         }
 
         return $query->where('status', $status);
+    }
+
+    public function scopeFilterByRecommendationType(Builder $query, ?string $recommendationType, ?string $status = null): Builder
+    {
+        if (empty($recommendationType)) {
+            return $query;
+        }
+
+        if ($status && $status !== 'Sent to Govt') {
+            return $query;
+        }
+
+        return $query->whereHas('decision', function ($q) use ($recommendationType) {
+            $q->where('govt_recommendation_type', $recommendationType);
+        });
     }
 
     public function scopeSearch(Builder $query, ?string $search, ?string $searchType = null): Builder
@@ -630,7 +650,7 @@ class Petition extends Model
             }
         }
 
-        $finalDecisionStatuses = ['VC', 'VE', 'PE', 'SC', 'CV', 'Closed', 'Sent to Govt', 'ICell'];
+        $finalDecisionStatuses = ['VC', 'VE', 'PE', 'SC', 'CV', 'Closed', 'Sent to Govt', 'Sent to SPC', 'ICell'];
 
         $column = 'date_of_petition_received';
         $relation = null;

@@ -23,7 +23,9 @@ class PetitionForwardingControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->admin = User::factory()->create(['role' => 'admin']);
+        $this->admin = User::factory()->create();
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super admin', 'guard_name' => 'web']);
+        $this->admin->assignRole($role);
         $this->seat = Seat::factory()->create();
         
         SeatUser::factory()->create([
@@ -107,6 +109,7 @@ class PetitionForwardingControllerTest extends TestCase
             'petition_id' => $petition->petition_id,
             'action' => 'Close',
             'director_remarks' => 'Closing based on initial review.',
+            'directorate_order_number' => 'ORD-CLOSE-01',
             'file_no' => 'FILE-TEST-002',
             'forwarded_date' => '2024-03-01',
         ]);
@@ -116,6 +119,67 @@ class PetitionForwardingControllerTest extends TestCase
         $this->assertDatabaseHas('decisions', [
             'petition_id' => $petition->petition_id,
             'final_decision' => 'Closed'
+        ]);
+    }
+
+    public function test_admin_can_send_to_govt_from_forwarding_form(): void
+    {
+        $petition = Petition::factory()->create(['status' => 'Received']);
+
+        $response = $this->actingAs($this->admin)->post(route('forwardings.store'), [
+            'petition_id' => $petition->petition_id,
+            'action' => 'Sent_to_Govt',
+            'govt_recommendation_type' => '17 A Sanction',
+            'director_remarks' => 'Sending to government for sanction.',
+            'directorate_order_number' => 'ORD-1234',
+            'file_no' => 'FILE-TEST-003',
+            'forwarded_date' => '2024-03-01',
+        ]);
+
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('petitions', ['petition_id' => $petition->petition_id, 'status' => 'Sent_to_Govt']);
+        $this->assertDatabaseHas('decisions', [
+            'petition_id' => $petition->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => '17 A Sanction',
+        ]);
+    }
+
+    public function test_send_to_govt_requires_recommendation_type(): void
+    {
+        $petition = Petition::factory()->create(['status' => 'Received']);
+
+        $response = $this->actingAs($this->admin)->post(route('forwardings.store'), [
+            'petition_id' => $petition->petition_id,
+            'action' => 'Sent_to_Govt',
+            'govt_recommendation_type' => '',
+            'director_remarks' => 'Sending to government.',
+            'directorate_order_number' => 'ORD-1234',
+            'file_no' => 'FILE-TEST-005',
+            'forwarded_date' => '2024-03-01',
+        ]);
+
+        $response->assertSessionHasErrors(['govt_recommendation_type']);
+    }
+
+    public function test_admin_can_send_to_spc_from_forwarding_form(): void
+    {
+        $petition = Petition::factory()->create(['status' => 'Received']);
+
+        $response = $this->actingAs($this->admin)->post(route('forwardings.store'), [
+            'petition_id' => $petition->petition_id,
+            'action' => 'Sent_to_SPC',
+            'director_remarks' => 'Sending to SPC directly.',
+            'directorate_order_number' => 'ORD-SPC-001',
+            'file_no' => 'FILE-TEST-004',
+            'forwarded_date' => '2024-03-01',
+        ]);
+
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('petitions', ['petition_id' => $petition->petition_id, 'status' => 'Sent_to_SPC']);
+        $this->assertDatabaseHas('decisions', [
+            'petition_id' => $petition->petition_id,
+            'final_decision' => 'Sent to SPC',
         ]);
     }
 
