@@ -52,6 +52,26 @@
                     Filter Petitions
                 </h3>
                 <form id="searchForm" method="GET" action="{{ route('petitions.reports') }}"
+                    x-data="{
+                        currentStatus: '{{ request('status') }}',
+                        recType: '{{ request('recommendation_type') }}',
+                        onStatusChange(e) {
+                            this.currentStatus = e.target.value;
+                            if (this.currentStatus !== 'Sent to Govt') {
+                                this.recType = '';
+                                const recSelect = document.getElementById('recommendation_type');
+                                if (recSelect) {
+                                    recSelect.value = '';
+                                    recSelect.disabled = true;
+                                }
+                            } else {
+                                const recSelect = document.getElementById('recommendation_type');
+                                if (recSelect) {
+                                    recSelect.disabled = false;
+                                }
+                            }
+                        }
+                    }"
                     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
                     <input type="hidden" name="tab" value="{{ $tab }}">
 
@@ -100,6 +120,8 @@
                             Timeline</label>
                         <div class="relative flex items-center">
                             <select name="status"
+                                x-model="currentStatus"
+                                @change="onStatusChange($event)"
                                 class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white appearance-none pr-10">
                                 <option value="" class="font-medium text-slate-800 bg-white py-1">All Petitions</option>
                                 <optgroup label="Petition Timeline" class="font-bold text-slate-900 bg-slate-50">
@@ -126,6 +148,33 @@
                                     <option value="Sent to Govt" {{ request('status') == 'Sent to Govt' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Sent to Govt</option>
                                     <option value="Sent to SPC" {{ request('status') == 'Sent to SPC' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Sent to SPC</option>
                                 </optgroup>
+                            </select>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- Dependent Recommendation Type Dropdown (Appears only when Sent to Govt is selected) -->
+                    <div x-show="currentStatus === 'Sent to Govt'"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 -translate-y-1"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        x-cloak
+                        style="display: {{ request('status') === 'Sent to Govt' ? 'block' : 'none' }};"
+                        class="lg:col-span-1">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1 uppercase tracking-wider">
+                            Recommendation Type
+                        </label>
+                        <div class="relative flex items-center">
+                            <select name="recommendation_type" id="recommendation_type" x-model="recType"
+                                :disabled="currentStatus !== 'Sent to Govt'"
+                                class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white appearance-none pr-10">
+                                <option value="" class="font-medium text-slate-800 bg-white py-1">All Recommendation Types</option>
+                                <option value="17 A Sanction" {{ request('recommendation_type') == '17 A Sanction' ? 'selected' : '' }}
+                                    class="font-medium text-slate-800 bg-white py-1">17 A Sanction</option>
+                                <option value="Report with Recommendations" {{ request('recommendation_type') == 'Report with Recommendations' ? 'selected' : '' }}
+                                    class="font-medium text-slate-800 bg-white py-1">Report with Recommendations</option>
+                                <option value="No Recommendations" {{ request('recommendation_type') == 'No Recommendations' ? 'selected' : '' }}
+                                    class="font-medium text-slate-800 bg-white py-1">No Recommendations</option>
                             </select>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
                         </div>
@@ -603,6 +652,7 @@
                                     'VR Received At CPSP' => 'VR Received at CPSP',
                                     'VR Remarks' => 'VR Remarks',
                                     'Decision' => 'Decision',
+                                    'Recommendation Type' => 'Recommendation Type',
                                     'Final Decision Date' => 'Final Decision Date',
                                     'Final Recommendation' => 'Final Recommendation',
                                 ];

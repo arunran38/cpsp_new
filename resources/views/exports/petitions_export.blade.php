@@ -26,7 +26,7 @@
                 @if($column === '#') <col style="width: 30pt;">
                 @elseif($column === 'Receipt No') <col style="width: 80pt;">
                 @elseif($column === 'Description' || str_contains($column, 'Address')) <col style="width: 220pt;">
-                @elseif(in_array($column, ['VR Remarks', 'Decision', 'Final Recommendation'])) <col style="width: 150pt;">
+                @elseif(in_array($column, ['VR Remarks', 'Decision', 'Final Recommendation', 'Recommendation Type', 'Directorate Order No'])) <col style="width: 150pt;">
                 @else <col style="width: 100pt;">
                 @endif
             @endforeach
@@ -116,9 +116,10 @@
                         'VR Date' => '<td class="text-center">' . ($petition->latestForwarding?->vr_date ? date('d-m-Y', strtotime($petition->latestForwarding->vr_date)) : 'N/A') . '</td>',
                         'VR Received At CPSP' => '<td class="text-center">' . ($petition->latestForwarding?->vr_received_at_cpsp_date ? date('d-m-Y', strtotime($petition->latestForwarding->vr_received_at_cpsp_date)) : 'N/A') . '</td>',
                         'VR Remarks' => '<td>' . ($petition->latestForwarding->vr_remarks ?? 'N/A') . '</td>',
-                        'Decision' => '<td>' . ($petition->decision ? (\App\Models\Decision::getDecisionLabel($petition->decision->final_decision) . ($petition->decision->govt_recommendation_type ? ' (' . $petition->decision->govt_recommendation_type . ')' : '')) : 'N/A') . '</td>',
+                        'Decision' => '<td>' . ($petition->decision ? \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) : 'N/A') . '</td>',
                         'Final Decision Date' => '<td class="text-center">' . ($petition->decision?->decision_date ? date('d-m-Y', strtotime($petition->decision->decision_date)) : 'N/A') . '</td>',
-                        'Final Recommendation' => '<td>' . ($petition->decision ? ($petition->decision->final_decision . ($petition->decision->govt_recommendation_type ? ' (' . $petition->decision->govt_recommendation_type . ')' : '')) : 'N/A') . '</td>',
+                        'Final Recommendation' => '<td>' . ($petition->decision ? $petition->decision->final_decision : 'N/A') . '</td>',
+                        'Recommendation Type' => '<td class="text-center">' . (($petition->decision && $petition->decision->govt_recommendation_type) ? $petition->decision->govt_recommendation_type : 'N/A') . '</td>',
                         'Directorate Order No' => '<td>' . ($petition->decision->directorate_order_number ?? 'N/A') . '</td>',
                     ];
                 @endphp

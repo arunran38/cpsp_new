@@ -465,4 +465,107 @@ class PetitionControllerTest extends TestCase
         $this->assertEquals(1, $govtRecCounts['Report with Recommendations']);
         $this->assertEquals(0, $govtRecCounts['No Recommendations']);
     }
+
+    public function test_master_reports_filters_by_sent_to_govt_and_recommendation_type(): void
+    {
+        $petition1 = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'status' => Petition::STATUS_SENT_TO_GOVT,
+            'is_cpsp_processed' => true,
+        ]);
+        \App\Models\Decision::factory()->create([
+            'petition_id' => $petition1->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => '17 A Sanction',
+        ]);
+
+        $petition2 = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'status' => Petition::STATUS_SENT_TO_GOVT,
+            'is_cpsp_processed' => true,
+        ]);
+        \App\Models\Decision::factory()->create([
+            'petition_id' => $petition2->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => 'Report with Recommendations',
+        ]);
+
+        // Filter by 17 A Sanction
+        $response = $this->actingAs($this->user)->get(route('petitions.reports', [
+            'status' => 'Sent to Govt',
+            'recommendation_type' => '17 A Sanction',
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Final: Sent to Govt');
+        $response->assertDontSee('(' . '17 A Sanction' . ')');
+        $petitions = $response->viewData('petitions');
+        $this->assertCount(1, $petitions);
+        $this->assertEquals($petition1->petition_id, $petitions->first()->petition_id);
+
+        // Filter by All Recommendation Types
+        $responseAll = $this->actingAs($this->user)->get(route('petitions.reports', [
+            'status' => 'Sent to Govt',
+            'recommendation_type' => 'All Recommendation Types',
+        ]));
+
+        $responseAll->assertStatus(200);
+        $petitionsAll = $responseAll->viewData('petitions');
+        $this->assertCount(2, $petitionsAll);
+    }
+
+    public function test_excel_export_respects_recommendation_type_filter_and_includes_column(): void
+    {
+        $petition1 = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'status' => Petition::STATUS_SENT_TO_GOVT,
+            'is_cpsp_processed' => true,
+        ]);
+        \App\Models\Decision::factory()->create([
+            'petition_id' => $petition1->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => '17 A Sanction',
+        ]);
+
+        $petition2 = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'status' => Petition::STATUS_SENT_TO_GOVT,
+            'is_cpsp_processed' => true,
+        ]);
+        \App\Models\Decision::factory()->create([
+            'petition_id' => $petition2->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => 'Report with Recommendations',
+        ]);
+
+        // Export filtered by 17 A Sanction
+        $response = $this->actingAs($this->user)->get(route('petitions.export', [
+            'status' => 'Sent to Govt',
+            'recommendation_type' => '17 A Sanction',
+        ]));
+
+        $response->assertStatus(200);
+        $content = $response->getContent();
+
+        $this->assertStringContainsString('Recommendation Type', $content);
+        $this->assertStringContainsString($petition1->receipt_no, $content);
+        $this->assertStringContainsString('17 A Sanction', $content);
+        $this->assertStringNotContainsString($petition2->receipt_no, $content);
+
+        // Custom Export specifying custom_columns
+        $responseCustom = $this->actingAs($this->user)->get(route('petitions.export', [
+            'status' => 'Sent to Govt',
+            'custom_columns' => ['Receipt No', 'Decision', 'Recommendation Type'],
+        ]));
+
+        $responseCustom->assertStatus(200);
+        $customContent = $responseCustom->getContent();
+        $this->assertStringContainsString('<th>Recommendation Type</th>', $customContent);
+        $this->assertStringContainsString('17 A Sanction', $customContent);
+        $this->assertStringContainsString('Report with Recommendations', $customContent);
+    }
 }

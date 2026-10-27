@@ -575,7 +575,7 @@ class Petition extends Model
 
     public function scopeFilterByRecommendationType(Builder $query, ?string $recommendationType, ?string $status = null): Builder
     {
-        if (empty($recommendationType)) {
+        if (empty($recommendationType) || in_array(strtolower($recommendationType), ['all', 'all recommendation types'])) {
             return $query;
         }
 
