@@ -199,6 +199,9 @@
             </thead>
             <tbody class="divide-y divide-slate-100 text-sm">
                 @forelse($petitions as $petition)
+                    @php
+                        $regDate = $petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d') : ($petition->created_at ? $petition->created_at->format('Y-m-d') : '');
+                    @endphp
                     <tr class="hover:bg-slate-50/50 transition-colors">
                         <td class="px-6 py-4 text-center text-sm font-semibold text-slate-500">
                             {{ ($petitions->currentPage() - 1) * $petitions->perPage() + $loop->iteration }}

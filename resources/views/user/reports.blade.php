@@ -245,6 +245,8 @@
                         action: '', 
                         recommendationType: '',
                         recommendationTypeError: '',
+                        fileCreatedDate: '',
+                        forwardedDate: '',
                         validateForm(e) {
                             this.recommendationTypeError = '';
                             if (this.action === 'Sent_to_Govt' && !this.recommendationType) {
@@ -261,6 +263,7 @@
                     x-init="
                         $watch('action', val => { if (val !== 'Sent_to_Govt') { recommendationType = ''; recommendationTypeError = ''; } });
                         $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
+                        $watch('fileCreatedDate', val => { if (val && forwardedDate && forwardedDate < val) { forwardedDate = val; } });
                     "
                     @submit="if (!validateForm($event)) return false;">
                     @csrf
@@ -275,7 +278,8 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1">File Date</label>
-                                <input type="date" name="file_created_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                                <input type="date" name="file_created_date" x-model="fileCreatedDate"
+                                    :min="activePetitionDate || null" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                                     class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
                                     style="color: #1e40af !important;">
                             </div>
@@ -328,7 +332,8 @@
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Action Date</label>
-                            <input type="date" name="forwarded_date" :min="activePetitionDate || null" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                            <input type="date" name="forwarded_date" x-model="forwardedDate"
+                                :min="fileCreatedDate || activePetitionDate || null" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                                 style="color: #1e40af !important;" required>
                         </div>
