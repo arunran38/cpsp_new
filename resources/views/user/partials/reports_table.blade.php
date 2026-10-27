@@ -147,7 +147,7 @@
                                 @endif
 
                                 @if(Auth::user()->canAccess('delete petitions'))
-                                    @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance']) && (!$petition->isFromInward() || Auth::user()->canAccess('access admin dashboard')))
+                                    @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance']) && (!$petition->isFromInward() || Auth::user()->canAccess('access admin dashboard')))
                                         <form action="{{ route('petitions.destroy', $petition->hashid) }}" method="POST"
                                             class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
                                             @csrf
@@ -278,7 +278,7 @@
                             <span
                                 class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest {{ $wf['pill_class'] }}">
                                 @if($targetPetition->decision)
-                                    Final : {{ \App\Models\Decision::getDecisionLabel($targetPetition->decision->final_decision) }}
+                                    Final: {{ \App\Models\Decision::getDecisionLabel($targetPetition->decision->final_decision) }}
                                 @else
                                     {{ $wf['label'] }}
                                 @endif
@@ -316,7 +316,7 @@
                                             </button>
                                         @endif
                                         
-                                        @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Internal_Vigilance')
+                                        @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Sent_to_SPC' || $petition->status === 'Internal_Vigilance')
                                             <a href="{{ route('petitions.show', $petition->hashid) }}#decision"
                                                 class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline flex items-center gap-1">
                                                 <i class="fa-solid fa-circle-check"></i> Finalized
@@ -336,7 +336,7 @@
                                         $procBy = null;
                                         if($petition->status === 'Forwarded' || $petition->status === 'VR_Received') {
                                             $procBy = $petition->latestForwarding?->processedBy?->name;
-                                        } elseif($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Internal_Vigilance') {
+                                        } elseif($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Sent_to_SPC' || $petition->status === 'Internal_Vigilance') {
                                             $procBy = $petition->decision?->processedBy?->name;
                                         }
                                     @endphp
@@ -379,7 +379,7 @@
                                     <i class="fa-solid fa-eye text-indigo-500"></i>
                                 </a>
                                 @if($canModifyPetition)
-                                    @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance']) && ($petition->is_cpsp_processed || $petition->is_returned_to_inward))
+                                    @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance']) && ($petition->is_cpsp_processed || $petition->is_returned_to_inward))
                                         <a href="{{ route('petitions.edit', $petition->hashid) }}"
                                             class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                                             title="Edit Record">
@@ -397,7 +397,7 @@
                                     </button>
                                 @endif
                                 @if(Auth::user()->canAccess('delete petitions'))
-                                    @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance']) && (!$petition->isFromInward() || Auth::user()->canAccess('access admin dashboard')))
+                                    @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance']) && (!$petition->isFromInward() || Auth::user()->canAccess('access admin dashboard')))
                                         <form action="{{ route('petitions.destroy', $petition->hashid) }}" method="POST"
                                             class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
                                             @csrf

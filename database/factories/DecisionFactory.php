@@ -20,7 +20,7 @@ class DecisionFactory extends Factory
         return [
             'petition_id' => \App\Models\Petition::factory(),
             'decided_by_seat_id' => \App\Models\Seat::factory(),
-            'decision_remarks' => $this->faker->randomElement(['PE', 'SC', 'QV', 'Closed', 'Sent to Govt', 'ICell']),
+            'final_decision' => $this->faker->randomElement(['PE', 'SC', 'CV', 'Closed', 'Sent to Govt', 'Sent to SPC', 'ICell']),
             'final_remarks' => $this->faker->paragraph(),
             'decision_date' => $this->faker->date(),
         ];

@@ -197,7 +197,7 @@
                                 title="Forwarded Petitions">Forwarded<br>Petitions</th>
                             <th class="px-4 py-3 align-middle border-r border-slate-200" rowspan="2"
                                 title="Verification Reports">VR<br>Received</th>
-                            <th class="px-4 py-2 border-b border-slate-200 bg-slate-100/50" colspan="10">Final Decisions
+                            <th class="px-4 py-2 border-b border-slate-200 bg-slate-100/50" colspan="11">Final Decisions
                             </th>
                         </tr>
                         <tr class="bg-slate-50">
@@ -211,7 +211,8 @@
                             <th class="px-2 py-2 border-r border-slate-200 w-20">Internal<br>Vigilance</th>
                             <th class="px-2 py-2 border-r border-slate-200 w-20">ICell</th>
                             <th class="px-2 py-2 border-r border-slate-200 w-20">Closed</th>
-                            <th class="px-2 py-2 w-20">Sent to<br>Govt</th>
+                            <th class="px-2 py-2 border-r border-slate-200 w-20">Sent to<br>Govt</th>
+                            <th class="px-2 py-2 w-20">Sent to<br>SPC</th>
                         </tr>
                     </thead>
 
@@ -244,10 +245,11 @@
                                 <td class="px-2 py-3 text-center">{{ $seat->decisions_icell_count }}</td>
                                 <td class="px-2 py-3 text-center">{{ $seat->decisions_closed_count }}</td>
                                 <td class="px-2 py-3 text-center">{{ $seat->decisions_sent_count }}</td>
+                                <td class="px-2 py-3 text-center">{{ $seat->decisions_sent_to_spc_count }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="15" class="text-center py-10 text-slate-500">
+                                <td colspan="16" class="text-center py-10 text-slate-500">
                                     No data found
                                 </td>
                             </tr>
@@ -276,6 +278,7 @@
                                 <td class="text-center">{{ $seats->sum('decisions_icell_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('decisions_closed_count') }}</td>
                                 <td class="text-center">{{ $seats->sum('decisions_sent_count') }}</td>
+                                <td class="text-center">{{ $seats->sum('decisions_sent_to_spc_count') }}</td>
                             </tr>
                         </tfoot>
                     @endif

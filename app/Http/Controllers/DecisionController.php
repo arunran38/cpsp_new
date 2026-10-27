@@ -36,13 +36,18 @@ class DecisionController extends Controller
                     'petition_id' => $petition->petition_id,
                     'decided_by_seat_id' => $currentSeatId,
                     'final_decision' => $request->final_decision,
+                    'govt_recommendation_type' => $request->final_decision === 'Sent to Govt' ? $request->govt_recommendation_type : null,
                     'directorate_order_number' => $request->directorate_order_number,
                     'final_remarks' => $request->final_remarks,
                     'decision_date' => $request->decision_date,
                     'processed_by_user_id' => Auth::id(),
                 ]);
 
-                $status = $request->final_decision === 'Sent to Govt' ? Petition::STATUS_SENT_TO_GOVT : Petition::STATUS_CLOSED;
+                $status = match($request->final_decision) {
+                    'Sent to Govt' => Petition::STATUS_SENT_TO_GOVT,
+                    'Sent to SPC' => Petition::STATUS_SENT_TO_SPC,
+                    default => Petition::STATUS_CLOSED,
+                };
                 $petition->update(['status' => $status]);
 
                 if ($request->hasFile('final_order_file')) {

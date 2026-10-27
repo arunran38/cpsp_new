@@ -87,7 +87,7 @@
         @if($tab === 'decisions')
             <!-- Sub-Tabs for Final Decisions -->
             <div
-                class="flex flex-wrap items-center justify-center gap-2 mb-6 p-1.5 bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] animate-in fade-in slide-in-from-top-2 duration-300">
+                class="flex flex-wrap items-center justify-center gap-2 {{ request('status') === 'Sent to Govt' ? 'mb-3' : 'mb-6' }} p-1.5 bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] animate-in fade-in slide-in-from-top-2 duration-300">
                 @php
                     $statuses = [
                         'All' => null,
@@ -99,7 +99,8 @@
                         'Internal Vigilance' => 'IV',
                         'ICell' => 'ICell',
                         'Closed' => 'Closed',
-                        'Sent to Govt' => 'Sent to Govt'
+                        'Sent to Govt' => 'Sent to Govt',
+                        'Sent to SPC' => 'Sent to SPC'
                     ];
                 @endphp
                 @foreach($statuses as $label => $value)
@@ -110,6 +111,41 @@
                     </a>
                 @endforeach
             </div>
+
+            @if(request('status') === 'Sent to Govt')
+                <!-- Sub-Navigation for Recommendation Type under Sent to Govt -->
+                <div
+                    class="flex flex-wrap items-center justify-center gap-2 mb-6 p-1.5 bg-slate-900/60 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] animate-in fade-in slide-in-from-top-2 duration-300">
+                    @php
+                        $recTypes = [
+                            'All' => null,
+                            '17 A Sanction' => '17 A Sanction',
+                            'Report with Recommendations' => 'Report with Recommendations',
+                            'No Recommendations' => 'No Recommendations',
+                        ];
+                    @endphp
+                    @foreach($recTypes as $label => $value)
+                        @php
+                            $isSelected = $value === null
+                                ? empty(request('recommendation_type'))
+                                : request('recommendation_type') === $value;
+                            $recUrl = route('petitions.index', array_filter([
+                                'tab' => 'decisions',
+                                'status' => 'Sent to Govt',
+                                'recommendation_type' => ($value === null || $isSelected) ? null : $value,
+                                'search' => request('search'),
+                                'date_from' => request('date_from'),
+                                'date_to' => request('date_to')
+                            ]));
+                        @endphp
+                        <a href="{{ $recUrl }}"
+                            class="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-300 {{ $isSelected ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] border border-emerald-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
+                            <span>{{ $label }}</span>
+                            <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[10px] font-black px-1.5 transition-colors {{ $isSelected ? 'bg-white text-emerald-700' : 'bg-white/20 text-white' }}">{{ $govtRecCounts[$label] ?? 0 }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
         @endif
 
 
@@ -133,6 +169,9 @@
                     <input type="hidden" name="tab" value="{{ $tab }}">
                     @if(request('status'))
                         <input type="hidden" name="status" value="{{ request('status') }}">
+                    @endif
+                    @if(request('recommendation_type'))
+                        <input type="hidden" name="recommendation_type" value="{{ request('recommendation_type') }}">
                     @endif
                     <div class="flex-1 min-w-[200px]">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Search Petitions</label>
@@ -160,7 +199,7 @@
                     </div>
                     <div class="flex-none">
                         <label class="block text-xs font-medium text-transparent mb-1">&nbsp;</label>
-                        <a href="{{ route('petitions.index', ['tab' => $tab, 'status' => request('status')]) }}"
+                        <a href="{{ route('petitions.index', array_filter(['tab' => $tab, 'status' => request('status'), 'recommendation_type' => request('recommendation_type')])) }}"
                             class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold px-4 py-[9px] rounded-lg text-sm flex items-center gap-2 shadow-sm transition-all whitespace-nowrap"
                             title="Clear all filters">
                             <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
@@ -190,46 +229,73 @@
                     </button>
                 </div>
 
-                <form action="{{ route('forwardings.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('forwardings.store') }}" method="POST" enctype="multipart/form-data"
+                    x-data="{ 
+                        action: '', 
+                        recommendationType: '',
+                        recommendationTypeError: '',
+                        fileNo: '', 
+                        fileNoError: '',
+                        checkEmpty() {
+                            if (!this.fileNo.trim()) {
+                                this.fileNoError = 'this field is required';
+                            } else {
+                                this.fileNoError = '';
+                            }
+                        },
+                        async checkFileNoUniqueness() {
+                            if (!this.fileNo.trim()) {
+                                this.fileNoError = 'this field is required';
+                                return;
+                            }
+                            try {
+                                const response = await fetch('/petitions/check-file-no', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
+                                    },
+                                    body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
+                                });
+                                const data = await response.json();
+                                if (data.exists) {
+                                    this.fileNoError = 'File number already exists';
+                                } else {
+                                    this.fileNoError = '';
+                                }
+                            } catch (error) {
+                                console.error(error);
+                            }
+                        },
+                        validateForm(e) {
+                            this.recommendationTypeError = '';
+                            if (this.action === 'Sent_to_Govt' && !this.recommendationType) {
+                                this.recommendationTypeError = 'Recommendation Type is required.';
+                                if (e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }
+                                return false;
+                            }
+                            if (this.fileNoError) {
+                                if (e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }
+                                return false;
+                            }
+                            return true;
+                        }
+                    }"
+                    x-init="
+                        $watch('action', val => { if (val !== 'Sent_to_Govt') { recommendationType = ''; recommendationTypeError = ''; } });
+                        $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
+                    "
+                    @submit="if (!validateForm($event)) return false;">
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 
-                    <div x-data="{ 
-                                            action: '', 
-                                            fileNo: '', 
-                                            fileNoError: '',
-                                            checkEmpty() {
-                                                if (!this.fileNo.trim()) {
-                                                    this.fileNoError = 'this field is required';
-                                                } else {
-                                                    this.fileNoError = '';
-                                                }
-                                            },
-                                            async checkFileNoUniqueness() {
-                                                if (!this.fileNo.trim()) {
-                                                    this.fileNoError = 'this field is required';
-                                                    return;
-                                                }
-                                                try {
-                                                    const response = await fetch('/petitions/check-file-no', {
-                                                        method: 'POST',
-                                                        headers: {
-                                                            'Content-Type': 'application/json',
-                                                            'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
-                                                        },
-                                                        body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
-                                                    });
-                                                    const data = await response.json();
-                                                    if (data.exists) {
-                                                        this.fileNoError = 'File number already exists';
-                                                    } else {
-                                                        this.fileNoError = '';
-                                                    }
-                                                } catch (error) {
-                                                    console.error(error);
-                                                }
-                                            }
-                                        }" class="space-y-4">
+                    <div class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1">File Number <span
@@ -253,12 +319,26 @@
                             $actionOptions = [
                                 'Forward_To_Unit' => 'Forward to Unit',
                                 'Sent_to_Govt' => 'Send to Govt (Decision)',
+                                'Sent_to_SPC' => 'Send to SPC (Decision)',
                                 'Close' => 'Close Petition (Decision)',
                             ];
                         @endphp
                         <x-select label="Action" name="action" :options="$actionOptions" x-model="action"
                             placeholder="Select Action..." required />
 
+                        <div x-show="action === 'Sent_to_Govt'" x-cloak class="pt-2">
+                            @php
+                                $govtRecOptions = [
+                                    '17 A Sanction' => '17 A Sanction',
+                                    'Report with Recommendations' => 'Report with Recommendations',
+                                    'No Recommendations' => 'No Recommendations',
+                                ];
+                            @endphp
+                            <x-select label="Recommendation Type" name="govt_recommendation_type" :options="$govtRecOptions"
+                                x-model="recommendationType"
+                                placeholder="Select Recommendation Type..." />
+                            <p x-show="recommendationTypeError" x-text="recommendationTypeError" x-cloak class="mt-1 text-xs font-semibold text-rose-600"></p>
+                        </div>
 
                         <div x-show="action === 'Forward_To_Unit'" x-cloak class="pt-2">
                             @php
@@ -275,12 +355,12 @@
                                 style="color: #1e40af !important;" required>
                         </div>
 
-                        <div x-show="action === 'Close' || action === 'Sent_to_Govt'" x-cloak class="pt-2">
+                        <div x-show="action === 'Close' || action === 'Sent_to_Govt' || action === 'Sent_to_SPC'" x-cloak class="pt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Directorate Order Number</label>
                             <input type="text" name="directorate_order_number"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 mb-3"
                                 placeholder="Order Number"
-                                x-bind:required="action === 'Close' || action === 'Sent_to_Govt'">
+                                x-bind:required="action === 'Close' || action === 'Sent_to_Govt' || action === 'Sent_to_SPC'">
 
                             <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order</label>
                             <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
@@ -297,7 +377,7 @@
                         <div class="flex justify-end gap-3 pt-6">
                             <button type="button" @click="showForwardModal = false"
                                 class="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-transparent rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>
-                            <button type="submit" :disabled="fileNoError !== ''"
+                            <button type="submit" @click="if (!validateForm($event)) return false;" :disabled="fileNoError !== ''"
                                 class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                                 Submit Action <i data-lucide="arrow-right" class="w-4 h-4"></i>
                             </button>
@@ -352,7 +432,8 @@
                                 'IV' => 'Internal Vigilance (IV)',
                                 'ICell' => 'Intelligence Cell (I Cell)',
                                 'Closed' => 'Closed',
-                                'Sent to Govt' => 'Sent to Govt'
+                                'Sent to Govt' => 'Sent to Govt',
+                                'Sent to SPC' => 'Sent to SPC'
                             ];
                         @endphp
                         <x-select label="VR Recommendation" name="vr_remarks" :options="$vrRecommendationOptions"
@@ -401,7 +482,29 @@
                     </button>
                 </div>
 
-                <form action="{{ route('decisions.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <form action="{{ route('decisions.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4"
+                    x-data="{ 
+                        finalDecision: '', 
+                        recommendationType: '',
+                        recommendationTypeError: '',
+                        validateDecision(e) {
+                            this.recommendationTypeError = '';
+                            if (this.finalDecision === 'Sent to Govt' && !this.recommendationType) {
+                                this.recommendationTypeError = 'Recommendation Type is required.';
+                                if (e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }
+                                return false;
+                            }
+                            return true;
+                        }
+                    }"
+                    x-init="
+                        $watch('finalDecision', val => { if (val !== 'Sent to Govt') { recommendationType = ''; recommendationTypeError = ''; } });
+                        $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
+                    "
+                    @submit="if (!validateDecision($event)) return false;">
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 
@@ -416,11 +519,27 @@
                                 'IV' => 'Internal Vigilance (IV)',
                                 'ICell' => 'Intelligence Cell (I Cell)',
                                 'Closed' => 'Closed',
-                                'Sent to Govt' => 'Sent to Govt'
+                                'Sent to Govt' => 'Sent to Govt',
+                                'Sent to SPC' => 'Sent to SPC'
                             ];
                         @endphp
                         <x-select label="Final Decision" name="final_decision" :options="$decisionOptions"
+                            x-model="finalDecision"
                             placeholder="Select..." required />
+
+                        <div x-show="finalDecision === 'Sent to Govt'" x-cloak class="pt-2">
+                            @php
+                                $govtRecOptions = [
+                                    '17 A Sanction' => '17 A Sanction',
+                                    'Report with Recommendations' => 'Report with Recommendations',
+                                    'No Recommendations' => 'No Recommendations',
+                                ];
+                            @endphp
+                            <x-select label="Recommendation Type" name="govt_recommendation_type" :options="$govtRecOptions"
+                                x-model="recommendationType"
+                                placeholder="Select Recommendation Type..." />
+                            <p x-show="recommendationTypeError" x-text="recommendationTypeError" x-cloak class="mt-1 text-xs font-semibold text-rose-600"></p>
+                        </div>
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Decision Date</label>
@@ -451,7 +570,7 @@
                     <div class="flex justify-end gap-3 pt-6">
                         <button type="button" @click="showDecisionModal = false"
                             class="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-transparent rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>
-                        <button type="submit"
+                        <button type="submit" @click="if (!validateDecision($event)) return false;"
                             class="px-4 py-2 text-sm font-medium text-white bg-rose-600 border border-transparent rounded-lg hover:bg-rose-700 shadow-sm transition-colors flex items-center gap-2">
                             Submit Decision <i data-lucide="arrow-right" class="w-4 h-4"></i>
                         </button>

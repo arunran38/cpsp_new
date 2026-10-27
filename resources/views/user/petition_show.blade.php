@@ -127,7 +127,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                @if(Auth::user()->canAccess('update petitions') && (Auth::user()->canAccess('access admin dashboard') || !in_array($petition->status, ['Closed', 'Sent_to_Govt'])))
+                @if(Auth::user()->canAccess('update petitions') && (Auth::user()->canAccess('access admin dashboard') || !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC'])))
                     @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
                         <a href="{{ route('petitions.edit', $petition->hashid) }}"
                             class="px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 rounded-lg transition-all shadow-md shadow-teal-500/20 flex items-center gap-2">
@@ -139,7 +139,7 @@
                             <i data-lucide="edit" class="w-4 h-4"></i> Edit Details
                         </a>
                     @endif
-                    @if(Auth::user()->canAccess('link petitions') && !$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Duplicate']))
+                    @if(Auth::user()->canAccess('link petitions') && !$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Duplicate']))
                         <button type="button" @click="showLinkModal = true"
                             class="px-4 py-2.5 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-all shadow-sm flex items-center gap-2">
                             <i data-lucide="link" class="w-4 h-4"></i> Link Petition
@@ -500,7 +500,8 @@
                         <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-6">
                             <h4 class="font-bold text-indigo-900 mb-4">Initial Decision / Forwarding</h4>
                             <form action="{{ route('forwardings.store') }}" method="POST" enctype="multipart/form-data"
-                                class="space-y-4">
+                                class="space-y-4"
+                                onsubmit="if(document.getElementById('fwd_action_select').value === 'Sent_to_Govt' && !document.getElementById('fwd_govt_rec_type').value) { document.getElementById('fwd-govt-rec-error').style.display = 'block'; return false; }">
                                 @csrf
                                 <input type="hidden" name="petition_id" value="{{ $petition->petition_id }}">
 
@@ -524,14 +525,24 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
                                     <div class="relative flex items-center">
-                                        <select name="action"
+                                        <select name="action" id="fwd_action_select"
                                             class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
                                             style="background-image: none !important;" required
-                                            onchange="document.getElementById('unit-select-div').style.display = this.value === 'Forward_To_Unit' ? 'block' : 'none'; document.getElementById('final-doc-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt') ? 'block' : 'none'; document.getElementById('fwd_order_number').required = (this.value === 'Close' || this.value === 'Sent_to_Govt');">
+                                            onchange="
+                                                document.getElementById('unit-select-div').style.display = this.value === 'Forward_To_Unit' ? 'block' : 'none';
+                                                document.getElementById('final-doc-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Sent_to_SPC') ? 'block' : 'none';
+                                                document.getElementById('fwd_order_number').required = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Sent_to_SPC');
+                                                document.getElementById('govt-rec-div-fwd').style.display = this.value === 'Sent_to_Govt' ? 'block' : 'none';
+                                                if (this.value !== 'Sent_to_Govt') {
+                                                    document.getElementById('fwd_govt_rec_type').value = '';
+                                                    document.getElementById('fwd-govt-rec-error').style.display = 'none';
+                                                }
+                                            ">
                                             <option value="">Select Action...</option>
                                             <option value="Forward_To_Unit">Forward to Unit</option>
-                                            <option value="Sent_to_Govt">Send to Govt</option>
-                                            <option value="Close">Close Petition</option>
+                                            <option value="Sent_to_Govt">Send to Govt (Decision)</option>
+                                            <option value="Sent_to_SPC">Send to SPC (Decision)</option>
+                                            <option value="Close">Close Petition (Decision)</option>
                                         </select>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                             fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -540,6 +551,28 @@
                                             <path d="m6 9 6 6 6-6" />
                                         </svg>
                                     </div>
+                                </div>
+
+                                <div id="govt-rec-div-fwd" style="display: none;">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Recommendation Type <span class="text-red-500">*</span></label>
+                                    <div class="relative flex items-center">
+                                        <select name="govt_recommendation_type" id="fwd_govt_rec_type"
+                                            onchange="if(this.value) document.getElementById('fwd-govt-rec-error').style.display = 'none';"
+                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
+                                            style="background-image: none !important;">
+                                            <option value="">Select Recommendation Type...</option>
+                                            <option value="17 A Sanction">17 A Sanction</option>
+                                            <option value="Report with Recommendations">Report with Recommendations</option>
+                                            <option value="No Recommendations">No Recommendations</option>
+                                        </select>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none">
+                                            <path d="m6 9 6 6 6-6" />
+                                        </svg>
+                                    </div>
+                                    <p id="fwd-govt-rec-error" class="text-xs font-semibold text-rose-600 mt-1" style="display: none;">Recommendation Type is required.</p>
                                 </div>
 
                                 <div>
@@ -753,6 +786,7 @@
                                                 <option value="ICell">Intelligence Cell (I Cell)</option>
                                                 <option value="Closed">Closed</option>
                                                 <option value="Sent to Govt">Sent to Govt</option>
+                                                <option value="Sent to SPC">Sent to SPC</option>
                                             </select>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                                 fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -827,16 +861,24 @@
                             <div class="bg-rose-50 border border-rose-100 rounded-xl p-6 mb-6">
                                 <h4 class="font-bold text-rose-900 mb-4">Final Decision</h4>
                                 <form action="{{ route('decisions.store') }}" method="POST" enctype="multipart/form-data"
-                                    class="space-y-4">
+                                    class="space-y-4"
+                                    onsubmit="if(document.getElementById('final_decision_select').value === 'Sent to Govt' && !document.getElementById('final_govt_rec_type').value) { document.getElementById('final-govt-rec-error').style.display = 'block'; return false; }">
                                     @csrf
                                     <input type="hidden" name="petition_id" value="{{ $petition->petition_id }}">
 
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Final Decision</label>
                                         <div class="relative flex items-center">
-                                            <select name="final_decision"
+                                            <select name="final_decision" id="final_decision_select"
                                                 class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 appearance-none pr-10 py-2 text-sm text-gray-900"
-                                                style="background-image: none !important;" required>
+                                                style="background-image: none !important;" required
+                                                onchange="
+                                                    document.getElementById('final-govt-rec-div').style.display = this.value === 'Sent to Govt' ? 'block' : 'none';
+                                                    if (this.value !== 'Sent to Govt') {
+                                                        document.getElementById('final_govt_rec_type').value = '';
+                                                        document.getElementById('final-govt-rec-error').style.display = 'none';
+                                                    }
+                                                ">
                                                 <option value="">Select...</option>
                                                 <option value="VC">Vigilance Case (VC)</option>
                                                 <option value="VE">Vigilance Enquiry (VE)</option>
@@ -847,6 +889,7 @@
                                                 <option value="ICell">Intelligence Cell (I Cell)</option>
                                                 <option value="Closed">Closed</option>
                                                 <option value="Sent to Govt">Sent to Govt</option>
+                                                <option value="Sent to SPC">Sent to SPC</option>
                                             </select>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                                 fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -855,6 +898,28 @@
                                                 <path d="m6 9 6 6 6-6" />
                                             </svg>
                                         </div>
+                                    </div>
+
+                                    <div id="final-govt-rec-div" style="display: none;">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Recommendation Type <span class="text-red-500">*</span></label>
+                                        <div class="relative flex items-center">
+                                            <select name="govt_recommendation_type" id="final_govt_rec_type"
+                                                onchange="if(this.value) document.getElementById('final-govt-rec-error').style.display = 'none';"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 appearance-none pr-10 py-2 text-sm text-gray-900"
+                                                style="background-image: none !important;">
+                                                <option value="">Select Recommendation Type...</option>
+                                                <option value="17 A Sanction">17 A Sanction</option>
+                                                <option value="Report with Recommendations">Report with Recommendations</option>
+                                                <option value="No Recommendations">No Recommendations</option>
+                                            </select>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none">
+                                                <path d="m6 9 6 6 6-6" />
+                                            </svg>
+                                        </div>
+                                        <p id="final-govt-rec-error" class="text-xs font-semibold text-rose-600 mt-1" style="display: none;">Recommendation Type is required.</p>
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Decision Date</label>
@@ -892,7 +957,7 @@
                             </div>
                         @endif
 
-                        @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt')
+                        @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Sent_to_SPC')
                             @if($petition->decision)
                                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 lg:col-span-2">
                                     <h4 class="font-bold text-gray-800 mb-4 border-b border-slate-200 pb-2">Decision Details</h4>
@@ -902,6 +967,13 @@
                                             <span
                                                 class="text-gray-900 block mt-1">{{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}</span>
                                         </div>
+                                        @if($petition->decision->govt_recommendation_type)
+                                            <div>
+                                                <span class="text-gray-600 font-semibold">Recommendation Type:</span>
+                                                <span
+                                                    class="text-rose-900 font-bold block mt-1">{{ $petition->decision->govt_recommendation_type }}</span>
+                                            </div>
+                                        @endif
                                         <div>
                                             <span class="text-gray-600 font-semibold">Decided On:</span>
                                             <span
@@ -1046,7 +1118,7 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <span
-                                            class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($petition->originalPetition->status === 'Closed' || $petition->originalPetition->status === 'Sent_to_Govt') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                            class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($petition->originalPetition->status === 'Closed' || $petition->originalPetition->status === 'Sent_to_Govt' || $petition->originalPetition->status === 'Sent_to_SPC') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
                                             @if($petition->originalPetition->decision)
                                                 Final :
                                                 {{ \App\Models\Decision::getDecisionLabel($petition->originalPetition->decision->final_decision) }}
@@ -1090,7 +1162,7 @@
                                         </td>
                                         <td class="px-6 py-4">
                                             <span
-                                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($dup->status === 'Closed' || $dup->status === 'Sent_to_Govt') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($dup->status === 'Closed' || $dup->status === 'Sent_to_Govt' || $dup->status === 'Sent_to_SPC') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
                                                 @if($dup->decision)
                                                     Final : {{ \App\Models\Decision::getDecisionLabel($dup->decision->final_decision) }}
                                                 @else

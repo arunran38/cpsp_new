@@ -44,13 +44,22 @@ class PetitionForwardingController extends Controller
                     ]);
                     $status = Petition::STATUS_FORWARDED;
                 } else {
-                    $status = $request->action === 'Sent_to_Govt' ? Petition::STATUS_SENT_TO_GOVT : Petition::STATUS_CLOSED;
-                    $decisionRemarks = $request->action === 'Sent_to_Govt' ? 'Sent to Govt' : 'Closed'; 
+                    $status = match($request->action) {
+                        'Sent_to_Govt' => Petition::STATUS_SENT_TO_GOVT,
+                        'Sent_to_SPC' => Petition::STATUS_SENT_TO_SPC,
+                        default => Petition::STATUS_CLOSED,
+                    };
+                    $decisionRemarks = match($request->action) {
+                        'Sent_to_Govt' => 'Sent to Govt',
+                        'Sent_to_SPC' => 'Sent to SPC',
+                        default => 'Closed',
+                    };
 
                     Decision::create([
                         'petition_id' => $petition->petition_id,
                         'decided_by_seat_id' => $currentSeatId,
                         'final_decision' => $decisionRemarks,
+                        'govt_recommendation_type' => $request->action === 'Sent_to_Govt' ? $request->govt_recommendation_type : null,
                         'directorate_order_number' => $request->directorate_order_number,
                         'final_remarks' => $request->director_remarks,
                         'decision_date' => $request->forwarded_date,

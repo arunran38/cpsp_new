@@ -8,7 +8,7 @@
 <div class="space-y-1.5">
     @if($label)
         <label @if($name) for="{{ $name }}" @endif class="block text-sm font-bold text-slate-800">
-            {{ $label }}
+            {!! $label !!}
         </label>
     @endif
     <div class="relative flex items-center group">
@@ -21,7 +21,7 @@
             :class="(typeof formErrors !== 'undefined' && formErrors && $refs.select && formErrors[$refs.select.name]) ? 'border-rose-500 ring-4 ring-rose-500/10 focus:border-rose-500 focus:ring-rose-500/10' : 'border-slate-200 focus:ring-4 focus:ring-primary/10 focus:border-primary'"
             x-ref="select"
             @if(!($attributes->has(':name') || $attributes->has('::name') || $attributes->has('x-bind:name'))) name="{{ $name }}" @endif
-            @change="validateField($event)"
+            @change="typeof validateField === 'function' ? validateField($event) : null"
         >
             @if($placeholder)
                 <option value="" {{ !$selected && !old($name) ? 'selected' : '' }} disabled class="py-2 text-sm font-medium text-slate-500 bg-white">

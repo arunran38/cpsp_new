@@ -25,12 +25,18 @@ class PetitionControllerTest extends TestCase
     {
         parent::setUp();
         
+        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(\Database\Seeders\DeveloperRoleSeeder::class);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'CPSP', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'cpsp', 'guard_name' => 'web']);
+
         $this->admin = User::factory()->create();
         $this->user = User::factory()->create();
         $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super admin', 'guard_name' => 'web']);
         $this->admin->assignRole($role);
         $this->user->assignRole($role);
         $this->seat = Seat::factory()->create();
+        $this->seat->assignRole($role);
         
         // Assign user to seat
         SeatUser::factory()->create([
@@ -78,6 +84,7 @@ class PetitionControllerTest extends TestCase
                 [
                     'name' => 'Jane Smith',
                     'entity_type' => 'Person',
+                    'department_id' => \App\Models\DepartmentList::firstOrCreate(['department_name' => 'Police'])->id,
                     'addresses' => [
                         [
                             'address_type' => 'Office',
@@ -93,7 +100,7 @@ class PetitionControllerTest extends TestCase
 
         $response = $this->actingAs($this->user)->post(route('petitions.store'), $data);
 
-        $response->assertRedirect(route('petitions.index'));
+        $response->assertRedirect(route('petitions.index', ['tab' => 'all']));
         $this->assertDatabaseHas('petitions', ['receipt_no' => 'REC-2024-0001', 'seat_id' => $this->seat->seat_id]);
         $this->assertDatabaseHas('addresses', ['person_name' => 'John Doe', 'person_type' => 'Complainant']);
         $this->assertDatabaseHas('addresses', ['person_name' => 'Jane Smith', 'person_type' => 'Accused']);
@@ -140,11 +147,24 @@ class PetitionControllerTest extends TestCase
 
     public function test_user_cannot_view_others_petition(): void
     {
+        $restrictedUser = User::factory()->create();
+        $restrictedSeat = Seat::factory()->create(['seat_name' => 'Inward Section']);
+        SeatUser::factory()->create([
+            'user_id' => $restrictedUser->user_id,
+            'seat_id' => $restrictedSeat->seat_id,
+            'is_active' => true
+        ]);
+        $inwardRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'inward', 'guard_name' => 'web']);
+        $restrictedUser->assignRole($inwardRole);
+        $restrictedSeat->assignRole($inwardRole);
+
         $otherUser = User::factory()->create();
         $otherSeat = Seat::factory()->create();
         $petition = Petition::factory()->create(['user_id' => $otherUser->user_id, 'seat_id' => $otherSeat->seat_id]);
 
-        $response = $this->actingAs($this->user)->get(route('petitions.show', $petition->petition_id));
+        $response = $this->actingAs($restrictedUser)
+            ->withSession(['current_seat_id' => $restrictedSeat->seat_id])
+            ->get(route('petitions.show', $petition->petition_id));
 
         $response->assertStatus(403);
     }
@@ -162,17 +182,25 @@ class PetitionControllerTest extends TestCase
     {
         $petition = Petition::factory()->create(['user_id' => $this->user->user_id, 'seat_id' => $this->seat->seat_id]);
         
+        $department = \App\Models\DepartmentList::firstOrCreate(['department_name' => 'Police']);
         $updateData = [
             'receipt_no' => 'UPDATED-NO-1',
             'date_of_petition_received' => '2024-02-02',
             'nature_of_petition' => 'Misuse of authority',
             'mode_of_petition_received' => 'Email',
             'description' => 'Updated description content',
+            'accused' => [
+                [
+                    'name' => 'Jane Smith',
+                    'entity_type' => 'Person',
+                    'department_id' => $department->id,
+                ]
+            ]
         ];
 
         $response = $this->actingAs($this->user)->put(route('petitions.update', $petition->petition_id), $updateData);
 
-        $response->assertRedirect(route('petitions.index'));
+        $response->assertRedirect(route('petitions.index', ['tab' => 'all']));
         $this->assertDatabaseHas('petitions', [
             'petition_id' => $petition->petition_id,
             'receipt_no' => 'UPDATED-NO-1',
@@ -186,7 +214,7 @@ class PetitionControllerTest extends TestCase
 
         $response = $this->actingAs($this->user)->delete(route('petitions.destroy', $petition->petition_id));
 
-        $response->assertRedirect(route('petitions.index'));
+        $response->assertRedirect(route('petitions.index', ['tab' => 'all']));
         $this->assertSoftDeleted('petitions', ['petition_id' => $petition->petition_id]);
     }
 
@@ -274,5 +302,167 @@ class PetitionControllerTest extends TestCase
             'date_to' => '2024-05-01'
         ]));
         $response->assertSessionHasErrors(['date_to']);
+    }
+
+    public function test_decisions_tab_sent_to_govt_shows_recommendation_subnav_and_counts(): void
+    {
+        $petition1 = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'status' => Petition::STATUS_SENT_TO_GOVT
+        ]);
+        \App\Models\Decision::factory()->create([
+            'petition_id' => $petition1->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => '17 A Sanction'
+        ]);
+
+        $petition2 = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'status' => Petition::STATUS_SENT_TO_GOVT
+        ]);
+        \App\Models\Decision::factory()->create([
+            'petition_id' => $petition2->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => 'Report with Recommendations'
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('petitions.index', [
+            'tab' => 'decisions',
+            'status' => 'Sent to Govt'
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('17 A Sanction');
+        $response->assertSee('Report with Recommendations');
+        $response->assertSee('No Recommendations');
+        
+        $govtRecCounts = $response->viewData('govtRecCounts');
+        $this->assertEquals(2, $govtRecCounts['All']);
+        $this->assertEquals(1, $govtRecCounts['17 A Sanction']);
+        $this->assertEquals(1, $govtRecCounts['Report with Recommendations']);
+        $this->assertEquals(0, $govtRecCounts['No Recommendations']);
+    }
+
+    public function test_decisions_tab_filters_by_recommendation_type(): void
+    {
+        $petition1 = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'status' => Petition::STATUS_SENT_TO_GOVT
+        ]);
+        \App\Models\Decision::factory()->create([
+            'petition_id' => $petition1->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => '17 A Sanction'
+        ]);
+
+        $petition2 = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'status' => Petition::STATUS_SENT_TO_GOVT
+        ]);
+        \App\Models\Decision::factory()->create([
+            'petition_id' => $petition2->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => 'Report with Recommendations'
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('petitions.index', [
+            'tab' => 'decisions',
+            'status' => 'Sent to Govt',
+            'recommendation_type' => '17 A Sanction'
+        ]));
+
+        $response->assertStatus(200);
+        $petitions = $response->viewData('petitions');
+        $this->assertCount(1, $petitions);
+        $this->assertEquals($petition1->petition_id, $petitions->first()->petition_id);
+    }
+
+    public function test_petition_list_displays_final_sent_to_govt_without_recommendation_type(): void
+    {
+        $petition = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'status' => Petition::STATUS_SENT_TO_GOVT
+        ]);
+        \App\Models\Decision::factory()->create([
+            'petition_id' => $petition->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => '17 A Sanction'
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('petitions.index', [
+            'tab' => 'decisions',
+            'status' => 'Sent to Govt'
+        ]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Final: Sent to Govt');
+        $response->assertDontSee('(' . '17 A Sanction' . ')');
+    }
+
+    public function test_decision_counts_exclude_soft_deleted_and_prevent_duplicate_counts(): void
+    {
+        $petition1 = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'status' => Petition::STATUS_SENT_TO_GOVT,
+            'is_cpsp_processed' => true,
+        ]);
+        // Soft-deleted decision on petition 1 (e.g. from previous pullback)
+        $oldDecision = \App\Models\Decision::factory()->create([
+            'petition_id' => $petition1->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => null,
+        ]);
+        $oldDecision->delete();
+
+        // Active decision on petition 1
+        \App\Models\Decision::factory()->create([
+            'petition_id' => $petition1->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => '17 A Sanction',
+        ]);
+
+        // Petition 2 with active decision
+        $petition2 = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'status' => Petition::STATUS_SENT_TO_GOVT,
+            'is_cpsp_processed' => true,
+        ]);
+        \App\Models\Decision::factory()->create([
+            'petition_id' => $petition2->petition_id,
+            'final_decision' => 'Sent to Govt',
+            'govt_recommendation_type' => 'Report with Recommendations',
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('petitions.index', [
+            'tab' => 'decisions',
+        ]));
+
+        $response->assertStatus(200);
+
+        $unifiedCounts = $response->viewData('unifiedCounts');
+        $decisionCounts = $response->viewData('decisionCounts');
+        $govtRecCounts = $response->viewData('govtRecCounts');
+
+        // Only 2 petitions exist; counts must be exactly 2, not 3
+        $this->assertEquals(2, $unifiedCounts['all']);
+        $this->assertEquals(2, $unifiedCounts['decisions']);
+
+        $this->assertEquals(2, $decisionCounts['All']);
+        $this->assertEquals(2, $decisionCounts['Sent to Govt']);
+        $this->assertEquals(0, $decisionCounts['VC']);
+        $this->assertEquals(0, $decisionCounts['Closed']);
+        $this->assertEquals(0, $decisionCounts['Sent to SPC']);
+
+        $this->assertEquals(2, $govtRecCounts['All']);
+        $this->assertEquals(1, $govtRecCounts['17 A Sanction']);
+        $this->assertEquals(1, $govtRecCounts['Report with Recommendations']);
+        $this->assertEquals(0, $govtRecCounts['No Recommendations']);
     }
 }

@@ -46,7 +46,7 @@
                 <th rowspan="2">Processed Petitions</th>
                 <th rowspan="2">Forwarded Petitions</th>
                 <th rowspan="2">Verification Reports Received</th>
-                <th colspan="9">Final Decisions</th>
+                <th colspan="10">Final Decisions</th>
             </tr>
             <tr>
                 <th>Total</th>
@@ -59,6 +59,7 @@
                 <th>ICell</th>
                 <th>Closed</th>
                 <th>Sent Govt</th>
+                <th>Sent to SPC</th>
             </tr>
         </thead>
         <tbody>
@@ -80,6 +81,7 @@
                     <td>{{ $seat->decisions_icell_count }}</td>
                     <td>{{ $seat->decisions_closed_count }}</td>
                     <td>{{ $seat->decisions_sent_count }}</td>
+                    <td>{{ $seat->decisions_sent_to_spc_count }}</td>
                 </tr>
             @endforeach
 
@@ -101,6 +103,7 @@
                     <td>{{ $seats->sum('decisions_icell_count') }}</td>
                     <td>{{ $seats->sum('decisions_closed_count') }}</td>
                     <td>{{ $seats->sum('decisions_sent_count') }}</td>
+                    <td>{{ $seats->sum('decisions_sent_to_spc_count') }}</td>
                 </tr>
             @endif
         </tbody>
