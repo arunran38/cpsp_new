@@ -28,7 +28,21 @@ class StoreForwardingRequest extends FormRequest
             'to_unit_id' => 'required_if:action,Forward_To_Unit|nullable|exists:units,unit_id',
             'directorate_order_number' => 'required_if:action,Sent_to_Govt,Close|nullable|string|max:255',
             'final_order_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
-            'forwarded_date' => 'required|date|before_or_equal:today',
+            'forwarded_date' => [
+                'required',
+                'date',
+                'before_or_equal:today',
+                function ($attribute, $value, $fail) {
+                    $petitionId = \App\Services\HashidService::decode($this->petition_id) ?? $this->petition_id;
+                    $petition = \App\Models\Petition::find($petitionId);
+                    if ($petition && $petition->date_of_petition_received) {
+                        $regDate = \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d');
+                        if ($value < $regDate) {
+                            $fail('Action date cannot be earlier than petition registration date (' . \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d-m-Y') . ').');
+                        }
+                    }
+                },
+            ],
             'file_no' => 'required|string|unique:petitions,file_no,' . $this->petition_id . ',petition_id',
             'file_created_date' => 'nullable|date|before_or_equal:today',
         ];

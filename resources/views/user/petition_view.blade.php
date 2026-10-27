@@ -2,7 +2,7 @@
 @section('container_width', 'max-w-full')
 
 @section('content')
-    <div x-data="{ showForwardModal: false, showVrModal: false, showDecisionModal: false, activePetitionId: null, activeForwardingId: null, showReturnModal: false, returnPetitionId: null, returnReceiptNo: '' }"
+    <div x-data="{ showForwardModal: false, showVrModal: false, showDecisionModal: false, activePetitionId: null, activePetitionDate: '', activeForwardingId: null, showReturnModal: false, returnPetitionId: null, returnReceiptNo: '' }"
         @open-return-modal.window="returnPetitionId = $event.detail.id; returnReceiptNo = $event.detail.receipt; showReturnModal = true"
         class="space-y-6">
         <!-- Premium Header Section -->
@@ -270,7 +270,7 @@
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Action Date</label>
-                            <input type="date" name="forwarded_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                            <input type="date" name="forwarded_date" :min="activePetitionDate || null" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                                 style="color: #1e40af !important;" required>
                         </div>
@@ -424,7 +424,7 @@
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Decision Date</label>
-                            <input type="date" name="decision_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                            <input type="date" name="decision_date" :min="activePetitionDate || null" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-slate-800 font-semibold"
                                 style="color: #1e40af !important;" required>
                         </div>
