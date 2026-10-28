@@ -74,14 +74,16 @@ class UserTest extends TestCase
         $this->assertFalse($superAdmin->canAccessTSectionPending());
 
         $role->givePermissionTo(
-            Permission::create(['name' => 'view seat diagnostics', 'guard_name' => 'web']),
-            Permission::create(['name' => 'inward statistics', 'guard_name' => 'web']),
-            Permission::create(['name' => 'view t-section diagnostics', 'guard_name' => 'web']),
-            Permission::create(['name' => 'view t-section pending details', 'guard_name' => 'web'])
+            Permission::firstOrCreate(['name' => 'view seat diagnostics', 'guard_name' => 'web']),
+            Permission::firstOrCreate(['name' => 'inward statistics', 'guard_name' => 'web']),
+            Permission::firstOrCreate(['name' => 'view pendency details', 'guard_name' => 'web']),
+            Permission::firstOrCreate(['name' => 'view t-section diagnostics', 'guard_name' => 'web']),
+            Permission::firstOrCreate(['name' => 'view t-section pending details', 'guard_name' => 'web'])
         );
 
         $this->assertTrue($superAdmin->canAccess('view seat diagnostics'));
         $this->assertTrue($superAdmin->canAccess('inward_statistics'));
+        $this->assertTrue($superAdmin->canAccess('view pendency details'));
         $this->assertTrue($superAdmin->canAccessTSectionDiagnostics());
         $this->assertTrue($superAdmin->canAccessTSectionPending());
     }

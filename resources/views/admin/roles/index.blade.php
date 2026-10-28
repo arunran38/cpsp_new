@@ -47,7 +47,7 @@
             'title' => 'Reports & Charts',
             'icon' => 'pie-chart',
             'badge' => 'bg-purple-50 text-purple-700 border-purple-200',
-            'filter' => fn($p) => (str_contains($p, 'stat') || str_contains($p, 'chart') || str_contains($p, 'export') || str_contains($p, 'master report')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
+            'filter' => fn($p) => (str_contains($p, 'stat') || str_contains($p, 'chart') || str_contains($p, 'export') || str_contains($p, 'master report') || str_contains($p, 'pendency')) && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p)
         ],
         'system' => [
             'title' => 'Maintenance',

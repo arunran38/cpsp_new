@@ -138,10 +138,12 @@ class User extends Authenticatable
             'view recent petitions',
             'view seat diagnostics',
             'inward statistics',
+            'view pendency details',
+            'pendency details',
         ], \App\Services\TSectionPermissionRegistry::all());
 
         if (in_array($permission, $strictPermissions, true)) {
-            if ($currentSeat && !session('is_impersonating_seat')) {
+            if ($currentSeat) {
                 try {
                     return $currentSeat->hasPermissionTo($permission);
                 } catch (\Exception $e) {
@@ -156,15 +158,8 @@ class User extends Authenticatable
             }
         }
 
-        // Developer & Super Admin have unrestricted full access
-        try {
-            if ($this->hasRole(['developer', 'Developer', 'super admin', 'Super Admin'])) {
-                return true;
-            }
-        } catch (\Exception $e) { }
-
-        // If sitting in a seat, the seat's permissions govern access (except for admin dashboard)
-        if ($currentSeat && !session('is_impersonating_seat')) {
+        // If sitting in a seat, the seat's permissions govern access (even when switched/impersonating)
+        if ($currentSeat) {
             try {
                 if ($currentSeat->hasRole(['developer', 'Developer', 'super admin', 'Super Admin'])) {
                     return true;
@@ -174,15 +169,23 @@ class User extends Authenticatable
                 }
             } catch (\Exception $e) { }
 
-            // Still allow global admin dashboard access if the user has it personally
+            // Still allow global admin dashboard access if the user has it personally (e.g. to switch back)
             if ($permission === 'access admin dashboard') {
                 try {
-                    return $this->hasPermissionTo($permission);
+                    return $this->hasRole(['developer', 'Developer', 'super admin', 'Super Admin'])
+                        || $this->hasPermissionTo($permission);
                 } catch (\Exception $e) { }
             }
 
             return false;
         }
+
+        // Developer & Super Admin have unrestricted full access when not in an operational seat
+        try {
+            if ($this->hasRole(['developer', 'Developer', 'super admin', 'Super Admin'])) {
+                return true;
+            }
+        } catch (\Exception $e) { }
 
         // If not in a seat (or impersonating), fallback to personal permissions
         try {

@@ -36,6 +36,24 @@ class AppServiceProvider extends ServiceProvider
                 return null;
             }
 
+            // If user has an active seat, check the seat's roles/permissions
+            $currentSeatUser = method_exists($user, 'currentSeatUser') ? $user->currentSeatUser() : null;
+            $currentSeat = $currentSeatUser?->seat;
+
+            if ($currentSeat) {
+                try {
+                    if ($currentSeat->hasRole(['developer', 'Developer', 'super admin', 'Super Admin'])) {
+                        return true;
+                    }
+                    $normalizedAbility = str_replace('_', ' ', trim($ability));
+                    if ($currentSeat->hasPermissionTo($normalizedAbility)) {
+                        return true;
+                    }
+                } catch (\Exception $e) { }
+
+                return null;
+            }
+
             try {
                 if ($user->hasRole(['developer', 'Developer', 'super admin', 'Super Admin'])) {
                     return true;

@@ -643,7 +643,7 @@
                 </a>
                 @endif
 
-                @if(Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('inward statistics'))
+                @if(Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view pendency details'))
                 <!-- Statistical Reports Dropdown -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -694,7 +694,7 @@
                         </a>
                         @endif
 
-                        @if(Auth::user()->canAccess('inward statistics'))
+                        @if(Auth::user()->canAccess('view pendency details'))
                         <a href="{{ route('inward.statistics') }}" 
                            @click="reportsOpen = true"
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">

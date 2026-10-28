@@ -126,7 +126,7 @@
                 ],
                 'Statistics, Diagnostics & Exports' => [
                     'desc' => 'Operational statistics, seat diagnostics, and data exports',
-                    'filter' => fn($p) => (str_contains(strtolower($p->name), 'stat') || str_contains(strtolower($p->name), 'export') || str_contains(strtolower($p->name), 'diagnostic')) && !str_contains(strtolower($p->name), 'chart') && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p->name)
+                    'filter' => fn($p) => (str_contains(strtolower($p->name), 'stat') || str_contains(strtolower($p->name), 'export') || str_contains(strtolower($p->name), 'diagnostic') || str_contains(strtolower($p->name), 'pendency')) && !str_contains(strtolower($p->name), 'chart') && !\App\Services\TSectionPermissionRegistry::isTSectionPermission($p->name)
                 ],
                 'Visual Analytics Charts' => [
                     'desc' => 'Trends, nature, status & seat distribution charts',

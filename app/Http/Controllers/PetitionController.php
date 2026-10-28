@@ -416,10 +416,10 @@ class PetitionController extends Controller
     {
         $user = Auth::user();
         
-        $canAccessStats = $user->canAccess('inward statistics');
+        $canAccessStats = $user->canAccess('inward statistics') || $user->canAccess('view pendency details');
 
         if (!$canAccessStats) {
-            abort(403, 'Unauthorized access to Inward Statistics.');
+            abort(403, 'Unauthorized access to Inward Statistics / Pendency Details.');
         }
 
         $dateFrom = $request->input('date_from');
@@ -437,8 +437,21 @@ class PetitionController extends Controller
         $seatsQuery = Seat::with(['activeAssignment.user'])
             ->where('is_active', true);
 
+        $cpspConstraint = function ($q) {
+            $q->where(function ($sq) {
+                $sq->whereHas('roles', fn($r) => $r->whereIn('name', ['CPSP', 'cpsp']))
+                   ->orWhereHas('activeAssignment.user.roles', fn($r) => $r->whereIn('name', ['CPSP', 'cpsp']))
+                   ->orWhere(function ($nameQuery) {
+                       $nameQuery->where('seat_name', 'like', 'CPSP%');
+                   });
+            })
+            ->where('seat_name', 'not like', 'SS %')
+            ->where('seat_name', 'not like', '%Superintendent%')
+            ->whereDoesntHave('roles', fn($r) => $r->where('name', 'like', '%Superintendent%'));
+        };
+
         if ($section === 'cpsp' || !$canViewTSection) {
-            $seatsQuery->where('seat_name', 'like', '%CPSP%');
+            $seatsQuery->where($cpspConstraint);
             if (!$canViewTSection && $section === 'all') {
                 $section = 'cpsp';
             }
@@ -450,9 +463,9 @@ class PetitionController extends Controller
                   ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']));
             });
         } else {
-            // All: CPSP & T-Section (when authorized)
-            $seatsQuery->where(function ($q) use ($tSeatIds) {
-                $q->where('seat_name', 'like', '%CPSP%')
+            // All: CPSP (excluding Superintendent / SS seats) & T-Section (when authorized)
+            $seatsQuery->where(function ($q) use ($tSeatIds, $cpspConstraint) {
+                $q->where($cpspConstraint)
                   ->orWhereIn('seat_id', $tSeatIds)
                   ->orWhere('seat_name', 'like', '%T Section%')
                   ->orWhere('seat_name', 'like', '%T-Section%')
