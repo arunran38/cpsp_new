@@ -483,9 +483,6 @@ class PetitionController extends Controller
                          });
                   });
             })
-            ->whereDoesntHave('roles', function ($rq) {
-                $rq->whereIn('name', ['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']);
-            })
             ->whereDoesntHave('seatUsers', function ($su) {
                 $su->where('is_active', true)
                    ->whereHas('seat', function ($s) {
@@ -533,6 +530,15 @@ class PetitionController extends Controller
             $requestedCreator = 'my_petitions';
         }
 
+        $isOwnCreator = $requestedCreator === 'my_petitions'
+            || (is_numeric($requestedCreator) && (int) $requestedCreator === (int) $user->user_id);
+        $isEligibleCreator = is_numeric($requestedCreator)
+            && $creators->contains(fn ($creator) => (int) $creator->user_id === (int) $requestedCreator);
+
+        if ($requestedCreator !== 'all' && !$isOwnCreator && !$isEligibleCreator) {
+            $requestedCreator = 'my_petitions';
+        }
+
         $selectedCreator = $requestedCreator;
         $targetCreatorUser = null;
         $selectedCreatorLabel = 'All Creators';
@@ -541,8 +547,7 @@ class PetitionController extends Controller
             $targetCreatorUser = $user;
             $selectedCreatorLabel = "My Petitions ({$user->name})";
         } elseif ($selectedCreator !== 'all' && is_numeric($selectedCreator)) {
-            $targetCreatorUser = $creators->firstWhere('user_id', (int)$selectedCreator)
-                ?? \App\Models\User::find((int)$selectedCreator);
+            $targetCreatorUser = $creators->firstWhere('user_id', (int)$selectedCreator);
             $selectedCreatorLabel = $targetCreatorUser 
                 ? ($targetCreatorUser->inward_display_name ?? $targetCreatorUser->name) 
                 : "Creator #{$selectedCreator}";
@@ -569,10 +574,9 @@ class PetitionController extends Controller
                 $sq->whereHas('roles', fn($r) => $r->whereIn('name', ['CPSP', 'cpsp']))
                    ->orWhereHas('activeAssignment.user.roles', fn($r) => $r->whereIn('name', ['CPSP', 'cpsp']))
                    ->orWhere(function ($nameQuery) {
-                       $nameQuery->where('seat_name', 'like', 'CPSP%');
+                       $nameQuery->where('seat_name', 'like', '%CPSP%');
                    });
             })
-            ->where('seat_name', 'not like', 'SS %')
             ->where('seat_name', 'not like', '%Superintendent%')
             ->whereDoesntHave('roles', fn($r) => $r->where('name', 'like', '%Superintendent%'));
         };
