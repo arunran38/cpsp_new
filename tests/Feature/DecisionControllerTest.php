@@ -23,10 +23,8 @@ class DecisionControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->admin = User::factory()->create();
-        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super admin', 'guard_name' => 'web']);
-        $this->admin->assignRole($role);
         $this->seat = Seat::factory()->create();
+        $this->admin = $this->createSuperAdminUser($this->seat);
         
         SeatUser::factory()->create([
             'user_id' => $this->admin->user_id,
@@ -145,4 +143,3 @@ class DecisionControllerTest extends TestCase
         $this->assertDatabaseHas('petitions', ['petition_id' => $petition->petition_id, 'status' => 'VR_Received']);
     }
 }
-

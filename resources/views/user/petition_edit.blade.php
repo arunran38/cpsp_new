@@ -727,7 +727,6 @@
                     </div>
                 </div>
             </div>
-    </div>
 
     <!-- Duplicate Detection Modal (Redesigned) -->
     <div x-show="showDuplicateModal" x-cloak
@@ -854,13 +853,15 @@
                             </div>
 
                             <!-- Action Button -->
+                            @if(Auth::user()->canAccess('link petitions'))
                             <div class="w-full xl:w-auto shrink-0 flex items-center">
-                                <button type="button" @click="linkPetition(dup.petition_id, dup.receipt_no)"
+                                <button type="button" @click="linkPetition(dup.receipt_no)" :disabled="isLinkingDuplicate"
                                     class="w-full xl:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-teal-600 active:scale-95 transition-all flex justify-center items-center gap-2 group-hover:animate-pulse focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
                                     <i data-lucide="link" class="w-4 h-4 transition-transform group-hover:rotate-12"></i>
-                                    Link & Merge
+                                    <span x-text="isLinkingDuplicate ? 'Linking...' : 'Link & Merge'"></span>
                                 </button>
                             </div>
+                            @endif
                         </div>
                     </template>
                 </div>
@@ -899,6 +900,7 @@
                 showDuplicateModal: false,
                 linkedPetitionId: '{{ $petition->linked_petition_id }}' || null,
                 isCheckingDuplicates: false,
+                isLinkingDuplicate: false,
                 debounceTimer: null,
 
                 init() {
@@ -971,28 +973,52 @@
                         });
                 },
 
-                linkPetition(id, number) {
-                    this.linkedPetitionId = id;
-                    this.showDuplicateModal = false;
+                async linkPetition(number) {
+                    if (this.isLinkingDuplicate) return;
 
-                    Swal.fire({
-                        title: 'Petition Linked!',
-                        text: 'Petition is linked to ' + number,
-                        icon: 'success',
-                        confirmButtonText: 'OK',
-                        confirmButtonColor: '#10b981',
-                        allowOutsideClick: false
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            let form = document.getElementById('petitionFormElement');
-                            let redirectInput = document.createElement('input');
-                            redirectInput.type = 'hidden';
-                            redirectInput.name = 'duplicate_link_number';
-                            redirectInput.value = number;
-                            form.appendChild(redirectInput);
-                            form.submit();
+                    this.isLinkingDuplicate = true;
+                    try {
+                        const response = await fetch('{{ route('petitions.linkDuplicate', $petition->hashid) }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({ original_receipt_no: number })
+                        });
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            const validationMessage = data.errors
+                                ? Object.values(data.errors).flat().join(' ')
+                                : data.message;
+                            throw new Error(validationMessage || 'The petition could not be linked.');
                         }
-                    });
+
+                        this.showDuplicateModal = false;
+                        const result = await Swal.fire({
+                            title: 'Petition Linked!',
+                            text: data.message,
+                            icon: 'success',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#10b981',
+                            allowOutsideClick: false
+                        });
+
+                        if (result.isConfirmed && data.redirect_url) {
+                            window.location.assign(data.redirect_url);
+                        }
+                    } catch (error) {
+                        Swal.fire({
+                            title: 'Unable to Link Petition',
+                            text: error.message || 'An unexpected error occurred.',
+                            icon: 'error',
+                            confirmButtonColor: '#e11d48'
+                        });
+                    } finally {
+                        this.isLinkingDuplicate = false;
+                    }
                 },
 
                 removeExistingUpload(id) {

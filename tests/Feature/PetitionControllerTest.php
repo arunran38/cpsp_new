@@ -110,6 +110,120 @@ class PetitionControllerTest extends TestCase
         Storage::disk('public')->assertExists($petition->uploads->first()->file_path);
     }
 
+    public function test_non_inward_petition_creator_is_counted_by_workflow_state_and_visible_in_matching_tabs(): void
+    {
+        $creator = User::factory()->create();
+        $creator->givePermissionTo([
+            \Spatie\Permission\Models\Permission::findOrCreate('create petitions', 'web'),
+            \Spatie\Permission\Models\Permission::findOrCreate('view petitions', 'web'),
+            \Spatie\Permission\Models\Permission::findOrCreate('create inward petitions', 'web'),
+        ]);
+        $seat = Seat::factory()->create();
+        SeatUser::factory()->create([
+            'user_id' => $creator->user_id,
+            'seat_id' => $seat->seat_id,
+            'is_active' => true,
+        ]);
+        $seat->givePermissionTo([
+            \Spatie\Permission\Models\Permission::findOrCreate('create petitions', 'web'),
+            \Spatie\Permission\Models\Permission::findOrCreate('view petitions', 'web'),
+            \Spatie\Permission\Models\Permission::findOrCreate('create inward petitions', 'web'),
+        ]);
+        $department = \App\Models\DepartmentList::firstOrCreate(['department_name' => 'Petition Test Department']);
+
+        $this->actingAs($creator)->withSession(['current_seat_id' => $seat->seat_id])
+            ->get(route('petitions.create'))
+            ->assertOk();
+
+        $this->actingAs($creator)->withSession(['current_seat_id' => $seat->seat_id])
+            ->post(route('petitions.store'), [
+                'receipt_no' => 'NON-INWARD-CREATOR-1',
+                'date_of_petition_received' => now()->toDateString(),
+                'nature_of_petition' => 'Bribery',
+                'mode_of_petition_received' => 'Direct',
+                'description' => 'Created by a user without the Inward role.',
+                'seat_id' => $seat->seat_id,
+                'accused' => [[
+                    'name' => 'Test Suspect',
+                    'entity_type' => 'Person',
+                    'department_id' => $department->id,
+                ]],
+            ])
+            ->assertRedirect(route('petitions.index', ['tab' => 'all']));
+
+        $outsideSeat = Seat::factory()->create();
+        Petition::factory()->create([
+            'user_id' => User::factory()->create()->user_id,
+            'seat_id' => $outsideSeat->seat_id,
+            'receipt_no' => 'OUTSIDE-CREATOR-SCOPE-1',
+            'is_cpsp_processed' => true,
+        ]);
+
+        $petition = Petition::where('receipt_no', 'NON-INWARD-CREATOR-1')->firstOrFail();
+        $this->assertFalse($creator->hasRole(['inward', 'Inward']));
+        $this->assertTrue($petition->is_cpsp_processed);
+
+        $allResponse = $this->actingAs($creator)->withSession(['current_seat_id' => $seat->seat_id])
+            ->get(route('petitions.index', ['tab' => 'all']));
+        $allResponse->assertOk();
+        $this->assertSame(1, $allResponse->viewData('petitions')->total());
+        $this->assertSame(1, $allResponse->viewData('unifiedCounts')['all']);
+
+        $processedResponse = $this->actingAs($creator)->withSession(['current_seat_id' => $seat->seat_id])
+            ->get(route('petitions.index', ['tab' => 'received']));
+        $processedResponse->assertOk();
+        $this->assertSame(1, $processedResponse->viewData('petitions')->total());
+        $this->assertSame(1, $processedResponse->viewData('unifiedCounts')['received']);
+        $this->assertSame(0, $processedResponse->viewData('unifiedCounts')['inward']);
+
+        $petition->update(['status' => Petition::STATUS_FORWARDED]);
+        $forwardedResponse = $this->actingAs($creator)->withSession(['current_seat_id' => $seat->seat_id])
+            ->get(route('petitions.index', ['tab' => 'forwarded']));
+        $forwardedResponse->assertOk();
+        $this->assertSame(1, $forwardedResponse->viewData('petitions')->total());
+        $this->assertSame(1, $forwardedResponse->viewData('unifiedCounts')['forwarded']);
+        $this->assertSame(0, $forwardedResponse->viewData('unifiedCounts')['received']);
+
+        $petition->update(['status' => Petition::STATUS_SENT_TO_GOVT]);
+        \App\Models\Decision::factory()->create([
+            'petition_id' => $petition->petition_id,
+            'decided_by_seat_id' => $seat->seat_id,
+            'final_decision' => 'Sent to Govt',
+        ]);
+        $decisionsResponse = $this->actingAs($creator)->withSession(['current_seat_id' => $seat->seat_id])
+            ->get(route('petitions.index', ['tab' => 'decisions']));
+        $decisionsResponse->assertOk();
+        $this->assertSame(1, $decisionsResponse->viewData('petitions')->total());
+        $this->assertSame(1, $decisionsResponse->viewData('unifiedCounts')['decisions']);
+        $this->assertSame(1, $decisionsResponse->viewData('decisionCounts')['Sent to Govt']);
+    }
+
+    public function test_inward_tab_counts_unprocessed_workflow_records_without_creator_role_filter(): void
+    {
+        $creator = User::factory()->create();
+        $creator->givePermissionTo([
+            \Spatie\Permission\Models\Permission::findOrCreate('view petitions', 'web'),
+        ]);
+        $petition = Petition::factory()->create([
+            'user_id' => $creator->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'is_cpsp_processed' => false,
+            'is_returned_to_inward' => false,
+        ]);
+        SeatUser::factory()->create([
+            'user_id' => $creator->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($creator)->withSession(['current_seat_id' => $this->seat->seat_id])
+            ->get(route('petitions.index', ['tab' => 'inward']));
+
+        $response->assertOk();
+        $this->assertSame(1, $response->viewData('petitions')->total());
+        $this->assertSame(1, $response->viewData('unifiedCounts')['inward']);
+    }
+
     public function test_user_can_view_petitions_index(): void
     {
         Petition::factory()->create(['user_id' => $this->user->user_id, 'seat_id' => $this->seat->seat_id]);
@@ -176,6 +290,235 @@ class PetitionControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('petitions.show', $petition->petition_id));
 
         $response->assertStatus(200);
+    }
+
+    public function test_create_page_exposes_duplicate_search_and_create_link_workflow(): void
+    {
+        $response = $this->actingAs($this->user)->get(route('petitions.create'));
+
+        $response->assertOk()
+            ->assertSee(route('petitions.checkDuplicates'), false)
+            ->assertSee('duplicate_link_number', false);
+    }
+
+    public function test_edit_page_uses_duplicate_link_endpoint_without_submitting_update_form(): void
+    {
+        $petition = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('petitions.edit', $petition->hashid));
+
+        $response->assertOk()
+            ->assertSee(route('petitions.linkDuplicate', $petition->hashid), false)
+            ->assertSee('original_receipt_no', false)
+            ->assertSee('fetch(', false);
+    }
+
+    public function test_duplicate_search_finds_petition_by_complainant_and_accused(): void
+    {
+        $petition = Petition::factory()->create(['receipt_no' => 'DUP-SEARCH-1']);
+        Address::factory()->create([
+            'petition_id' => $petition->petition_id,
+            'person_name' => 'Alex Complainant',
+            'person_type' => 'Complainant',
+        ]);
+        Address::factory()->create([
+            'petition_id' => $petition->petition_id,
+            'person_name' => 'Jamie Accused',
+            'person_type' => 'Accused',
+            'department_id' => null,
+        ]);
+
+        $response = $this->actingAs($this->user)->postJson(route('petitions.checkDuplicates'), [
+            'complainants' => [['name' => 'Alex Complainant']],
+            'accused' => [['name' => 'Jamie Accused']],
+        ]);
+
+        $response->assertOk()->assertJsonFragment([
+            'petition_id' => $petition->petition_id,
+            'receipt_no' => 'DUP-SEARCH-1',
+        ]);
+    }
+
+    public function test_duplicate_create_does_not_require_department_for_legacy_target(): void
+    {
+        $legacyPetition = Petition::factory()->create(['receipt_no' => 'LEGACY-NO-DEPT']);
+        Address::factory()->create([
+            'petition_id' => $legacyPetition->petition_id,
+            'person_type' => 'Accused',
+            'department_id' => null,
+        ]);
+
+        $response = $this->actingAs($this->user)->post(route('petitions.store'), [
+            'receipt_no' => 'DUPLICATE-NEW-1',
+            'date_of_petition_received' => now()->toDateString(),
+            'duplicate_link_number' => $legacyPetition->receipt_no,
+        ]);
+
+        $duplicate = Petition::where('receipt_no', 'DUPLICATE-NEW-1')->firstOrFail();
+        $response->assertRedirect(route('petitions.show', $duplicate->hashid))
+            ->assertSessionHas('success');
+        $this->assertSame($legacyPetition->petition_id, $duplicate->linked_petition_id);
+        $this->assertSame(Petition::STATUS_DUPLICATE, $duplicate->status);
+    }
+
+    public function test_normal_petition_create_still_requires_department(): void
+    {
+        $response = $this->actingAs($this->user)->from(route('petitions.create'))->post(route('petitions.store'), [
+            'receipt_no' => 'MISSING-DEPARTMENT-1',
+            'date_of_petition_received' => now()->toDateString(),
+            'nature_of_petition' => 'Bribery',
+            'mode_of_petition_received' => 'Direct',
+            'description' => 'Department validation regression test',
+            'accused' => [[
+                'name' => 'Jamie Accused',
+                'entity_type' => 'Person',
+                'department_id' => null,
+            ]],
+        ]);
+
+        $response->assertRedirect(route('petitions.create'))
+            ->assertSessionHasErrors('accused.0.department_id');
+        $this->assertDatabaseMissing('petitions', ['receipt_no' => 'MISSING-DEPARTMENT-1']);
+    }
+
+    public function test_edit_duplicate_link_succeeds_for_legacy_petitions_without_department(): void
+    {
+        $original = Petition::factory()->create(['receipt_no' => 'EDIT-LEGACY-ORIGINAL']);
+        Address::factory()->create([
+            'petition_id' => $original->petition_id,
+            'person_type' => 'Accused',
+            'department_id' => null,
+            'full_address' => 'Original petition address',
+        ]);
+        $duplicate = Petition::factory()->create([
+            'receipt_no' => 'EDIT-LEGACY-DUPLICATE',
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+        ]);
+        Address::factory()->create([
+            'petition_id' => $duplicate->petition_id,
+            'person_type' => 'Accused',
+            'department_id' => null,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->postJson(route('petitions.linkDuplicate', $duplicate->hashid), [
+                'original_receipt_no' => $original->receipt_no,
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('redirect_url', route('petitions.show', $duplicate->hashid));
+        $this->assertSame(
+            'Petition successfully linked as a duplicate of ' . $original->receipt_no . '.',
+            $response->json('message')
+        );
+        $this->assertSame(1, Address::where('petition_id', $original->petition_id)->count());
+        $this->assertDatabaseHas('petitions', [
+            'petition_id' => $duplicate->petition_id,
+            'linked_petition_id' => $original->petition_id,
+            'status' => Petition::STATUS_DUPLICATE,
+        ]);
+    }
+
+    public function test_petition_details_show_identical_legacy_address_copies_once_and_keep_distinct_addresses(): void
+    {
+        $petition = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+        ]);
+        foreach (['Complainant', 'Accused'] as $personType) {
+            $addressData = [
+                'petition_id' => $petition->petition_id,
+                'person_name' => $personType === 'Complainant' ? 'Riya Complainant' : 'Mohan Suspect',
+                'person_type' => $personType,
+                'address_type' => 'Permanent',
+                'full_address' => $personType === 'Complainant'
+                    ? '14 Complainant Software Road'
+                    : '14 Suspect Software Road',
+                'phone' => $personType === 'Complainant' ? '9000000001' : '9000000002',
+                'pincode' => '695033',
+            ];
+            Address::factory()->create($addressData);
+            Address::factory()->create($addressData);
+            Address::factory()->create(array_merge($addressData, [
+                'full_address' => $personType === 'Complainant'
+                    ? '15 Complainant Software Road'
+                    : '15 Suspect Software Road',
+            ]));
+        }
+
+        $response = $this->actingAs($this->user)->get(route('petitions.show', $petition->hashid));
+
+        $response->assertOk();
+        $html = $response->getContent();
+        $this->assertSame(1, substr_count($html, '14 Complainant Software Road'));
+        $this->assertSame(1, substr_count($html, '14 Suspect Software Road'));
+        $this->assertSame(1, substr_count($html, '15 Complainant Software Road'));
+        $this->assertSame(1, substr_count($html, '15 Suspect Software Road'));
+    }
+
+    public function test_linked_petition_displays_original_and_independent_addresses_once_for_multiple_duplicates(): void
+    {
+        $original = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+        ]);
+
+        foreach (['Complainant', 'Accused'] as $personType) {
+            $addressData = [
+                'petition_id' => $original->petition_id,
+                'person_name' => $personType === 'Complainant' ? 'Riya Complainant' : 'Mohan Suspect',
+                'person_type' => $personType,
+                'address_type' => 'Permanent',
+                'full_address' => $personType === 'Complainant'
+                    ? '14 Complainant Software Road'
+                    : '14 Suspect Software Road',
+                'phone' => $personType === 'Complainant' ? '9000000001' : '9000000002',
+                'pincode' => '695033',
+            ];
+            Address::factory()->create($addressData);
+            Address::factory()->create($addressData);
+        }
+
+        $duplicates = collect(['DUP-ADDR-1', 'DUP-ADDR-2'])->map(function ($receiptNo) use ($original) {
+            $duplicate = Petition::factory()->create([
+                'receipt_no' => $receiptNo,
+                'user_id' => $this->user->user_id,
+                'seat_id' => $this->seat->seat_id,
+                'linked_petition_id' => $original->petition_id,
+                'status' => Petition::STATUS_DUPLICATE,
+            ]);
+
+            foreach (['Complainant', 'Accused'] as $personType) {
+                Address::factory()->create([
+                    'petition_id' => $duplicate->petition_id,
+                    'person_name' => $personType === 'Complainant' ? 'Riya Complainant' : 'Mohan Suspect',
+                    'person_type' => $personType,
+                    'address_type' => 'Permanent',
+                    'full_address' => $personType === 'Complainant'
+                        ? '16 Independent Complainant Road'
+                        : '17 Independent Suspect Road',
+                    'phone' => $personType === 'Complainant' ? '9000000001' : '9000000002',
+                    'pincode' => '695033',
+                ]);
+            }
+
+            return $duplicate;
+        });
+
+        foreach ($duplicates as $duplicate) {
+            $response = $this->actingAs($this->user)->get(route('petitions.show', $duplicate->hashid));
+
+            $response->assertOk();
+            $html = $response->getContent();
+            $this->assertSame(1, substr_count($html, '14 Complainant Software Road'));
+            $this->assertSame(1, substr_count($html, '14 Suspect Software Road'));
+            $this->assertSame(1, substr_count($html, '16 Independent Complainant Road'));
+            $this->assertSame(1, substr_count($html, '17 Independent Suspect Road'));
+        }
     }
 
     public function test_user_can_update_petition(): void

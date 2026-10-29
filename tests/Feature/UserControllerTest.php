@@ -21,7 +21,7 @@ class UserControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->admin = User::factory()->create(['role' => 'admin']);
+        $this->admin = $this->createSuperAdminUser();
     }
 
     public function test_admin_can_view_users_index(): void
@@ -71,7 +71,7 @@ class UserControllerTest extends TestCase
     {
         $response = $this->actingAs($this->admin)->post(route('users.store'), []);
 
-        $response->assertSessionHasErrors(['name', 'pen', 'email', 'role', 'designation', 'password']);
+        $response->assertSessionHasErrors(['name', 'pen', 'email', 'designation', 'password']);
     }
 
     public function test_admin_can_edit_user_with_encrypted_id(): void

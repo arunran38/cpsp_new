@@ -44,7 +44,7 @@
     <tbody>
         @foreach($transfers as $index => $item)
             @php
-                $complainant = $item->addresses->firstWhere('person_type', 'Complainant');
+                $complainant = $item->displayAddresses()->firstWhere('person_type', 'Complainant');
                 $wf = $item->workflow_status;
                 $status = $wf['label'];
                 if ($wf['label'] === 'Transferred' && $item->seat) {

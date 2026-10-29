@@ -27,7 +27,7 @@
         <tbody class="divide-y divide-slate-200 text-sm">
             @forelse($transfers ?? [] as $index => $item)
                 @php
-                    $complainant = $item->addresses->firstWhere('person_type', 'Complainant');
+                    $complainant = $item->displayAddresses()->firstWhere('person_type', 'Complainant');
                     $seatUser = $item->seat?->activeAssignment?->user;
                 @endphp
             <tr class="hover:bg-blue-50/30 transition-colors {{ $loop->first && session('success') ? 'bg-indigo-50/40' : '' }}">

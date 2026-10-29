@@ -23,10 +23,8 @@ class PetitionForwardingControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->admin = User::factory()->create();
-        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'super admin', 'guard_name' => 'web']);
-        $this->admin->assignRole($role);
         $this->seat = Seat::factory()->create();
+        $this->admin = $this->createSuperAdminUser($this->seat);
         
         SeatUser::factory()->create([
             'user_id' => $this->admin->user_id,
@@ -115,6 +113,7 @@ class PetitionForwardingControllerTest extends TestCase
         ]);
 
         $response->assertStatus(302);
+        $response->assertSessionHas('success');
         $this->assertDatabaseHas('petitions', ['petition_id' => $petition->petition_id, 'status' => 'Closed']);
         $this->assertDatabaseHas('decisions', [
             'petition_id' => $petition->petition_id,
@@ -226,4 +225,3 @@ class PetitionForwardingControllerTest extends TestCase
         $this->assertDatabaseHas('petitions', ['petition_id' => $petition->petition_id, 'status' => 'Forwarded']);
     }
 }
-

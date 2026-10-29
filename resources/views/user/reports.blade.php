@@ -345,6 +345,7 @@
                                     <option value="Forward_To_Unit">Forward to Unit</option>
                                     <option value="Sent_to_Govt">Send to Govt (Decision)</option>
                                     <option value="Sent_to_SPC">Send to SPC (Decision)</option>
+                                    <option value="Internal_Vigilance">Send to Internal Vigilance</option>
                                     <option value="Close">Close Petition (Decision)</option>
                                 </select>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
@@ -387,7 +388,7 @@
                                 style="color: #1e40af !important;" required>
                         </div>
 
-                        <div x-show="action === 'Close' || action === 'Sent_to_Govt' || action === 'Sent_to_SPC'" x-cloak class="pt-2">
+                        <div x-show="action === 'Close' || action === 'Sent_to_Govt' || action === 'Sent_to_SPC' || action === 'Internal_Vigilance'" x-cloak class="pt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order</label>
                             <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
                                 class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">

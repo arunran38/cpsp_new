@@ -21,7 +21,8 @@
                 @forelse($petitions as $petition)
                     @php
                         $targetPetition = $petition->originalPetition ?? $petition;
-                        $complainants = $targetPetition->addresses->where('person_type', 'Complainant')->unique('person_name');
+                        $displayAddresses = $petition->displayAddresses();
+                        $complainants = $displayAddresses->where('person_type', 'Complainant')->unique('person_name');
                         $seatUser = $petition->seat?->activeAssignment?->user;
                         $regDate = $petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d') : ($petition->created_at ? $petition->created_at->format('Y-m-d') : '');
                     @endphp
@@ -224,7 +225,8 @@
                         <td class="px-6 py-4 text-slate-600">
                             @php
                                 $targetPetition = $petition->originalPetition ?? $petition;
-                                $complainants = $targetPetition->addresses->where('person_type', 'Complainant')->unique('person_name');
+                                $displayAddresses = $petition->displayAddresses();
+                                $complainants = $displayAddresses->where('person_type', 'Complainant')->unique('person_name');
                             @endphp
                             @if($complainants->count() > 0)
                                 @foreach($complainants as $complainant)
@@ -237,7 +239,7 @@
                         </td>
                         <td class="px-6 py-4 max-w-xs text-slate-700">
                             @php
-                                $accused = $targetPetition->addresses->where('person_type', 'Accused')->unique('person_name');
+                                $accused = $displayAddresses->where('person_type', 'Accused')->unique('person_name');
                             @endphp
                             @if($accused->count() > 0)
                                 @foreach($accused as $accuse)
@@ -431,4 +433,3 @@
 <div class="px-4 py-3 border-t border-slate-200">
     {{ $petitions->links() }}
 </div>
-

@@ -90,6 +90,14 @@ class StorePetitionRequest extends FormRequest
 
     public function rules(): array
     {
+        if ($this->filled('duplicate_link_number')) {
+            return [
+                'receipt_no' => 'required|unique:petitions,receipt_no',
+                'date_of_petition_received' => 'required|date|before_or_equal:today',
+                'duplicate_link_number' => 'required|string|exists:petitions,receipt_no',
+            ];
+        }
+
         $isInward = $this->boolean('is_inward_entry');
 
         $rules = [

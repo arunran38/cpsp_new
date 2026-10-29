@@ -23,11 +23,11 @@ class StoreForwardingRequest extends FormRequest
     {
         return [
             'petition_id' => 'required|exists:petitions,petition_id',
-            'action' => 'required|in:Forward_To_Unit,Sent_to_Govt,Sent_to_SPC,Close',
+            'action' => 'required|in:Forward_To_Unit,Sent_to_Govt,Sent_to_SPC,Internal_Vigilance,Sent_to_Internal_Vigilance,Close',
             'govt_recommendation_type' => 'required_if:action,Sent_to_Govt|nullable|in:17 A Sanction,Report with Recommendations,No Recommendations',
             'director_remarks' => 'required|string',
             'to_unit_id' => 'required_if:action,Forward_To_Unit|nullable|exists:units,unit_id',
-            'directorate_order_number' => 'required_if:action,Sent_to_Govt,Sent_to_SPC,Close|nullable|string|max:255',
+            'directorate_order_number' => 'required_if:action,Sent_to_Govt,Sent_to_SPC,Internal_Vigilance,Sent_to_Internal_Vigilance,Close|nullable|string|max:255',
             'final_order_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
             'forwarded_date' => [
                 'required',

@@ -51,9 +51,7 @@ class PetitionService
                 ));
 
             $isInwardWorkflow = !empty($data['is_inward_entry'])
-                || $isInwardUser
-                || $user->canAccess('create inward petitions')
-                || $user->canAccess('inward form');
+                || $isInwardUser;
 
             $petition = Petition::create([
                 'receipt_no' => $data['receipt_no'],

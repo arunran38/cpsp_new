@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Petition;
 use App\Models\Upload;
 use App\Models\Seat;
+use App\Models\User;
 use App\Http\Requests\StorePetitionRequest;
 use App\Http\Requests\UpdatePetitionRequest;
 use App\Services\PetitionService;
@@ -19,7 +20,9 @@ use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\InwardStatisticsExport;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Database\Eloquent\Builder;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -131,7 +134,7 @@ class PetitionController extends Controller
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
 
-        $transfersQuery = Petition::with(['seat.activeAssignment.user', 'user', 'addresses', 'cpspOpenedByUser', 'cpspOpenedBySeat', 'returnedByUser', 'processedByUser', 'processedBySeat'])
+        $transfersQuery = Petition::with(['seat.activeAssignment.user', 'user', 'addresses', 'originalPetition.addresses', 'cpspOpenedByUser', 'cpspOpenedBySeat', 'returnedByUser', 'processedByUser', 'processedBySeat'])
             ->whereNull('linked_petition_id')
             ->accessibleInwardPetitions($user, $request->input('scope'));
 
@@ -263,7 +266,7 @@ class PetitionController extends Controller
 
         $filter = $request->query('filter', 'all');
 
-        $transfersQuery = Petition::with(['user', 'seat.activeAssignment.user', 'unit', 'addresses'])
+        $transfersQuery = Petition::with(['user', 'seat.activeAssignment.user', 'unit', 'addresses', 'originalPetition.addresses'])
             ->whereNull('linked_petition_id')
             ->accessibleInwardPetitions($user, $request->input('scope'));
 
@@ -643,7 +646,7 @@ class PetitionController extends Controller
                 COUNT(CASE WHEN status = 'Received' THEN 1 END) as received,
                 COUNT(CASE WHEN status = 'Forwarded' THEN 1 END) as forwarded,
                 COUNT(CASE WHEN status = 'VR_Received' THEN 1 END) as vrs,
-                COUNT(CASE WHEN status IN ('Sent_to_Govt', 'Closed') THEN 1 END) as decisions,
+                COUNT(CASE WHEN status IN ('Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Closed') THEN 1 END) as decisions,
                 COUNT(CASE WHEN is_cpsp_processed = 1 THEN 1 END) as processed,
                 COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 THEN 1 END) as pending
             ")
@@ -785,26 +788,35 @@ class PetitionController extends Controller
         
         try {
             if ($request->filled('duplicate_link_number')) {
-                $originalPetition = Petition::where('receipt_no', $request->input('duplicate_link_number'))->first();
-                
-                if ($originalPetition) {
-                    $petition = new Petition();
-                    $petition->receipt_no = $request->receipt_no;
-                    $petition->date_of_petition_received = $request->date_of_petition_received;
-                    
-                    // Set minimal required fields for duplicate stub
-                    $petition->mode_of_petition_received = 'others';
-                    $petition->mode_of_petition_received_others = 'Duplicate Entry';
-                    $petition->nature_of_petition = 'others';
-                    $petition->description = 'Registered as a duplicate of Receipt No: ' . $originalPetition->receipt_no;
-                    
-                    $petition->linked_petition_id = $originalPetition->petition_id;
-                    $petition->user_id = auth()->id();
-                    $petition->status = Petition::STATUS_CLOSED; // Auto-close duplicate entry
-                    $petition->save();
+                abort_unless($request->user()->canAccess('link petitions'), 403, 'Unauthorized to link duplicate petitions.');
+
+                $originalPetition = Petition::where('receipt_no', $request->input('duplicate_link_number'))->firstOrFail();
+                $this->authorize('view', $originalPetition);
+
+                $visitedPetitionIds = [];
+                while ($originalPetition->linked_petition_id) {
+                    if (in_array($originalPetition->petition_id, $visitedPetitionIds, true)) {
+                        abort(422, 'Could not resolve the root original petition.');
+                    }
+                    $visitedPetitionIds[] = $originalPetition->petition_id;
+                    $originalPetition = Petition::findOrFail($originalPetition->linked_petition_id);
+                    $this->authorize('view', $originalPetition);
                 }
-                
-                return redirect()->route('petitions.create');
+
+                $petition = new Petition();
+                $petition->receipt_no = $request->receipt_no;
+                $petition->date_of_petition_received = $request->date_of_petition_received;
+                $petition->mode_of_petition_received = 'others';
+                $petition->mode_of_petition_received_others = 'Duplicate Entry';
+                $petition->nature_of_petition = 'others';
+                $petition->description = 'Registered as a duplicate of Receipt No: ' . $originalPetition->receipt_no;
+                $petition->linked_petition_id = $originalPetition->petition_id;
+                $petition->user_id = $request->user()->user_id;
+                $petition->status = Petition::STATUS_DUPLICATE;
+                $petition->save();
+
+                return redirect()->route('petitions.show', $petition->hashid)
+                    ->with('success', 'Petition successfully registered as a duplicate of ' . $originalPetition->receipt_no . '.');
             }
 
             $petition = $this->petitionService->store($request->validated(), $request->file('evidence_files') ?? []);
@@ -938,9 +950,11 @@ class PetitionController extends Controller
     {
         $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::with([
+            'addresses.district',
             'addresses.designation', 
             'addresses.department', 
             'uploads', 
+            'originalPetition.addresses.district',
             'originalPetition.addresses.designation', 
             'originalPetition.addresses.department', 
             'originalPetition.unit',
@@ -1046,10 +1060,10 @@ class PetitionController extends Controller
     /**
      * Link an existing petition to another as a duplicate.
      */
-    public function linkDuplicate(Request $request, $id): RedirectResponse
+    public function linkDuplicate(Request $request, $id): RedirectResponse|JsonResponse
     {
         $request->validate([
-            'original_receipt_no' => 'required|string',
+            'original_receipt_no' => 'required|string|exists:petitions,receipt_no',
         ]);
 
         $realId = HashidService::decode($id) ?? $id;
@@ -1061,48 +1075,82 @@ class PetitionController extends Controller
         }
 
         if ($petition->linked_petition_id) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'This petition is already linked as a duplicate.'], 422);
+            }
             return back()->with('error', 'This petition is already linked as a duplicate.');
         }
 
         $originalPetition = Petition::where('receipt_no', $request->original_receipt_no)->first();
 
         if (!$originalPetition) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Original petition not found. Please check the receipt number.'], 422);
+            }
             return back()->with('error', 'Original petition not found. Please check the receipt number.');
         }
 
+        $this->authorize('view', $originalPetition);
+
         if ($originalPetition->petition_id === $petition->petition_id) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Cannot link a petition to itself.'], 422);
+            }
             return back()->with('error', 'Cannot link a petition to itself.');
         }
 
         // If the target petition is already a duplicate, resolve to its root original petition
+        $visitedPetitionIds = [];
         while ($originalPetition->linked_petition_id) {
-            $originalPetition = Petition::find($originalPetition->linked_petition_id);
-            if (!$originalPetition) {
+            if (in_array($originalPetition->petition_id, $visitedPetitionIds, true)) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Could not resolve the root original petition.'], 422);
+                }
                 return back()->with('error', 'Could not resolve the root original petition.');
             }
+            $visitedPetitionIds[] = $originalPetition->petition_id;
+            $originalPetition = Petition::find($originalPetition->linked_petition_id);
+            if (!$originalPetition) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Could not resolve the root original petition.'], 422);
+                }
+                return back()->with('error', 'Could not resolve the root original petition.');
+            }
+            $this->authorize('view', $originalPetition);
         }
 
-        $petition->update([
-            'linked_petition_id' => $originalPetition->petition_id,
-            'previous_status' => $petition->status,
-            'status' => Petition::STATUS_DUPLICATE,
-        ]);
-
-        // Merge Details: Replicate Addresses (Suspects/Complainants)
-        foreach ($petition->addresses as $address) {
-            $newAddress = $address->replicate();
-            $newAddress->petition_id = $originalPetition->petition_id;
-            $newAddress->save();
+        if ($originalPetition->petition_id === $petition->petition_id) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Cannot link a petition to itself or create a duplicate cycle.'], 422);
+            }
+            return back()->with('error', 'Cannot link a petition to itself or create a duplicate cycle.');
         }
 
-        // Merge Details: Replicate Uploads (Attachments)
-        foreach ($petition->uploads as $upload) {
-            $newUpload = $upload->replicate();
-            $newUpload->petition_id = $originalPetition->petition_id;
-            $newUpload->save();
+        \Illuminate\Support\Facades\DB::transaction(function () use ($petition, $originalPetition) {
+            $petition->update([
+                'linked_petition_id' => $originalPetition->petition_id,
+                'previous_status' => $petition->status,
+                'status' => Petition::STATUS_DUPLICATE,
+            ]);
+
+            foreach ($petition->uploads as $upload) {
+                $newUpload = $upload->replicate();
+                $newUpload->petition_id = $originalPetition->petition_id;
+                $newUpload->save();
+            }
+        });
+
+        $message = 'Petition successfully linked as a duplicate of ' . $originalPetition->receipt_no . '.';
+        $redirectUrl = route('petitions.show', $petition->hashid);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'redirect_url' => $redirectUrl,
+            ]);
         }
 
-        return redirect()->route('petitions.show', $petition->hashid)->with('success', 'Petition successfully linked as a duplicate of ' . $originalPetition->receipt_no . '. The suspects and attachments have been copied to the original petition.');
+        return redirect($redirectUrl)->with('success', $message);
     }
 
     /**
@@ -1149,7 +1197,7 @@ class PetitionController extends Controller
             return response()->json([]);
         }
 
-        $petitions = Petition::excludeTSectionIfNotAuthorized(Auth::user())->where(function($q) use ($query) {
+        $petitions = Petition::excludeTSectionIfNotAuthorized(Auth::user())->with(['addresses', 'originalPetition.addresses'])->where(function($q) use ($query) {
             $q->where('receipt_no', 'LIKE', "%{$query}%")
               ->orWhere('nature_of_petition', 'LIKE', "%{$query}%")
               ->orWhereHas('addresses', function ($q2) use ($query) {
@@ -1165,8 +1213,9 @@ class PetitionController extends Controller
         // We allow linking to duplicate petitions; the backend will automatically resolve to the root original.
 
         $results = $petitions->take(10)->get()->map(function ($petition) {
-            $complainant = $petition->addresses->where('person_type', 'Complainant')->first();
-            $accused = $petition->addresses->where('person_type', 'Accused')->first();
+            $addresses = $petition->displayAddresses();
+            $complainant = $addresses->firstWhere('person_type', 'Complainant');
+            $accused = $addresses->firstWhere('person_type', 'Accused');
             
             $complainantName = $complainant ? $complainant->person_name : 'N/A';
             $accusedName = $accused ? $accused->person_name : 'N/A';
@@ -1254,7 +1303,11 @@ class PetitionController extends Controller
             return response()->json([]);
         }
 
-        $query = Petition::query()->excludeTSectionIfNotAuthorized(Auth::user())->with(['decision', 'addresses.district']);
+        $query = Petition::query()->excludeTSectionIfNotAuthorized(Auth::user())->with([
+            'decision',
+            'addresses.district',
+            'originalPetition.addresses.district',
+        ]);
         
         $description = $request->input('description');
         $nature = $request->input('nature_of_petition');
@@ -1323,14 +1376,15 @@ class PetitionController extends Controller
         });
 
         $duplicates = $query->orderBy('date_of_petition_received', 'desc')->take(5)->get()->map(function($p) {
-            $complainants = $p->addresses->where('person_type', 'Complainant');
+            $addresses = $p->displayAddresses();
+            $complainants = $addresses->where('person_type', 'Complainant');
             $primaryComplainant = $complainants->first();
             $complainantText = $primaryComplainant ? $primaryComplainant->person_name . ($primaryComplainant->district ? ', ' . $primaryComplainant->district->district_name : '') : 'N/A';
             if ($complainants->count() > 1) {
                 $complainantText .= ' (+' . ($complainants->count() - 1) . ' others)';
             }
 
-            $accused = $p->addresses->where('person_type', 'Accused');
+            $accused = $addresses->where('person_type', 'Accused');
             $primaryAccused = $accused->first();
             $accusedText = $primaryAccused ? $primaryAccused->person_name . ($primaryAccused->district ? ', ' . $primaryAccused->district->district_name : '') : 'N/A';
             if ($accused->count() > 1) {
@@ -1356,56 +1410,52 @@ class PetitionController extends Controller
     /**
      * Get counts for unified tabs
      */
-    private function getUnifiedCounts()
+    private function applyPetitionAccessScope(Builder $query, User $user): Builder
     {
-        $user = Auth::user();
-        $query = Petition::query()->excludeTSectionIfNotAuthorized($user);
+        $query->excludeTSectionIfNotAuthorized($user);
 
-        $currentSeatUser = $user->currentSeatUser();
-        $currentSeat = $currentSeatUser?->seat;
+        if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
+            $currentSeat = $user->currentSeatUser();
 
-        $isAdminOrSuperAdmin = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
-            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin'])) ||
-            $user->canAccess('access admin dashboard');
-
-        $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
-            ($currentSeat && (
-                $currentSeat->hasRole(['inward', 'Inward']) || 
-                str_contains(strtolower($currentSeat->seat_name), 'inward')
-            ));
-
-        if (!$isAdminOrSuperAdmin) {
-            if ($isInwardUser) {
+            if ($user->hasRole(['inward', 'Inward'])) {
+                $inwardUserIds = User::role(['inward', 'Inward'])->pluck('user_id');
+                $query->where(function (Builder $scopedQuery) use ($inwardUserIds, $currentSeat) {
+                    $scopedQuery->whereIn('petitions.user_id', $inwardUserIds);
+                    if ($currentSeat) {
+                        $scopedQuery->orWhere('petitions.seat_id', $currentSeat->seat_id);
+                    }
+                });
+            } elseif ($currentSeat) {
+                $query->where('petitions.seat_id', $currentSeat->seat_id);
+            } else {
                 $query->where('petitions.user_id', $user->user_id ?? $user->id);
-            } elseif (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
-                if ($currentSeat) {
-                    $query->where('seat_id', $currentSeat->seat_id);
-                } else {
-                    $query->where('petitions.user_id', $user->user_id ?? $user->id);
-                }
             }
         }
 
-        $query->whereNull('linked_petition_id')
-              ->where('is_returned_to_inward', false);
+        return $query;
+    }
 
-        $inwardCreatorIds = Petition::getInwardCreatorUserIds();
-        $inwardIdsList = implode(',', $inwardCreatorIds);
+    private function getUnifiedCounts()
+    {
+        $user = Auth::user();
+        $query = $this->applyPetitionAccessScope(Petition::query(), $user)
+            ->whereNull('linked_petition_id');
 
         // Optimize: Perform single SQL aggregation instead of loading all models into PHP memory
         $stats = $query->selectRaw("
-            COUNT(DISTINCT CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 AND user_id IN ({$inwardIdsList}) THEN petitions.petition_id END) as inward,
+            COUNT(DISTINCT CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 THEN petitions.petition_id END) as inward,
             COUNT(DISTINCT CASE WHEN is_cpsp_processed = 1 THEN petitions.petition_id END) as all_count,
             COUNT(DISTINCT CASE WHEN status = ? AND is_cpsp_processed = 1 THEN petitions.petition_id END) as received,
             COUNT(DISTINCT CASE WHEN status = ? THEN petitions.petition_id END) as forwarded,
             COUNT(DISTINCT CASE WHEN status = ? THEN petitions.petition_id END) as vrs,
-            COUNT(DISTINCT CASE WHEN status IN (?, ?, ?) THEN petitions.petition_id END) as decisions
+            COUNT(DISTINCT CASE WHEN status IN (?, ?, ?, ?) THEN petitions.petition_id END) as decisions
         ", [
             Petition::STATUS_RECEIVED,
             Petition::STATUS_FORWARDED,
             Petition::STATUS_VR_RECEIVED,
             Petition::STATUS_SENT_TO_GOVT,
             Petition::STATUS_SENT_TO_SPC,
+            Petition::STATUS_INTERNAL_VIGILANCE,
             Petition::STATUS_CLOSED
         ])->first();
 
@@ -1425,28 +1475,9 @@ class PetitionController extends Controller
     private function getDecisionCounts()
     {
         $user = Auth::user();
-        $query = Petition::query()
-            ->excludeTSectionIfNotAuthorized($user)
-            ->whereIn('petitions.status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC, Petition::STATUS_CLOSED])
-            ->whereNull('petitions.linked_petition_id')
-            ->where('petitions.is_returned_to_inward', false);
-
-        $currentSeat = $user->currentSeatUser();
-        if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
-            if ($user->hasRole(['inward', 'Inward'])) {
-                $inwardUserIds = \App\Models\User::role(['inward', 'Inward'])->pluck('user_id');
-                $query->where(function($q) use ($inwardUserIds, $currentSeat) {
-                    $q->whereIn('petitions.user_id', $inwardUserIds);
-                    if ($currentSeat) {
-                        $q->orWhere('petitions.seat_id', $currentSeat->seat_id);
-                    }
-                });
-            } elseif ($currentSeat) {
-                $query->where('petitions.seat_id', $currentSeat->seat_id);
-            } else {
-                $query->where('petitions.user_id', $user->user_id ?? $user->id);
-            }
-        }
+        $query = $this->applyPetitionAccessScope(Petition::query(), $user)
+            ->whereIn('petitions.status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC, Petition::STATUS_INTERNAL_VIGILANCE, Petition::STATUS_CLOSED])
+            ->whereNull('petitions.linked_petition_id');
 
         // Optimize: Join only the latest active (non-deleted) decision per petition to prevent duplicates
         $stats = $query->leftJoin('decisions', function ($join) {
@@ -1511,29 +1542,11 @@ class PetitionController extends Controller
         ]);
 
         $user = Auth::user();
-        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user.seatUsers.seat', 'seat.activeAssignment.user', 'unit', 'originalPetition.addresses', 'returnedByUser', 'processedByUser', 'processedBySeat', 'updatedByUser', 'updatedBySeat'])
-            ->excludeTSectionIfNotAuthorized($user);
+        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user.seatUsers.seat', 'seat.activeAssignment.user', 'unit', 'originalPetition.addresses', 'returnedByUser', 'processedByUser', 'processedBySeat', 'updatedByUser', 'updatedBySeat']);
+        $this->applyPetitionAccessScope($query, $user);
         $isInwardOnly = $user && ($user->hasRole(['inward', 'Inward']) || str_contains(strtolower($user->currentSeatUser()?->seat?->seat_name ?? ''), 'inward'));
         $defaultTab = $isInwardOnly ? 'inward' : 'all';
         $tab = $request->input('tab', $defaultTab);
-        $currentSeat = $user->currentSeatUser();
-
-        // Security: Filter by user/seat if not unrestricted admin
-        if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
-            if ($user->hasRole(['inward', 'Inward'])) {
-                $inwardUserIds = \App\Models\User::role(['inward', 'Inward'])->pluck('user_id');
-                $query->where(function($q) use ($inwardUserIds, $currentSeat) {
-                    $q->whereIn('petitions.user_id', $inwardUserIds);
-                    if ($currentSeat) {
-                        $q->orWhere('seat_id', $currentSeat->seat_id);
-                    }
-                });
-            } elseif ($currentSeat) {
-                $query->where('seat_id', $currentSeat->seat_id);
-            } else {
-                $query->where('petitions.user_id', $user->id);
-            }
-        }
 
         // Apply filters using scopes
         $query->filterByTab($tab)
@@ -1604,7 +1617,7 @@ class PetitionController extends Controller
      */
     private function formatAddressesForAlpine(Petition $petition, string $type): array
     {
-        return $petition->addresses->where('person_type', $type)->groupBy(function ($addr) {
+        return $petition->uniqueOwnAddresses()->where('person_type', $type)->groupBy(function ($addr) {
             if (in_array($addr->person_name, ['Unknown', 'Unknown Suspect', 'Anonymous / Unknown'])) {
                 return $addr->person_name . '_' . ($addr->department_id ?? '') . '_' . ($addr->designation_id ?? '') . '_' . ($addr->phone ?? '') . '_' . ($addr->pen_number ?? '') . '_' . ($addr->entity_type ?? '');
             }

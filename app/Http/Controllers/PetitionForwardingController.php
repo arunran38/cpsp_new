@@ -47,11 +47,13 @@ class PetitionForwardingController extends Controller
                     $status = match($request->action) {
                         'Sent_to_Govt' => Petition::STATUS_SENT_TO_GOVT,
                         'Sent_to_SPC' => Petition::STATUS_SENT_TO_SPC,
+                        'Internal_Vigilance', 'Sent_to_Internal_Vigilance' => Petition::STATUS_INTERNAL_VIGILANCE,
                         default => Petition::STATUS_CLOSED,
                     };
                     $decisionRemarks = match($request->action) {
                         'Sent_to_Govt' => 'Sent to Govt',
                         'Sent_to_SPC' => 'Sent to SPC',
+                        'Internal_Vigilance', 'Sent_to_Internal_Vigilance' => 'Internal Vigilance',
                         default => 'Closed',
                     };
 

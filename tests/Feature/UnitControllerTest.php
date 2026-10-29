@@ -16,7 +16,7 @@ class UnitControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->admin = User::factory()->create(['role' => 'admin']);
+        $this->admin = $this->createSuperAdminUser();
     }
  
     public function test_admin_can_view_units_index(): void

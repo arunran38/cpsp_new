@@ -62,7 +62,7 @@
         COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 THEN 1 END) as unprocessed,
         COUNT(CASE WHEN is_returned_to_inward = 0 AND status = 'Forwarded' THEN 1 END) as forwarded,
         COUNT(CASE WHEN is_returned_to_inward = 0 AND status = 'VR_Received' THEN 1 END) as vr_reports,
-        COUNT(CASE WHEN is_returned_to_inward = 0 AND status IN ('Sent_to_Govt', 'Sent_to_SPC', 'Closed') THEN 1 END) as decisions,
+        COUNT(CASE WHEN is_returned_to_inward = 0 AND status IN ('Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Closed') THEN 1 END) as decisions,
         COUNT(CASE WHEN created_at >= ? THEN 1 END) as today_inward,
         COUNT(CASE WHEN seat_id IS NOT NULL AND is_returned_to_inward = 0 THEN 1 END) as transferred_to_desks,
         COUNT(CASE WHEN is_returned_to_inward = 1 THEN 1 END) as returned_to_inward
@@ -618,8 +618,7 @@
                     <tbody class="divide-y divide-slate-100 text-slate-700">
                         @foreach($recentPetitions as $petition)
                             @php
-                                $targetPetition = $petition->originalPetition ?? $petition;
-                                $complainant = $targetPetition->addresses->where('person_type', 'Complainant')->first();
+                                $complainant = $petition->displayAddresses()->firstWhere('person_type', 'Complainant');
                                 $wf = $petition->workflow_status;
                             @endphp
                             <tr class="hover:bg-slate-50/60 transition-colors">
