@@ -50,22 +50,50 @@
                     </div>
                 </div>
 
-                <!-- Role Assignment -->
-                <div class="space-y-2.5">
-                    <label for="role" class="text-sm font-bold text-slate-700">Assign Role <span class="text-rose-500">*</span></label>
-                    <div class="relative">
-                        <select name="role" id="role" required
-                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium text-slate-900 appearance-none !bg-none"
-                                style="background-image: none !important;">
-                            <option value="">-- Select Role --</option>
-                            @foreach($roles as $r)
-                                <option value="{{ $r->name }}" {{ old('role', $seat->roles->first()?->name) == $r->name ? 'selected' : '' }}>
-                                    {{ ucfirst($r->name) }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
+                <!-- Multiple Roles Assignment -->
+                <div class="space-y-3 md:col-span-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-sm font-bold text-slate-700">
+                            Assign Roles (Multiple Selection) <span class="text-rose-500">*</span>
+                        </label>
+                        <span class="text-xs text-slate-400">Select one or more roles to define capabilities for this seat</span>
                     </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                        @php
+                            $activeRoleNames = $seat->roles->pluck('name')->toArray();
+                            $oldRoles = old('roles', old('role') ? [old('role')] : $activeRoleNames);
+                        @endphp
+                        @foreach($roles as $r)
+                            @php
+                                $isChecked = in_array($r->name, $oldRoles);
+                                $isConfidential = str_contains(strtolower($r->name), 't section') || str_contains(strtolower($r->name), 't-section');
+                            @endphp
+                            <label class="relative flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-all duration-200 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50/60 has-[:checked]:ring-2 has-[:checked]:ring-indigo-500/20 shadow-sm group select-none">
+                                <input type="checkbox" name="roles[]" value="{{ $r->name }}" 
+                                       {{ $isChecked ? 'checked' : '' }}
+                                       class="mt-0.5 w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 focus:ring-2">
+                                <div class="flex flex-col flex-1 min-w-0">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors truncate">
+                                            {{ ucfirst($r->name) }}
+                                        </span>
+                                        @if($isConfidential)
+                                            <span class="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200">
+                                                Secret
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <span class="text-[11px] text-slate-400 mt-0.5">
+                                        {{ $r->permissions_count ?? $r->permissions->count() }} permissions
+                                    </span>
+                                </div>
+                            </label>
+                        @endforeach
+                    </div>
+                    @error('roles')
+                        <p class="text-xs text-rose-500 mt-1 font-medium">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
 

@@ -135,6 +135,15 @@ class PetitionController extends Controller
             ->whereNull('linked_petition_id')
             ->accessibleInwardPetitions($user, $request->input('scope'));
 
+        if ($request->filled('creator_id')) {
+            $cFilter = $request->creator_id;
+            if ($cFilter === 'my_petitions') {
+                $transfersQuery->where('petitions.user_id', $user->user_id);
+            } elseif ($cFilter !== 'all' && is_numeric($cFilter)) {
+                $transfersQuery->where('petitions.user_id', (int)$cFilter);
+            }
+        }
+
         if ($isSeatLocked && $defaultSeatId) {
             $transfersQuery->where('seat_id', $defaultSeatId);
         } elseif ($request->filled('seat_id')) {
@@ -415,13 +424,131 @@ class PetitionController extends Controller
     public function inwardStatistics(Request $request): View|StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         $user = Auth::user();
-        
-        $canAccessStats = $user->canAccess('inward statistics') || $user->canAccess('view pendency details');
+        $currentSeatUser = $user->currentSeatUser();
+        $currentSeat = $currentSeatUser?->seat;
 
-        if (!$canAccessStats) {
-            abort(403, 'Unauthorized access to Inward Statistics / Pendency Details.');
+        // Ensure permissions exist in database (self-healing fallback)
+        try {
+            $requiredPermissions = [
+                'view own inward statistics',
+                'view other inward statistics',
+                'view all inward statistics',
+            ];
+            foreach ($requiredPermissions as $perm) {
+                \Spatie\Permission\Models\Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'web']);
+            }
+        } catch (\Exception $e) { }
+
+        // Role & Administrator clearance checks
+        $isAdminOrDeveloper = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
+            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']));
+
+        $hasAdminDashboard = $user->canAccess('access admin dashboard');
+
+        // Check granular PBAC permissions for Inward Statistics
+        $canViewAllStats = $isAdminOrDeveloper
+            || $hasAdminDashboard
+            || $user->canAccess('view all inward statistics')
+            || $user->canAccess('view_all_inward_statistics')
+            || $user->canAccess('view all petitions');
+
+        $canViewOtherStats = $canViewAllStats
+            || $user->canAccess('view other inward statistics')
+            || $user->canAccess('view_other_inward_statistics');
+
+        $canViewOwnStats = $canViewOtherStats
+            || $user->canAccess('view own inward statistics')
+            || $user->canAccess('view_own_inward_statistics')
+            || $user->canAccess('inward statistics')
+            || $user->canAccess('view pendency details')
+            || $user->canAccess('create inward petitions')
+            || $user->canAccess('inward form')
+            || $user->hasRole(['inward', 'Inward'])
+            || ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || str_contains(strtolower($currentSeat->seat_name), 'inward')));
+
+        if (!$canViewOwnStats) {
+            abort(403, 'Unauthorized. You do not have permission to view inward statistics.');
         }
 
+        // 1. Fetch only users who hold the Inward role or are assigned to an active Inward seat
+        $creators = \App\Models\User::query()
+            ->with(['seatUsers.seat.roles', 'roles'])
+            ->where(function ($q) {
+                $q->whereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward']))
+                  ->orWhereHas('seatUsers', function ($su) {
+                      $su->where('is_active', true)
+                         ->whereHas('seat', function ($s) {
+                             $s->where('seat_name', 'like', '%Inward%')
+                               ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward']));
+                         });
+                  });
+            })
+            ->whereDoesntHave('roles', function ($rq) {
+                $rq->whereIn('name', ['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']);
+            })
+            ->whereDoesntHave('seatUsers', function ($su) {
+                $su->where('is_active', true)
+                   ->whereHas('seat', function ($s) {
+                       $s->where(function ($sq) {
+                           $sq->where('seat_name', 'like', '%Director%')
+                              ->orWhere('seat_name', 'like', '%T-%')
+                              ->orWhere('seat_name', 'like', 'T1%')
+                              ->orWhere('seat_name', 'like', 'T2%')
+                              ->orWhere('seat_name', 'like', 'T3%');
+                       });
+                   });
+            })
+            ->orderBy('name')
+            ->get();
+
+        // Format creator display names: "Officer Name (INWARD 1)"
+        foreach ($creators as $creator) {
+            $inwardSeat = $creator->seatUsers
+                ->where('is_active', true)
+                ->first(fn($su) => $su->seat && (
+                    str_contains(strtolower($su->seat->seat_name), 'inward') ||
+                    $su->seat->hasRole(['inward', 'Inward'])
+                ))?->seat;
+
+            if ($inwardSeat) {
+                $rawSeatName = strtoupper(trim($inwardSeat->seat_name));
+                $designation = preg_replace('/^(INWARD)\s*(\d+)$/i', '$1 $2', $rawSeatName);
+            } else {
+                $designation = 'INWARD';
+            }
+
+            $creator->inward_display_name = "{$creator->name} ({$designation})";
+        }
+
+        // 2. Resolve creator filter with strict backend security
+        $defaultCreator = $canViewAllStats ? 'all' : 'my_petitions';
+        $requestedCreator = $request->input('creator_id', $defaultCreator);
+
+        // Security boundary: Restrict unauthorized creator scope access
+        if (!$canViewAllStats && $requestedCreator === 'all') {
+            $requestedCreator = 'my_petitions';
+        }
+
+        if (!$canViewOtherStats && $requestedCreator !== 'my_petitions' && (int)$requestedCreator !== (int)$user->user_id) {
+            $requestedCreator = 'my_petitions';
+        }
+
+        $selectedCreator = $requestedCreator;
+        $targetCreatorUser = null;
+        $selectedCreatorLabel = 'All Creators';
+
+        if ($selectedCreator === 'my_petitions' || (int)$selectedCreator === (int)$user->user_id) {
+            $targetCreatorUser = $user;
+            $selectedCreatorLabel = "My Petitions ({$user->name})";
+        } elseif ($selectedCreator !== 'all' && is_numeric($selectedCreator)) {
+            $targetCreatorUser = $creators->firstWhere('user_id', (int)$selectedCreator)
+                ?? \App\Models\User::find((int)$selectedCreator);
+            $selectedCreatorLabel = $targetCreatorUser 
+                ? ($targetCreatorUser->inward_display_name ?? $targetCreatorUser->name) 
+                : "Creator #{$selectedCreator}";
+        }
+
+        // Date & Section filters
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
         $section = $request->input('section', 'all');
@@ -463,7 +590,7 @@ class PetitionController extends Controller
                   ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']));
             });
         } else {
-            // All: CPSP (excluding Superintendent / SS seats) & T-Section (when authorized)
+            // All: CPSP & T-Section
             $seatsQuery->where(function ($q) use ($tSeatIds, $cpspConstraint) {
                 $q->where($cpspConstraint)
                   ->orWhereIn('seat_id', $tSeatIds)
@@ -479,6 +606,11 @@ class PetitionController extends Controller
         // Fetch petition data
         $petitionsQuery = Petition::whereNull('linked_petition_id')
             ->whereIn('seat_id', $includedSeatIds);
+
+        // Apply Creator Filter
+        if ($targetCreatorUser) {
+            $petitionsQuery->where('petitions.user_id', $targetCreatorUser->user_id);
+        }
 
         if ($dateFrom) {
             $petitionsQuery->where(function($q) use ($dateFrom) {
@@ -592,11 +724,20 @@ class PetitionController extends Controller
                 't_section' => '_t_section',
                 default => '',
             };
-            $filename = "inward_seat_statistics{$sectionSuffix}{$periodSuffix}_" . now()->format('Ymd_His') . ".xlsx";
+            $creatorSuffix = $targetCreatorUser ? "_creator_{$targetCreatorUser->user_id}" : "_all_creators";
+            $filename = "inward_seat_statistics{$sectionSuffix}{$creatorSuffix}{$periodSuffix}_" . now()->format('Ymd_His') . ".xlsx";
             
             $canViewProcessed = $user->canAccess('view processed statistics');
 
-            return Excel::download(new InwardStatisticsExport($seatStats, $summaryTotals, $dateFrom, $dateTo, $canViewProcessed, $section), $filename);
+            return Excel::download(new InwardStatisticsExport(
+                $seatStats, 
+                $summaryTotals, 
+                $dateFrom, 
+                $dateTo, 
+                $canViewProcessed, 
+                $section,
+                $selectedCreatorLabel
+            ), $filename);
         }
 
         return view('inward.statistics', compact(
@@ -605,7 +746,13 @@ class PetitionController extends Controller
             'dateTo', 
             'summaryTotals',
             'section',
-            'canViewTSection'
+            'canViewTSection',
+            'creators',
+            'selectedCreator',
+            'selectedCreatorLabel',
+            'canViewAllStats',
+            'canViewOtherStats',
+            'canViewOwnStats'
         ));
     }
 
@@ -1409,6 +1556,14 @@ class PetitionController extends Controller
         if ($request->filled('seat_id')) {
             $query->where('seat_id', $request->seat_id);
         }
+        if ($request->filled('creator_id')) {
+            $cFilter = $request->creator_id;
+            if ($cFilter === 'my_petitions') {
+                $query->where('petitions.user_id', $user->user_id ?? $user->id);
+            } elseif ($cFilter !== 'all' && is_numeric($cFilter)) {
+                $query->where('petitions.user_id', (int)$cFilter);
+            }
+        }
         if ($request->filled('user_id')) {
             $query->whereHas('user', function($q) use ($request) {
                 $q->where('user_id', $request->user_id);
@@ -1416,6 +1571,17 @@ class PetitionController extends Controller
         }
         if ($request->filled('department_id')) {
             $query->whereHas('addresses', fn($q) => $q->where('department_id', $request->department_id));
+        }
+        if ($request->filled('section') && $request->section !== 'all') {
+            $tSeatIds = Seat::getTSectionSeatIds();
+            if ($request->section === 't_section') {
+                $query->whereIn('petitions.seat_id', $tSeatIds);
+            } elseif ($request->section === 'cpsp') {
+                $query->where(function ($q) use ($tSeatIds) {
+                    $q->whereNotIn('petitions.seat_id', $tSeatIds)
+                      ->orWhereNull('petitions.seat_id');
+                });
+            }
         }
 
         // Address-based filters

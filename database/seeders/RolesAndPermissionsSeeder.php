@@ -60,6 +60,9 @@ class RolesAndPermissionsSeeder extends Seeder
             // Reports & Operational Statistics
             'view master reports',
             'inward statistics',
+            'view own inward statistics',
+            'view other inward statistics',
+            'view all inward statistics',
             'view pendency details',
             'export statistics',
             'view processed statistics',
@@ -126,6 +129,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'view file transfer', 
                 'inward form',
                 'inward statistics',
+                'view own inward statistics',
                 'export statistics',
                 'filter transfer',
                 'create inward petitions',

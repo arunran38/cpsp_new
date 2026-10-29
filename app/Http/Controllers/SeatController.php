@@ -36,7 +36,7 @@ class SeatController extends Controller
         abort_unless(auth()->user()->canAccess('create seats'), 403, 'Unauthorized access to create seats.');
 
         $units = Unit::all();
-        $roles = Role::all();
+        $roles = Role::withCount('permissions')->get();
         return view('admin.seats.create', compact('units', 'roles'));
     }
 
@@ -51,10 +51,12 @@ class SeatController extends Controller
             try {
                 $seat = Seat::create($request->only('seat_name', 'is_active'));
                 $seat->units()->sync($request->unit_ids);
-                if ($request->role) {
-                    $seat->assignRole($request->role);
+                
+                $roles = $request->roles ?? ($request->role ? [$request->role] : []);
+                if (!empty($roles)) {
+                    $seat->syncRoles($roles);
                 }
-                return redirect()->route('admin.seats.index')->with('success', 'Seat created successfully.');
+                return redirect()->route('admin.seats.index')->with('success', 'Seat created successfully with assigned roles.');
             } catch (\Exception $e) {
                 return back()->with('error', 'Failed to create seat: ' . $e->getMessage())->withInput();
             }
@@ -68,9 +70,9 @@ class SeatController extends Controller
     {
         abort_unless(auth()->user()->canAccess('update seats'), 403, 'Unauthorized access to edit seats.');
 
-        $seat = Seat::with('units')->findOrFail($id);
+        $seat = Seat::with(['units', 'roles'])->findOrFail($id);
         $units = Unit::all();
-        $roles = Role::all();
+        $roles = Role::withCount('permissions')->get();
         return view('admin.seats.edit', compact('seat', 'units', 'roles'));
     }
 
@@ -87,12 +89,11 @@ class SeatController extends Controller
             try {
                 $seat->update($request->only('seat_name', 'is_active'));
                 $seat->units()->sync($request->unit_ids);
-                if ($request->role) {
-                    $seat->syncRoles([$request->role]);
-                } else {
-                    $seat->syncRoles([]);
-                }
-                return redirect()->route('admin.seats.index')->with('success', 'Seat updated successfully.');
+                
+                $roles = $request->roles ?? ($request->role ? [$request->role] : []);
+                $seat->syncRoles($roles);
+
+                return redirect()->route('admin.seats.index')->with('success', 'Seat updated successfully with assigned roles.');
             } catch (\Exception $e) {
                 return back()->with('error', 'Failed to update seat: ' . $e->getMessage())->withInput();
             }

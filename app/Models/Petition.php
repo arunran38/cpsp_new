@@ -416,13 +416,15 @@ class Petition extends Model
 
         $allInwardIds = array_unique(array_merge($directInwardIds, $seatInwardIds));
 
-        // 3. Exclude users with Admin, Super Admin, Developer, CPSP roles (direct or seat-based)
+        // 3. Exclude users with Admin, Super Admin, Developer, CPSP roles (unless they also hold Inward role or seat)
         $excludedDirectIds = User::role([
             'super admin', 'Super Admin', 
             'developer', 'Developer', 
             'admin', 'Admin', 
             'cpsp', 'CPSP'
-        ])->pluck('user_id')->toArray();
+        ])->whereDoesntHave('roles', function ($rq) {
+            $rq->whereIn('name', ['inward', 'Inward']);
+        })->pluck('user_id')->toArray();
 
         $excludedSeatIds = SeatUser::whereHas('seat', function ($sq) {
             $sq->role([
@@ -430,7 +432,9 @@ class Petition extends Model
                 'developer', 'Developer', 
                 'admin', 'Admin', 
                 'cpsp', 'CPSP'
-            ]);
+            ])->whereDoesntHave('roles', function ($rq) {
+                $rq->whereIn('name', ['inward', 'Inward']);
+            })->where('seat_name', 'not like', '%inward%');
         })->pluck('user_id')->toArray();
 
         $allExcludedIds = array_unique(array_merge($excludedDirectIds, $excludedSeatIds));
@@ -475,10 +479,15 @@ class Petition extends Model
             ));
 
         if ($isInwardUser) {
-            if ($scopeFilter === 'all' && $user->canAccess('view all petitions')) {
+            if (($scopeFilter === 'all' && $user->canAccess('view all petitions')) || $user->canAccess('view file transfer')) {
                 return $query;
             }
-            return $query->where('petitions.user_id', $user->user_id);
+            return $query->where(function ($q) use ($user, $currentSeat) {
+                $q->where('petitions.user_id', $user->user_id);
+                if ($currentSeat) {
+                    $q->orWhere('petitions.seat_id', $currentSeat->seat_id);
+                }
+            });
         }
 
         // 3. CPSP Role: View inward petitions transferred to their assigned seat (or all inward if granted global view)

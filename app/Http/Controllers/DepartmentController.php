@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
+use App\Models\Seat;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -29,6 +30,22 @@ class DepartmentController extends Controller
         $search = $request->input('search');
         $date_from = $request->input('date_from');
         $date_to = $request->input('date_to');
+        $section = $request->input('section', 'all');
+
+        $user = auth()->user();
+        $canViewTSection = $user->canAccessTSectionDiagnostics() 
+            || $user->canAccessTSection() 
+            || $user->canAccessTSectionPending();
+
+        if (!$canViewTSection && $section === 't_section') {
+            abort(403, 'Unauthorized. Special clearance required to access T-Section analysis.');
+        }
+
+        if (!$canViewTSection && $section === 'all') {
+            $section = 'cpsp';
+        }
+
+        $tSeatIds = Seat::getTSectionSeatIds();
 
         $query = \Illuminate\Support\Facades\DB::table('department_lists')
             ->select(
@@ -50,8 +67,19 @@ class DepartmentController extends Controller
             })
             ->when($date_to, function ($q) use ($date_to) {
                 $q->whereDate('petitions.date_of_petition_received', '<=', $date_to);
-            })
-            ->groupBy('department_lists.id', 'department_lists.department_name')
+            });
+
+        // Section filter
+        if ($section === 't_section' && $canViewTSection) {
+            $query->whereIn('petitions.seat_id', $tSeatIds);
+        } elseif ($section === 'cpsp' || !$canViewTSection) {
+            $query->where(function ($q) use ($tSeatIds) {
+                $q->whereNotIn('petitions.seat_id', $tSeatIds)
+                  ->orWhereNull('petitions.seat_id');
+            });
+        }
+
+        $query->groupBy('department_lists.id', 'department_lists.department_name')
             ->orderBy('total_petitions', 'desc');
 
         $analysis = $query->paginate(10)->withQueryString();
@@ -60,10 +88,10 @@ class DepartmentController extends Controller
         $total_sum = $all_data->sum('total_petitions');
 
         if ($request->ajax()) {
-            return view('admin.departments.partials.table', compact('analysis', 'search', 'date_from', 'date_to', 'total_sum'))->render();
+            return view('admin.departments.partials.table', compact('analysis', 'search', 'date_from', 'date_to', 'section', 'canViewTSection', 'total_sum'))->render();
         }
 
-        return view('admin.analytics.departments', compact('analysis', 'search', 'date_from', 'date_to', 'total_sum'));
+        return view('admin.analytics.departments', compact('analysis', 'search', 'date_from', 'date_to', 'section', 'canViewTSection', 'total_sum'));
     }
 
     public function exportAnalysis(Request $request)
@@ -72,6 +100,22 @@ class DepartmentController extends Controller
         $search = $request->input('search');
         $date_from = $request->input('date_from');
         $date_to = $request->input('date_to');
+        $section = $request->input('section', 'all');
+
+        $user = auth()->user();
+        $canViewTSection = $user->canAccessTSectionDiagnostics() 
+            || $user->canAccessTSection() 
+            || $user->canAccessTSectionPending();
+
+        if (!$canViewTSection && $section === 't_section') {
+            abort(403, 'Unauthorized. Special clearance required to export T-Section analysis.');
+        }
+
+        if (!$canViewTSection && $section === 'all') {
+            $section = 'cpsp';
+        }
+
+        $tSeatIds = Seat::getTSectionSeatIds();
 
         $query = \Illuminate\Support\Facades\DB::table('department_lists')
             ->select(
@@ -93,8 +137,19 @@ class DepartmentController extends Controller
             })
             ->when($date_to, function ($q) use ($date_to) {
                 $q->whereDate('petitions.date_of_petition_received', '<=', $date_to);
-            })
-            ->groupBy('department_lists.id', 'department_lists.department_name')
+            });
+
+        // Section filter
+        if ($section === 't_section' && $canViewTSection) {
+            $query->whereIn('petitions.seat_id', $tSeatIds);
+        } elseif ($section === 'cpsp' || !$canViewTSection) {
+            $query->where(function ($q) use ($tSeatIds) {
+                $q->whereNotIn('petitions.seat_id', $tSeatIds)
+                  ->orWhereNull('petitions.seat_id');
+            });
+        }
+
+        $query->groupBy('department_lists.id', 'department_lists.department_name')
             ->orderBy('total_petitions', 'desc');
 
         $data = $query->get();
@@ -108,12 +163,25 @@ class DepartmentController extends Controller
             default => "DEPARTMENT WISE ANALYSIS OF PETITIONS (All Time)",
         };
 
+        $sectionLabel = match ($section) {
+            'cpsp' => ' (CPSP Section)',
+            't_section' => ' (T-Section)',
+            default => ' (All Sections)',
+        };
+        $mainHeading .= $sectionLabel;
+
         if ($search) {
             $mainHeading .= " (Filtered by: $search)";
         }
 
+        $sectionSuffix = match ($section) {
+            'cpsp' => '_cpsp',
+            't_section' => '_t_section',
+            default => '_all_sections',
+        };
+
         $filenameDateText = $date_from && $date_to ? "{$date_from}_to_{$date_to}" : ($date_from ? "from_{$date_from}" : ($date_to ? "up_to_{$date_to}" : "all_time"));
-        $filename = "department_analysis_" . $filenameDateText . ".xls";
+        $filename = "department_analysis{$sectionSuffix}_" . $filenameDateText . ".xls";
 
         $content = view('exports.department_analysis_export', compact('data', 'mainHeading'))->render();
 

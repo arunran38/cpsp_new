@@ -2,24 +2,32 @@
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-200">
-                    <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider w-16">Sl No</th>
+                    <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider w-24 whitespace-nowrap">Sl No</th>
                     <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Department Name</th>
                     <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Total Petitions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @forelse($analysis as $index => $data)
+                    @php
+                        $drilldownParams = array_filter([
+                            'department_id' => $data->department_id,
+                            'date_from' => $date_from ?? request('date_from'),
+                            'date_to' => $date_to ?? request('date_to'),
+                            'section' => ($section ?? request('section', 'all')) !== 'all' ? ($section ?? request('section')) : null,
+                        ]);
+                    @endphp
                     <tr class="hover:bg-slate-50/50 transition-colors">
                         <td class="py-4 px-6 text-sm text-slate-500">
                             {{ $analysis->firstItem() + $index }}
                         </td>
                         <td class="py-4 px-6 text-sm font-semibold">
-                            <a href="{{ route('petitions.index', ['department_id' => $data->department_id]) }}" class="text-slate-900 hover:text-indigo-600 transition-colors" title="View Petitions for {{ $data->department_name }}">
+                            <a href="{{ route('petitions.index', $drilldownParams) }}" class="text-slate-900 hover:text-indigo-600 transition-colors" title="View Petitions for {{ $data->department_name }}">
                                 {{ $data->department_name }}
                             </a>
                         </td>
                         <td class="py-4 px-6 text-center">
-                            <a href="{{ route('petitions.index', ['department_id' => $data->department_id]) }}" class="inline-flex items-center justify-center min-w-[2.5rem] px-2 py-1 text-xs font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 hover:text-indigo-800 transition-colors rounded-full cursor-pointer" title="View Petitions">
+                            <a href="{{ route('petitions.index', $drilldownParams) }}" class="inline-flex items-center justify-center min-w-[2.5rem] px-2 py-1 text-xs font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 hover:text-indigo-800 transition-colors rounded-full cursor-pointer" title="View Petitions">
                                 {{ $data->total_petitions }}
                             </a>
                         </td>

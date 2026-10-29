@@ -50,6 +50,11 @@ class PetitionService
                     str_contains(strtolower($user->currentSeatUser()->seat->seat_name), 'inward')
                 ));
 
+            $isInwardWorkflow = !empty($data['is_inward_entry'])
+                || $isInwardUser
+                || $user->canAccess('create inward petitions')
+                || $user->canAccess('inward form');
+
             $petition = Petition::create([
                 'receipt_no' => $data['receipt_no'],
                 'date_of_petition_received' => $data['date_of_petition_received'],
@@ -64,12 +69,12 @@ class PetitionService
                 'seat_id' => $seatId,
                 'unit_id' => $unitId,
                 'linked_petition_id' => $data['linked_petition_id'] ?? null,
-                'is_cpsp_processed' => !$isInwardUser,
-                'processed_at' => !$isInwardUser ? now() : null,
-                'processed_by_user_id' => !$isInwardUser ? $user->user_id : null,
-                'processed_by_seat_id' => !$isInwardUser ? $seatId : null,
-                'updated_by_user_id' => !$isInwardUser ? $user->user_id : null,
-                'updated_by_seat_id' => !$isInwardUser ? $seatId : null,
+                'is_cpsp_processed' => !$isInwardWorkflow,
+                'processed_at' => !$isInwardWorkflow ? now() : null,
+                'processed_by_user_id' => !$isInwardWorkflow ? $user->user_id : null,
+                'processed_by_seat_id' => !$isInwardWorkflow ? $seatId : null,
+                'updated_by_user_id' => !$isInwardWorkflow ? $user->user_id : null,
+                'updated_by_seat_id' => !$isInwardWorkflow ? $seatId : null,
             ]);
 
             // Clear any preexisting/orphaned addresses for this ID before adding

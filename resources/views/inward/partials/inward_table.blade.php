@@ -36,7 +36,12 @@
                     </td>
                     <td class="px-5 py-3.5">
                         <div class="flex flex-col">
-                            <span class="font-bold text-blue-800 block">{{ $item->receipt_no }}</span>
+                            <a href="{{ route('petitions.show', $item->hashid) }}" 
+                               class="font-bold text-blue-800 hover:text-indigo-600 hover:underline flex items-center gap-1 group/link"
+                               title="View Petition Details">
+                                <span>{{ $item->receipt_no }}</span>
+                                <i data-lucide="external-link" class="w-3 h-3 text-blue-400 group-hover/link:text-indigo-600 transition-colors"></i>
+                            </a>
                             <span class="text-[11px] font-medium text-blue-500 flex items-center gap-1 mt-0.5">
                                 {{ \Carbon\Carbon::parse($item->date_of_petition_received)->format('d M, Y') }}
                             </span>
