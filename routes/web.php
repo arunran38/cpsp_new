@@ -171,6 +171,11 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('admin/roles', RoleController::class)->names('admin.roles');
     Route::resource('admin/permissions', PermissionController::class)->names('admin.permissions');
 
+    // Audit Log Routes (Protected by 'view log' clearance)
+    Route::get('/admin/audit-logs', [\App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('admin.audit_logs.index');
+    Route::get('/admin/audit-logs/export', [\App\Http\Controllers\Admin\AuditLogController::class, 'export'])->name('admin.audit_logs.export');
+    Route::get('/admin/audit-logs/{id}', [\App\Http\Controllers\Admin\AuditLogController::class, 'show'])->name('admin.audit_logs.show');
+
     // Compliances (Petition Compliances workflow)
     Route::get('/compliances/reports', [ComplianceController::class, 'reports'])->name('compliances.reports');
     Route::get('/compliances/reports/export', [ComplianceController::class, 'exportReports'])->name('compliances.reports.export');

@@ -716,6 +716,15 @@
                 </a>
                 @endif
 
+                @if(Auth::user()->canAccess('view log'))
+                <!-- Audit Logs -->
+                <a href="{{ route('admin.audit_logs.index') }}" 
+                   class="nav-item-transition flex items-center gap-3 px-4 py-3 text-[15px] font-medium rounded-xl group {{ request()->routeIs('admin.audit_logs.*') ? 'active-nav' : 'inactive-nav' }}">
+                    <i data-lucide="shield-check" class="w-5 h-5 icon-bounce text-cyan-400 group-hover:text-cyan-300 transition-colors"></i>
+                    <span class="group-hover:text-cyan-100 transition-colors">Audit Logs</span>
+                </a>
+                @endif
+
             
             </nav>
         </aside>

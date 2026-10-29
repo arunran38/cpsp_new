@@ -31,6 +31,7 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        $request->session()->put('login_time', now()->timestamp);
 
         if ($request->user()->isPetitionComplianceRole()) {
             return redirect()->route('compliances.index');

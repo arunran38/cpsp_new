@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('decisions', function (Blueprint $table) {
-            $table->renameColumn('decision_remarks', 'final_decision');
-        });
+        if (Schema::hasColumn('decisions', 'decision_remarks')) {
+            Schema::table('decisions', function (Blueprint $table) {
+                $table->renameColumn('decision_remarks', 'final_decision');
+            });
+        }
     }
 
     /**

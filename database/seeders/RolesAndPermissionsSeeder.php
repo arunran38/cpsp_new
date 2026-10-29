@@ -75,6 +75,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view recycle bin',
             'restore recycle bin',
             'delete recycle bin', // Permanent purge
+            'view log', // System Audit Trail Clearance
 
             // T-Section (Confidential / Secret Section) Permissions
             ...TSectionPermissionRegistry::all(),

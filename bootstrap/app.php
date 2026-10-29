@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
         $middleware->web(append: [
             \RealRashid\SweetAlert\ToSweetAlert::class,
+            \App\Http\Middleware\AuditLogMiddleware::class,
         ]);
         $middleware->alias([
             'seat' => \App\Http\Middleware\EnsureUserHasSeat::class,
