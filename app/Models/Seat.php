@@ -210,5 +210,28 @@ class Seat extends Model
           ->pluck('seat_id')
           ->toArray();
     }
+
+    /**
+     * Scope a query to only include seats eligible for inward petition assignment (CPSP and T-Section, strictly excluding SS CPSP).
+     */
+    public function scopeEligibleForInward(Builder $query): Builder
+    {
+        return $query->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereHas('roles', function ($rq) {
+                    $rq->whereIn('name', ['CPSP', 'cpsp', 'T Section', 't section', 'T-Section', 't-section']);
+                })
+                ->orWhere(function ($sq) {
+                    $sq->where('seat_name', 'like', 'CPSP%')
+                       ->orWhere('seat_name', 'like', '%T Section%')
+                       ->orWhere('seat_name', 'like', '%T-Section%');
+                });
+            })
+            ->where('seat_name', 'not like', '%SS CPSP%')
+            ->where('seat_name', 'not like', '%Superintendent%')
+            ->whereDoesntHave('roles', function ($rq) {
+                $rq->whereIn('name', ['SS CPSP', 'ss cpsp']);
+            });
+    }
 }
 

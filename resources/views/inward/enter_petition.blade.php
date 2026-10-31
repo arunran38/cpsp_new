@@ -3,7 +3,13 @@
 
 @section('content')
     @php
-        $seatsList = $seats ?? \App\Models\Seat::where('is_active', true)->where(function($q) { $q->where('seat_name', 'like', '%CPSP%')->orWhere('seat_name', 'like', '%T Section%')->orWhere('seat_name', 'like', '%T-Section%')->orWhereHas('roles', fn($r) => $r->whereIn('name', ['CPSP', 'T Section', 't section', 'T-Section', 't-section'])); })->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+        $seatsList = ($seats ?? \App\Models\Seat::eligibleForInward()->with(['activeAssignment.user'])->get())
+            ->filter(function($s) {
+                return !str_contains(strtoupper($s->seat_name), 'SS CPSP') 
+                    && !str_contains(strtoupper($s->seat_name), 'SUPERINTENDENT')
+                    && (!$s->relationLoaded('roles') || !$s->roles->contains(fn($r) => in_array(strtoupper($r->name), ['SS CPSP', 'SUPERINTENDENT'])));
+            })
+            ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
         $tab = 'inward';
 
@@ -134,8 +140,8 @@
                                 </label>
                                 <div class="relative">
                                     <input type="text" name="receipt_no" id="receipt_no" x-model="receiptNo"
-                                        @blur="checkReceiptUniqueness()" @keydown.enter.prevent="focusNextField($event)"
-                                        required placeholder="Ex. 12/DVACB/2026-CPSP"
+                                        @blur="handleReceiptBlur()" @keydown.enter.prevent="focusNextField($event)"
+                                        required placeholder="Ex. 123456/{{ now()->year }}"
                                         class="block w-full px-4 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-400"
                                         :class="receiptError ? 'border-rose-500 ring-2 ring-rose-500/20' : (receiptAvailable ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200')">
 
@@ -746,6 +752,7 @@
                 },
 
                 openConfirmationModal() {
+                    this.formatReceiptNo();
                     const form = document.getElementById('inwardPetitionForm');
                     if (form && form.checkValidity()) {
                         this.showConfirmModal = true;
@@ -761,7 +768,31 @@
                     }
                 },
 
+                formatReceiptNo() {
+                    if (!this.receiptNo || typeof this.receiptNo !== 'string') return;
+                    let val = this.receiptNo.trim();
+                    if (!val) return;
+
+                    const currentYear = new Date().getFullYear();
+
+                    // If no slash is present, automatically append the current year
+                    if (!val.includes('/')) {
+                        this.receiptNo = `${val}/${currentYear}`;
+                    } else if (val.endsWith('/')) {
+                        this.receiptNo = `${val}${currentYear}`;
+                    }
+                },
+
+                handleReceiptBlur() {
+                    this.formatReceiptNo();
+                    this.checkReceiptUniqueness();
+                },
+
                 focusNextField(event) {
+                    if (event.target && event.target.id === 'receipt_no') {
+                        this.formatReceiptNo();
+                        this.checkReceiptUniqueness();
+                    }
                     const formElements = Array.from(document.querySelectorAll('#inwardPetitionForm input, #inwardPetitionForm select, #inwardPetitionForm button'));
                     const currentIndex = formElements.indexOf(event.target);
                     if (currentIndex >= 0 && currentIndex < formElements.length - 1) {
@@ -770,6 +801,8 @@
                 },
 
                 checkReceiptUniqueness() {
+                    this.formatReceiptNo();
+
                     if (!this.receiptNo || this.receiptNo.trim() === '') {
                         this.receiptError = null;
                         this.receiptAvailable = false;
@@ -1087,6 +1120,85 @@
                             </button>
                             <button type="button" @click="open = false" class="w-full sm:w-auto px-6 py-2.5 text-sm font-bold text-blue-600 bg-white border border-blue-200 rounded-xl hover:bg-blue-50 hover:text-blue-700 transition-all focus:ring-4 focus:ring-blue-100 outline-none">
                                 Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Returned Petition Confirmation Modal -->
+    <div x-data="{ open: false, petitionId: null, receiptNo: '', returnReason: '' }"
+         @open-delete-modal.window="open = true; petitionId = $event.detail.id; receiptNo = $event.detail.receipt; returnReason = $event.detail.reason || ''; $nextTick(() => { if (window.lucide) { lucide.createIcons(); } });"
+         class="relative z-[100]" aria-labelledby="delete-modal-title" role="dialog" aria-modal="true" x-cloak x-show="open">
+        <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" x-show="open"
+            x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
+
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div x-show="open" x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    @click.away="open = false"
+                    class="relative transform overflow-visible rounded-2xl bg-white text-left shadow-[0_20px_60px_-15px_rgba(0,0,0,0.2)] transition-all sm:my-8 sm:w-full sm:max-w-md border border-slate-100">
+                    
+                    <form :action="'{{ url('inward/petitions') }}/' + petitionId" method="POST">
+                        @csrf
+                        @method('DELETE')
+
+                        <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between rounded-t-2xl relative overflow-hidden bg-white">
+                            <div class="flex items-center gap-4 relative z-10">
+                                <div class="w-12 h-12 rounded-2xl bg-rose-50 shadow-sm border border-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="trash-2" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-900 tracking-tight" id="delete-modal-title">
+                                        Delete Petition
+                                    </h3>
+                                    <p class="text-[13px] text-slate-500 font-medium mt-0.5">
+                                        Receipt No: <strong x-text="receiptNo" class="text-rose-600 font-bold ml-0.5 font-mono"></strong>
+                                    </p>
+                                </div>
+                            </div>
+                            <button type="button" @click="open = false"
+                                class="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-50 transition-all relative z-10 focus:outline-none">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <div class="p-6 space-y-4 bg-white">
+                            <!-- Reason for Return Banner -->
+                            <div x-show="returnReason" class="rounded-2xl bg-rose-50 border border-rose-200/80 p-4 space-y-2">
+                                <div class="flex items-center gap-2 text-rose-800 text-xs font-bold uppercase tracking-wider">
+                                    <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500"></i>
+                                    <span>Desk Return Reason</span>
+                                </div>
+                                <div class="bg-white/90 rounded-xl p-3 border border-rose-100 shadow-sm">
+                                    <p class="text-sm text-rose-950 font-semibold leading-relaxed break-words" x-text="returnReason"></p>
+                                </div>
+                            </div>
+
+                            <div class="rounded-xl bg-amber-50/80 border border-amber-200 p-3.5 flex items-start gap-3">
+                                <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5"></i>
+                                <p class="text-xs text-amber-900 leading-relaxed font-medium">
+                                    This petition does not belong to the integrated sections. Deleting it will remove it from active Inward lists and move it to the <strong>Recycle Bin</strong>.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-5 bg-slate-50/80 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-end gap-3 rounded-b-2xl">
+                            <button type="button" @click="open = false" class="w-full sm:w-auto px-6 py-2.5 text-sm font-bold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-slate-700 transition-all focus:ring-4 focus:ring-slate-100 outline-none">
+                                Cancel
+                            </button>
+                            <button type="submit" class="w-full sm:w-auto px-7 py-2.5 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-lg shadow-rose-600/20 transition-all flex items-center justify-center gap-2 focus:ring-4 focus:ring-rose-500/20 outline-none hover:-translate-y-0.5 active:translate-y-0">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                <span>Confirm Delete</span>
                             </button>
                         </div>
                     </form>

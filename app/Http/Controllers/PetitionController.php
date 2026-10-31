@@ -116,13 +116,7 @@ class PetitionController extends Controller
             $currentSeatName = $currentSeat->seat_name;
             $seats = collect([$currentSeat]);
         } else {
-            $seats = Seat::where('is_active', true)
-                ->where(function($q) {
-                    $q->where('seat_name', 'like', '%CPSP%')
-                      ->orWhere('seat_name', 'like', '%T Section%')
-                      ->orWhere('seat_name', 'like', '%T-Section%')
-                      ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['CPSP', 'T Section', 't section', 'T-Section', 't-section']));
-                })
+            $seats = Seat::eligibleForInward()
                 ->with(['activeAssignment.user'])
                 ->get()
                 ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
@@ -408,6 +402,11 @@ class PetitionController extends Controller
 
         $newSeat = Seat::findOrFail($request->seat_id);
 
+        $isEligible = Seat::eligibleForInward()->where('seats.seat_id', $newSeat->seat_id)->exists();
+        if (!$isEligible) {
+            return back()->with('error', 'Selected seat is not eligible for inward petition assignment.');
+        }
+
         $petition->update([
             'seat_id' => $newSeat->seat_id,
             'is_returned_to_inward' => false,
@@ -419,6 +418,60 @@ class PetitionController extends Controller
         ]);
 
         return back()->with('success', 'Petition reassigned successfully.');
+    }
+
+    /**
+     * Remove a returned inward petition from records (Soft delete).
+     */
+    public function destroyInward(Request $request, $id): RedirectResponse
+    {
+        $user = Auth::user();
+        $currentSeat = $user->currentSeatUser()?->seat;
+
+        $isAdmin = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
+            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin'])) ||
+            $user->canAccess('access admin dashboard');
+
+        $isInwardUser = $user->hasRole(['inward', 'Inward']) ||
+            ($currentSeat && (
+                $currentSeat->hasRole(['inward', 'Inward']) ||
+                str_contains(strtolower($currentSeat->seat_name), 'inward')
+            )) ||
+            $user->canAccess('view file transfer') ||
+            $user->canAccess('view_file_transfer') ||
+            $user->canAccess('inward form') ||
+            $user->canAccess('inward_form') ||
+            $user->canAccess('create inward petitions');
+
+        if (!$isInwardUser && !$isAdmin) {
+            abort(403, 'Unauthorized to delete inward petitions.');
+        }
+
+        $realId = HashidService::decode($id) ?? $id;
+        $petition = Petition::findOrFail($realId);
+
+        // Security validation: Only petitions returned from seats can be deleted
+        if (!$petition->is_returned_to_inward) {
+            return back()->with('error', 'Only petitions returned from seats can be deleted.');
+        }
+
+        if ($petition->is_cpsp_processed) {
+            return back()->with('error', 'Cannot delete a petition that has already been processed by CPSP.');
+        }
+
+        if (in_array($petition->status, [
+            Petition::STATUS_CLOSED,
+            Petition::STATUS_SENT_TO_GOVT,
+            Petition::STATUS_SENT_TO_SPC,
+            Petition::STATUS_INTERNAL_VIGILANCE
+        ])) {
+            return back()->with('error', 'Cannot delete a finalized petition.');
+        }
+
+        $receiptNo = $petition->receipt_no;
+        $petition->delete();
+
+        return back()->with('success', "Petition (Receipt No: {$receiptNo}) has been deleted successfully.");
     }
 
     /**
@@ -782,6 +835,13 @@ class PetitionController extends Controller
      */
     public function store(StorePetitionRequest $request): RedirectResponse
     {
+        if ($request->boolean('is_inward_entry') && $request->filled('seat_id')) {
+            $isEligible = Seat::eligibleForInward()->where('seats.seat_id', $request->seat_id)->exists();
+            if (!$isEligible) {
+                return back()->with('error', 'Selected concerned seat is not eligible for inward petition assignment.')->withInput();
+            }
+        }
+
         if (!$request->boolean('is_inward_entry') && !$request->filled('seat_id')) {
             $this->authorize('create', Petition::class);
         }

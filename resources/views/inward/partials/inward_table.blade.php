@@ -121,10 +121,10 @@
                         @endif
                     </td>
                     @endif
-                    <td class="px-5 py-3.5 text-center">
+                    <td class="px-5 py-3.5 text-center whitespace-nowrap">
                         @if($item->is_returned_to_inward)
-                            <div class="flex flex-col items-center justify-center gap-1.5">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <div class="inline-flex items-center justify-center gap-2">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider shrink-0">
                                     Returned
                                 </span>
                                 <button type="button" @click="$dispatch('open-reassign-modal', { 
@@ -135,9 +135,18 @@
                                         at: {{ json_encode($item->returned_at ? \Carbon\Carbon::parse($item->returned_at)->format('d M, Y h:i A') : '') }},
                                         seat: {{ json_encode($item->seat?->seat_name ?? '') }}
                                     })"
-                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 text-rose-600 hover:text-rose-700 hover:bg-rose-100 rounded-lg transition-colors shadow-sm text-[10px] font-bold border border-rose-100 uppercase tracking-wider" title="Re-transfer to CPSP">
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 hover:text-amber-800 hover:bg-amber-100 rounded-lg transition-colors shadow-sm text-[10px] font-bold border border-amber-200 uppercase tracking-wider shrink-0" title="Re-transfer to another seat">
                                     <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
                                     <span>Re-transfer</span>
+                                </button>
+                                <button type="button" @click="$dispatch('open-delete-modal', { 
+                                        id: '{{ $item->hashid }}', 
+                                        receipt: {{ json_encode($item->receipt_no) }},
+                                        reason: {{ json_encode($item->return_reason ?? '') }}
+                                    })"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 text-rose-600 hover:text-rose-700 hover:bg-rose-100 rounded-lg transition-colors shadow-sm text-[10px] font-bold border border-rose-200 uppercase tracking-wider shrink-0" title="Delete this returned petition">
+                                    <i data-lucide="trash-2" class="w-3 h-3 text-rose-500"></i>
+                                    <span>Delete</span>
                                 </button>
                             </div>
                         @elseif($item->is_cpsp_processed)
