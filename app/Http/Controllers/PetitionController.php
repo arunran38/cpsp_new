@@ -396,16 +396,12 @@ class PetitionController extends Controller
         $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
 
+        $eligibleSeatIds = Seat::eligibleForInward()->pluck('seat_id')->toArray();
         $request->validate([
-            'seat_id' => 'required|exists:seats,seat_id',
+            'seat_id' => ['required', 'exists:seats,seat_id', \Illuminate\Validation\Rule::in($eligibleSeatIds)],
         ]);
 
         $newSeat = Seat::findOrFail($request->seat_id);
-
-        $isEligible = Seat::eligibleForInward()->where('seats.seat_id', $newSeat->seat_id)->exists();
-        if (!$isEligible) {
-            return back()->with('error', 'Selected seat is not eligible for inward petition assignment.');
-        }
 
         $petition->update([
             'seat_id' => $newSeat->seat_id,
@@ -630,11 +626,13 @@ class PetitionController extends Controller
                 $sq->whereHas('roles', fn($r) => $r->whereIn('name', ['CPSP', 'cpsp']))
                    ->orWhereHas('activeAssignment.user.roles', fn($r) => $r->whereIn('name', ['CPSP', 'cpsp']))
                    ->orWhere(function ($nameQuery) {
-                       $nameQuery->where('seat_name', 'like', '%CPSP%');
+                       $nameQuery->where('seat_name', 'like', 'CPSP%');
                    });
             })
+            ->where('seat_name', 'not like', 'SS %')
+            ->where('seat_name', 'not like', '%SS CPSP%')
             ->where('seat_name', 'not like', '%Superintendent%')
-            ->whereDoesntHave('roles', fn($r) => $r->where('name', 'like', '%Superintendent%'));
+            ->whereDoesntHave('roles', fn($r) => $r->whereIn('name', ['SS CPSP', 'ss cpsp', 'Superintendent', 'superintendent', 'Inward', 'inward']));
         };
 
         if ($section === 'cpsp' || !$canViewTSection) {
@@ -659,6 +657,12 @@ class PetitionController extends Controller
                   ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']));
             });
         }
+
+        // Strictly exclude SS CPSP, Superintendent, and Inward seats from inward statistics
+        $seatsQuery->where('seat_name', 'not like', 'SS %')
+                   ->where('seat_name', 'not like', '%SS CPSP%')
+                   ->where('seat_name', 'not like', '%Superintendent%')
+                   ->whereDoesntHave('roles', fn($r) => $r->whereIn('name', ['SS CPSP', 'ss cpsp', 'Superintendent', 'superintendent', 'Inward', 'inward']));
 
         $seats = $seatsQuery->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $includedSeatIds = $seats->pluck('seat_id')->toArray();
@@ -835,13 +839,6 @@ class PetitionController extends Controller
      */
     public function store(StorePetitionRequest $request): RedirectResponse
     {
-        if ($request->boolean('is_inward_entry') && $request->filled('seat_id')) {
-            $isEligible = Seat::eligibleForInward()->where('seats.seat_id', $request->seat_id)->exists();
-            if (!$isEligible) {
-                return back()->with('error', 'Selected concerned seat is not eligible for inward petition assignment.')->withInput();
-            }
-        }
-
         if (!$request->boolean('is_inward_entry') && !$request->filled('seat_id')) {
             $this->authorize('create', Petition::class);
         }

@@ -203,8 +203,9 @@ class SeatController extends Controller
                    });
             })
             ->where('seat_name', 'not like', 'SS %')
+            ->where('seat_name', 'not like', '%SS CPSP%')
             ->where('seat_name', 'not like', '%Superintendent%')
-            ->whereDoesntHave('roles', fn($r) => $r->where('name', 'like', '%Superintendent%'));
+            ->whereDoesntHave('roles', fn($r) => $r->whereIn('name', ['SS CPSP', 'ss cpsp', 'Superintendent', 'superintendent', 'Inward', 'inward']));
         };
 
         if ($section === 't_section' && $canViewTSection) {
@@ -229,6 +230,11 @@ class SeatController extends Controller
             // CPSP only (strictly role CPSP, excluding SS CPSP / Superintendent)
             $query->where($cpspConstraint);
         }
+
+        $query->where('seat_name', 'not like', 'SS %')
+              ->where('seat_name', 'not like', '%SS CPSP%')
+              ->where('seat_name', 'not like', '%Superintendent%')
+              ->whereDoesntHave('roles', fn($r) => $r->whereIn('name', ['SS CPSP', 'ss cpsp', 'Superintendent', 'superintendent', 'Inward', 'inward']));
 
         return $query;
     }

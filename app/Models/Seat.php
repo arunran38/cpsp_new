@@ -218,20 +218,31 @@ class Seat extends Model
     {
         return $query->where('is_active', true)
             ->where(function ($q) {
-                $q->whereHas('roles', function ($rq) {
-                    $rq->whereIn('name', ['CPSP', 'cpsp', 'T Section', 't section', 'T-Section', 't-section']);
+                $q->where(function ($cpspQ) {
+                    $cpspQ->whereHas('roles', fn($rq) => $rq->whereIn('name', ['CPSP', 'cpsp']))
+                          ->orWhereHas('activeAssignment.user.roles', fn($rq) => $rq->whereIn('name', ['CPSP', 'cpsp']))
+                          ->orWhere('seat_name', 'like', 'CPSP%');
                 })
-                ->orWhere(function ($sq) {
-                    $sq->where('seat_name', 'like', 'CPSP%')
+                ->orWhere(function ($tQ) {
+                    $tQ->whereHas('roles', fn($rq) => $rq->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']))
                        ->orWhere('seat_name', 'like', '%T Section%')
                        ->orWhere('seat_name', 'like', '%T-Section%');
                 });
             })
+            ->where('seat_name', 'not like', 'SS %')
             ->where('seat_name', 'not like', '%SS CPSP%')
             ->where('seat_name', 'not like', '%Superintendent%')
             ->whereDoesntHave('roles', function ($rq) {
-                $rq->whereIn('name', ['SS CPSP', 'ss cpsp']);
+                $rq->whereIn('name', ['SS CPSP', 'ss cpsp', 'Superintendent', 'superintendent', 'Inward', 'inward']);
             });
+    }
+
+    /**
+     * Alias for scopeEligibleForInward.
+     */
+    public function scopeEligibleForInwardTransfer(Builder $query): Builder
+    {
+        return $this->scopeEligibleForInward($query);
     }
 }
 

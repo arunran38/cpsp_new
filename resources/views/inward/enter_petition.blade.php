@@ -3,13 +3,7 @@
 
 @section('content')
     @php
-        $seatsList = ($seats ?? \App\Models\Seat::eligibleForInward()->with(['activeAssignment.user'])->get())
-            ->filter(function($s) {
-                return !str_contains(strtoupper($s->seat_name), 'SS CPSP') 
-                    && !str_contains(strtoupper($s->seat_name), 'SUPERINTENDENT')
-                    && (!$s->relationLoaded('roles') || !$s->roles->contains(fn($r) => in_array(strtoupper($r->name), ['SS CPSP', 'SUPERINTENDENT'])));
-            })
-            ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+        $seatsList = $seats ?? \App\Models\Seat::eligibleForInward()->with(['activeAssignment.user'])->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
         $tab = 'inward';
 

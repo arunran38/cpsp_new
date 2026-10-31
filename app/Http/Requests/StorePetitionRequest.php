@@ -106,7 +106,9 @@ class StorePetitionRequest extends FormRequest
             'mode_of_petition_received' => 'required_without:duplicate_link_number',
             'proposed_action' => 'nullable|string',
             'transfer_remarks' => 'nullable|string',
-            'seat_id' => $isInward ? 'required|exists:seats,seat_id' : 'nullable|exists:seats,seat_id',
+            'seat_id' => $isInward 
+                ? ['required', 'exists:seats,seat_id', Rule::in(\App\Models\Seat::eligibleForInward()->pluck('seat_id')->toArray())]
+                : 'nullable|exists:seats,seat_id',
             'is_inward_entry' => 'nullable|boolean',
             'unit_id' => [
                 'nullable',
