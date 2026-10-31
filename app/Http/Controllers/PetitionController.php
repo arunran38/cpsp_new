@@ -43,11 +43,16 @@ class PetitionController extends Controller
     public function create(): View
     {
         $this->authorize('create', Petition::class);
+        $user = Auth::user();
+        $draft = \App\Models\PetitionDraft::where('user_id', $user->user_id)
+            ->where('type', 'create')
+            ->first();
+
         $districts = \App\Models\District::orderBy('district_id')->get();
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
         $units = \App\Models\Unit::orderBy('unit_name')->get();
-        return view('user.petition_add', compact('districts', 'designations', 'departments', 'units'));
+        return view('user.petition_add', compact('districts', 'designations', 'departments', 'units', 'draft'));
     }
 
     /**
@@ -872,12 +877,22 @@ class PetitionController extends Controller
                 $petition->status = Petition::STATUS_DUPLICATE;
                 $petition->save();
 
+                // Clear creation draft on duplicate linking
+                \App\Models\PetitionDraft::where('user_id', Auth::id())
+                    ->where('type', 'create')
+                    ->delete();
+
                 return redirect()->route('petitions.show', $petition->hashid)
                     ->with('success', 'Petition successfully registered as a duplicate of ' . $originalPetition->receipt_no . '.');
             }
 
             $petition = $this->petitionService->store($request->validated(), $request->file('evidence_files') ?? []);
             
+            // Clear creation draft on successful store
+            \App\Models\PetitionDraft::where('user_id', Auth::id())
+                ->where('type', 'create')
+                ->delete();
+
             $user = Auth::user();
             $isInwardUser = $user && ($user->hasRole(['inward', 'Inward']) || str_contains(strtolower($user->currentSeatUser()?->seat?->seat_name ?? ''), 'inward'));
             if ($request->boolean('is_inward_entry') || ($request->filled('seat_id') && $isInwardUser)) {
@@ -1054,6 +1069,11 @@ class PetitionController extends Controller
             return redirect()->route('petitions.index')->with('error', 'Cannot edit a petition once a final decision has been taken.');
         }
 
+        $draft = \App\Models\PetitionDraft::where('user_id', $user?->user_id)
+            ->where('type', 'update')
+            ->where('petition_id', $petition->petition_id)
+            ->first();
+
         // Format addresses for Alpine.js
         $complainants = $this->formatAddressesForAlpine($petition, 'Complainant');
         $accused = $this->formatAddressesForAlpine($petition, 'Accused');
@@ -1062,7 +1082,7 @@ class PetitionController extends Controller
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
         $units = \App\Models\Unit::orderBy('unit_name')->get();
-        return view('user.petition_edit', compact('petition', 'complainants', 'accused', 'districts', 'designations', 'departments', 'units'));
+        return view('user.petition_edit', compact('petition', 'complainants', 'accused', 'districts', 'designations', 'departments', 'units', 'draft'));
     }
 
     /**
@@ -1081,6 +1101,13 @@ class PetitionController extends Controller
                 $request->file('evidence_files') ?? [], 
                 $request->deleted_attachments ?? []
             );
+
+            // Clear update draft on successful update
+            \App\Models\PetitionDraft::where('user_id', Auth::id())
+                ->where('type', 'update')
+                ->where('petition_id', $petition->petition_id)
+                ->delete();
+
             return redirect()->route('petitions.index', ['tab' => 'all'])->with('success', 'Petition updated successfully.');
         } catch (\Exception $e) {
             Log::error('Petition Update Error: ' . $e->getMessage());

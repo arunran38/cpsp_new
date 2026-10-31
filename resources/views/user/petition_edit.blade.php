@@ -4,6 +4,9 @@
 @section('content')
     @php
         $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
+        $draftData = isset($draft) && $draft ? $draft->form_data : null;
+        $draftStep = isset($draft) && $draft ? $draft->step : null;
+        $draftSavedAt = isset($draft) && $draft ? $draft->updated_at->format('d M, Y h:i A') : null;
     @endphp
     <div class="space-y-6" x-data="petitionForm()" @open-return-modal.window="showReturnModal = true">
         <!-- Premium Header Section -->
@@ -27,6 +30,24 @@
                 </div>
 
                 <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 z-10">
+                    <!-- Auto-save status -->
+                    <div x-show="isSavingDraft" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-400/30 text-amber-300 text-xs font-semibold backdrop-blur-sm shadow-sm" style="display: none;">
+                        <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                        <span>Saving draft...</span>
+                    </div>
+                    <div x-show="!isSavingDraft && lastSavedText" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-semibold backdrop-blur-sm shadow-sm" style="display: none;">
+                        <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400"></i>
+                        <span x-text="'Draft saved ' + lastSavedText"></span>
+                    </div>
+
+                    <!-- Reset / Clear Draft Button -->
+                    <button type="button" @click="confirmClearDraft()"
+                        class="px-3.5 py-1.5 text-xs font-bold text-slate-200 bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-200 border border-slate-700/60 hover:border-rose-500/40 rounded-xl transition-all flex items-center gap-1.5 shadow-sm backdrop-blur-sm cursor-pointer"
+                        title="Discard draft changes and revert to original petition details">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        <span>Reset Draft</span>
+                    </button>
+
                     @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
                         <button type="button"
                             onclick="window.openReturnModal('{{ $petition->hashid }}', '{{ addslashes($petition->receipt_no) }}')"
@@ -44,6 +65,30 @@
                         <i data-lucide="eye" class="w-4 h-4"></i> View Current
                     </a>
                 </div>
+            </div>
+        </div>
+
+        <!-- Draft Restored Banner -->
+        <div x-show="hasRestoredDraft && !dismissedRestoredBanner" x-transition
+            class="bg-indigo-950/80 border border-indigo-500/40 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-indigo-100 backdrop-blur-md mb-6" style="display: none;">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-300 shrink-0">
+                    <i data-lucide="history" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-white">Draft Changes Restored</p>
+                    <p class="text-xs text-indigo-200" x-text="'Your previously saved edit draft' + (lastSavedText ? ' from ' + lastSavedText : '') + ' has been automatically restored. You can continue editing or discard the draft.'"></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button type="button" @click="confirmClearDraft()"
+                    class="px-3 py-1.5 text-xs font-bold text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Discard Draft
+                </button>
+                <button type="button" @click="dismissedRestoredBanner = true"
+                    class="px-3 py-1.5 text-xs font-bold text-indigo-200 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/30 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i> Continue
+                </button>
             </div>
         </div>
 
@@ -874,8 +919,59 @@
 
     <script>
         function petitionForm() {
+            const originalPetitionDetails = {
+                receipt_no: {!! json_encode($petition->receipt_no) !!},
+                date: {!! json_encode($petition->date_of_petition_received) !!},
+                nature: {!! json_encode($petition->nature_of_petition ?? '') !!},
+                mode: {!! json_encode($petition->mode_of_petition_received ?? '') !!},
+                mode_others: {!! json_encode($petition->mode_of_petition_received_others ?? '') !!},
+                unit_id: {!! json_encode($petition->unit_id ? (string)$petition->unit_id : '') !!},
+                date_of_petition_received_at_unit: {!! json_encode($petition->date_of_petition_received_at_unit ? $petition->date_of_petition_received_at_unit->format('Y-m-d') : '') !!},
+                description: {!! json_encode($petition->description ?? '') !!},
+                proposed_action: {!! json_encode($petition->proposed_action ?? '') !!}
+            };
+            const originalComplainants = {!! json_encode($complainants) !!}.length > 0 ? {!! json_encode($complainants) !!} : [{ id: Date.now(), name: '', phone: '', email: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }];
+            const originalAccused = {!! json_encode($accused) !!}.length > 0 ? {!! json_encode($accused) !!} : [{ id: Date.now() + 1, entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }];
+
+            const serverDraft = @json($draftData, JSON_UNESCAPED_SLASHES);
+            const serverDraftStep = {{ $draftStep ?? 1 }};
+            const serverDraftSavedAt = {!! json_encode($draftSavedAt) !!};
+            const storageKey = 'cpsp_draft_edit_{{ Auth::id() }}_{{ $petition->petition_id }}';
+
+            let initialDraft = serverDraft;
+            let initialStep = serverDraftStep;
+            let initialSavedText = serverDraftSavedAt;
+            let isRestored = !!serverDraft;
+
+            if (!initialDraft) {
+                try {
+                    const localRaw = localStorage.getItem(storageKey);
+                    if (localRaw) {
+                        const parsed = JSON.parse(localRaw);
+                        if (parsed && parsed.form_data) {
+                            initialDraft = parsed.form_data;
+                            initialStep = parsed.step || 1;
+                            initialSavedText = parsed.timestamp ? new Date(parsed.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'recently';
+                            isRestored = true;
+                        }
+                    }
+                } catch(e) {}
+            }
+
+            const oldComplainants = @json(old('complainants'));
+            const oldAccused = @json(old('accused'));
+
             return {
-                step: 1,
+                draftType: 'update',
+                draftPetitionId: {{ $petition->petition_id }},
+                localStorageKey: storageKey,
+                isSavingDraft: false,
+                lastSavedText: initialSavedText,
+                hasRestoredDraft: isRestored,
+                dismissedRestoredBanner: false,
+                autoSaveTimer: null,
+
+                step: {{ old('step') ? old('step') : 'initialStep' }},
                 formErrors: {},
                 showReturnModal: false,
                 returnPetitionId: {{ $petition->petition_id }},
@@ -883,16 +979,16 @@
                 petitionDetails: {
                     receipt_no: {!! json_encode($petition->receipt_no) !!},
                     date: {!! json_encode($petition->date_of_petition_received) !!},
-                    nature: {!! json_encode(old('nature_of_petition', $petition->nature_of_petition ?? '')) !!},
-                    mode: {!! json_encode(old('mode_of_petition_received', $petition->mode_of_petition_received ?? '')) !!},
-                    mode_others: {!! json_encode(old('mode_others', $petition->mode_of_petition_received_others ?? '')) !!},
-                    unit_id: {!! json_encode(old('unit_id', $petition->unit_id ? (string)$petition->unit_id : '')) !!},
-                    date_of_petition_received_at_unit: {!! json_encode(old('date_of_petition_received_at_unit', $petition->date_of_petition_received_at_unit ? $petition->date_of_petition_received_at_unit->format('Y-m-d') : '')) !!},
-                    description: {!! json_encode(old('description', $petition->description ?? '')) !!},
-                    proposed_action: {!! json_encode(old('proposed_action', $petition->proposed_action ?? '')) !!}
+                    nature: {!! json_encode(old('nature_of_petition')) !!} || (initialDraft?.petitionDetails?.nature ?? originalPetitionDetails.nature),
+                    mode: {!! json_encode(old('mode_of_petition_received')) !!} || (initialDraft?.petitionDetails?.mode ?? originalPetitionDetails.mode),
+                    mode_others: {!! json_encode(old('mode_others')) !!} || (initialDraft?.petitionDetails?.mode_others ?? originalPetitionDetails.mode_others),
+                    unit_id: {!! json_encode(old('unit_id')) !!} || (initialDraft?.petitionDetails?.unit_id ?? originalPetitionDetails.unit_id),
+                    date_of_petition_received_at_unit: {!! json_encode(old('date_of_petition_received_at_unit')) !!} || (initialDraft?.petitionDetails?.date_of_petition_received_at_unit ?? originalPetitionDetails.date_of_petition_received_at_unit),
+                    description: {!! json_encode(old('description')) !!} || (initialDraft?.petitionDetails?.description ?? originalPetitionDetails.description),
+                    proposed_action: {!! json_encode(old('proposed_action')) !!} || (initialDraft?.petitionDetails?.proposed_action ?? originalPetitionDetails.proposed_action)
                 },
-                complainants: {!! json_encode($complainants) !!}.length > 0 ? {!! json_encode($complainants) !!} : [{ id: Date.now(), name: '', phone: '', email: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
-                accused: {!! json_encode($accused) !!}.length > 0 ? {!! json_encode($accused) !!} : [{ id: Date.now() + 1, entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
+                complainants: oldComplainants || (initialDraft?.complainants && initialDraft.complainants.length > 0 ? initialDraft.complainants : originalComplainants),
+                accused: oldAccused || (initialDraft?.accused && initialDraft.accused.length > 0 ? initialDraft.accused : originalAccused),
                 deleted_uploads: [],
 
                 // Duplicate Checking State
@@ -903,7 +999,129 @@
                 isLinkingDuplicate: false,
                 debounceTimer: null,
 
+                debouncedAutoSave() {
+                    clearTimeout(this.autoSaveTimer);
+                    this.autoSaveTimer = setTimeout(() => {
+                        this.saveDraft();
+                    }, 1500);
+                },
+
+                saveDraft() {
+                    this.isSavingDraft = true;
+                    const payload = {
+                        type: this.draftType,
+                        petition_id: this.draftPetitionId,
+                        step: this.step,
+                        form_data: {
+                            petitionDetails: this.petitionDetails,
+                            complainants: this.complainants,
+                            accused: this.accused
+                        }
+                    };
+
+                    try {
+                        localStorage.setItem(this.localStorageKey, JSON.stringify({
+                            step: this.step,
+                            form_data: payload.form_data,
+                            timestamp: new Date().toISOString()
+                        }));
+                    } catch(e) {}
+
+                    fetch('{{ route('petitions.draft.save') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        this.isSavingDraft = false;
+                        if (data.success) {
+                            this.lastSavedText = data.saved_at || 'just now';
+                            this.refreshIcons();
+                        }
+                    })
+                    .catch(() => {
+                        this.isSavingDraft = false;
+                    });
+                },
+
+                confirmClearDraft() {
+                    Swal.fire({
+                        title: 'Discard Draft Changes?',
+                        text: 'Are you sure you want to discard your draft changes? The form will reset to the original saved petition records.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#e11d48',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: 'Yes, Discard Draft',
+                        cancelButtonText: 'Cancel',
+                        customClass: {
+                            popup: 'cpsp-swal-popup',
+                            title: 'cpsp-swal-title',
+                            confirmButton: 'cpsp-swal-confirm-btn'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.clearDraft();
+                        }
+                    });
+                },
+
+                clearDraft() {
+                    try {
+                        localStorage.removeItem(this.localStorageKey);
+                    } catch(e) {}
+
+                    fetch('{{ route('petitions.draft.clear') }}', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            type: this.draftType,
+                            petition_id: this.draftPetitionId
+                        })
+                    })
+                    .finally(() => {
+                        this.resetFormState();
+                        if (window.showToast) {
+                            window.showToast('success', 'Draft changes discarded. Reverted to original petition records.');
+                        } else if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Draft Discarded',
+                                text: 'The form has been reverted to saved petition records.',
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        }
+                    });
+                },
+
+                resetFormState() {
+                    this.step = 1;
+                    this.petitionDetails = JSON.parse(JSON.stringify(originalPetitionDetails));
+                    this.complainants = JSON.parse(JSON.stringify(originalComplainants));
+                    this.accused = JSON.parse(JSON.stringify(originalAccused));
+                    this.formErrors = {};
+                    this.lastSavedText = null;
+                    this.hasRestoredDraft = false;
+                    this.dismissedRestoredBanner = true;
+                    this.scrollToTop();
+                    this.refreshIcons();
+                },
+
                 init() {
+                    this.$watch('petitionDetails', () => this.debouncedAutoSave(), { deep: true });
+                    this.$watch('complainants', () => this.debouncedAutoSave(), { deep: true });
+                    this.$watch('accused', () => this.debouncedAutoSave(), { deep: true });
+
                     this.$watch('petitionDetails.mode', (newMode) => {
                         if (newMode && String(newMode).trim() !== '') {
                             delete this.formErrors['mode_of_petition_received'];
@@ -1054,6 +1272,7 @@
                         if (this.step < 4) {
                             this.step++;
                             this.scrollToTop();
+                            this.saveDraft();
                         }
                     }
                 },
@@ -1061,6 +1280,7 @@
                     if (this.step > 1) {
                         this.step--;
                         this.scrollToTop();
+                        this.saveDraft();
                     }
                 },
                 handleSubmit(event) {
@@ -1091,6 +1311,11 @@
                         }
                         return false;
                     }
+
+                    try {
+                        localStorage.removeItem(this.localStorageKey);
+                    } catch(e) {}
+
                     return true;
                 },
                 validateStep(step) {
@@ -1390,6 +1615,7 @@
                         if (target >= 1 && target <= 4) {
                             this.step = target;
                             this.scrollToTop();
+                            this.saveDraft();
                         }
                     }
                 },
