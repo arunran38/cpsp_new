@@ -1,5 +1,5 @@
 @extends(auth()->user()->canAccess('access admin dashboard') && !session('is_impersonating_seat') ? 'layouts.admin' : 'layouts.user')
-@section('container_width', 'max-w-7xl')
+@section('container_width', 'max-w-full')
 
 @section('content')
     <div class="space-y-6">
@@ -98,15 +98,17 @@
                                     style="color: #1e40af !important;"
                                     onchange="this.form.submit()">
                                     
-                                    @if($canViewAllStats ?? false)
+                                    @if(($canViewAllStats ?? false) || !($canCreateInward ?? false))
                                         <option value="all" {{ ($selectedCreator ?? 'all') === 'all' ? 'selected' : '' }}>
                                             All Petitions
                                         </option>
                                     @endif
 
-                                    <option value="my_petitions" {{ ($selectedCreator ?? '') === 'my_petitions' || (($selectedCreator ?? '') == Auth::id() && !($canViewAllStats ?? false)) ? 'selected' : '' }}>
-                                        My Petitions
-                                    </option>
+                                    @if($canCreateInward ?? false)
+                                        <option value="my_petitions" {{ ($selectedCreator ?? '') === 'my_petitions' || (($selectedCreator ?? '') == Auth::id() && !($canViewAllStats ?? false)) ? 'selected' : '' }}>
+                                            My Petitions
+                                        </option>
+                                    @endif
 
                                     @if(($canViewOtherStats ?? false) || ($canViewAllStats ?? false))
                                         @foreach($creators as $creator)
@@ -167,7 +169,7 @@
                                 </button>
 
                                 @php
-                                    $defaultCreatorScope = ($canViewAllStats ?? false) ? 'all' : 'my_petitions';
+                                    $defaultCreatorScope = ($canCreateInward ?? false) ? (($canViewAllStats ?? false) ? 'all' : 'my_petitions') : 'all';
                                     $hasActiveFilters = $dateFrom || $dateTo || (($section ?? 'all') !== 'all') || (($selectedCreator ?? '') !== $defaultCreatorScope);
                                 @endphp
                                 @if($hasActiveFilters)

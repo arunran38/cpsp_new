@@ -30,22 +30,10 @@ class TSectionDiagnosticsPermissionsSeeder extends Seeder
             ]);
         }
 
-        // 2. Grant to Developer role (full access)
-        $developer = Role::where('name', 'Developer')->first();
-        if ($developer) {
-            $developer->givePermissionTo($permissions);
-        }
-
-        // 3. Grant to T Section role
-        $tSectionRole = Role::whereIn('name', ['T Section', 't section', 'T-Section', 't-section'])->first();
-        if ($tSectionRole) {
-            $tSectionRole->givePermissionTo($permissions);
-        }
-
-        // 4. Grant to Super Admin role
-        $superAdmin = Role::where('name', 'super admin')->orWhere('name', 'Super Admin')->first();
-        if ($superAdmin) {
-            $superAdmin->givePermissionTo($permissions);
+        // 2. Grant to Developer and Super Admin roles
+        $roles = Role::whereIn('name', ['Developer', 'developer', 'super admin', 'Super Admin'])->get();
+        foreach ($roles as $role) {
+            $role->givePermissionTo($permissions);
         }
     }
 }

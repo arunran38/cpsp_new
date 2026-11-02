@@ -203,7 +203,7 @@
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     New Registration
                 </a>
-            @elseif(Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('create petition') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('create_inward_petitions'))
+            @elseif(Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('create inward petitions'))
                 <a href="{{ route('petitions.create') }}" class="flex items-center gap-2 px-6 py-3 text-sm font-bold text-white transition-all rounded-xl shadow-lg shadow-indigo-500/30 bg-indigo-600 hover:bg-indigo-700 hover:-translate-y-0.5 focus:ring-4 focus:ring-indigo-500/20 active:translate-y-0">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     New Petition

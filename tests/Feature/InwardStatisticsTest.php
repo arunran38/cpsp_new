@@ -26,6 +26,9 @@ class InwardStatisticsTest extends TestCase
         $cpspSeat = Seat::factory()->create(['seat_name' => 'CPSP 1']);
         $cpspSeat->assignRole($cpspRole);
 
+        $cpspSeat2 = Seat::factory()->create(['seat_name' => 'CPSP 2']);
+        $cpspSeat2->assignRole($cpspRole);
+
         $superAdmin = User::factory()->create(['name' => 'Super Admin User']);
         $superAdmin->assignRole($superAdminRole);
         SeatUser::factory()->create([
@@ -47,7 +50,7 @@ class InwardStatisticsTest extends TestCase
 
         Petition::factory()->create([
             'user_id' => $superAdmin->user_id,
-            'seat_id' => $ssCpspSeat->seat_id,
+            'seat_id' => $cpspSeat2->seat_id,
         ]);
         Petition::factory()->create([
             'user_id' => $inwardCreator->user_id,
@@ -87,5 +90,40 @@ class InwardStatisticsTest extends TestCase
             ->assertOk()
             ->assertViewHas('selectedCreator', 'my_petitions')
             ->assertViewHas('summaryTotals', fn (array $totals) => $totals['total'] === 0);
+    }
+
+    public function test_user_without_inward_creation_provision_hides_my_petitions_and_defaults_to_all(): void
+    {
+        $adminRole = Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view all inward statistics', 'guard_name' => 'web']);
+
+        $cpspSeat = Seat::factory()->create(['seat_name' => 'CPSP Office']);
+        $adminUser = User::factory()->create(['name' => 'Executive Officer']);
+        $adminUser->assignRole($adminRole);
+        $adminUser->givePermissionTo('view all inward statistics');
+
+        SeatUser::factory()->create([
+            'user_id' => $adminUser->user_id,
+            'seat_id' => $cpspSeat->seat_id,
+            'is_active' => true,
+        ]);
+        session(['current_seat_id' => $cpspSeat->seat_id]);
+
+        // When accessing without parameters, default should be 'all'
+        $this->actingAs($adminUser)
+            ->get(route('inward.statistics'))
+            ->assertOk()
+            ->assertViewHas('canCreateInward', false)
+            ->assertViewHas('selectedCreator', 'all')
+            ->assertSee('All Petitions')
+            ->assertDontSee('My Petitions');
+
+        // When attempting to request 'my_petitions', backend must normalize to 'all'
+        $this->get(route('inward.statistics', ['creator_id' => 'my_petitions']))
+            ->assertOk()
+            ->assertViewHas('canCreateInward', false)
+            ->assertViewHas('selectedCreator', 'all')
+            ->assertSee('All Petitions')
+            ->assertDontSee('My Petitions');
     }
 }

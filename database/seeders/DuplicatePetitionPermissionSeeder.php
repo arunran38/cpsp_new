@@ -22,7 +22,8 @@ class DuplicatePetitionPermissionSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
-        foreach (['super admin', 'Super Admin', 'admin', 'Admin', 'CPSP'] as $roleName) {
+        // Only assign to Developer and Super Admin
+        foreach (['Developer', 'developer', 'super admin', 'Super Admin'] as $roleName) {
             $role = Role::where('name', $roleName)->first();
             if ($role) {
                 $role->givePermissionTo($permissions);

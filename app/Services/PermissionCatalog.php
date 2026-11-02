@@ -59,12 +59,16 @@ class PermissionCatalog
         'view recent petitions' => 'View Recently Received Petitions',
         'view duplicate warnings' => 'View Duplicate Petition Warnings',
         'link petitions' => 'Link or Unlink Duplicate Petitions',
-        'inward form' => 'Access the Inward Registration Form',
         'create inward petitions' => 'Register Inward Petitions',
+        'delete inward petitions' => 'Delete Returned Inward Petitions',
+        'reassign inward petitions' => 'Reassign Returned Inward Petitions',
         'view file transfer' => 'View File Transfers',
         'filter transfer' => 'Filter File Transfers',
         'view master reports' => 'View Master Reports',
         'inward statistics' => 'View Inward Statistics',
+        'view own inward statistics' => 'View Own Seat Inward Statistics',
+        'view other inward statistics' => 'View Other Seats Inward Statistics',
+        'view all inward statistics' => 'View All Inward Statistics',
         'view pendency details' => 'View Pendency Details',
         'pendency details' => 'View Pendency Details',
         'export statistics' => 'Export Statistics',
@@ -82,6 +86,7 @@ class PermissionCatalog
         'export t-section petitions' => 'Export Confidential T-Section Petitions',
         'view t-section diagnostics' => 'View T-Section Diagnostics',
         'view t-section pending details' => 'View T-Section Pending Petition Details',
+        'view t-section in reports' => 'View T-Section in Reports & Filters',
     ];
 
     private const DESCRIPTIONS = [
@@ -91,15 +96,19 @@ class PermissionCatalog
         'view recent petitions' => 'View the recently received petitions available to the current user.',
         'view duplicate warnings' => 'See possible duplicate matches while entering or reviewing petitions.',
         'link petitions' => 'Link or unlink duplicate petition records.',
-        'inward form' => 'Open the Inward petition registration form.',
-        'create inward petitions' => 'Register petitions through the Inward desk.',
-        'view file transfer' => 'View file transfer records.',
-        'filter transfer' => 'Filter file transfer records.',
-        'view master reports' => 'Open consolidated petition reports.',
+        'create inward petitions' => 'Open the Inward registration desk, record incoming petitions, and transfer them to seats.',
+        'delete inward petitions' => 'Remove returned inward petitions from records.',
+        'reassign inward petitions' => 'Reassign a returned inward petition to another eligible seat.',
+        'view file transfer' => 'View file transfer and desk movement records.',
+        'filter transfer' => 'Filter file transfer movement logs by transferred and returned states.',
+        'view master reports' => 'Open consolidated petition reports with custom filtering.',
         'inward statistics' => 'View Inward seat statistics and registration counts.',
+        'view own inward statistics' => 'View inward statistics for petitions created by the current user or seat.',
+        'view other inward statistics' => 'View inward statistics for petitions assigned to other seats.',
+        'view all inward statistics' => 'Full departmental oversight of inward petition volume across all seats.',
         'view pendency details' => 'View seat-wise petition pendency and status details.',
         'pendency details' => 'View seat-wise petition pendency and status details.',
-        'export statistics' => 'Download available statistics as a spreadsheet.',
+        'export statistics' => 'Download available statistics and tabular reports as a spreadsheet.',
         'view processed statistics' => 'View processed and pending counts and progress in Inward statistics.',
         'view seat distribution chart' => 'View the seat distribution chart on the dashboard.',
         'view petition status chart' => 'View the petition status chart on the dashboard.',
@@ -114,6 +123,7 @@ class PermissionCatalog
         'export t-section petitions' => 'Export confidential T-Section petition records.',
         'view t-section diagnostics' => 'View T-Section workload and performance statistics.',
         'view t-section pending details' => 'View pending petition counts and details for T-Section.',
+        'view t-section in reports' => 'View both CPSP and T-Section users and seats in report search and filters.',
     ];
 
     private const CRUD_RESOURCES = [
@@ -165,8 +175,9 @@ class PermissionCatalog
         }
 
         if (in_array($permission, [
-            'inward form',
             'create inward petitions',
+            'delete inward petitions',
+            'reassign inward petitions',
             'view file transfer',
             'filter transfer',
         ], true)) {
@@ -180,6 +191,9 @@ class PermissionCatalog
         if (in_array($permission, [
             'view master reports',
             'inward statistics',
+            'view own inward statistics',
+            'view other inward statistics',
+            'view all inward statistics',
             'view pendency details',
             'pendency details',
             'export statistics',

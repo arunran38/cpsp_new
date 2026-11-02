@@ -39,7 +39,7 @@
                             class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
                             <i data-lucide="file-plus-2" class="w-4 h-4"></i> New Registration
                         </a>
-                    @elseif(Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('create petition') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('create_inward_petitions'))
+                    @elseif(Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('create inward petitions'))
                         <a href="{{ route('petitions.create') }}"
                             class="px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
                             <i data-lucide="file-plus-2" class="w-4 h-4"></i> New Petition

@@ -500,7 +500,7 @@
                 </div>
                 @endif
 
-                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view master reports') || Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin') || Auth::user()->canAccess('inward form') || Auth::user()->canAccess('view compliances'))
+                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view master reports') || Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('view compliances'))
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-xs font-bold tracking-wider text-blue-500 uppercase">Operations</p>
                 </div>
@@ -508,8 +508,7 @@
 
 
                 @php
-                    $canAccessInwardAdmin = Auth::user()->canAccess('inward form') || 
-                                           Auth::user()->canAccess('create inward petitions') || 
+                    $canAccessInwardAdmin = Auth::user()->canAccess('create inward petitions') || 
                                            Auth::user()->canAccess('inward statistics') || 
                                            Auth::user()->canAccess('view file transfer');
                 @endphp
@@ -544,7 +543,7 @@
                          x-transition:leave-start="slide-down-leave-from"
                          x-transition:leave-end="slide-down-leave-to"
                          class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
-                        @if(Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('inward form'))
+                        @if(Auth::user()->canAccess('create inward petitions'))
                         <a href="{{ route('inward.enter_petition', ['show_form' => 1]) }}" 
                            @click="inwardOpen = true"
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.enter_petition') && !request()->boolean('hide_form') ? 'active-submenu' : 'submenu-link' }}">

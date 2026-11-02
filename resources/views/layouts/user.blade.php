@@ -452,7 +452,6 @@
 
                     $canAccessInwardEntry = Auth::check() && (
                         $hasInwardRole ||
-                        Auth::user()->canAccess('inward form') ||
                         Auth::user()->canAccess('create inward petitions')
                     );
 
@@ -557,7 +556,7 @@
                          x-transition:leave-end="slide-down-leave-to"
                          class="submenu-container pl-10 pr-2 mt-1 space-y-1 overflow-hidden">
                         
-                        @if(Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('create petition') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('create_inward_petitions'))
+                        @if(Auth::user()->canAccess('create petitions') || Auth::user()->canAccess('create inward petitions'))
                         <a href="{{ route('petitions.create') }}" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('petitions.create') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator shrink-0"></span>

@@ -162,6 +162,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Trash bin routes
     Route::get('/admin/trash', [TrashController::class, 'index'])->name('admin.trash.index');
+    Route::get('/admin/trash/attachment/{id}', [TrashController::class, 'downloadAttachment'])->name('admin.trash.download');
+    Route::get('/admin/trash/{id}', [TrashController::class, 'show'])->name('admin.trash.show');
     Route::post('/admin/trash/{id}/restore', [TrashController::class, 'restore'])->name('admin.trash.restore');
     Route::delete('/admin/trash/{id}/force', [TrashController::class, 'forceDelete'])->name('admin.trash.forceDelete');
 

@@ -122,7 +122,7 @@ class PetitionPolicy
         }
 
         // Users with inward/transfer viewing permission can view inward origin petitions
-        if ($petition->isFromInward() && ($user->canAccess('view file transfer') || $user->canAccess('inward form') || $user->canAccess('create inward petitions'))) {
+        if ($petition->isFromInward() && ($user->canAccess('view file transfer') || $user->canAccess('create inward petitions'))) {
             return true;
         }
 

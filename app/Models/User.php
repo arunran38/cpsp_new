@@ -317,4 +317,14 @@ class User extends Authenticatable
     {
         return $this->canAccess(\App\Services\TSectionPermissionRegistry::VIEW_PENDING_DETAILS);
     }
+
+    /**
+     * Check if user has clearance to view T-Section users and seats in reports and filters.
+     */
+    public function canAccessTSectionInReports(): bool
+    {
+        return $this->canAccess(\App\Services\TSectionPermissionRegistry::VIEW_IN_REPORTS)
+            || $this->canAccessTSection()
+            || $this->canAccessTSectionPending();
+    }
 }

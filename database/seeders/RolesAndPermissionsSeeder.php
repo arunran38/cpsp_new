@@ -52,8 +52,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'link petitions',
 
             // Inward Desk & Transfers
-            'inward form',
             'create inward petitions',
+            'delete inward petitions',
+            'reassign inward petitions',
             'view file transfer',
             'filter transfer',
 
@@ -92,15 +93,15 @@ class RolesAndPermissionsSeeder extends Seeder
         // -------------------------------------------------------------
 
         // 1. Developer: Highest level access with all permissions
-        $developer = Role::firstOrCreate(['name' => 'Developer']);
+        $developer = Role::firstOrCreate(['name' => 'Developer', 'guard_name' => 'web']);
         $developer->syncPermissions(Permission::all());
 
-        // 2. Super Admin: General administrative oversight (excluding confidential T-section permissions unless explicitly granted)
-        $superAdmin = Role::firstOrCreate(['name' => 'super admin']);
-        if ($superAdmin->wasRecentlyCreated) {
-            $superAdminPermissions = Permission::whereNotIn('name', TSectionPermissionRegistry::all())->get();
-            $superAdmin->syncPermissions($superAdminPermissions);
-        }
+        // 2. Super Admin: General administrative oversight (including T-section report filtering, excluding secret internal diagnostics unless explicitly granted)
+        $superAdmin = Role::firstOrCreate(['name' => 'super admin', 'guard_name' => 'web']);
+        $superAdminPermissions = Permission::whereNotIn('name', array_diff(TSectionPermissionRegistry::all(), [
+            TSectionPermissionRegistry::VIEW_IN_REPORTS,
+        ]))->get();
+        $superAdmin->syncPermissions($superAdminPermissions);
 
         // Cleanup legacy capitalized 'Super Admin' if it exists as a separate record
         $legacySuperAdmin = Role::where('name', 'Super Admin')->first();
@@ -112,101 +113,29 @@ class RolesAndPermissionsSeeder extends Seeder
             $legacySuperAdmin->delete();
         }
 
-        // 3. Admin: System administrator (operations, masters, reports, charts, dashboard - strictly excluding secret T-section perms)
-        $admin = Role::firstOrCreate(['name' => 'admin']);
-        if ($admin->wasRecentlyCreated || $admin->permissions()->count() === 0) {
-            $adminPermissions = Permission::whereNotIn('name', array_merge([
-                'delete roles',
-                'delete permissions',
-            ], TSectionPermissionRegistry::all()))->get();
-            $admin->syncPermissions($adminPermissions);
-        }
+        // Standard System Roles
+        Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'Inward', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'CPSP', 'guard_name' => 'web']);
 
-        // 4. Inward Desk: Reception, petition registration, transfers & statistics
-        $inward = Role::firstOrCreate(['name' => 'Inward']);
-        if ($inward->wasRecentlyCreated || $inward->permissions()->count() === 0) {
-            $inward->syncPermissions([
-                'view file transfer', 
-                'inward form',
-                'inward statistics',
-                'view own inward statistics',
-                'export statistics',
-                'filter transfer',
-                'create inward petitions',
-                'create petitions',
-                'view petitions',
-                'view own petitions',
-                'view recent petitions',
-            ]);
-        }
-
-        // 5. CPSP Desk: Grievance management, forwarding, compliances, duplicate linking, transfers
-        $cpsp = Role::firstOrCreate(['name' => 'CPSP']);
-        if ($cpsp->wasRecentlyCreated || $cpsp->permissions()->count() === 0) {
-            $cpsp->syncPermissions([
-                'view petitions',
-                'view all petitions',
-                'view recent petitions',
-                'create petitions',
-                'update petitions',
-                'view file transfer',
-                'filter transfer',
-                'view compliances',
-                'create compliances',
-                'update compliances',
-                'view duplicate warnings',
-                'link petitions',
-                'view petition trends chart',
-                'view petition nature chart',
-            ]);
-        }
-
-        // 6. Petition Compliances: Petitions oversight and compliances
         $petitionCompliances = Role::where('name', 'Petition Compliances')->first()
             ?? Role::where('name', 'IOP HQ')->first();
         if ($petitionCompliances) {
             $petitionCompliances->update(['name' => 'Petition Compliances']);
         } else {
-            $petitionCompliances = Role::firstOrCreate(['name' => 'Petition Compliances', 'guard_name' => 'web']);
-        }
-        if ($petitionCompliances->wasRecentlyCreated || $petitionCompliances->permissions()->count() === 0) {
-            $petitionCompliances->syncPermissions([
-                'view petitions',
-                'view all petitions',
-                'view recent petitions',
-                'view master reports',
-                'view seat distribution chart',
-                'view petition status chart',
-                'view compliances',
-                'create compliances',
-                'update compliances',
-                'delete compliances',
-            ]);
+            Role::firstOrCreate(['name' => 'Petition Compliances', 'guard_name' => 'web']);
         }
 
-        // 7. T-Section Role: Confidential / Secret Section (Isolated CRUD, Strict NO Delete)
-        $tSection = Role::firstOrCreate(['name' => 'T Section']);
+        // T Section Role (granted permission to view T-Section in reports & filters)
+        $tSection = Role::firstOrCreate(['name' => 'T Section', 'guard_name' => 'web']);
         $tSection->syncPermissions([
-            'view petitions',
-            'view own petitions',
-            'create petitions',
-            'update petitions',
-            'view recent petitions',
-            'access t-section dashboard',
-            'forward t-section petitions',
-            TSectionPermissionRegistry::VIEW_DIAGNOSTICS,
-            TSectionPermissionRegistry::VIEW_PENDING_DETAILS,
+            TSectionPermissionRegistry::VIEW_IN_REPORTS,
         ]);
 
-        // Ensure T Section Seat exists and is mapped to T Section Role & Unit 8 (Vigilance Directorate)
-        $tSectionSeat = \App\Models\Seat::firstOrCreate(
-            ['seat_name' => 'T Section'],
-            ['is_active' => true]
-        );
-        $tSectionSeat->syncRoles(['T Section']);
-        $directorateUnit = \App\Models\Unit::find(8);
-        if ($directorateUnit && !$tSectionSeat->units()->where('units.unit_id', 8)->exists()) {
-            $tSectionSeat->units()->attach(8);
+        // Remove all existing permission assignments from roles (ensure NO permissions for any role except Developer, super admin, and T Section)
+        $rolesToClear = Role::whereNotIn('name', ['Developer', 'developer', 'super admin', 'Super Admin', 'T Section', 't section', 'T-Section', 't-section'])->get();
+        foreach ($rolesToClear as $role) {
+            $role->syncPermissions([]);
         }
 
         // Ensure deprecated Director role is removed if present
@@ -223,7 +152,7 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         // Ensure Admin user has super admin role
-        $adminUser = \App\Models\User::where('pen', '100001')->orWhere('name', 'Admin')->first();
+        $adminUser = \App\Models\User::where('pen', '100001')->first();
         if ($adminUser) {
             $adminUser->assignRole('super admin');
         }

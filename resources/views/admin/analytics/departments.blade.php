@@ -14,7 +14,7 @@
         
         <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
             <div class="text-center sm:text-left z-10">
-                <div class="flex flex-wrap justify-center sm:justify-start items-center gap-2.5 mb-1">
+                <div class="flex items-center gap-3 mb-1">
                     <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
                         Department Wise Analysis
                     </h1>
@@ -42,85 +42,108 @@
                     <i data-lucide="filter" class="w-4 h-4 text-teal-600"></i>
                     <h3 class="text-xs font-bold text-blue-600 uppercase tracking-wider">Filter Statistics</h3>
                 </div>
-                <form action="{{ route('admin.departments.analysis') }}" method="GET" class="w-full"
-                    id="searchForm">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 xl:gap-4 items-end w-full">
-                    <div class="sm:col-span-1 lg:col-span-2 flex flex-col justify-end">
-                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">Search Departments</label>
-                        <div class="relative flex items-center">
-                            <i data-lucide="search" class="w-4 h-4 absolute left-3 text-indigo-400"></i>
-                            <input type="text" name="search" value="{{ request('search') }}"
-                                class="w-full pl-9 pr-3 h-11 rounded-xl border border-blue-200/80 shadow-sm focus:border-teal-500 focus:ring-teal-500/20 text-sm text-slate-700"
-                                placeholder="Enter department name">
-                        </div>
-                    </div>
-
-                    <!-- Section Filter (Segmented Control) -->
-                    <div class="sm:col-span-1 lg:col-span-3 flex flex-col justify-end">
-                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
-                            <i data-lucide="layers" class="h-3.5 w-3.5 text-indigo-500"></i>
-                            <span>Section</span>
-                        </label>
-                        <div class="flex items-center p-1 bg-blue-50/50 border border-blue-200/80 rounded-xl w-full h-11 shadow-inner">
-                            @if($canViewTSection ?? false)
-                                <label class="flex-1 cursor-pointer h-full">
-                                    <input type="radio" name="section" value="all" class="sr-only peer"
-                                        {{ ($section ?? 'all') === 'all' ? 'checked' : '' }}>
-                                    <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2.5">
-                                        All
-                                    </span>
-                                </label>
-                            @endif
-
-                            <label class="flex-1 cursor-pointer h-full">
-                                <input type="radio" name="section" value="cpsp" class="sr-only peer"
-                                    {{ ($section ?? '') === 'cpsp' || !($canViewTSection ?? false) ? 'checked' : '' }}>
-                                <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2.5">
-                                    CPSP
-                                </span>
+                <form action="{{ route('admin.departments.analysis') }}" method="GET" class="w-full" id="searchForm">
+                    <div class="flex flex-col sm:flex-row flex-wrap xl:flex-nowrap items-stretch sm:items-end gap-2.5 sm:gap-3 xl:gap-3.5 w-full">
+                        <!-- Search Departments (Expands to occupy available space) -->
+                        <div class="flex-1 min-w-[180px] flex flex-col justify-end">
+                            <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
+                                <i data-lucide="search" class="h-3.5 w-3.5 text-blue-500"></i>
+                                <span>Search Departments</span>
                             </label>
+                            <div class="relative flex items-center w-full">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-blue-400">
+                                    <i data-lucide="search" class="w-4 h-4"></i>
+                                </div>
+                                <input type="text" name="search" value="{{ request('search') }}"
+                                    class="w-full pl-9 pr-3 h-11 bg-white rounded-xl border border-blue-200/80 shadow-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 text-xs sm:text-sm font-semibold text-slate-700 transition-all hover:border-blue-300"
+                                    placeholder="Enter department name">
+                            </div>
+                        </div>
 
-                            @if($canViewTSection ?? false)
+                        <!-- Section Filter (Segmented Control) -->
+                        <div class="{{ ($canViewTSection ?? false) ? 'w-full sm:w-56 lg:w-56 xl:w-60' : 'w-full sm:w-28 lg:w-28' }} shrink-0 flex flex-col justify-end">
+                            <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
+                                <i data-lucide="layers" class="h-3.5 w-3.5 text-blue-500"></i>
+                                <span>Section</span>
+                            </label>
+                            <div class="flex items-center p-1 bg-blue-50/50 border border-blue-200/80 rounded-xl w-full h-11 shadow-inner">
+                                @if($canViewTSection ?? false)
+                                    <label class="flex-1 cursor-pointer h-full">
+                                        <input type="radio" name="section" value="all" class="sr-only peer"
+                                            {{ ($section ?? 'all') === 'all' ? 'checked' : '' }}>
+                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2">
+                                            All
+                                        </span>
+                                    </label>
+                                @endif
+
                                 <label class="flex-1 cursor-pointer h-full">
-                                    <input type="radio" name="section" value="t_section" class="sr-only peer"
-                                        {{ ($section ?? '') === 't_section' ? 'checked' : '' }}>
-                                    <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2.5">
-                                        T-Section
+                                    <input type="radio" name="section" value="cpsp" class="sr-only peer"
+                                        {{ ($section ?? '') === 'cpsp' || !($canViewTSection ?? false) ? 'checked' : '' }}>
+                                    <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2">
+                                        CPSP
                                     </span>
                                 </label>
-                            @endif
+
+                                @if($canViewTSection ?? false)
+                                    <label class="flex-1 cursor-pointer h-full">
+                                        <input type="radio" name="section" value="t_section" class="sr-only peer"
+                                            {{ ($section ?? '') === 't_section' ? 'checked' : '' }}>
+                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2">
+                                            T-Section
+                                        </span>
+                                    </label>
+                                @endif
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="sm:col-span-1 lg:col-span-2 flex flex-col justify-end">
-                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">Date From</label>
-                        <input type="date" id="date_from" placeholder="DD-MM-YYYY" name="date_from"
-                            value="{{ request('date_from') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
-                            class="w-full h-11 rounded-xl border border-blue-200/80 shadow-sm focus:border-teal-500 focus:ring-teal-500/20 text-sm text-slate-700 font-semibold"
-                            style="color: #1e40af !important;">
-                    </div>
-                    <div class="sm:col-span-1 lg:col-span-2 flex flex-col justify-end">
-                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">Date To</label>
-                        <input type="date" id="date_to" placeholder="DD-MM-YYYY" name="date_to"
-                            value="{{ request('date_to') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
-                            class="w-full h-11 rounded-xl border border-blue-200/80 shadow-sm focus:border-teal-500 focus:ring-teal-500/20 text-sm text-slate-700 font-semibold"
-                            style="color: #1e40af !important;">
-                        <p id="dateRangeError" class="mt-1 text-xs text-rose-600 hidden" aria-live="polite"></p>
-                    </div>
+                        <!-- Date From -->
+                        <div class="w-full sm:w-36 lg:w-36 shrink-0 flex flex-col justify-end">
+                            <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
+                                <i data-lucide="calendar" class="h-3.5 w-3.5 text-blue-500"></i>
+                                <span>Date From</span>
+                            </label>
+                            <div class="relative w-full">
+                                <input type="date" id="date_from" placeholder="DD-MM-YYYY" name="date_from"
+                                    value="{{ request('date_from') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
+                                    class="w-full px-3 h-11 bg-white rounded-xl border border-blue-200/80 shadow-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 text-xs sm:text-sm font-semibold text-slate-700 transition-all hover:border-blue-300"
+                                    style="color: #1e40af !important;">
+                            </div>
+                        </div>
 
-                    <div class="sm:col-span-2 lg:col-span-3 flex items-end gap-2">
-                        <a href="{{ route('admin.departments.analysis.export', request()->query()) }}" id="exportExcelBtn"
-                            class="h-11 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold px-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all whitespace-nowrap">
-                            <i data-lucide="download" class="w-4 h-4"></i> Export Excel
-                        </a>
+                        <!-- Date To -->
+                        <div class="w-full sm:w-36 lg:w-36 shrink-0 flex flex-col justify-end">
+                            <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
+                                <i data-lucide="calendar" class="h-3.5 w-3.5 text-blue-500"></i>
+                                <span>Date To</span>
+                            </label>
+                            <div class="relative w-full">
+                                <input type="date" id="date_to" placeholder="DD-MM-YYYY" name="date_to"
+                                    value="{{ request('date_to') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
+                                    class="w-full px-3 h-11 bg-white rounded-xl border border-blue-200/80 shadow-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 text-xs sm:text-sm font-semibold text-slate-700 transition-all hover:border-blue-300"
+                                    style="color: #1e40af !important;">
+                            </div>
+                            <p id="dateRangeError" class="mt-1 text-xs text-rose-600 hidden" aria-live="polite"></p>
+                        </div>
 
-                        <a href="{{ route('admin.departments.analysis') }}"
-                            class="h-11 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold px-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all whitespace-nowrap"
-                            title="Clear all filters">
-                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                            Reset
-                        </a>
-                    </div>
+                        <!-- Action Buttons -->
+                        <div class="w-full sm:w-auto shrink-0 flex flex-col justify-end">
+                            <div class="h-4 mb-1.5 hidden lg:block"></div>
+                            <div class="flex items-center gap-2 h-11">
+                                <a href="{{ route('admin.departments.analysis.export', request()->query()) }}" id="exportExcelBtn"
+                                    class="h-11 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold px-3 sm:px-3.5 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm transition-all whitespace-nowrap cursor-pointer">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                    <span>Export Excel</span>
+                                </a>
+
+                                <a href="{{ route('admin.departments.analysis') }}"
+                                    class="h-11 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold px-3 sm:px-3.5 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm transition-all whitespace-nowrap cursor-pointer"
+                                    title="Clear all filters">
+                                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                                    <span>Reset</span>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -132,6 +155,7 @@
                 @include('admin.departments.partials.table')
             </div>
         </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

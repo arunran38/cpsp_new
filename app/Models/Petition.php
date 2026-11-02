@@ -793,7 +793,7 @@ class Petition extends Model
     public function scopeExcludeTSectionIfNotAuthorized(Builder $query, ?User $user = null): Builder
     {
         $user = $user ?? auth()->user();
-        if ($user && ($user->canAccessTSection() || $user->canAccessTSectionPending())) {
+        if ($user && ($user->canAccessTSection() || $user->canAccessTSectionPending() || $user->canAccessTSectionInReports())) {
             return $query;
         }
 

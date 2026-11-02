@@ -21,6 +21,7 @@ class TSectionPermissionRegistry
     public const EXPORT_PETITIONS      = 'export t-section petitions';
     public const VIEW_DIAGNOSTICS     = 'view t-section diagnostics';
     public const VIEW_PENDING_DETAILS = 'view t-section pending details';
+    public const VIEW_IN_REPORTS      = 'view t-section in reports';
 
     /**
      * Get all T-Section permission keys.
@@ -35,6 +36,7 @@ class TSectionPermissionRegistry
             self::EXPORT_PETITIONS,
             self::VIEW_DIAGNOSTICS,
             self::VIEW_PENDING_DETAILS,
+            self::VIEW_IN_REPORTS,
         ];
     }
 
@@ -94,6 +96,13 @@ class TSectionPermissionRegistry
                 'desc' => 'Access and inspect pending petition statistics and file lists for T-Section',
                 'badge' => 'Audit',
                 'badge_color' => 'amber',
+            ],
+            self::VIEW_IN_REPORTS => [
+                'name' => self::VIEW_IN_REPORTS,
+                'label' => 'View T-Section in Reports & Filters',
+                'desc' => 'Access and view both CPSP and T-Section users and seats in report search and filters',
+                'badge' => 'Reports',
+                'badge_color' => 'teal',
             ],
         ];
     }

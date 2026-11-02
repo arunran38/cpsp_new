@@ -19,9 +19,6 @@
         $canRegisterInward = $currentUser && (
             $hasInwardRole ||
             $currentUser->canAccess('create inward petitions') ||
-            $currentUser->canAccess('create_inward_petitions') ||
-            $currentUser->canAccess('inward form') ||
-            $currentUser->canAccess('inward form') ||
             $currentUser->hasRole(['inward', 'Inward', 'admin', 'Admin', 'super admin', 'Super Admin', 'developer', 'Developer'])
         );
 

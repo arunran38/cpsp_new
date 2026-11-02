@@ -1,124 +1,744 @@
 @extends('layouts.admin')
 @section('container_width', 'max-w-full')
 
-@section('title', 'Recycle Bin')
+@section('title', 'Recycle Bin - Deleted Petitions')
 
 @section('content')
-    <div class="space-y-6">
-        <!-- Premium Header Section -->
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
-            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
-                <div class="w-72 h-72 bg-rose-500/20 rounded-full blur-[60px]"></div>
-            </div>
-            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
-                <div class="w-72 h-72 bg-rose-500/20 rounded-full blur-[60px]"></div>
-            </div>
-            
-            <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="text-center sm:text-left">
-                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
-                        Recycle Bin
-                    </h1>
-                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
-                        Manage deleted petitions and securely restore them if needed.
+<div class="space-y-6" x-data="recycleBinManager()">
+    <!-- Header Section matching Inward Statistics design -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
+        <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3 pointer-events-none">
+            <div class="w-80 h-80 bg-rose-500/15 rounded-full blur-[80px]"></div>
+        </div>
+        <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 pointer-events-none">
+            <div class="w-80 h-80 bg-rose-600/10 rounded-full blur-[80px]"></div>
+        </div>
+
+        <div class="relative px-6 py-6 sm:px-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <!-- Title & Description -->
+                <div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 shadow-inner">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </div>
+                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
+                            Recycle Bin
+                        </h1>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                            {{ $totalTrashed }} {{ Str::plural('Record', $totalTrashed) }}
+                        </span>
+                    </div>
+                    <p class="text-slate-300 font-medium max-w-2xl text-sm leading-relaxed">
+                        Detailed seat-wise records of soft-deleted petitions. Authorized administrators can inspect historical records, restore petitions, or permanently purge files.
                     </p>
+                </div>
+
+                <!-- Stat Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full lg:w-auto">
+                    <!-- Total Trashed -->
+                    <div class="bg-slate-800/80 backdrop-blur-sm border border-slate-700/60 rounded-xl p-3.5 text-center min-w-[110px]">
+                        <span class="block text-2xl font-black text-white">{{ $totalTrashed }}</span>
+                        <span class="text-xs text-slate-400 font-medium">Total Deleted</span>
+                    </div>
+                    <!-- Trashed This Month -->
+                    <div class="bg-slate-800/80 backdrop-blur-sm border border-slate-700/60 rounded-xl p-3.5 text-center min-w-[110px]">
+                        <span class="block text-2xl font-black text-amber-400">{{ $trashedThisMonth }}</span>
+                        <span class="text-xs text-slate-400 font-medium">This Month</span>
+                    </div>
+                    <!-- Trashed With Files -->
+                    <div class="bg-slate-800/80 backdrop-blur-sm border border-slate-700/60 rounded-xl p-3.5 text-center min-w-[110px] col-span-2 sm:col-span-1">
+                        <span class="block text-2xl font-black text-emerald-400">{{ $trashedWithFiles }}</span>
+                        <span class="text-xs text-slate-400 font-medium">With Files</span>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
 
+    <!-- Advanced Filter Section matching Inward Statistics design -->
+    <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden print-hide mb-6">
+        <div class="p-4 sm:p-5 bg-slate-50/50">
+            <div class="flex items-center gap-2 mb-3">
+                <i data-lucide="filter" class="w-4 h-4 text-teal-600"></i>
+                <h3 class="text-xs font-bold text-blue-600 uppercase tracking-wider">Filter Deleted Petitions</h3>
+            </div>
+            <form method="GET" action="{{ route('admin.trash.index') }}" class="w-full">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 xl:gap-4 items-end w-full">
+                    
+                    <!-- Search Keyword -->
+                    <div class="sm:col-span-2 lg:col-span-4 flex flex-col justify-end">
+                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
+                            <i data-lucide="search" class="h-3.5 w-3.5 text-blue-500"></i>
+                            <span>Search Details</span>
+                        </label>
+                        <div class="relative w-full">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-blue-400">
+                                <i data-lucide="search" class="h-4 w-4"></i>
+                            </div>
+                            <input type="text" name="search" id="search" value="{{ $search ?? '' }}"
+                                placeholder="Receipt No, File No, Petitioner, Phone..."
+                                class="w-full pl-10 pr-3 h-11 bg-white border border-blue-200/80 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300"
+                                style="color: #1e40af !important;">
+                        </div>
+                    </div>
 
+                    <!-- Nature Filter -->
+                    <div class="sm:col-span-1 lg:col-span-3 flex flex-col justify-end">
+                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
+                            <i data-lucide="tag" class="h-3.5 w-3.5 text-blue-500"></i>
+                            <span>Petition Nature</span>
+                        </label>
+                        <div class="relative w-full">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-blue-400">
+                                <i data-lucide="tag" class="h-4 w-4"></i>
+                            </div>
+                            <select name="nature" id="nature"
+                                class="w-full pl-10 pr-9 h-11 bg-white border border-blue-200/80 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300 appearance-none cursor-pointer"
+                                style="color: #1e40af !important;">
+                                <option value="">All Petition Natures</option>
+                                @foreach($availableNatures as $nat)
+                                    <option value="{{ $nat }}" {{ ($nature ?? '') === $nat ? 'selected' : '' }}>{{ $nat }}</option>
+                                @endforeach
+                            </select>
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                <i data-lucide="chevron-down" class="h-4 w-4"></i>
+                            </div>
+                        </div>
+                    </div>
 
-        <!-- Data Table -->
-        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
-                            <th class="px-6 py-4 font-bold w-12 text-center">#</th>
-                            <th class="px-6 py-4 font-bold">Receipt No</th>
-                            <th class="px-6 py-4 font-bold">Deleted Object Info</th>
-                            <th class="px-6 py-4 font-bold">Deleted At</th>
-                            <th class="px-6 py-4 font-bold text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 text-sm">
-                        @forelse($trashedPetitions as $petition)
-                            <tr class="hover:bg-slate-50/50 transition-colors">
-                                <td class="px-6 py-4 text-center text-sm font-semibold text-slate-500">
-                                    {{ ($trashedPetitions->currentPage() - 1) * $trashedPetitions->perPage() + $loop->iteration }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="font-bold text-slate-800">{{ $petition->receipt_no }}</span>
-                                    <span
-                                        class="block text-xs text-slate-500 mt-1 w-max px-2 py-0.5 rounded bg-slate-100 border border-slate-200">{{ $petition->nature_of_petition }}</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="text-slate-800 font-medium">User:
-                                        {{ $petition->user->name ?? 'Unknown' }}</span>
-                                    <span class="block text-xs text-slate-500 mt-1">Seat:
-                                        {{ $petition->seat->seat_name ?? 'N/A' }}</span>
-                                    <span class="block text-xs text-slate-500 mt-1">Submitted:
-                                        {{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}</span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-2">
-                                        <i data-lucide="clock" class="w-4 h-4 text-rose-400"></i>
-                                        <span
-                                            class="text-slate-700 font-medium">{{ \Carbon\Carbon::parse($petition->deleted_at)->diffForHumans() }}</span>
+                    <!-- Date From (Deleted) -->
+                    <div class="sm:col-span-1 lg:col-span-2 flex flex-col justify-end">
+                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
+                            <i data-lucide="calendar" class="h-3.5 w-3.5 text-blue-500"></i>
+                            <span>Deleted From</span>
+                        </label>
+                        <div class="relative w-full">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <i data-lucide="calendar" class="h-4 w-4 text-blue-400"></i>
+                            </div>
+                            <input type="date" name="date_from" id="date_from" value="{{ $dateFrom ?? '' }}" placeholder="DD-MM-YYYY"
+                                max="{{ now()->format('Y-m-d') }}"
+                                class="w-full pl-10 pr-3 h-11 bg-white border border-blue-200/80 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300"
+                                style="color: #1e40af !important;">
+                        </div>
+                    </div>
+
+                    <!-- Date To (Deleted) -->
+                    <div class="sm:col-span-1 lg:col-span-2 flex flex-col justify-end">
+                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
+                            <i data-lucide="calendar" class="h-3.5 w-3.5 text-blue-500"></i>
+                            <span>Deleted To</span>
+                        </label>
+                        <div class="relative w-full">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <i data-lucide="calendar" class="h-4 w-4 text-blue-400"></i>
+                            </div>
+                            <input type="date" name="date_to" id="date_to" value="{{ $dateTo ?? '' }}" placeholder="DD-MM-YYYY"
+                                max="{{ now()->format('Y-m-d') }}"
+                                class="w-full pl-10 pr-3 h-11 bg-white border border-blue-200/80 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300"
+                                style="color: #1e40af !important;">
+                        </div>
+                    </div>
+
+                    <!-- Apply & Reset Actions -->
+                    <div class="sm:col-span-2 lg:col-span-1 flex flex-col justify-end">
+                        <div class="h-4 mb-1.5 hidden lg:block"></div>
+                        <div class="flex items-center gap-2 w-full h-11">
+                            <button type="submit"
+                                class="flex-1 h-11 px-3 text-sm font-bold text-white bg-teal-600 border border-teal-600 rounded-xl hover:bg-teal-700 hover:border-teal-700 shadow-sm shadow-teal-500/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+                                <i data-lucide="filter" class="w-4 h-4 text-white"></i>
+                                <span>Apply</span>
+                            </button>
+
+                            @php
+                                $hasActiveFilters = !empty($search) || !empty($nature) || !empty($dateFrom) || !empty($dateTo);
+                            @endphp
+                            @if($hasActiveFilters)
+                                <a href="{{ route('admin.trash.index') }}" title="Clear Filters"
+                                    class="w-11 h-11 shrink-0 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-rose-600 shadow-sm flex items-center justify-center transition-all">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Data Table matching Inward Statistics Data Sheet style -->
+    <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden mb-6">
+        <!-- Table Top Header -->
+        <div class="px-6 py-4.5 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+                <h3 class="text-base font-extrabold text-slate-900 tracking-tight">
+                    Deleted Petition Records
+                </h3>
+                <p class="text-xs text-slate-500 font-medium mt-0.5">
+                    Historical seat-wise records of soft-deleted petitions and evidence attachments.
+                </p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="px-3 py-1 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 shadow-2xs">
+                    Showing {{ $trashedPetitions->count() }} of {{ $trashedPetitions->total() }} Records
+                </span>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/80 border-b-2 border-slate-100 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                        <th class="px-5 py-4 w-12 text-center">#</th>
+                        <th class="px-5 py-4">Receipt & Nature</th>
+                        <th class="px-5 py-4">Petitioner (Complainant)</th>
+                        <th class="px-5 py-4">Accused / Subject</th>
+                        <th class="px-5 py-4">Desk & User</th>
+                        <th class="px-5 py-4">Deleted Date</th>
+                        <th class="px-5 py-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    @forelse($trashedPetitions as $petition)
+                        @php
+                            $complainants = $petition->addresses->where('person_type', 'Complainant');
+                            $firstComplainant = $complainants->first();
+                            $accused = $petition->addresses->where('person_type', 'Accused');
+                            $firstAccused = $accused->first();
+                            $hasUploads = $petition->uploads->count() > 0;
+
+                            // Prepared data payload for fast Alpine modal preview
+                            $previewPayload = [
+                                'id' => $petition->petition_id,
+                                'receipt_no' => $petition->receipt_no ?? ('ID #' . $petition->petition_id),
+                                'file_no' => $petition->file_no,
+                                'nature' => $petition->nature_of_petition,
+                                'mode' => $petition->mode_of_petition_received,
+                                'status' => $petition->status,
+                                'date_received' => $petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') : 'N/A',
+                                'deleted_at' => \Carbon\Carbon::parse($petition->deleted_at)->format('d M, Y h:i A'),
+                                'deleted_at_human' => \Carbon\Carbon::parse($petition->deleted_at)->diffForHumans(),
+                                'creator' => $petition->user->name ?? 'Unknown',
+                                'seat' => $petition->seat->seat_name ?? 'N/A',
+                                'unit' => $petition->unit->unit_name ?? 'N/A',
+                                'description' => $petition->description ?: 'No detailed summary provided.',
+                                'proposed_action' => $petition->proposed_action ?: 'None',
+                                'complainants' => $complainants->values()->map(fn($c) => [
+                                    'name' => $c->person_name ?: 'N/A',
+                                    'phone' => $c->phone ?: null,
+                                    'email' => $c->email ?: null,
+                                    'aadhar' => $c->Aadhar_number ?: null,
+                                    'district' => $c->district->district_name ?? null,
+                                    'address' => $c->full_address ?: null,
+                                    'pincode' => $c->pincode ?: null,
+                                ]),
+                                'accused' => $accused->values()->map(fn($a) => [
+                                    'name' => $a->person_name ?: 'N/A',
+                                    'designation' => $a->designation->designation_name ?? null,
+                                    'department' => $a->department->department_name ?? null,
+                                    'phone' => $a->phone ?: null,
+                                    'district' => $a->district->district_name ?? null,
+                                    'address' => $a->full_address ?: null,
+                                ]),
+                                'uploads' => $petition->uploads->map(fn($u) => [
+                                    'id' => $u->upload_id,
+                                    'name' => $u->original_filename ?: basename($u->file_path),
+                                    'category' => $u->file_category ?? 'Document',
+                                    'download_url' => route('admin.trash.download', $u->upload_id),
+                                ]),
+                                'restore_url' => route('admin.trash.restore', $petition->petition_id),
+                                'force_delete_url' => route('admin.trash.forceDelete', $petition->petition_id),
+                                'can_restore' => Auth::user()->canAccess('restore recycle bin'),
+                                'can_delete' => Auth::user()->canAccess('delete recycle bin'),
+                            ];
+                        @endphp
+                        <tr class="hover:bg-slate-50/60 transition-colors">
+                            <!-- # SL -->
+                            <td class="px-5 py-4 text-center font-bold text-slate-400 text-xs">
+                                {{ ($trashedPetitions->currentPage() - 1) * $trashedPetitions->perPage() + $loop->iteration }}
+                            </td>
+
+                            <!-- Receipt No & Nature -->
+                            <td class="px-5 py-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-extrabold text-slate-900 text-sm tracking-tight">
+                                        {{ $petition->receipt_no ?? ('ID #' . $petition->petition_id) }}
+                                    </span>
+                                    @if($hasUploads)
+                                        <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5" title="Has file attachments">
+                                            <i data-lucide="paperclip" class="w-3 h-3"></i> {{ $petition->uploads->count() }}
+                                        </span>
+                                    @endif
+                                </div>
+                                @if($petition->file_no)
+                                    <span class="block text-xs text-slate-500 font-medium mt-0.5">
+                                        File: {{ $petition->file_no }}
+                                    </span>
+                                @endif
+                                <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                    @if($petition->nature_of_petition)
+                                        <span class="inline-block text-[11px] font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-md px-2 py-0.5">
+                                            {{ $petition->nature_of_petition }}
+                                        </span>
+                                    @endif
+                                    @if($petition->mode_of_petition_received)
+                                        <span class="inline-block text-[10px] font-medium text-slate-500 bg-slate-50 border border-slate-200/80 rounded px-1.5 py-0.5">
+                                            {{ $petition->mode_of_petition_received }}
+                                        </span>
+                                    @endif
+                                </div>
+                            </td>
+
+                            <!-- Petitioner (Complainant) -->
+                            <td class="px-5 py-4">
+                                @if($firstComplainant)
+                                    <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                        <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                                        <span>{{ $firstComplainant->person_name ?: 'Unnamed Petitioner' }}</span>
+                                        @if($complainants->count() > 1)
+                                            <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded px-1.5 py-0.2">
+                                                +{{ $complainants->count() - 1 }} more
+                                            </span>
+                                        @endif
                                     </div>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-2">
-                                        @if(Auth::user()->canAccess('restore recycle bin'))
-                                        <form action="{{ route('admin.trash.restore', $petition->petition_id) }}" method="POST">
+                                    <div class="text-xs text-slate-500 font-medium mt-0.5 space-y-0.5">
+                                        @if($firstComplainant->district)
+                                            <div>{{ $firstComplainant->district->district_name }}</div>
+                                        @endif
+                                        @if($firstComplainant->phone)
+                                            <div class="text-slate-400 font-mono text-[11px]">{{ $firstComplainant->phone }}</div>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="text-xs text-slate-400 italic">No petitioner recorded</span>
+                                @endif
+                            </td>
+
+                            <!-- Accused / Subject -->
+                            <td class="px-5 py-4">
+                                @if($firstAccused)
+                                    <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                        <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-500 shrink-0"></i>
+                                        <span>{{ $firstAccused->person_name ?: 'Unnamed Accused' }}</span>
+                                        @if($accused->count() > 1)
+                                            <span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.2">
+                                                +{{ $accused->count() - 1 }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <div class="text-xs text-slate-500 font-medium mt-0.5">
+                                        @if($firstAccused->designation)
+                                            <span>{{ $firstAccused->designation->designation_name }}</span>
+                                        @endif
+                                        @if($firstAccused->department)
+                                            <span class="text-slate-400 block text-[11px] truncate max-w-[200px]" title="{{ $firstAccused->department->department_name }}">
+                                                {{ $firstAccused->department->department_name }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="text-xs text-slate-400 italic">None specified</span>
+                                @endif
+                            </td>
+
+                            <!-- Desk & Creator -->
+                            <td class="px-5 py-4">
+                                <span class="font-bold text-slate-800 block text-xs">
+                                    {{ $petition->seat->seat_name ?? 'No Seat' }}
+                                </span>
+                                <span class="text-xs text-slate-500 block mt-0.5">
+                                    By: {{ $petition->user->name ?? 'Unknown' }}
+                                </span>
+                                @if($petition->unit)
+                                    <span class="text-[11px] text-slate-400 block mt-0.5 truncate max-w-[160px]">
+                                        Unit: {{ $petition->unit->unit_name }}
+                                    </span>
+                                @endif
+                            </td>
+
+                            <!-- Deleted Date -->
+                            <td class="px-5 py-4">
+                                <div class="flex items-center gap-1.5 text-rose-600 font-bold text-xs">
+                                    <i data-lucide="clock" class="w-3.5 h-3.5 shrink-0"></i>
+                                    <span>{{ \Carbon\Carbon::parse($petition->deleted_at)->diffForHumans() }}</span>
+                                </div>
+                                <span class="block text-[11px] text-slate-400 font-medium mt-0.5">
+                                    {{ \Carbon\Carbon::parse($petition->deleted_at)->format('d M, Y h:i A') }}
+                                </span>
+                            </td>
+
+                            <!-- Actions -->
+                            <td class="px-5 py-4 text-right">
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <!-- View Details Button -->
+                                    <button type="button" 
+                                            @click="openPreview(@js($previewPayload))"
+                                            class="px-2.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+                                            title="View Record Details">
+                                        <i data-lucide="eye" class="w-3.5 h-3.5 text-slate-500"></i>
+                                        <span>Details</span>
+                                    </button>
+
+                                    <!-- Restore Button -->
+                                    @if(Auth::user()->canAccess('restore recycle bin'))
+                                        <form action="{{ route('admin.trash.restore', $petition->petition_id) }}" 
+                                              method="POST" 
+                                              data-confirm="Are you sure you want to restore petition {{ $petition->receipt_no ?? ('ID ' . $petition->petition_id) }} back to active processing?">
                                             @csrf
                                             <button type="submit"
-                                                class="px-3 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1.5"
-                                                title="Restore Petition">
-                                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Restore
+                                                    class="px-2.5 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1.5"
+                                                    title="Restore Petition">
+                                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                                <span class="hidden sm:inline">Restore</span>
                                             </button>
                                         </form>
-                                        @endif
+                                    @endif
 
-                                        @if(Auth::user()->canAccess('delete recycle bin'))
+                                    <!-- Permanent Delete Button -->
+                                    @if(Auth::user()->canAccess('delete recycle bin'))
                                         <form action="{{ route('admin.trash.forceDelete', $petition->petition_id) }}"
-                                            method="POST"
-                                            onsubmit="return confirm('WARNING: This will permanently delete the petition and all associated physical files from the server. This cannot be undone. Area you absolutely sure?');">
+                                              method="POST"
+                                              data-confirm="CRITICAL: This will PERMANENTLY purge petition {{ $petition->receipt_no ?? ('ID ' . $petition->petition_id) }} and delete all attached physical documents. This action CANNOT be reversed. Do you wish to proceed?">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                class="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-colors flex items-center gap-1.5"
-                                                title="Permanently Delete">
-                                                <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Delete Forever
+                                                    class="px-2.5 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-colors flex items-center gap-1.5"
+                                                    title="Permanently Purge Petition">
+                                                <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+                                                <span class="hidden sm:inline">Purge</span>
                                             </button>
                                         </form>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-6 py-20">
+                                <div class="flex flex-col items-center justify-center text-center">
+                                    <div class="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mb-4 border border-rose-100 shadow-inner">
+                                        <i data-lucide="trash-2" class="w-10 h-10 text-rose-300"></i>
+                                    </div>
+                                    <h3 class="text-lg font-bold text-slate-800">
+                                        @if(!empty($search) || !empty($nature) || !empty($dateFrom) || !empty($dateTo))
+                                            No Matching Trashed Records
+                                        @else
+                                            Recycle Bin is Empty
                                         @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="px-6 py-20">
-                                    <div class="flex flex-col items-center justify-center text-center">
-                                        <div
-                                            class="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-4 border border-slate-100 shadow-inner">
-                                            <i data-lucide="trash-2" class="w-10 h-10 text-slate-300"></i>
+                                    </h3>
+                                    <p class="text-slate-500 font-medium text-sm max-w-sm mx-auto mt-1">
+                                        @if(!empty($search) || !empty($nature) || !empty($dateFrom) || !empty($dateTo))
+                                            No deleted petitions matched your search criteria. Try resetting the filters.
+                                        @else
+                                            There are currently no soft-deleted petition records in the system.
+                                        @endif
+                                    </p>
+                                    @if(!empty($search) || !empty($nature) || !empty($dateFrom) || !empty($dateTo))
+                                        <div class="mt-4">
+                                            <a href="{{ route('admin.trash.index') }}" 
+                                               class="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shadow-xs">
+                                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Clear Search Filters
+                                            </a>
                                         </div>
-                                        <h3 class="text-lg font-bold text-slate-800">Recycle Bin Empty</h3>
-                                        <p class="text-slate-500 font-medium text-sm max-w-xs mx-auto">There are no petitions
-                                            currently in the trash.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+                <!-- Total Summary Footer matching Inward Statistics -->
+                <tfoot>
+                    <tr class="bg-slate-900 text-white border-t-4 border-teal-500">
+                        <td colspan="5" class="px-5 py-4 text-right uppercase tracking-wider font-extrabold text-xs text-slate-300">
+                            Total Summary
+                        </td>
+                        <td colspan="2" class="px-5 py-4 text-left font-black text-base text-teal-400">
+                            {{ $trashedPetitions->total() }} {{ Str::plural('Record', $trashedPetitions->total()) }}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        @if($trashedPetitions->hasPages())
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50/70">
+                {{ $trashedPetitions->links() }}
             </div>
-            @if($trashedPetitions->hasPages())
-                <div class="px-6 py-4 border-t border-slate-200 bg-slate-50">
-                    {{ $trashedPetitions->links() }}
+        @endif
+    </div>
+
+    <!-- Quick Preview Modal Dialog -->
+    <div x-show="previewModal" 
+         x-cloak 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+         @keydown.escape.window="previewModal = false">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" 
+             @click="previewModal = false"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"></div>
+
+        <!-- Modal Content Container -->
+        <div class="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] z-10"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-4">
+
+            <!-- Modal Header -->
+            <div class="px-6 py-4.5 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                        <i data-lucide="file-text" class="w-4.5 h-4.5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-black text-white" x-text="selectedItem.receipt_no"></h3>
+                            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/30 text-rose-200 border border-rose-500/40">
+                                Soft-Deleted
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-300 font-medium">
+                            <span x-text="selectedItem.nature"></span> &bull; 
+                            Deleted <span x-text="selectedItem.deleted_at_human"></span> (<span x-text="selectedItem.deleted_at"></span>)
+                        </p>
+                    </div>
                 </div>
-            @endif
+
+                <button type="button" 
+                        @click="previewModal = false"
+                        class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-6 overflow-y-auto space-y-6 flex-1 text-slate-700 text-sm" style="scrollbar-width: thin;">
+                <!-- Key Metadata Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div>
+                        <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">File No</span>
+                        <span class="font-bold text-slate-800 text-xs" x-text="selectedItem.file_no || 'None'"></span>
+                    </div>
+                    <div>
+                        <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Receipt Date</span>
+                        <span class="font-bold text-slate-800 text-xs" x-text="selectedItem.date_received || 'N/A'"></span>
+                    </div>
+                    <div>
+                        <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Received Mode</span>
+                        <span class="font-bold text-slate-800 text-xs" x-text="selectedItem.mode || 'N/A'"></span>
+                    </div>
+                    <div>
+                        <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Lifecycle Status</span>
+                        <span class="font-bold text-slate-800 text-xs" x-text="selectedItem.status || 'Received'"></span>
+                    </div>
+                    <div class="col-span-2 pt-2 border-t border-slate-200/60">
+                        <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Desk / Unit</span>
+                        <span class="font-bold text-slate-800 text-xs">
+                            <span x-text="selectedItem.seat"></span> &bull; <span x-text="selectedItem.unit"></span>
+                        </span>
+                    </div>
+                    <div class="col-span-2 pt-2 border-t border-slate-200/60">
+                        <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Registered By</span>
+                        <span class="font-bold text-slate-800 text-xs" x-text="selectedItem.creator"></span>
+                    </div>
+                </div>
+
+                <!-- Description & Proposed Action -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <i data-lucide="align-left" class="w-3.5 h-3.5"></i> Petition Summary / Description
+                    </h4>
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 text-sm whitespace-pre-line leading-relaxed font-normal"
+                         x-text="selectedItem.description"></div>
+
+                    <template x-if="selectedItem.proposed_action && selectedItem.proposed_action !== 'None'">
+                        <div class="mt-3">
+                            <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-1.5">
+                                <i data-lucide="compass" class="w-3.5 h-3.5"></i> Proposed Action
+                            </h4>
+                            <div class="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-amber-900 text-xs font-medium"
+                                 x-text="selectedItem.proposed_action"></div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Complainant(s) Section -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="users" class="w-3.5 h-3.5"></i> Complainant / Petitioner(s)
+                        </span>
+                        <span class="text-[11px] text-slate-500 font-bold" x-text="(selectedItem.complainants || []).length + ' Recorded'"></span>
+                    </h4>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <template x-for="(comp, idx) in selectedItem.complainants" :key="idx">
+                            <div class="p-3.5 rounded-xl border border-slate-200 bg-white shadow-2xs space-y-1.5">
+                                <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-indigo-600"></i>
+                                    <span x-text="comp.name"></span>
+                                </div>
+                                <div class="text-xs text-slate-500 space-y-0.5">
+                                    <div x-show="comp.phone" class="flex items-center gap-1 text-slate-600 font-mono text-[11px]">
+                                        <i data-lucide="phone" class="w-3 h-3 text-slate-400"></i>
+                                        <span x-text="comp.phone"></span>
+                                    </div>
+                                    <div x-show="comp.district" class="text-slate-600">
+                                        District: <span class="font-semibold" x-text="comp.district"></span>
+                                    </div>
+                                    <div x-show="comp.address" class="text-slate-500 italic text-[11px]" x-text="comp.address"></div>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-if="!selectedItem.complainants || selectedItem.complainants.length === 0">
+                            <div class="p-3 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs italic col-span-2 text-center">
+                                No complainant details attached.
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Accused Section -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-500"></i> Accused / Respondent(s)
+                        </span>
+                        <span class="text-[11px] text-slate-500 font-bold" x-text="(selectedItem.accused || []).length + ' Recorded'"></span>
+                    </h4>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <template x-for="(acc, idx) in selectedItem.accused" :key="idx">
+                            <div class="p-3.5 rounded-xl border border-amber-200/80 bg-amber-50/30 shadow-2xs space-y-1.5">
+                                <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <span x-text="acc.name"></span>
+                                </div>
+                                <div class="text-xs text-slate-600 space-y-0.5">
+                                    <div x-show="acc.designation" class="font-medium text-slate-700" x-text="acc.designation"></div>
+                                    <div x-show="acc.department" class="text-slate-500 text-[11px]" x-text="acc.department"></div>
+                                    <div x-show="acc.district" class="text-slate-500 text-[11px]">District: <span x-text="acc.district"></span></div>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-if="!selectedItem.accused || selectedItem.accused.length === 0">
+                            <div class="p-3 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs italic col-span-2 text-center">
+                                No respondents or accused officers specified.
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Attachments Section -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="paperclip" class="w-3.5 h-3.5"></i> Attached Evidence / Documents
+                        </span>
+                        <span class="text-[11px] text-slate-500 font-bold" x-text="(selectedItem.uploads || []).length + ' Files'"></span>
+                    </h4>
+
+                    <div class="space-y-2">
+                        <template x-for="(file, idx) in selectedItem.uploads" :key="idx">
+                            <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                                        <i data-lucide="file" class="w-4 h-4"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold text-slate-800 truncate" x-text="file.name"></div>
+                                        <div class="text-[10px] text-slate-500" x-text="file.category"></div>
+                                    </div>
+                                </div>
+                                <a :href="file.download_url" 
+                                   target="_blank"
+                                   class="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-indigo-50 hover:border-indigo-300 text-slate-700 hover:text-indigo-700 text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0 shadow-2xs">
+                                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Download
+                                </a>
+                            </div>
+                        </template>
+                        <template x-if="!selectedItem.uploads || selectedItem.uploads.length === 0">
+                            <div class="p-3 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs italic text-center">
+                                No document attachments associated with this petition.
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+                <span class="text-xs text-slate-500 font-medium hidden sm:inline">
+                    Changes here directly impact audit trails.
+                </span>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button type="button" 
+                            @click="previewModal = false"
+                            class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 transition-colors">
+                        Close
+                    </button>
+
+                    <!-- Restore Trigger -->
+                    <template x-if="selectedItem.can_restore">
+                        <form :action="selectedItem.restore_url" method="POST"
+                              :data-confirm="'Are you sure you want to restore petition ' + selectedItem.receipt_no + '?'">
+                            @csrf
+                            <button type="submit" 
+                                    class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-xs">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                Restore Petition
+                            </button>
+                        </form>
+                    </template>
+
+                    <!-- Force Delete Trigger -->
+                    <template x-if="selectedItem.can_delete">
+                        <form :action="selectedItem.force_delete_url" method="POST"
+                              :data-confirm="'CRITICAL: Permanently purge ' + selectedItem.receipt_no + ' and its files? This cannot be undone.'">
+                            @csrf
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit" 
+                                    class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors flex items-center gap-1.5 shadow-xs">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                Permanently Purge
+                            </button>
+                        </form>
+                    </template>
+                </div>
+            </div>
         </div>
     </div>
+</div>
+
+<script>
+    function recycleBinManager() {
+        return {
+            previewModal: false,
+            selectedItem: {},
+            openPreview(item) {
+                this.selectedItem = item;
+                this.previewModal = true;
+                this.$nextTick(() => {
+                    if (window.lucide) {
+                        window.lucide.createIcons();
+                    }
+                });
+            }
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    });
+</script>
 @endsection

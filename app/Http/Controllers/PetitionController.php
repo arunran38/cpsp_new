@@ -81,20 +81,17 @@ class PetitionController extends Controller
                 str_contains(strtolower($currentSeat->seat_name), 'cpsp')
             ));
 
-        // Permission Check: Must have inward form access, petition viewing access, or appropriate role
+        // Permission Check: Must have inward petition access, file transfer access, or appropriate role
         $canAccessInwardModule = $isAdminOrSuperAdmin ||
             $isInwardUser ||
             $isCpspUser ||
-            $user->canAccess('inward_form') || 
-            $user->canAccess('inward form') || 
             $user->canAccess('create inward petitions') || 
-            $user->canAccess('create_inward_petitions') ||
             $user->canAccess('view file transfer') ||
             $user->canAccess('view petitions') ||
             $user->canAccess('view all petitions');
 
         if (!$canAccessInwardModule) {
-            abort(403, 'Unauthorized. Permission inward_form or petition viewing access required.');
+            abort(403, 'Unauthorized. Inward or petition viewing access required.');
         }
 
         $filters = $request->validate([
@@ -247,8 +244,8 @@ class PetitionController extends Controller
         $canExport = $isAdminOrSuperAdmin ||
             $isInwardUser ||
             $isCpspUser ||
-            $user->canAccess('inward_form') || 
-            $user->canAccess('inward form') ||
+            $user->canAccess('create inward petitions') || 
+            $user->canAccess('export statistics') ||
             $user->canAccess('view file transfer') ||
             $user->canAccess('view petitions') ||
             $user->canAccess('view all petitions');
@@ -389,12 +386,19 @@ class PetitionController extends Controller
     public function reassignInward(Request $request, $id): RedirectResponse
     {
         $user = Auth::user();
-        $hasInwardAccess = $user->canAccess('view_file_transfer') || 
-            $user->canAccess('view file transfer') || 
-            $user->hasRole('inward') || 
-            $user->hasRole('Inward');
+        $currentSeat = $user->currentSeatUser()?->seat;
+        $isAdmin = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
+            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin'])) ||
+            $user->canAccess('access admin dashboard');
 
-        if (!$hasInwardAccess) {
+        $canReassign = $isAdmin ||
+            $user->canAccess('reassign inward petitions') ||
+            $user->canAccess('create inward petitions') ||
+            $user->canAccess('view file transfer') || 
+            $user->hasRole(['inward', 'Inward']) ||
+            ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || str_contains(strtolower($currentSeat->seat_name), 'inward')));
+
+        if (!$canReassign) {
             abort(403, 'Unauthorized to reassign inward petitions.');
         }
 
@@ -433,18 +437,13 @@ class PetitionController extends Controller
             ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin'])) ||
             $user->canAccess('access admin dashboard');
 
-        $isInwardUser = $user->hasRole(['inward', 'Inward']) ||
-            ($currentSeat && (
-                $currentSeat->hasRole(['inward', 'Inward']) ||
-                str_contains(strtolower($currentSeat->seat_name), 'inward')
-            )) ||
-            $user->canAccess('view file transfer') ||
-            $user->canAccess('view_file_transfer') ||
-            $user->canAccess('inward form') ||
-            $user->canAccess('inward_form') ||
-            $user->canAccess('create inward petitions');
+        $canDeleteInward = $isAdmin ||
+            $user->canAccess('delete inward petitions') ||
+            $user->canAccess('create inward petitions') ||
+            $user->hasRole(['inward', 'Inward']) ||
+            ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || str_contains(strtolower($currentSeat->seat_name), 'inward')));
 
-        if (!$isInwardUser && !$isAdmin) {
+        if (!$canDeleteInward) {
             abort(403, 'Unauthorized to delete inward petitions.');
         }
 
@@ -515,11 +514,9 @@ class PetitionController extends Controller
 
         $canViewOwnStats = $canViewOtherStats
             || $user->canAccess('view own inward statistics')
-            || $user->canAccess('view_own_inward_statistics')
             || $user->canAccess('inward statistics')
             || $user->canAccess('view pendency details')
             || $user->canAccess('create inward petitions')
-            || $user->canAccess('inward form')
             || $user->hasRole(['inward', 'Inward'])
             || ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || str_contains(strtolower($currentSeat->seat_name), 'inward')));
 
@@ -575,32 +572,44 @@ class PetitionController extends Controller
         }
 
         // 2. Resolve creator filter with strict backend security
-        $defaultCreator = $canViewAllStats ? 'all' : 'my_petitions';
+        $canCreateInward = $user->canAccess('create inward petitions')
+            || $user->hasRole(['inward', 'Inward'])
+            || ($currentSeat && (
+                $currentSeat->hasRole(['inward', 'Inward']) || 
+                str_contains(strtolower($currentSeat->seat_name), 'inward')
+            ));
+
+        $defaultCreator = ($canCreateInward && !$canViewAllStats) ? 'my_petitions' : 'all';
         $requestedCreator = $request->input('creator_id', $defaultCreator);
+
+        // Security boundary: Disallow 'my_petitions' if user cannot create inward petitions
+        if (!$canCreateInward && $requestedCreator === 'my_petitions') {
+            $requestedCreator = 'all';
+        }
 
         // Security boundary: Restrict unauthorized creator scope access
         if (!$canViewAllStats && $requestedCreator === 'all') {
-            $requestedCreator = 'my_petitions';
+            $requestedCreator = $canCreateInward ? 'my_petitions' : ($creators->first()?->user_id ?? 'all');
         }
 
         if (!$canViewOtherStats && $requestedCreator !== 'my_petitions' && (int)$requestedCreator !== (int)$user->user_id) {
-            $requestedCreator = 'my_petitions';
+            $requestedCreator = $canCreateInward ? 'my_petitions' : 'all';
         }
 
-        $isOwnCreator = $requestedCreator === 'my_petitions'
-            || (is_numeric($requestedCreator) && (int) $requestedCreator === (int) $user->user_id);
+        $isOwnCreator = $canCreateInward && ($requestedCreator === 'my_petitions'
+            || (is_numeric($requestedCreator) && (int) $requestedCreator === (int) $user->user_id));
         $isEligibleCreator = is_numeric($requestedCreator)
             && $creators->contains(fn ($creator) => (int) $creator->user_id === (int) $requestedCreator);
 
         if ($requestedCreator !== 'all' && !$isOwnCreator && !$isEligibleCreator) {
-            $requestedCreator = 'my_petitions';
+            $requestedCreator = $canCreateInward ? 'my_petitions' : 'all';
         }
 
         $selectedCreator = $requestedCreator;
         $targetCreatorUser = null;
         $selectedCreatorLabel = 'All Creators';
 
-        if ($selectedCreator === 'my_petitions' || (int)$selectedCreator === (int)$user->user_id) {
+        if ($canCreateInward && ($selectedCreator === 'my_petitions' || (int)$selectedCreator === (int)$user->user_id)) {
             $targetCreatorUser = $user;
             $selectedCreatorLabel = "My Petitions ({$user->name})";
         } elseif ($selectedCreator !== 'all' && is_numeric($selectedCreator)) {
@@ -821,7 +830,8 @@ class PetitionController extends Controller
             'selectedCreatorLabel',
             'canViewAllStats',
             'canViewOtherStats',
-            'canViewOwnStats'
+            'canViewOwnStats',
+            'canCreateInward'
         ));
     }
 
@@ -948,17 +958,64 @@ class PetitionController extends Controller
 
         $seats = [];
         $users = [];
-        if (Auth::user()->canAccess('view all petitions')) {
-            $seats = Seat::where('is_active', true)
-                         ->where('seat_name', 'like', 'CPSP%')
-                         ->get()
-                         ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
-            $users = \App\Models\User::whereHas('seatUsers', function ($query) {
+        $user = Auth::user();
+        if ($user->canAccess('view all petitions')) {
+            $canViewTSection = $user->canAccessTSectionInReports()
+                || $user->hasRole(['Developer', 'developer', 'super admin', 'Super Admin', 'T Section', 't section', 'T-Section', 't-section']);
+
+            $seatsQuery = Seat::where('is_active', true)
+                ->where('seat_name', 'not like', 'SS %')
+                ->where('seat_name', 'not like', '%SS CPSP%')
+                ->where('seat_name', 'not like', '%Superintendent%')
+                ->whereDoesntHave('roles', fn($r) => $r->whereIn('name', ['SS CPSP', 'ss cpsp', 'Superintendent', 'superintendent', 'Inward', 'inward']));
+
+            if ($canViewTSection) {
+                $seatsQuery->where(function ($q) {
+                    $q->where(function ($cpspQ) {
+                        $cpspQ->whereHas('roles', fn($r) => $r->whereIn('name', ['CPSP', 'cpsp']))
+                              ->orWhere('seat_name', 'like', 'CPSP%');
+                    })
+                    ->orWhere(function ($tQ) {
+                        $tQ->whereHas('roles', fn($r) => $r->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']))
+                           ->orWhere('seat_name', 'like', '%T Section%')
+                           ->orWhere('seat_name', 'like', '%T-Section%');
+                    });
+                });
+            } else {
+                $seatsQuery->where(function ($cpspQ) {
+                    $cpspQ->whereHas('roles', fn($r) => $r->whereIn('name', ['CPSP', 'cpsp']))
+                          ->orWhere('seat_name', 'like', 'CPSP%');
+                });
+            }
+
+            $seats = $seatsQuery->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+
+            $usersQuery = \App\Models\User::whereHas('seatUsers', function ($query) use ($canViewTSection) {
                 $query->where('is_active', true)
-                    ->whereHas('seat', fn($seatQuery) => $seatQuery
-                        ->where('is_active', true)
-                        ->role('CPSP'));
-            })->orderBy('name')->get();
+                    ->whereHas('seat', function ($sq) use ($canViewTSection) {
+                        $sq->where('is_active', true)
+                           ->where('seat_name', 'not like', 'SS %')
+                           ->where('seat_name', 'not like', '%SS CPSP%')
+                           ->where('seat_name', 'not like', '%Superintendent%')
+                           ->whereDoesntHave('roles', fn($r) => $r->whereIn('name', ['SS CPSP', 'ss cpsp', 'Superintendent', 'superintendent', 'Inward', 'inward']));
+
+                        if ($canViewTSection) {
+                            $sq->where(function ($sub) {
+                                $sub->whereHas('roles', fn($r) => $r->whereIn('name', ['CPSP', 'cpsp', 'T Section', 't section', 'T-Section', 't-section']))
+                                    ->orWhere('seat_name', 'like', 'CPSP%')
+                                    ->orWhere('seat_name', 'like', '%T Section%')
+                                    ->orWhere('seat_name', 'like', '%T-Section%');
+                            });
+                        } else {
+                            $sq->where(function ($sub) {
+                                $sub->whereHas('roles', fn($r) => $r->whereIn('name', ['CPSP', 'cpsp']))
+                                    ->orWhere('seat_name', 'like', 'CPSP%');
+                            });
+                        }
+                    });
+            })->orderBy('name');
+
+            $users = $usersQuery->get();
         }
 
         $departments = \App\Models\DepartmentList::orderBy('department_name')->pluck('department_name', 'id')->toArray();
@@ -1666,8 +1723,10 @@ class PetitionController extends Controller
             }
         }
         if ($request->filled('user_id')) {
-            $query->whereHas('user', function($q) use ($request) {
-                $q->where('user_id', $request->user_id);
+            $selectedUserId = (int) $request->user_id;
+            $query->where(function ($uq) use ($selectedUserId) {
+                $uq->where('petitions.user_id', $selectedUserId)
+                   ->orWhereHas('seat.seatUsers', fn($sq) => $sq->where('is_active', true)->where('user_id', $selectedUserId));
             });
         }
         if ($request->filled('department_id')) {
