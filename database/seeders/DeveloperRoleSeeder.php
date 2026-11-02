@@ -27,10 +27,14 @@ class DeveloperRoleSeeder extends Seeder
         $allPermissions = Permission::all();
         $developerRole->syncPermissions($allPermissions);
 
-        // Also ensure Super Admin retains all permissions
+        // Also ensure Super Admin retains its configured permissions
         $superAdmin = Role::where('name', 'super admin')->first();
         if ($superAdmin) {
-            $superAdmin->syncPermissions($allPermissions);
+            $superAdminPermissions = Permission::whereNotIn('name', [
+                'forward t-section petitions',
+                'export t-section petitions',
+            ])->get();
+            $superAdmin->syncPermissions($superAdminPermissions);
         }
 
         // Reset cache again
