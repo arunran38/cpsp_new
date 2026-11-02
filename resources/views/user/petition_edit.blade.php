@@ -222,7 +222,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="lg:col-span-1">
                             <x-input label="Receipt No *" name="receipt_no" x-model="petitionDetails.receipt_no" required
-                                placeholder="Ex. PT-2026-001" />
+                                placeholder="Ex. 12589/{{ now()->year }}"
+                                @blur="formatReceiptNo()" />
                         </div>
                         <div class="lg:col-span-1">
                             <x-input type="date" placeholder="DD-MM-YYYY" label="Date of Receipt *"
@@ -1622,6 +1623,19 @@
                 scrollToTop() {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                     this.refreshIcons();
+                },
+                formatReceiptNo() {
+                    const val = (this.petitionDetails.receipt_no || '').trim();
+                    if (!val) return;
+                    const currentYear = new Date().getFullYear();
+                    // If no slash present, append current year
+                    if (!val.includes('/')) {
+                        this.petitionDetails.receipt_no = `${val}/${currentYear}`;
+                    } else if (val.endsWith('/')) {
+                        // Trailing slash — append the year
+                        this.petitionDetails.receipt_no = `${val}${currentYear}`;
+                    }
+                    // Otherwise: already has /YYYY or custom format — leave as-is
                 },
                 addComplainant() {
                     this.complainants.push({

@@ -205,8 +205,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="lg:col-span-1">
                             <x-input label="Receipt No *" name="receipt_no" x-model="petitionDetails.receipt_no" required
-                                placeholder="Ex. 12/DVACB/2026-CPSP 5" @input="count = $event.target.value.length"
-                                @blur="validateField($event); checkPetitionNumberUniqueness($event.target.value)" />
+                                placeholder="Ex. 12589/{{ now()->year }}" @input="count = $event.target.value.length"
+                                @blur="formatReceiptNo(); validateField($event); checkPetitionNumberUniqueness(petitionDetails.receipt_no)" />
                         </div>
                         <div class="lg:col-span-1">
                             <x-input type="date" placeholder="DD-MM-YYYY" label="Date of Receipt *"
@@ -1806,7 +1806,7 @@
                     }
                 },
                 async checkPetitionNumberUniqueness(petitionNo) {
-                    if (!petitionNo.trim()) return;
+                    if (!petitionNo || !petitionNo.trim()) return;
 
                     try {
                         const response = await fetch(`/petitions/check-petition-no`, {
@@ -1815,7 +1815,7 @@
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             },
-                            body: JSON.stringify({ receipt_no: petitionNo })
+                            body: JSON.stringify({ receipt_no: petitionNo.trim() })
                         });
 
                         const data = await response.json();
@@ -1829,6 +1829,20 @@
                         console.error('Error checking petition number uniqueness:', error);
                         // Don't show error on network failure, let server validation handle it
                     }
+                },
+
+                formatReceiptNo() {
+                    const val = (this.petitionDetails.receipt_no || '').trim();
+                    if (!val) return;
+                    const currentYear = new Date().getFullYear();
+                    // If no slash present, append current year
+                    if (!val.includes('/')) {
+                        this.petitionDetails.receipt_no = `${val}/${currentYear}`;
+                    } else if (val.endsWith('/')) {
+                        // Trailing slash — append the year
+                        this.petitionDetails.receipt_no = `${val}${currentYear}`;
+                    }
+                    // Otherwise: already has /YYYY or custom format — leave as-is
                 },
                 clearError(event) {
                     const el = event.target;
