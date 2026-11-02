@@ -127,7 +127,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                @if(Auth::user()->canAccess('update petitions') && (Auth::user()->canAccess('access admin dashboard') || !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC'])))
+                @if(Auth::user()->canAccess('update petitions') && (Auth::user()->canAccess('access admin dashboard') || !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance'])))
                     @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
                         <a href="{{ route('petitions.edit', $petition->hashid) }}"
                             class="px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 rounded-lg transition-all shadow-md shadow-teal-500/20 flex items-center gap-2">
@@ -139,7 +139,7 @@
                             <i data-lucide="edit" class="w-4 h-4"></i> Edit Details
                         </a>
                     @endif
-                    @if(Auth::user()->canAccess('link petitions') && !$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Duplicate']))
+                    @if(Auth::user()->canAccess('link petitions') && !$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Duplicate']))
                         <button type="button" @click="showLinkModal = true"
                             class="px-4 py-2.5 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-all shadow-sm flex items-center gap-2">
                             <i data-lucide="link" class="w-4 h-4"></i> Link Petition
@@ -293,8 +293,8 @@
                         </h3>
                         <div class="space-y-4">
                             @php
-                                $targetPetition = $petition->originalPetition ?? $petition;
-                                $complainants = $targetPetition->addresses->where('person_type', 'Complainant')->groupBy(function ($addr) {
+                                $displayAddresses = $petition->displayAddresses();
+                                $complainants = $displayAddresses->where('person_type', 'Complainant')->groupBy(function ($addr) {
                                     if (in_array($addr->person_name, ['Unknown', 'Anonymous / Unknown', 'Unknown Suspect'])) {
                                         return $addr->person_name . '_' . ($addr->phone ?? '') . '_' . ($addr->email ?? '');
                                     }
@@ -352,7 +352,7 @@
                         </h3>
                         <div class="space-y-4">
                             @php
-                                $accused = $targetPetition->addresses->where('person_type', 'Accused')->groupBy(function ($addr) {
+                                $accused = $displayAddresses->where('person_type', 'Accused')->groupBy(function ($addr) {
                                     if (in_array($addr->person_name, ['Unknown', 'Unknown Suspect', 'Anonymous / Unknown'])) {
                                         return $addr->person_name . '_' . ($addr->department_id ?? '') . '_' . ($addr->designation_id ?? '') . '_' . ($addr->phone ?? '') . '_' . ($addr->pen_number ?? '') . '_' . ($addr->entity_type ?? '');
                                     }
@@ -540,8 +540,8 @@
                                             class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
                                             style="background-image: none !important;" required onchange="
                                                         document.getElementById('unit-select-div').style.display = this.value === 'Forward_To_Unit' ? 'block' : 'none';
-                                                        document.getElementById('final-doc-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Sent_to_SPC') ? 'block' : 'none';
-                                                        document.getElementById('fwd_order_number').required = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Sent_to_SPC');
+                                                        document.getElementById('final-doc-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Sent_to_SPC' || this.value === 'Internal_Vigilance') ? 'block' : 'none';
+                                                        document.getElementById('fwd_order_number').required = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Sent_to_SPC' || this.value === 'Internal_Vigilance');
                                                         document.getElementById('govt-rec-div-fwd').style.display = this.value === 'Sent_to_Govt' ? 'block' : 'none';
                                                         if (this.value !== 'Sent_to_Govt') {
                                                             document.getElementById('fwd_govt_rec_type').value = '';
@@ -552,6 +552,7 @@
                                             <option value="Forward_To_Unit">Forward to Unit</option>
                                             <option value="Sent_to_Govt">Send to Govt (Decision)</option>
                                             <option value="Sent_to_SPC">Send to SPC (Decision)</option>
+                                            <option value="Internal_Vigilance">Send to Internal Vigilance</option>
                                             <option value="Close">Close Petition (Decision)</option>
                                         </select>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -972,7 +973,7 @@
                             </div>
                         @endif
 
-                        @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Sent_to_SPC')
+                        @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Sent_to_SPC' || $petition->status === 'Internal_Vigilance')
                             @if($petition->decision)
                                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 lg:col-span-2">
                                     <h4 class="font-bold text-gray-800 mb-4 border-b border-slate-200 pb-2">Decision Details</h4>
@@ -1133,7 +1134,7 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <span
-                                            class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($petition->originalPetition->status === 'Closed' || $petition->originalPetition->status === 'Sent_to_Govt' || $petition->originalPetition->status === 'Sent_to_SPC') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                            class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($petition->originalPetition->status === 'Closed' || $petition->originalPetition->status === 'Sent_to_Govt' || $petition->originalPetition->status === 'Sent_to_SPC' || $petition->originalPetition->status === 'Internal_Vigilance') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
                                             @if($petition->originalPetition->decision)
                                                 Final :
                                                 {{ \App\Models\Decision::getDecisionLabel($petition->originalPetition->decision->final_decision) }}
@@ -1177,7 +1178,7 @@
                                         </td>
                                         <td class="px-6 py-4">
                                             <span
-                                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($dup->status === 'Closed' || $dup->status === 'Sent_to_Govt' || $dup->status === 'Sent_to_SPC') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($dup->status === 'Closed' || $dup->status === 'Sent_to_Govt' || $dup->status === 'Sent_to_SPC' || $dup->status === 'Internal_Vigilance') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
                                                 @if($dup->decision)
                                                     Final : {{ \App\Models\Decision::getDecisionLabel($dup->decision->final_decision) }}
                                                 @else

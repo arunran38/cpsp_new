@@ -4,6 +4,9 @@
 @section('content')
     @php
         $unitsList = $units ?? \App\Models\Unit::orderBy('unit_name')->get();
+        $draftData = isset($draft) && $draft ? $draft->form_data : null;
+        $draftStep = isset($draft) && $draft ? $draft->step : null;
+        $draftSavedAt = isset($draft) && $draft ? $draft->updated_at->format('d M, Y h:i A') : null;
     @endphp
     <div class="space-y-6" x-data="petitionForm()">
         <!-- Premium Header Section -->
@@ -29,6 +32,50 @@
                         </p>
                     </div>
                 </div>
+
+                <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 z-10">
+                    <!-- Auto-save status -->
+                    <div x-show="isSavingDraft" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-400/30 text-amber-300 text-xs font-semibold backdrop-blur-sm shadow-sm" style="display: none;">
+                        <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
+                        <span>Saving draft...</span>
+                    </div>
+                    <div x-show="!isSavingDraft && lastSavedText" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-semibold backdrop-blur-sm shadow-sm" style="display: none;">
+                        <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400"></i>
+                        <span x-text="'Draft saved ' + lastSavedText"></span>
+                    </div>
+
+                    <!-- Reset / Clear Draft Button -->
+                    <button type="button" @click="confirmClearDraft()"
+                        class="px-3.5 py-1.5 text-xs font-bold text-slate-200 bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-200 border border-slate-700/60 hover:border-rose-500/40 rounded-xl transition-all flex items-center gap-1.5 shadow-sm backdrop-blur-sm cursor-pointer"
+                        title="Clear all saved draft data and reset form">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        <span>Reset Form</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Draft Restored Banner -->
+        <div x-show="hasRestoredDraft && !dismissedRestoredBanner" x-transition
+            class="bg-indigo-950/80 border border-indigo-500/40 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-indigo-100 backdrop-blur-md mb-6" style="display: none;">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-300 shrink-0">
+                    <i data-lucide="history" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-white">Draft Restored</p>
+                    <p class="text-xs text-indigo-200" x-text="'Your previously entered data' + (lastSavedText ? ' from ' + lastSavedText : '') + ' has been automatically restored. You can continue editing or reset.'"></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button type="button" @click="confirmClearDraft()"
+                    class="px-3 py-1.5 text-xs font-bold text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Discard Draft
+                </button>
+                <button type="button" @click="dismissedRestoredBanner = true"
+                    class="px-3 py-1.5 text-xs font-bold text-indigo-200 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/30 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i> Continue
+                </button>
             </div>
         </div>
 
@@ -1054,26 +1101,66 @@
 
     <script>
         function petitionForm() {
+            const serverDraft = @json($draftData, JSON_UNESCAPED_SLASHES);
+            const serverDraftStep = {{ $draftStep ?? 1 }};
+            const serverDraftSavedAt = {!! json_encode($draftSavedAt) !!};
+            const storageKey = 'cpsp_draft_create_{{ Auth::id() }}';
+
+            let initialDraft = serverDraft;
+            let initialStep = serverDraftStep;
+            let initialSavedText = serverDraftSavedAt;
+            let isRestored = !!serverDraft;
+
+            if (!initialDraft) {
+                try {
+                    const localRaw = localStorage.getItem(storageKey);
+                    if (localRaw) {
+                        const parsed = JSON.parse(localRaw);
+                        if (parsed && parsed.form_data) {
+                            initialDraft = parsed.form_data;
+                            initialStep = parsed.step || 1;
+                            initialSavedText = parsed.timestamp ? new Date(parsed.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'recently';
+                            isRestored = true;
+                        }
+                    }
+                } catch(e) {}
+            }
+
+            const defaultComplainants = [{ id: Date.now(), name: '', phone: '', email: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }];
+            const defaultAccused = [{ id: Date.now() + 1, entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }];
+
+            const oldComplainants = @json(old('complainants'));
+            const oldAccused = @json(old('accused'));
+
             return {
-                step: {{ old('step', 1) }},
+                draftType: 'create',
+                draftPetitionId: null,
+                localStorageKey: storageKey,
+                isSavingDraft: false,
+                lastSavedText: initialSavedText,
+                hasRestoredDraft: isRestored,
+                dismissedRestoredBanner: false,
+                autoSaveTimer: null,
+
+                step: {{ old('step') ? old('step') : 'initialStep' }},
                 districtNames: @json($districts->pluck('district_name', 'district_id')),
                 unitNames: @json($unitsList->pluck('unit_name', 'unit_id')),
                 formErrors: {},
 
                 showPreview: false,
                 petitionDetails: {
-                    receipt_no: '{{ old('receipt_no') }}',
-                    date: '{{ old('date_of_petition_received') }}',
-                    nature: '{{ old('nature_of_petition') }}',
-                    mode: '{{ old('mode_of_petition_received') }}',
-                    mode_others: '{{ old('mode_others') }}',
-                    unit_id: '{{ old('unit_id') }}',
-                    date_of_petition_received_at_unit: '{{ old('date_of_petition_received_at_unit') }}',
-                    description: `{!! addslashes(old('description')) !!}`,
-                    proposed_action: `{!! addslashes(old('proposed_action')) !!}`
+                    receipt_no: '{{ old('receipt_no') }}' || (initialDraft?.petitionDetails?.receipt_no || ''),
+                    date: '{{ old('date_of_petition_received') }}' || (initialDraft?.petitionDetails?.date || ''),
+                    nature: '{{ old('nature_of_petition') }}' || (initialDraft?.petitionDetails?.nature || ''),
+                    mode: '{{ old('mode_of_petition_received') }}' || (initialDraft?.petitionDetails?.mode || ''),
+                    mode_others: '{{ old('mode_others') }}' || (initialDraft?.petitionDetails?.mode_others || ''),
+                    unit_id: '{{ old('unit_id') }}' || (initialDraft?.petitionDetails?.unit_id || ''),
+                    date_of_petition_received_at_unit: '{{ old('date_of_petition_received_at_unit') }}' || (initialDraft?.petitionDetails?.date_of_petition_received_at_unit || ''),
+                    description: `{!! addslashes(old('description')) !!}` || (initialDraft?.petitionDetails?.description || ''),
+                    proposed_action: `{!! addslashes(old('proposed_action')) !!}` || (initialDraft?.petitionDetails?.proposed_action || '')
                 },
-                complainants: @json(old('complainants')) || [{ id: Date.now(), name: '', phone: '', email: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
-                accused: @json(old('accused')) || [{ id: Date.now() + 1, entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }],
+                complainants: oldComplainants || (initialDraft?.complainants && initialDraft.complainants.length > 0 ? initialDraft.complainants : defaultComplainants),
+                accused: oldAccused || (initialDraft?.accused && initialDraft.accused.length > 0 ? initialDraft.accused : defaultAccused),
 
                 // Duplicate Checking State
                 duplicates: [],
@@ -1082,7 +1169,153 @@
                 isCheckingDuplicates: false,
                 debounceTimer: null,
 
+                debouncedAutoSave() {
+                    clearTimeout(this.autoSaveTimer);
+                    this.autoSaveTimer = setTimeout(() => {
+                        this.saveDraft();
+                    }, 1500);
+                },
+
+                saveDraft() {
+                    const pd = this.petitionDetails;
+                    const hasData = (pd.receipt_no && pd.receipt_no.trim()) ||
+                                    (pd.nature && pd.nature.trim()) ||
+                                    (pd.description && pd.description.trim()) ||
+                                    this.step > 1 ||
+                                    (this.complainants.length > 0 && this.complainants[0].name && this.complainants[0].name.trim()) ||
+                                    (this.accused.length > 0 && ((this.accused[0].name && this.accused[0].name.trim()) || this.accused[0].department_id));
+
+                    if (!hasData) return;
+
+                    this.isSavingDraft = true;
+                    const payload = {
+                        type: this.draftType,
+                        petition_id: this.draftPetitionId,
+                        step: this.step,
+                        form_data: {
+                            petitionDetails: this.petitionDetails,
+                            complainants: this.complainants,
+                            accused: this.accused
+                        }
+                    };
+
+                    try {
+                        localStorage.setItem(this.localStorageKey, JSON.stringify({
+                            step: this.step,
+                            form_data: payload.form_data,
+                            timestamp: new Date().toISOString()
+                        }));
+                    } catch(e) {}
+
+                    fetch('{{ route('petitions.draft.save') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        this.isSavingDraft = false;
+                        if (data.success) {
+                            this.lastSavedText = data.saved_at || 'just now';
+                            this.$nextTick(() => {
+                                if (typeof lucide !== 'undefined') lucide.createIcons();
+                            });
+                        }
+                    })
+                    .catch(() => {
+                        this.isSavingDraft = false;
+                    });
+                },
+
+                confirmClearDraft() {
+                    Swal.fire({
+                        title: 'Reset Form?',
+                        text: 'Are you sure you want to clear all entered information? All unsaved details will be discarded.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#e11d48',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: 'Yes, Clear All',
+                        cancelButtonText: 'Cancel',
+                        customClass: {
+                            popup: 'cpsp-swal-popup',
+                            title: 'cpsp-swal-title',
+                            confirmButton: 'cpsp-swal-confirm-btn'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.clearDraft();
+                        }
+                    });
+                },
+
+                clearDraft() {
+                    try {
+                        localStorage.removeItem(this.localStorageKey);
+                    } catch(e) {}
+
+                    fetch('{{ route('petitions.draft.clear') }}', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            type: this.draftType,
+                            petition_id: this.draftPetitionId
+                        })
+                    })
+                    .finally(() => {
+                        this.resetFormState();
+                        if (window.showToast) {
+                            window.showToast('success', 'Form draft cleared successfully.');
+                        } else if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: 'Reset Complete',
+                                text: 'The form has been reset to initial state.',
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        }
+                    });
+                },
+
+                resetFormState() {
+                    this.step = 1;
+                    this.petitionDetails = {
+                        receipt_no: '',
+                        date: '',
+                        nature: '',
+                        mode: '',
+                        mode_others: '',
+                        unit_id: '',
+                        date_of_petition_received_at_unit: '',
+                        description: '',
+                        proposed_action: ''
+                    };
+                    this.complainants = [{ id: Date.now(), name: '', phone: '', email: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }];
+                    this.accused = [{ id: Date.now() + 1, entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }];
+                    this.formErrors = {};
+                    this.lastSavedText = null;
+                    this.hasRestoredDraft = false;
+                    this.dismissedRestoredBanner = true;
+                    this.scrollToTop();
+                    this.$nextTick(() => {
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                    });
+                },
+
                 init() {
+                    this.$watch('petitionDetails', () => this.debouncedAutoSave(), { deep: true });
+                    this.$watch('complainants', () => this.debouncedAutoSave(), { deep: true });
+                    this.$watch('accused', () => this.debouncedAutoSave(), { deep: true });
+
                     this.$watch('petitionDetails.mode', (newMode) => {
                         if (newMode && String(newMode).trim() !== '') {
                             delete this.formErrors['mode_of_petition_received'];
@@ -1179,6 +1412,7 @@
                         if (this.step < 4) {
                             this.step++;
                             this.scrollToTop();
+                            this.saveDraft();
                         }
                     }
                 },
@@ -1186,6 +1420,7 @@
                     if (this.step > 1) {
                         this.step--;
                         this.scrollToTop();
+                        this.saveDraft();
                     }
                 },
                 handleSubmit(event) {
@@ -1219,6 +1454,11 @@
                         }
                         return false;
                     }
+
+                    try {
+                        localStorage.removeItem(this.localStorageKey);
+                    } catch(e) {}
+
                     return true;
                 },
                 validateStep(step) {
@@ -1677,6 +1917,7 @@
                         if (target >= 1 && target <= 4) {
                             this.step = target;
                             this.scrollToTop();
+                            this.saveDraft();
                         }
                     }
                 },

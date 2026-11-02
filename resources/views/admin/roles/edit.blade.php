@@ -276,9 +276,9 @@
 
             <!-- Toolbar: Search + Module Quick Nav Pills + Quick Actions -->
             <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col gap-3.5">
-                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
                     <!-- Search Input -->
-                    <div class="relative w-full md:w-88">
+                    <div class="relative flex-1 w-full sm:w-auto min-w-[200px]">
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                             <i data-lucide="search" class="w-4 h-4"></i>
                         </div>
@@ -291,17 +291,17 @@
                     </div>
 
                     <!-- Batch Actions -->
-                    <div class="flex items-center gap-2.5 w-full md:w-auto justify-end flex-wrap">
+                    <div class="flex items-center gap-2 sm:gap-2.5 w-auto justify-end flex-nowrap shrink-0">
                         <button type="button" @click="selectAll()" 
-                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-sm shadow-emerald-600/20 hover:-translate-y-0.5 transition-all">
+                                class="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-sm shadow-emerald-600/20 hover:-translate-y-0.5 transition-all whitespace-nowrap shrink-0">
                             <i data-lucide="check-check" class="w-4 h-4"></i> Select All
                         </button>
                         <button type="button" @click="selectViewOnly()" 
-                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-sm shadow-blue-600/20 hover:-translate-y-0.5 transition-all">
+                                class="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-sm shadow-blue-600/20 hover:-translate-y-0.5 transition-all whitespace-nowrap shrink-0">
                             <i data-lucide="eye" class="w-4 h-4"></i> All View
                         </button>
                         <button type="button" @click="deselectAll()" 
-                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 shadow-sm shadow-rose-600/20 hover:-translate-y-0.5 transition-all">
+                                class="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 shadow-sm shadow-rose-600/20 hover:-translate-y-0.5 transition-all whitespace-nowrap shrink-0">
                             <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Clear All
                         </button>
                     </div>

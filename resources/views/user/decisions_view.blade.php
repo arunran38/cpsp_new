@@ -70,7 +70,8 @@
                             </td>
                             <td class="px-6 py-4 text-slate-600">
                                 @php
-                                    $complainants = $petition->addresses->where('person_type', 'Complainant')->unique('person_name');
+                                    $displayAddresses = $petition->displayAddresses();
+                                    $complainants = $displayAddresses->where('person_type', 'Complainant')->unique('person_name');
                                 @endphp
                                 @if($complainants->count() > 0)
                                     @foreach($complainants as $complainant)
@@ -82,7 +83,7 @@
                             </td>
                             <td class="px-6 py-4 text-slate-600">
                                 @php
-                                    $accused = $petition->addresses->where('person_type', 'Accused')->unique('person_name');
+                                    $accused = $displayAddresses->where('person_type', 'Accused')->unique('person_name');
                                 @endphp
                                 @if($accused->count() > 0)
                                     @foreach($accused as $accuse)
@@ -210,5 +211,4 @@
     });
 </script>
 @endsection
-
 

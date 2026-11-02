@@ -66,7 +66,7 @@
     $inwardCount = $petitions->filter(fn($p) => !$p->is_cpsp_processed && !$p->is_returned_to_inward)->count();
     $forwarded = $petitions->filter(fn($p) => $p->status === 'Forwarded')->count();
     $vrsReceived = $petitions->filter(fn($p) => $p->status === 'VR_Received')->count();
-    $finalDecisions = $petitions->filter(fn($p) => in_array($p->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC']))->count();
+    $finalDecisions = $petitions->filter(fn($p) => in_array($p->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance']))->count();
 
     if ($isInwardRole) {
         $totalInwardCount = $petitions->count();

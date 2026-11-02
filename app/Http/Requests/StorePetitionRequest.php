@@ -90,6 +90,14 @@ class StorePetitionRequest extends FormRequest
 
     public function rules(): array
     {
+        if ($this->filled('duplicate_link_number')) {
+            return [
+                'receipt_no' => 'required|unique:petitions,receipt_no',
+                'date_of_petition_received' => 'required|date|before_or_equal:today',
+                'duplicate_link_number' => 'required|string|exists:petitions,receipt_no',
+            ];
+        }
+
         $isInward = $this->boolean('is_inward_entry');
 
         $rules = [
@@ -98,7 +106,9 @@ class StorePetitionRequest extends FormRequest
             'mode_of_petition_received' => 'required_without:duplicate_link_number',
             'proposed_action' => 'nullable|string',
             'transfer_remarks' => 'nullable|string',
-            'seat_id' => $isInward ? 'required|exists:seats,seat_id' : 'nullable|exists:seats,seat_id',
+            'seat_id' => $isInward 
+                ? ['required', 'exists:seats,seat_id', Rule::in(\App\Models\Seat::eligibleForInward()->pluck('seat_id')->toArray())]
+                : 'nullable|exists:seats,seat_id',
             'is_inward_entry' => 'nullable|boolean',
             'unit_id' => [
                 'nullable',

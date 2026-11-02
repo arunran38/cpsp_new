@@ -72,6 +72,7 @@ class Decision extends Model
             'CV' => 'Confidential Verification (CV)',
             'CS' => 'Confidential Verification (CV)',
             'IV' => 'Internal Vigilance (IV)',
+            'Internal Vigilance' => 'Internal Vigilance (IV)',
             'ICell' => 'Intelligence Cell (I Cell)',
             'Closed' => 'Closed',
             'Sent to Govt' => 'Sent to Govt',

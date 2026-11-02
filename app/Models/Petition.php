@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use App\Services\HashidService;
 
 class Petition extends Model
@@ -107,6 +108,56 @@ class Petition extends Model
     public function addresses(): HasMany
     {
         return $this->hasMany(Address::class, 'petition_id');
+    }
+
+    /**
+     * Return this petition's addresses and, for linked duplicates, its original's
+     * addresses without repeating identical records copied by older link flows.
+     */
+    public function displayAddresses(): EloquentCollection
+    {
+        $addresses = $this->uniqueOwnAddresses();
+
+        if ($this->linked_petition_id && $this->originalPetition) {
+            $addresses = $this->originalPetition->uniqueOwnAddresses()->concat($addresses);
+        }
+
+        return $this->uniqueAddressRecords($addresses);
+    }
+
+    public function uniqueOwnAddresses(): EloquentCollection
+    {
+        return $this->uniqueAddressRecords($this->addresses);
+    }
+
+    private function uniqueAddressRecords(EloquentCollection $addresses): EloquentCollection
+    {
+        $identityFields = [
+            'person_type',
+            'entity_type',
+            'person_name',
+            'contact_person',
+            'department_id',
+            'designation_id',
+            'phone',
+            'email',
+            'pen_number',
+            'Aadhar_number',
+            'address_type',
+            'is_primary',
+            'full_address',
+            'district_id',
+            'pincode',
+        ];
+
+        return $addresses->unique(function (Address $address) use ($identityFields): string {
+            $identity = [];
+            foreach ($identityFields as $field) {
+                $identity[] = $address->getAttribute($field);
+            }
+
+            return json_encode($identity, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
+        })->values();
     }
 
     /**
@@ -416,13 +467,15 @@ class Petition extends Model
 
         $allInwardIds = array_unique(array_merge($directInwardIds, $seatInwardIds));
 
-        // 3. Exclude users with Admin, Super Admin, Developer, CPSP roles (direct or seat-based)
+        // 3. Exclude users with Admin, Super Admin, Developer, CPSP roles (unless they also hold Inward role or seat)
         $excludedDirectIds = User::role([
             'super admin', 'Super Admin', 
             'developer', 'Developer', 
             'admin', 'Admin', 
             'cpsp', 'CPSP'
-        ])->pluck('user_id')->toArray();
+        ])->whereDoesntHave('roles', function ($rq) {
+            $rq->whereIn('name', ['inward', 'Inward']);
+        })->pluck('user_id')->toArray();
 
         $excludedSeatIds = SeatUser::whereHas('seat', function ($sq) {
             $sq->role([
@@ -430,7 +483,9 @@ class Petition extends Model
                 'developer', 'Developer', 
                 'admin', 'Admin', 
                 'cpsp', 'CPSP'
-            ]);
+            ])->whereDoesntHave('roles', function ($rq) {
+                $rq->whereIn('name', ['inward', 'Inward']);
+            })->where('seat_name', 'not like', '%inward%');
         })->pluck('user_id')->toArray();
 
         $allExcludedIds = array_unique(array_merge($excludedDirectIds, $excludedSeatIds));
@@ -475,10 +530,15 @@ class Petition extends Model
             ));
 
         if ($isInwardUser) {
-            if ($scopeFilter === 'all' && $user->canAccess('view all petitions')) {
+            if (($scopeFilter === 'all' && $user->canAccess('view all petitions')) || $user->canAccess('view file transfer')) {
                 return $query;
             }
-            return $query->where('petitions.user_id', $user->user_id);
+            return $query->where(function ($q) use ($user, $currentSeat) {
+                $q->where('petitions.user_id', $user->user_id);
+                if ($currentSeat) {
+                    $q->orWhere('petitions.seat_id', $currentSeat->seat_id);
+                }
+            });
         }
 
         // 3. CPSP Role: View inward petitions transferred to their assigned seat (or all inward if granted global view)
@@ -526,7 +586,7 @@ class Petition extends Model
             'received' => $query->where('status', self::STATUS_RECEIVED)->where('is_cpsp_processed', true),
             'forwarded' => $query->where('status', self::STATUS_FORWARDED),
             'vrs' => $query->where('status', self::STATUS_VR_RECEIVED),
-            'decisions' => $query->whereIn('status', [self::STATUS_SENT_TO_GOVT, self::STATUS_SENT_TO_SPC, self::STATUS_CLOSED]),
+            'decisions' => $query->whereIn('status', [self::STATUS_SENT_TO_GOVT, self::STATUS_SENT_TO_SPC, self::STATUS_INTERNAL_VIGILANCE, self::STATUS_CLOSED]),
             'all' => $query->where('is_cpsp_processed', true),
             default => $query->where('is_cpsp_processed', true),
         };
@@ -650,7 +710,7 @@ class Petition extends Model
             }
         }
 
-        $finalDecisionStatuses = ['VC', 'VE', 'PE', 'SC', 'CV', 'Closed', 'Sent to Govt', 'Sent to SPC', 'ICell'];
+        $finalDecisionStatuses = ['VC', 'VE', 'PE', 'SC', 'CV', 'IV', 'Internal Vigilance', 'Closed', 'Sent to Govt', 'Sent to SPC', 'ICell'];
 
         $column = 'date_of_petition_received';
         $relation = null;
@@ -772,4 +832,3 @@ class Petition extends Model
         });
     }
 }
-

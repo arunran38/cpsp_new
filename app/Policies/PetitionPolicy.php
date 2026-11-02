@@ -111,15 +111,9 @@ class PetitionPolicy
             return true;
         }
 
-        // If user is Inward role and not admin: restricted to their own petitions
-        $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
-            ($currentSeat && (
-                $currentSeat->hasRole(['inward', 'Inward']) || 
-                str_contains(strtolower($currentSeat->seat_name), 'inward')
-            ));
-
-        if ($isInwardUser && !$user->canAccess('view all petitions')) {
-            return false;
+        // Check if user belongs to the seat assigned to this petition
+        if ($currentSeat && $petition->seat_id === $currentSeat->seat_id) {
+            return true;
         }
 
         // User with global view permission (e.g. CPSP with view all petitions)
@@ -127,9 +121,20 @@ class PetitionPolicy
             return true;
         }
 
-        // Check if user belongs to the seat assigned to this petition
-        if ($currentSeat && $petition->seat_id === $currentSeat->seat_id) {
+        // Users with inward/transfer viewing permission can view inward origin petitions
+        if ($petition->isFromInward() && ($user->canAccess('view file transfer') || $user->canAccess('inward form') || $user->canAccess('create inward petitions'))) {
             return true;
+        }
+
+        // If user is strictly Inward role and not admin/CPSP: restricted to their own petitions
+        $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
+            ($currentSeat && (
+                $currentSeat->hasRole(['inward', 'Inward']) || 
+                str_contains(strtolower($currentSeat->seat_name), 'inward')
+            ));
+        $isPureInwardOnly = $isInwardUser && !$user->hasRole(['cpsp', 'CPSP']) && !($currentSeat && $currentSeat->hasRole(['cpsp', 'CPSP']));
+        if ($isPureInwardOnly && !$user->canAccess('view all petitions')) {
+            return false;
         }
 
         // CPSP seat user can view an unprocessed inward petition transferred to their seat

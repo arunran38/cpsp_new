@@ -16,8 +16,9 @@ class InwardStatisticsExport implements FromArray, WithHeadings, WithStyles, Sho
     protected $dateTo;
     protected $canViewProcessed;
     protected $section;
+    protected $creatorLabel;
 
-    public function __construct(array $seatStats, array $summaryTotals, $dateFrom, $dateTo, bool $canViewProcessed, string $section = 'all')
+    public function __construct(array $seatStats, array $summaryTotals, $dateFrom, $dateTo, bool $canViewProcessed, string $section = 'all', string $creatorLabel = 'All Creators')
     {
         $this->seatStats = $seatStats;
         $this->summaryTotals = $summaryTotals;
@@ -25,6 +26,7 @@ class InwardStatisticsExport implements FromArray, WithHeadings, WithStyles, Sho
         $this->dateTo = $dateTo;
         $this->canViewProcessed = $canViewProcessed;
         $this->section = $section;
+        $this->creatorLabel = $creatorLabel;
     }
 
     public function array(): array
@@ -91,7 +93,7 @@ class InwardStatisticsExport implements FromArray, WithHeadings, WithStyles, Sho
 
         $headings = [
             [$title],
-            [$period],
+            [$period . ' | Petition Creator: ' . $this->creatorLabel],
             [],
             [
                 '#',

@@ -24,7 +24,7 @@
                 </div>
                 <div class="flex items-center gap-3 z-10">
                     @if(Auth::user()->canAccess('export statistics') || Auth::user()->canAccess('access admin dashboard'))
-                        <a href="{{ route('inward.statistics.export', request()->query()) }}"
+                        <a href="{{ route('inward.statistics.export', array_merge(request()->query(), ['creator_id' => $selectedCreator ?? 'all'])) }}"
                             class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 rounded-xl hover:bg-emerald-500/20 transition-all font-semibold text-sm shadow-sm">
                             <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                             Excel Export
@@ -44,7 +44,7 @@
                 <form method="GET" action="{{ route('inward.statistics') }}" class="w-full">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 xl:gap-4 items-end w-full">
                         <!-- Section Filter (Segmented Control) -->
-                        <div class="sm:col-span-2 lg:col-span-4 flex flex-col justify-end">
+                        <div class="sm:col-span-1 lg:col-span-3 flex flex-col justify-end">
                             <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
                                 <i data-lucide="layers" class="h-3.5 w-3.5 text-blue-500"></i>
                                 <span>Section</span>
@@ -65,7 +65,7 @@
                                     <input type="radio" name="section" value="cpsp" class="sr-only peer"
                                         {{ ($section ?? '') === 'cpsp' || !($canViewTSection ?? false) ? 'checked' : '' }}
                                         onchange="this.form.submit()">
-                                    <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-3">
+                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-3">
                                         CPSP
                                     </span>
                                 </label>
@@ -83,8 +83,49 @@
                             </div>
                         </div>
 
-                        <!-- Date From -->
+                        <!-- Petition Creator / Created By Filter -->
                         <div class="sm:col-span-1 lg:col-span-3 flex flex-col justify-end">
+                            <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
+                                <i data-lucide="user-check" class="h-3.5 w-3.5 text-blue-500"></i>
+                                <span>Petition Creator</span>
+                            </label>
+                            <div class="relative w-full">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-blue-400">
+                                    <i data-lucide="user" class="h-4 w-4"></i>
+                                </div>
+                                <select name="creator_id" id="creator_id"
+                                    class="w-full pl-10 pr-9 h-11 bg-white border border-blue-200/80 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300 appearance-none cursor-pointer"
+                                    style="color: #1e40af !important;"
+                                    onchange="this.form.submit()">
+                                    
+                                    @if($canViewAllStats ?? false)
+                                        <option value="all" {{ ($selectedCreator ?? 'all') === 'all' ? 'selected' : '' }}>
+                                            All Petitions
+                                        </option>
+                                    @endif
+
+                                    <option value="my_petitions" {{ ($selectedCreator ?? '') === 'my_petitions' || (($selectedCreator ?? '') == Auth::id() && !($canViewAllStats ?? false)) ? 'selected' : '' }}>
+                                        My Petitions
+                                    </option>
+
+                                    @if(($canViewOtherStats ?? false) || ($canViewAllStats ?? false))
+                                        @foreach($creators as $creator)
+                                            @if($creator->user_id !== Auth::id())
+                                                <option value="{{ $creator->user_id }}" {{ (string)($selectedCreator ?? '') === (string)$creator->user_id ? 'selected' : '' }}>
+                                                    {{ $creator->inward_display_name ?? $creator->name }}
+                                                </option>
+                                            @endif
+                                        @endforeach
+                                    @endif
+                                </select>
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                    <i data-lucide="chevron-down" class="h-4 w-4"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Date From -->
+                        <div class="sm:col-span-1 lg:col-span-2 flex flex-col justify-end">
                             <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
                                 <span>Date From</span>
                             </label>
@@ -100,7 +141,7 @@
                         </div>
 
                         <!-- Date To -->
-                        <div class="sm:col-span-1 lg:col-span-3 flex flex-col justify-end">
+                        <div class="sm:col-span-1 lg:col-span-2 flex flex-col justify-end">
                             <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
                                 <span>Date To</span>
                             </label>
@@ -125,7 +166,11 @@
                                     <span>Apply</span>
                                 </button>
 
-                                @if($dateFrom || $dateTo || (($section ?? 'all') !== 'all'))
+                                @php
+                                    $defaultCreatorScope = ($canViewAllStats ?? false) ? 'all' : 'my_petitions';
+                                    $hasActiveFilters = $dateFrom || $dateTo || (($section ?? 'all') !== 'all') || (($selectedCreator ?? '') !== $defaultCreatorScope);
+                                @endphp
+                                @if($hasActiveFilters)
                                     <a href="{{ route('inward.statistics') }}" title="Clear Filters"
                                         class="w-11 h-11 shrink-0 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-rose-600 shadow-sm flex items-center justify-center transition-all">
                                         <i data-lucide="x" class="w-4 h-4"></i>
@@ -154,29 +199,28 @@
                             Seat-Wise Petition Statistics Data Sheet
                         @endif
                     </h2>
-                    @if($dateFrom || $dateTo)
-                        <div class="flex items-center gap-2 mt-1.5">
-                            <span class="px-2 py-1 bg-slate-100 rounded text-xs font-semibold text-slate-600">Report
-                                Period</span>
-                            <p class="text-sm text-slate-600 font-medium">
-                                <span
-                                    class="text-indigo-600 font-bold">{{ $dateFrom ? \Carbon\Carbon::parse($dateFrom)->format('d M Y') : 'Beginning' }}</span>
-                                <span class="mx-1 text-slate-400">to</span>
-                                <span
-                                    class="text-indigo-600 font-bold">{{ $dateTo ? \Carbon\Carbon::parse($dateTo)->format('d M Y') : 'Today' }}</span>
+                    <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-800 border border-teal-200 shadow-sm">
+                            <i data-lucide="user-check" class="w-3.5 h-3.5 text-teal-600"></i>
+                            <span>Creator: {{ $selectedCreatorLabel ?? 'All Creators' }}</span>
+                        </span>
+                        @if($dateFrom || $dateTo)
+                            <div class="flex items-center gap-1.5 px-3 py-1 bg-slate-100 rounded-full text-xs font-semibold text-slate-700 border border-slate-200">
+                                <i data-lucide="calendar" class="w-3 h-3 text-slate-400"></i>
+                                <span>{{ $dateFrom ? \Carbon\Carbon::parse($dateFrom)->format('d M Y') : 'Beginning' }} to {{ $dateTo ? \Carbon\Carbon::parse($dateTo)->format('d M Y') : 'Today' }}</span>
+                            </div>
+                        @else
+                            <p class="text-sm text-slate-500 font-medium">
+                                @if(($section ?? '') === 'cpsp')
+                                    Overall petition summary assigned to CPSP seats.
+                                @elseif(($section ?? '') === 't_section')
+                                    Overall petition summary assigned to T-Section.
+                                @else
+                                    Overall petition summary assigned to CPSP and T-Section seats.
+                                @endif
                             </p>
-                        </div>
-                    @else
-                        <p class="text-sm text-slate-500 mt-1 font-medium">
-                            @if(($section ?? '') === 'cpsp')
-                                Overall petition summary assigned to CPSP seats.
-                            @elseif(($section ?? '') === 't_section')
-                                Overall petition summary assigned to T-Section.
-                            @else
-                                Overall petition summary assigned to CPSP and T-Section seats.
-                            @endif
-                        </p>
-                    @endif
+                        @endif
+                    </div>
                 </div>
 
             </div>
@@ -197,6 +241,9 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">
+                        @php
+                            $creatorParam = ($selectedCreator && $selectedCreator !== 'all') ? ['creator_id' => $selectedCreator] : [];
+                        @endphp
                         @forelse($seatStats as $index => $stat)
                             <tr class="hover:bg-slate-50/50 transition-colors group">
                                 <td class="px-5 py-4 font-extrabold text-slate-900">
@@ -206,20 +253,20 @@
                                     {{ $stat['occupant'] }}
                                 </td>
                                 <td class="px-4 py-4 text-center">
-                                    <a href="{{ route('inward.enter_petition', array_filter(['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'hide_form' => 1])) }}#view-inward-petitions"
+                                    <a href="{{ route('inward.enter_petition', array_filter(array_merge(['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'hide_form' => 1], $creatorParam))) }}#view-inward-petitions"
                                         class="font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-indigo-700 px-2.5 py-0.5 rounded border border-slate-200 transition-colors block cursor-pointer text-center">
                                         {{ $stat['total_sent'] }}
                                     </a>
                                 </td>
                                 @if(auth()->user()->canAccess('view processed statistics'))
                                     <td class="px-4 py-4 text-center">
-                                        <a href="{{ route('petitions.index', ['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'All_Final_Decisions']) }}"
+                                        <a href="{{ route('petitions.index', array_filter(array_merge(['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'All_Final_Decisions'], $creatorParam))) }}"
                                             class="font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 hover:text-teal-900 px-2.5 py-0.5 rounded border border-teal-200 transition-colors block cursor-pointer text-center">
                                             {{ $stat['processed'] }}
                                         </a>
                                     </td>
                                     <td class="px-4 py-4 text-center">
-                                        <a href="{{ route('petitions.index', ['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending']) }}"
+                                        <a href="{{ route('petitions.index', array_filter(array_merge(['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending'], $creatorParam))) }}"
                                             class="font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-900 px-2.5 py-0.5 rounded border border-rose-200 transition-colors block cursor-pointer text-center">
                                             {{ $stat['pending'] }}
                                         </a>
@@ -260,7 +307,7 @@
                             </td>
                             <td
                                 class="px-4 py-5 text-center font-black text-lg text-white hover:text-indigo-300 transition-colors">
-                                <a href="{{ route('inward.enter_petition', array_filter(['date_from' => request('date_from'), 'date_to' => request('date_to'), 'hide_form' => 1])) }}#view-inward-petitions"
+                                <a href="{{ route('inward.enter_petition', array_filter(array_merge(['date_from' => request('date_from'), 'date_to' => request('date_to'), 'hide_form' => 1], $creatorParam))) }}#view-inward-petitions"
                                     class="block">
                                     {{ $summaryTotals['totalSent'] }}
                                 </a>
@@ -268,14 +315,14 @@
                             @if(auth()->user()->canAccess('view processed statistics'))
                                 <td
                                     class="px-4 py-5 text-center font-black text-lg text-emerald-400 hover:text-emerald-300 transition-colors">
-                                    <a href="{{ route('petitions.index', ['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'All_Final_Decisions']) }}"
+                                    <a href="{{ route('petitions.index', array_filter(array_merge(['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'All_Final_Decisions'], $creatorParam))) }}"
                                         class="block">
                                         {{ $summaryTotals['processed'] }}
                                     </a>
                                 </td>
                                 <td
                                     class="px-4 py-5 text-center font-black text-lg text-rose-400 hover:text-rose-300 transition-colors">
-                                    <a href="{{ route('petitions.index', ['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending']) }}"
+                                    <a href="{{ route('petitions.index', array_filter(array_merge(['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending'], $creatorParam))) }}"
                                         class="block">
                                         {{ $summaryTotals['pending'] }}
                                     </a>

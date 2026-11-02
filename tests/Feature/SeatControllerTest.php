@@ -18,7 +18,7 @@ class SeatControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->admin = User::factory()->create(['role' => 'admin']);
+        $this->admin = $this->createSuperAdminUser();
     }
 
     public function test_admin_can_view_seats_index(): void
@@ -122,6 +122,13 @@ class SeatControllerTest extends TestCase
 
     public function test_admin_can_view_seat_statistics(): void
     {
+        $this->admin->givePermissionTo(
+            \Spatie\Permission\Models\Permission::firstOrCreate([
+                'name' => 'view seat diagnostics',
+                'guard_name' => 'web',
+            ])
+        );
+
         $response = $this->actingAs($this->admin)->get(route('admin.seats.statistics'));
 
         $response->assertStatus(200);
@@ -148,7 +155,7 @@ class SeatControllerTest extends TestCase
 
     public function test_user_can_switch_seat(): void
     {
-        $user = User::factory()->create(['role' => 'user']);
+        $user = User::factory()->create();
         $seat1 = Seat::factory()->create();
         $seat2 = Seat::factory()->create();
         

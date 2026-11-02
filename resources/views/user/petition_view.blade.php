@@ -324,6 +324,7 @@
                                 'Forward_To_Unit' => 'Forward to Unit',
                                 'Sent_to_Govt' => 'Send to Govt (Decision)',
                                 'Sent_to_SPC' => 'Send to SPC (Decision)',
+                                'Internal_Vigilance' => 'Send to Internal Vigilance',
                                 'Close' => 'Close Petition (Decision)',
                             ];
                         @endphp
@@ -360,12 +361,12 @@
                                 style="color: #1e40af !important;" required>
                         </div>
 
-                        <div x-show="action === 'Close' || action === 'Sent_to_Govt' || action === 'Sent_to_SPC'" x-cloak class="pt-2">
+                        <div x-show="action === 'Close' || action === 'Sent_to_Govt' || action === 'Sent_to_SPC' || action === 'Internal_Vigilance'" x-cloak class="pt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Directorate Order Number</label>
                             <input type="text" name="directorate_order_number"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 mb-3"
                                 placeholder="Order Number"
-                                x-bind:required="action === 'Close' || action === 'Sent_to_Govt' || action === 'Sent_to_SPC'">
+                                x-bind:required="action === 'Close' || action === 'Sent_to_Govt' || action === 'Sent_to_SPC' || action === 'Internal_Vigilance'">
 
                             <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order</label>
                             <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"

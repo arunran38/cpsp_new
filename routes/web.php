@@ -82,7 +82,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/petitions/{id}/return-to-inward', [PetitionController::class, 'returnToInward'])->name('petitions.returnToInward');
         Route::post('/petitions/return-to-inward', [PetitionController::class, 'returnToInward'])->name('petitions.returnToInward.fallback');
         Route::post('/inward/petitions/{id}/reassign', [PetitionController::class, 'reassignInward'])->name('inward.petitions.reassign');
+        Route::delete('/inward/petitions/{id}', [PetitionController::class, 'destroyInward'])->name('inward.petitions.destroy');
         Route::get('/petitions/download/{upload_id}', [PetitionController::class, 'downloadAttachment'])->name('petitions.download');
+        Route::post('/petitions/draft/save', [\App\Http\Controllers\PetitionDraftController::class, 'save'])->name('petitions.draft.save');
+        Route::delete('/petitions/draft/clear', [\App\Http\Controllers\PetitionDraftController::class, 'clear'])->name('petitions.draft.clear');
 
         Route::resource("petitions", PetitionController::class);
 

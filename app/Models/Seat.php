@@ -131,7 +131,7 @@ class Seat extends Model
             },
             
             'petitionsReceived as decisions_made_count' => function($q) use ($from, $to) {
-                $q->whereIn('status', [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC]);
+                $q->whereIn('status', [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC, Petition::STATUS_INTERNAL_VIGILANCE]);
                 if ($from || $to) {
                     $q->whereHas('decision', fn($d) => $this->filterDates($d, $from, $to, 'decision_date'));
                 }
@@ -160,7 +160,7 @@ class Seat extends Model
 
     private function filterDecisionType($query, $type, $from, $to)
     {
-        $query->whereIn('status', [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC]);
+        $query->whereIn('status', [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC, Petition::STATUS_INTERNAL_VIGILANCE]);
         return $query->whereHas('decision', function($q) use ($type, $from, $to) {
             $q->where('final_decision', $type);
             $this->filterDates($q, $from, $to, 'decision_date');
@@ -209,6 +209,40 @@ class Seat extends Model
           ->orWhere('seat_name', 'like', '%T-Section%')
           ->pluck('seat_id')
           ->toArray();
+    }
+
+    /**
+     * Scope a query to only include seats eligible for inward petition assignment (CPSP and T-Section, strictly excluding SS CPSP).
+     */
+    public function scopeEligibleForInward(Builder $query): Builder
+    {
+        return $query->where('is_active', true)
+            ->where(function ($q) {
+                $q->where(function ($cpspQ) {
+                    $cpspQ->whereHas('roles', fn($rq) => $rq->whereIn('name', ['CPSP', 'cpsp']))
+                          ->orWhereHas('activeAssignment.user.roles', fn($rq) => $rq->whereIn('name', ['CPSP', 'cpsp']))
+                          ->orWhere('seat_name', 'like', 'CPSP%');
+                })
+                ->orWhere(function ($tQ) {
+                    $tQ->whereHas('roles', fn($rq) => $rq->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']))
+                       ->orWhere('seat_name', 'like', '%T Section%')
+                       ->orWhere('seat_name', 'like', '%T-Section%');
+                });
+            })
+            ->where('seat_name', 'not like', 'SS %')
+            ->where('seat_name', 'not like', '%SS CPSP%')
+            ->where('seat_name', 'not like', '%Superintendent%')
+            ->whereDoesntHave('roles', function ($rq) {
+                $rq->whereIn('name', ['SS CPSP', 'ss cpsp', 'Superintendent', 'superintendent', 'Inward', 'inward']);
+            });
+    }
+
+    /**
+     * Alias for scopeEligibleForInward.
+     */
+    public function scopeEligibleForInwardTransfer(Builder $query): Builder
+    {
+        return $this->scopeEligibleForInward($query);
     }
 }
 

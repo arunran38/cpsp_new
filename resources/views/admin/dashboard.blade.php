@@ -33,7 +33,7 @@
 
         $decisions = \App\Models\Petition::whereNull('linked_petition_id')
             ->where('is_returned_to_inward', false)
-            ->whereIn('status', [\App\Models\Petition::STATUS_SENT_TO_GOVT, \App\Models\Petition::STATUS_SENT_TO_SPC, \App\Models\Petition::STATUS_CLOSED])
+            ->whereIn('status', [\App\Models\Petition::STATUS_SENT_TO_GOVT, \App\Models\Petition::STATUS_SENT_TO_SPC, \App\Models\Petition::STATUS_INTERNAL_VIGILANCE, \App\Models\Petition::STATUS_CLOSED])
             ->count();
 
         // Vacant Seats mapping

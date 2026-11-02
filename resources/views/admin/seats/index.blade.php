@@ -63,18 +63,45 @@
                                 <div class="flex flex-col items-center justify-center gap-1.5 text-center">
                                     <span class="text-base font-black text-slate-800 group-hover:text-sky-700 transition-colors">{{ $seat->seat_name }}</span>
                                     
-                                    <div class="flex items-center justify-center gap-2 mt-0.5">
+                                    <div class="flex w-full max-w-[18rem] flex-col items-center justify-center gap-1.5 mt-0.5"
+                                         @if($seat->roles->count() > 1) x-data="{ open: false }" @click.outside="open = false" @endif>
                                         @if(!$seat->is_active)
                                             <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold bg-rose-100 text-rose-700 uppercase tracking-widest">Disabled</span>
                                         @endif
                                         
                                         @if($seat->roles->isNotEmpty())
-                                            @foreach($seat->roles as $role)
-                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-widest">
-                                                    <div class="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
-                                                    {{ $role->name }}
-                                                </span>
-                                            @endforeach
+                                            @php
+                                                $additionalRoles = $seat->roles->slice(1);
+                                            @endphp
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-widest max-w-full break-words">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" aria-hidden="true"></span>
+                                                {{ $seat->roles->first()->name }}
+                                            </span>
+
+                                            @if($additionalRoles->isNotEmpty())
+                                                <button type="button"
+                                                        @click="open = !open"
+                                                        @keydown.escape="open = false"
+                                                        :aria-expanded="open.toString()"
+                                                        aria-controls="seat-roles-{{ $seat->seat_id }}"
+                                                        aria-label="Show {{ $additionalRoles->count() }} additional {{ $additionalRoles->count() === 1 ? 'role' : 'roles' }}"
+                                                        class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-50 text-slate-600 border border-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1 transition-colors">
+                                                    +{{ $additionalRoles->count() }} {{ $additionalRoles->count() === 1 ? 'role' : 'roles' }}
+                                                </button>
+                                                <div id="seat-roles-{{ $seat->seat_id }}"
+                                                     x-show="open"
+                                                     x-cloak
+                                                     x-transition
+                                                     class="w-full max-w-xs rounded-lg border border-slate-200 bg-white p-2 text-left shadow-lg">
+                                                    <ul class="flex flex-col gap-1" aria-label="Additional roles">
+                                                        @foreach($additionalRoles as $role)
+                                                            <li class="rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 break-words">
+                                                                {{ $role->name }}
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                </div>
+                                            @endif
                                         @else
                                             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100 uppercase tracking-widest">
                                                 <div class="w-1.5 h-1.5 rounded-full bg-rose-500"></div>

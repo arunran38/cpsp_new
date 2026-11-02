@@ -1,7 +1,8 @@
 @extends('layouts.admin')
+@section('container_width', 'max-w-full')
 
 @section('content')
-<div class="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+<div class="space-y-6">
     <!-- Premium Header Section -->
     <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2">
         <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
@@ -13,9 +14,21 @@
         
         <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
             <div class="text-center sm:text-left z-10">
-                <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
-                    Department Wise Analysis
-                </h1>
+                <div class="flex flex-wrap justify-center sm:justify-start items-center gap-2.5 mb-1">
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
+                        Department Wise Analysis
+                    </h1>
+                    <span
+                        class="px-2.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/30">
+                        @if(($section ?? '') === 'cpsp')
+                            CPSP Section
+                        @elseif(($section ?? '') === 't_section')
+                            T-Section
+                        @else
+                            All Sections
+                        @endif
+                    </span>
+                </div>
                 <p class="text-slate-300 font-medium max-w-2xl text-sm">
                     Statistical overview of petitions grouped by accused departments.
                 </p>
@@ -23,49 +36,91 @@
         </div>
     </div>
 
-        <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden mb-6">
-            <div class="p-6 bg-slate-50">
-                <form action="{{ route('admin.departments.analysis') }}" method="GET" class="flex flex-wrap gap-4 items-end"
+        <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden print-hide mb-6">
+            <div class="p-4 sm:p-5 bg-slate-50/50">
+                <div class="flex items-center gap-2 mb-3">
+                    <i data-lucide="filter" class="w-4 h-4 text-teal-600"></i>
+                    <h3 class="text-xs font-bold text-blue-600 uppercase tracking-wider">Filter Statistics</h3>
+                </div>
+                <form action="{{ route('admin.departments.analysis') }}" method="GET" class="w-full"
                     id="searchForm">
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="block text-xs font-medium text-indigo-700 mb-1">Search Departments</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 xl:gap-4 items-end w-full">
+                    <div class="sm:col-span-1 lg:col-span-2 flex flex-col justify-end">
+                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">Search Departments</label>
                         <div class="relative flex items-center">
                             <i data-lucide="search" class="w-4 h-4 absolute left-3 text-indigo-400"></i>
                             <input type="text" name="search" value="{{ request('search') }}"
-                                class="w-full pl-9 pr-3 py-[9px] rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
+                                class="w-full pl-9 pr-3 h-11 rounded-xl border border-blue-200/80 shadow-sm focus:border-teal-500 focus:ring-teal-500/20 text-sm text-slate-700"
                                 placeholder="Enter department name">
                         </div>
                     </div>
 
-                    <div class="flex-1 min-w-[150px]">
-                        <label class="block text-xs font-medium text-indigo-700 mb-1">Date From</label>
+                    <!-- Section Filter (Segmented Control) -->
+                    <div class="sm:col-span-1 lg:col-span-3 flex flex-col justify-end">
+                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
+                            <i data-lucide="layers" class="h-3.5 w-3.5 text-indigo-500"></i>
+                            <span>Section</span>
+                        </label>
+                        <div class="flex items-center p-1 bg-blue-50/50 border border-blue-200/80 rounded-xl w-full h-11 shadow-inner">
+                            @if($canViewTSection ?? false)
+                                <label class="flex-1 cursor-pointer h-full">
+                                    <input type="radio" name="section" value="all" class="sr-only peer"
+                                        {{ ($section ?? 'all') === 'all' ? 'checked' : '' }}>
+                                    <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2.5">
+                                        All
+                                    </span>
+                                </label>
+                            @endif
+
+                            <label class="flex-1 cursor-pointer h-full">
+                                <input type="radio" name="section" value="cpsp" class="sr-only peer"
+                                    {{ ($section ?? '') === 'cpsp' || !($canViewTSection ?? false) ? 'checked' : '' }}>
+                                <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2.5">
+                                    CPSP
+                                </span>
+                            </label>
+
+                            @if($canViewTSection ?? false)
+                                <label class="flex-1 cursor-pointer h-full">
+                                    <input type="radio" name="section" value="t_section" class="sr-only peer"
+                                        {{ ($section ?? '') === 't_section' ? 'checked' : '' }}>
+                                    <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2.5">
+                                        T-Section
+                                    </span>
+                                </label>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="sm:col-span-1 lg:col-span-2 flex flex-col justify-end">
+                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">Date From</label>
                         <input type="date" id="date_from" placeholder="DD-MM-YYYY" name="date_from"
                             value="{{ request('date_from') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
+                            class="w-full h-11 rounded-xl border border-blue-200/80 shadow-sm focus:border-teal-500 focus:ring-teal-500/20 text-sm text-slate-700 font-semibold"
                             style="color: #1e40af !important;">
                     </div>
-                    <div class="flex-1 min-w-[150px]">
-                        <label class="block text-xs font-medium text-indigo-700 mb-1">Date To</label>
+                    <div class="sm:col-span-1 lg:col-span-2 flex flex-col justify-end">
+                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">Date To</label>
                         <input type="date" id="date_to" placeholder="DD-MM-YYYY" name="date_to"
                             value="{{ request('date_to') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
-                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
+                            class="w-full h-11 rounded-xl border border-blue-200/80 shadow-sm focus:border-teal-500 focus:ring-teal-500/20 text-sm text-slate-700 font-semibold"
                             style="color: #1e40af !important;">
                         <p id="dateRangeError" class="mt-1 text-xs text-rose-600 hidden" aria-live="polite"></p>
                     </div>
 
-                    <div class="flex-none flex items-center gap-2">
-                        <label class="block text-xs font-medium text-transparent mb-1">&nbsp;</label>
+                    <div class="sm:col-span-2 lg:col-span-3 flex items-end gap-2">
                         <a href="{{ route('admin.departments.analysis.export', request()->query()) }}" id="exportExcelBtn"
-                            class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold px-4 py-[9px] rounded-lg text-sm flex items-center gap-2 shadow-sm transition-all whitespace-nowrap">
+                            class="h-11 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold px-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all whitespace-nowrap">
                             <i data-lucide="download" class="w-4 h-4"></i> Export Excel
                         </a>
 
                         <a href="{{ route('admin.departments.analysis') }}"
-                            class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold px-4 py-[9px] rounded-lg text-sm flex items-center gap-2 shadow-sm transition-all whitespace-nowrap"
+                            class="h-11 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold px-3 rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all whitespace-nowrap"
                             title="Clear all filters">
                             <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                             Reset
                         </a>
+                    </div>
                     </div>
                 </form>
             </div>
@@ -77,7 +132,6 @@
                 @include('admin.departments.partials.table')
             </div>
         </div>
-    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -172,7 +226,7 @@
                 });
             });
 
-            const changeInputs = searchForm.querySelectorAll('input[type="date"], select');
+            const changeInputs = searchForm.querySelectorAll('input[type="date"], select, input[type="radio"]');
             changeInputs.forEach(input => {
                 input.addEventListener('change', () => {
                     if (validateDateRange()) {

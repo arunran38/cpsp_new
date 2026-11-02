@@ -18,6 +18,8 @@ class StoreSeatRequest extends FormRequest
             'unit_ids.*' => 'exists:units,unit_id',
             'seat_name' => 'required|string|max:255|unique:seats,seat_name',
             'is_active' => 'boolean',
+            'roles' => 'nullable|array',
+            'roles.*' => 'string|exists:roles,name',
             'role' => 'nullable|string|exists:roles,name',
         ];
     }
