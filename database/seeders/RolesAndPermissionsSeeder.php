@@ -318,7 +318,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'filter transfer',
                 'reassign inward petitions',
                 'view file transfer',
-                'view own inward statistics',
+                'inward statistics',
                 'view petition nature chart',
                 'view petition trends chart',
                 'view processed statistics',
