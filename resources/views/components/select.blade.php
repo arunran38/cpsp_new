@@ -5,23 +5,7 @@
     'selected' => '',
     'placeholder' => null
 ])
-@php
-    $selectName = $name ?? '';
-@endphp
-<div class="space-y-1.5"
-     x-data="{ 
-         selectName: '{{ $selectName }}',
-         get errorMessage() {
-             if (typeof formErrors === 'undefined' || !formErrors) return '';
-             const key = this.selectName || (this.$refs.select ? this.$refs.select.name : '');
-             if (!key || !formErrors[key]) return '';
-             return Array.isArray(formErrors[key]) ? formErrors[key][0] : formErrors[key];
-         },
-         get hasError() {
-             return Boolean(this.errorMessage);
-         }
-     }"
-     x-init="if ($refs.select && $refs.select.name) selectName = $refs.select.name">
+<div class="space-y-1.5">
     @if($label)
         <label @if($name) for="{{ $name }}" @endif class="block text-sm font-bold text-slate-800">
             {!! $label !!}
@@ -34,7 +18,8 @@
                 'id' => $name,
             ]) }}
             style="background-image: none !important;"
-            :class="hasError ? 'border-rose-500 ring-4 ring-rose-500/10 focus:border-rose-500 focus:ring-rose-500/10' : 'border-slate-200 focus:ring-4 focus:ring-primary/10 focus:border-primary'"
+            :class="(typeof formErrors !== 'undefined' && formErrors && $refs.select && formErrors[$refs.select.name]) ? 'border-rose-500 ring-4 ring-rose-500/10 focus:border-rose-500 focus:ring-rose-500/10' : 'border-slate-200 focus:ring-4 focus:ring-primary/10 focus:border-primary'"
+            :aria-invalid="Boolean(typeof formErrors !== 'undefined' && formErrors && $refs.select && formErrors[$refs.select.name])"
             x-ref="select"
             @if(!($attributes->has(':name') || $attributes->has('::name') || $attributes->has('x-bind:name'))) name="{{ $name }}" @endif
             @change="if (typeof clearError === 'function') clearError($event); if (typeof validateField === 'function') validateField($event);"
@@ -67,7 +52,7 @@
             </div>
         @enderror
     @endif
-    <template x-if="hasError">
-        <p class="text-xs font-semibold text-rose-600 mt-1" x-text="errorMessage"></p>
+    <template x-if="typeof formErrors !== 'undefined' && formErrors && $refs.select && formErrors[$refs.select.name]">
+        <p role="alert" aria-live="polite" class="text-xs font-semibold text-rose-600 mt-1" x-text="Array.isArray(formErrors[$refs.select.name]) ? formErrors[$refs.select.name][0] : formErrors[$refs.select.name]"></p>
     </template>
 </div>

@@ -126,4 +126,61 @@ class InwardStatisticsTest extends TestCase
             ->assertSee('All Petitions')
             ->assertDontSee('My Petitions');
     }
+
+    public function test_viewing_inward_statistics_does_not_trigger_or_show_statistical_reports_dropdown_or_pendency_details(): void
+    {
+        $inwardRole = Role::firstOrCreate(['name' => 'Inward', 'guard_name' => 'web']);
+        $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'inward statistics', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'create inward petitions', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view seat diagnostics', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'access admin dashboard', 'guard_name' => 'web']);
+
+        $inwardSeat = Seat::factory()->create(['seat_name' => 'INWARD 1']);
+        $inwardSeat->assignRole($inwardRole);
+
+        $inwardUser = User::factory()->create(['name' => 'Inward Desk Officer']);
+        $inwardUser->assignRole($inwardRole);
+        $inwardUser->givePermissionTo('inward statistics', 'create inward petitions');
+
+        SeatUser::factory()->create([
+            'user_id' => $inwardUser->user_id,
+            'seat_id' => $inwardSeat->seat_id,
+            'is_active' => true,
+        ]);
+        session(['current_seat_id' => $inwardSeat->seat_id]);
+
+        // 1. Inward Desk Officer visiting Inward Statistics
+        $response = $this->actingAs($inwardUser)->get(route('inward.statistics'));
+        $response->assertOk();
+        $response->assertSee('Inward Statistics');
+        // Unrelated Statistical Reports and Pendency Details must NOT be rendered
+        $response->assertDontSee('Statistical Reports');
+        $response->assertDontSee('Pendency Details');
+        $response->assertDontSee('Seat Diagnostics');
+        $response->assertDontSee('reportsOpen: true', false);
+
+        // 2. Super Admin (who has view seat diagnostics) visiting Inward Statistics
+        $adminSeat = Seat::factory()->create(['seat_name' => 'Director Admin']);
+        $adminSeat->assignRole($superAdminRole);
+        $superAdminRole->givePermissionTo('access admin dashboard', 'view seat diagnostics', 'inward statistics');
+
+        $superAdmin = User::factory()->create(['name' => 'System Super Admin']);
+        $superAdmin->assignRole($superAdminRole);
+
+        SeatUser::factory()->create([
+            'user_id' => $superAdmin->user_id,
+            'seat_id' => $adminSeat->seat_id,
+            'is_active' => true,
+        ]);
+        session(['current_seat_id' => $adminSeat->seat_id]);
+
+        $adminResponse = $this->actingAs($superAdmin)->get(route('inward.statistics'));
+        $adminResponse->assertOk();
+        // Statistical Reports should exist in the sidebar for admin, but must NOT be triggered open by inward statistics
+        $adminResponse->assertSee('reportsOpen: false', false);
+        $adminResponse->assertDontSee('reportsOpen: true', false);
+        // Pendency Details duplicate link pointing to inward.statistics must NOT be rendered
+        $adminResponse->assertDontSee('Pendency Details');
+    }
 }

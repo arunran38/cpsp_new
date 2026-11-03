@@ -595,18 +595,18 @@
                 </a>
                 @endif
                 
-                @if(Auth::check() && (Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view pendency details') || Auth::user()->canAccess('view recycle bin')))
+                @if(Auth::check() && (Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin')))
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Operations</p>
                 </div>
                 @endif
 
-                @if(Auth::check() && (Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view pendency details')))
+                @if(Auth::check() && Auth::user()->canAccess('view seat diagnostics'))
                 <!-- Statistical Reports Dropdown -->
                 <div x-data="{ 
                         hoverOpen: false,
                         hoverTimeout: null,
-                        reportsOpen: {{ request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') || request()->routeIs('inward.statistics') ? 'true' : 'false' }}
+                        reportsOpen: {{ request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') ? 'true' : 'false' }}
                     }" 
                     @mouseenter="hoverOpen = true; clearTimeout(hoverTimeout)"
                     @mouseleave="hoverTimeout = setTimeout(() => { hoverOpen = false }, 300)"
@@ -616,7 +616,7 @@
                             class="nav-item-transition flex items-center justify-between w-full px-4 py-3 text-sm font-medium rounded-xl group"
                             :class="(reportsOpen || hoverOpen) ? 'menu-open' : 'inactive-nav'">
                         <div class="flex items-center gap-3">
-                            <i data-lucide="pie-chart" class="w-5 h-5 icon-bounce" :class="(reportsOpen || hoverOpen) || request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') || request()->routeIs('inward.statistics') ? 'text-indigo-400' : ''"></i>
+                            <i data-lucide="pie-chart" class="w-5 h-5 icon-bounce" :class="(reportsOpen || hoverOpen) || request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') ? 'text-indigo-400' : ''"></i>
                             <span>Statistical Reports</span>
                         </div>
                         <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': reportsOpen || hoverOpen }"></i>
@@ -649,16 +649,6 @@
                             <span class="submenu-indicator shrink-0"></span>
                             <i data-lucide="building-2" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('admin.departments.analysis') ? 'text-teal-400' : '' }}"></i>
                             <span class="whitespace-nowrap">Department wise</span>
-                        </a>
-                        @endif
-
-                        @if(Auth::user()->canAccess('view pendency details'))
-                        <a href="{{ route('inward.statistics') }}" 
-                           @click="reportsOpen = true"
-                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">
-                            <span class="submenu-indicator shrink-0"></span>
-                            <i data-lucide="clock" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.statistics') ? 'text-teal-400' : '' }}"></i>
-                            <span class="whitespace-nowrap">Pendency Details</span>
                         </a>
                         @endif
                     </div>

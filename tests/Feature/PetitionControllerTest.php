@@ -55,6 +55,33 @@ class PetitionControllerTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertViewIs('user.petition_add');
+        $response->assertSee('name="nature_of_petition"', false)
+            ->assertSee('Nature of Petition is required.', false);
+    }
+
+    public function test_normal_petition_create_requires_nature_of_petition(): void
+    {
+        $department = \App\Models\DepartmentList::firstOrCreate(['department_name' => 'Nature Validation Department']);
+
+        $response = $this->followingRedirects()
+            ->actingAs($this->user)
+            ->from(route('petitions.create'))
+            ->post(route('petitions.store'), [
+                'receipt_no' => 'MISSING-NATURE-1',
+                'date_of_petition_received' => now()->toDateString(),
+                'mode_of_petition_received' => 'Direct',
+                'description' => 'Nature validation regression test',
+                'accused' => [[
+                    'name' => 'Test Suspect',
+                    'entity_type' => 'Person',
+                    'department_id' => $department->id,
+                ]],
+            ]);
+
+        $response->assertOk()
+            ->assertSee('Nature of Petition is required.');
+        $this->assertDatabaseMissing('petitions', ['receipt_no' => 'MISSING-NATURE-1']);
+        $response->assertSee('"nature_of_petition":["Nature of Petition is required."]', false);
     }
 
     public function test_user_can_store_petition_with_complainants_and_files(): void
@@ -313,7 +340,37 @@ class PetitionControllerTest extends TestCase
         $response->assertOk()
             ->assertSee(route('petitions.linkDuplicate', $petition->hashid), false)
             ->assertSee('original_receipt_no', false)
-            ->assertSee('fetch(', false);
+            ->assertSee('fetch(', false)
+            ->assertSee('name="nature_of_petition"', false)
+            ->assertSee('Nature of Petition is required.', false);
+    }
+
+    public function test_petition_update_requires_nature_of_petition(): void
+    {
+        $petition = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+        ]);
+        $department = \App\Models\DepartmentList::firstOrCreate(['department_name' => 'Nature Update Validation Department']);
+
+        $response = $this->followingRedirects()
+            ->actingAs($this->user)
+            ->from(route('petitions.edit', $petition->hashid))
+            ->put(route('petitions.update', $petition->petition_id), [
+                'receipt_no' => $petition->receipt_no,
+                'date_of_petition_received' => now()->toDateString(),
+                'mode_of_petition_received' => 'Direct',
+                'description' => 'Nature update validation regression test',
+                'accused' => [[
+                    'name' => 'Test Suspect',
+                    'entity_type' => 'Person',
+                    'department_id' => $department->id,
+                ]],
+            ]);
+
+        $response->assertOk()
+            ->assertSee('Nature of Petition is required.')
+            ->assertSee('"nature_of_petition":["Nature of Petition is required."]', false);
     }
 
     public function test_duplicate_search_finds_petition_by_complainant_and_accused(): void

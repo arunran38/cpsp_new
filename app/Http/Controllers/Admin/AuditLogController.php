@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\AuditLogsExport;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AuditLogController extends Controller
@@ -88,9 +91,9 @@ class AuditLogController extends Controller
     }
 
     /**
-     * Export audit logs to CSV.
+     * Export audit logs to Excel.
      */
-    public function export(Request $request): StreamedResponse
+    public function export(Request $request): BinaryFileResponse
     {
         abort_unless(Auth::user()->canAccess('view log'), 403, 'Unauthorized access to Audit Logs.');
 
@@ -109,57 +112,9 @@ class AuditLogController extends Controller
             ->limit(5000)
             ->get();
 
-        $fileName = 'cpsp_audit_logs_' . date('Y_m_d_His') . '.csv';
+        $fileName = 'cpsp_audit_logs_' . date('Y_m_d_His') . '.xlsx';
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0',
-        ];
-
-        $callback = function () use ($logs) {
-            $handle = fopen('php://output', 'w');
-            
-            // Add UTF-8 BOM for proper Excel rendering
-            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
-
-            // Header row
-            fputcsv($handle, [
-                'Log ID',
-                'Date & Time',
-                'Session Duration',
-                'User Name',
-                'PEN',
-                'Action',
-                'Module',
-                'Description',
-                'HTTP Method',
-                'IP Address',
-                'URL',
-            ]);
-
-            foreach ($logs as $log) {
-                fputcsv($handle, [
-                    $log->audit_id,
-                    $log->created_at ? $log->created_at->format('Y-m-d H:i:s') : 'N/A',
-                    $log->session_duration ?? 'N/A',
-                    $log->user_name ?? ($log->user->name ?? 'System'),
-                    $log->user_pen ?? ($log->user->pen ?? 'N/A'),
-                    $log->action,
-                    $log->module,
-                    $log->description,
-                    $log->method,
-                    $log->ip_address,
-                    $log->url,
-                ]);
-            }
-
-            fclose($handle);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return Excel::download(new AuditLogsExport($logs, $filters), $fileName);
     }
 }
 

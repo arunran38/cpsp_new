@@ -973,7 +973,7 @@
                 autoSaveTimer: null,
 
                 step: {{ old('step') ? old('step') : 'initialStep' }},
-                formErrors: {},
+                formErrors: @json($errors->getMessages()),
                 showReturnModal: false,
                 returnPetitionId: {{ $petition->petition_id }},
                 returnReceiptNo: {!! json_encode($petition->receipt_no) !!},

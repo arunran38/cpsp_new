@@ -1145,7 +1145,7 @@
                 step: {{ old('step') ? old('step') : 'initialStep' }},
                 districtNames: @json($districts->pluck('district_name', 'district_id')),
                 unitNames: @json($unitsList->pluck('unit_name', 'unit_id')),
-                formErrors: {},
+                formErrors: @json($errors->getMessages()),
 
                 showPreview: false,
                 petitionDetails: {

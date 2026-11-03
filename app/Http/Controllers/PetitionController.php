@@ -515,7 +515,6 @@ class PetitionController extends Controller
         $canViewOwnStats = $canViewOtherStats
             || $user->canAccess('view own inward statistics')
             || $user->canAccess('inward statistics')
-            || $user->canAccess('view pendency details')
             || $user->canAccess('create inward petitions')
             || $user->hasRole(['inward', 'Inward'])
             || ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || str_contains(strtolower($currentSeat->seat_name), 'inward')));
@@ -619,21 +618,22 @@ class PetitionController extends Controller
                 : "Creator #{$selectedCreator}";
         }
 
-        // Date & Section filters
+        // Date filters
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
-        $section = $request->input('section', 'all');
 
-        $canViewTSection = $user->canAccessTSectionPending();
+        $section = $request->input('section', 'cpsp');
+        $canViewTSection = $user->canAccessTSectionPending()
+            || $user->canAccessTSectionDiagnostics();
+
         if (!$canViewTSection && $section === 't_section') {
-            abort(403, 'Unauthorized. Special clearance required to access T-Section statistics.');
+            abort(403, 'Unauthorized. Special clearance required to view T-Section statistics.');
+        }
+        if (!$canViewTSection && $section === 'all') {
+            $section = 'cpsp';
         }
 
         $tSeatIds = Seat::getTSectionSeatIds();
-
-        // Fetch active seats based on section filter (CPSP and/or T-Section)
-        $seatsQuery = Seat::with(['activeAssignment.user'])
-            ->where('is_active', true);
 
         $cpspConstraint = function ($q) {
             $q->where(function ($sq) {
@@ -646,42 +646,61 @@ class PetitionController extends Controller
             ->where('seat_name', 'not like', 'SS %')
             ->where('seat_name', 'not like', '%SS CPSP%')
             ->where('seat_name', 'not like', '%Superintendent%')
-            ->whereDoesntHave('roles', fn($r) => $r->whereIn('name', ['SS CPSP', 'ss cpsp', 'Superintendent', 'superintendent', 'Inward', 'inward']));
+            ->whereDoesntHave('roles', fn($r) => $r->whereIn('name', [
+                'SS CPSP', 'ss cpsp', 'Superintendent', 'superintendent', 'Inward', 'inward',
+                'T Section', 't section', 'T-Section', 't-section'
+            ]));
         };
 
-        if ($section === 'cpsp' || !$canViewTSection) {
-            $seatsQuery->where($cpspConstraint);
-            if (!$canViewTSection && $section === 'all') {
-                $section = 'cpsp';
-            }
-        } elseif ($section === 't_section') {
-            $seatsQuery->where(function ($q) use ($tSeatIds) {
-                $q->whereIn('seat_id', $tSeatIds)
-                  ->orWhere('seat_name', 'like', '%T Section%')
-                  ->orWhere('seat_name', 'like', '%T-Section%')
-                  ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']));
+        $seatsQuery = Seat::with(['activeAssignment.user'])
+            ->where('is_active', true);
+
+        $tSectionConstraint = function ($q) use ($tSeatIds) {
+            $q->whereIn('seat_id', $tSeatIds)
+              ->orWhere('seat_name', 'like', '%T Section%')
+              ->orWhere('seat_name', 'like', '%T-Section%')
+              ->orWhere('seat_name', 'like', 'T-%')
+              ->orWhere('seat_name', 'like', 'T1%')
+              ->orWhere('seat_name', 'like', 'T2%')
+              ->orWhere('seat_name', 'like', 'T3%')
+              ->orWhereHas('roles', fn($r) => $r->whereIn('name', [
+                  'T Section', 't section', 'T-Section', 't-section',
+              ]));
+        };
+
+        if ($section === 't_section') {
+            $seatsQuery->where($tSectionConstraint);
+        } elseif ($section === 'all' && $canViewTSection) {
+            $seatsQuery->where(function ($q) use ($cpspConstraint, $tSectionConstraint) {
+                $q->where($cpspConstraint)->orWhere($tSectionConstraint);
             });
         } else {
-            // All: CPSP & T-Section
-            $seatsQuery->where(function ($q) use ($tSeatIds, $cpspConstraint) {
-                $q->where($cpspConstraint)
-                  ->orWhereIn('seat_id', $tSeatIds)
-                  ->orWhere('seat_name', 'like', '%T Section%')
-                  ->orWhere('seat_name', 'like', '%T-Section%')
-                  ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']));
-            });
+            $section = 'cpsp';
+            $seatsQuery->where($cpspConstraint);
         }
 
-        // Strictly exclude SS CPSP, Superintendent, and Inward seats from inward statistics
         $seatsQuery->where('seat_name', 'not like', 'SS %')
                    ->where('seat_name', 'not like', '%SS CPSP%')
                    ->where('seat_name', 'not like', '%Superintendent%')
-                   ->whereDoesntHave('roles', fn($r) => $r->whereIn('name', ['SS CPSP', 'ss cpsp', 'Superintendent', 'superintendent', 'Inward', 'inward']));
+                   ->whereDoesntHave('roles', fn($r) => $r->whereIn('name', [
+                       'SS CPSP', 'ss cpsp', 'Superintendent', 'superintendent', 'Inward', 'inward',
+                   ]));
+
+        // Scoping for operational CPSP seat occupants without global stats viewing permissions:
+        // If the user is currently occupying a CPSP operational seat, restrict the view
+        // to their own assigned seat so they only view data they are authorized to access.
+        $isCpspSeatOccupant = $currentSeat && (
+            $currentSeat->hasRole(['cpsp', 'CPSP']) ||
+            str_starts_with(strtoupper($currentSeat->seat_name), 'CPSP')
+        );
+
+        if ($isCpspSeatOccupant && !$canViewOtherStats && !$canViewAllStats) {
+            $seatsQuery->where('seat_id', $currentSeat->seat_id);
+        }
 
         $seats = $seatsQuery->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $includedSeatIds = $seats->pluck('seat_id')->toArray();
 
-        // Fetch petition data
         $petitionsQuery = Petition::whereNull('linked_petition_id')
             ->whereIn('seat_id', $includedSeatIds);
 

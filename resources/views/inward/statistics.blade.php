@@ -43,7 +43,7 @@
                 </div>
                 <form method="GET" action="{{ route('inward.statistics') }}" class="w-full">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 xl:gap-4 items-end w-full">
-                        <!-- Section Filter (Segmented Control) -->
+                        <!-- Section Filter -->
                         <div class="sm:col-span-1 lg:col-span-3 flex flex-col justify-end">
                             <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
                                 <i data-lucide="layers" class="h-3.5 w-3.5 text-blue-500"></i>
@@ -53,29 +53,27 @@
                                 @if($canViewTSection ?? false)
                                     <label class="flex-1 cursor-pointer h-full">
                                         <input type="radio" name="section" value="all" class="sr-only peer"
-                                            {{ ($section ?? 'all') === 'all' ? 'checked' : '' }}
+                                            {{ ($section ?? 'cpsp') === 'all' ? 'checked' : '' }}
                                             onchange="this.form.submit()">
-                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-3">
-                                            All Sections
+                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2">
+                                            All
                                         </span>
                                     </label>
                                 @endif
-
                                 <label class="flex-1 cursor-pointer h-full">
                                     <input type="radio" name="section" value="cpsp" class="sr-only peer"
-                                        {{ ($section ?? '') === 'cpsp' || !($canViewTSection ?? false) ? 'checked' : '' }}
+                                        {{ ($section ?? 'cpsp') === 'cpsp' ? 'checked' : '' }}
                                         onchange="this.form.submit()">
-                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-3">
+                                    <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2">
                                         CPSP
                                     </span>
                                 </label>
-
                                 @if($canViewTSection ?? false)
                                     <label class="flex-1 cursor-pointer h-full">
                                         <input type="radio" name="section" value="t_section" class="sr-only peer"
                                             {{ ($section ?? '') === 't_section' ? 'checked' : '' }}
                                             onchange="this.form.submit()">
-                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-3">
+                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2">
                                             T-Section
                                         </span>
                                     </label>
@@ -193,13 +191,7 @@
                 class="px-8 py-6 border-b border-slate-100 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:p-0 print:border-b-2 print:border-slate-800">
                 <div>
                     <h2 class="text-lg font-extrabold text-slate-900">
-                        @if(($section ?? '') === 'cpsp')
-                            CPSP Seats - Petition Statistics Data Sheet
-                        @elseif(($section ?? '') === 't_section')
-                            T-Section - Petition Statistics Data Sheet
-                        @else
-                            Seat-Wise Petition Statistics Data Sheet
-                        @endif
+                        CPSP Seats - Petition Statistics Data Sheet
                     </h2>
                     <div class="flex flex-wrap items-center gap-2 mt-1.5">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-800 border border-teal-200 shadow-sm">
@@ -213,13 +205,7 @@
                             </div>
                         @else
                             <p class="text-sm text-slate-500 font-medium">
-                                @if(($section ?? '') === 'cpsp')
-                                    Overall petition summary assigned to CPSP seats.
-                                @elseif(($section ?? '') === 't_section')
-                                    Overall petition summary assigned to T-Section.
-                                @else
-                                    Overall petition summary assigned to CPSP and T-Section seats.
-                                @endif
+                                Overall petition summary assigned to CPSP seats.
                             </p>
                         @endif
                     </div>

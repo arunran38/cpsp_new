@@ -38,6 +38,6 @@
         @enderror
     @endif
     <template x-if="typeof formErrors !== 'undefined' && formErrors && $refs.textarea && formErrors[$refs.textarea.name]">
-        <p class="text-xs font-semibold text-rose-600 mt-1" x-text="Array.isArray(formErrors[$refs.textarea.name]) ? formErrors[$refs.textarea.name][0] : formErrors[$refs.textarea.name]"></p>
+        <p role="alert" aria-live="polite" class="text-xs font-semibold text-rose-600 mt-1" x-text="Array.isArray(formErrors[$refs.textarea.name]) ? formErrors[$refs.textarea.name][0] : formErrors[$refs.textarea.name]"></p>
     </template>
 </div>

@@ -5,23 +5,22 @@
 
 @section('content')
 <div class="space-y-6" x-data="recycleBinManager()">
-    <!-- Header Section matching Inward Statistics design -->
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
+    <!-- Header Section -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg">
         <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3 pointer-events-none">
-            <div class="w-80 h-80 bg-rose-500/15 rounded-full blur-[80px]"></div>
+            <div class="w-72 h-72 bg-rose-500/15 rounded-full blur-[60px]"></div>
         </div>
         <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 pointer-events-none">
-            <div class="w-80 h-80 bg-rose-600/10 rounded-full blur-[80px]"></div>
+            <div class="w-72 h-72 bg-indigo-500/15 rounded-full blur-[60px]"></div>
         </div>
-
-        <div class="relative px-6 py-6 sm:px-8">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                <!-- Title & Description -->
+        
+        <div class="relative px-6 py-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
+            <div class="flex items-center gap-4 text-center sm:text-left z-10">
+                <div class="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 shadow-inner shrink-0">
+                    <i data-lucide="trash-2" class="w-6 h-6"></i>
+                </div>
                 <div>
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center text-rose-400 shadow-inner">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </div>
+                    <div class="flex items-center gap-2.5 justify-center sm:justify-start">
                         <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
                             Recycle Bin
                         </h1>
@@ -29,174 +28,111 @@
                             {{ $totalTrashed }} {{ Str::plural('Record', $totalTrashed) }}
                         </span>
                     </div>
-                    <p class="text-slate-300 font-medium max-w-2xl text-sm leading-relaxed">
-                        Detailed seat-wise records of soft-deleted petitions. Authorized administrators can inspect historical records, restore petitions, or permanently purge files.
+                    <p class="text-slate-300 font-medium max-w-2xl text-xs sm:text-sm mt-0.5">
+                        Inspect soft-deleted petitions, restore active records, or permanently purge files.
                     </p>
                 </div>
-
-                <!-- Stat Cards -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full lg:w-auto">
-                    <!-- Total Trashed -->
-                    <div class="bg-slate-800/80 backdrop-blur-sm border border-slate-700/60 rounded-xl p-3.5 text-center min-w-[110px]">
-                        <span class="block text-2xl font-black text-white">{{ $totalTrashed }}</span>
-                        <span class="text-xs text-slate-400 font-medium">Total Deleted</span>
-                    </div>
-                    <!-- Trashed This Month -->
-                    <div class="bg-slate-800/80 backdrop-blur-sm border border-slate-700/60 rounded-xl p-3.5 text-center min-w-[110px]">
-                        <span class="block text-2xl font-black text-amber-400">{{ $trashedThisMonth }}</span>
-                        <span class="text-xs text-slate-400 font-medium">This Month</span>
-                    </div>
-                    <!-- Trashed With Files -->
-                    <div class="bg-slate-800/80 backdrop-blur-sm border border-slate-700/60 rounded-xl p-3.5 text-center min-w-[110px] col-span-2 sm:col-span-1">
-                        <span class="block text-2xl font-black text-emerald-400">{{ $trashedWithFiles }}</span>
-                        <span class="text-xs text-slate-400 font-medium">With Files</span>
-                    </div>
-                </div>
             </div>
+
+            @if($totalTrashed > 0)
+                <div class="flex items-center gap-2 z-10 text-xs font-bold text-slate-300 shrink-0">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 shadow-2xs">
+                        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                        <span>{{ $trashedThisMonth }} this month</span>
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 shadow-2xs">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span>{{ $trashedWithFiles }} with files</span>
+                    </span>
+                </div>
+            @endif
         </div>
     </div>
 
-    <!-- Advanced Filter Section matching Inward Statistics design -->
-    <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden print-hide mb-6">
-        <div class="p-4 sm:p-5 bg-slate-50/50">
-            <div class="flex items-center gap-2 mb-3">
-                <i data-lucide="filter" class="w-4 h-4 text-teal-600"></i>
-                <h3 class="text-xs font-bold text-blue-600 uppercase tracking-wider">Filter Deleted Petitions</h3>
-            </div>
-            <form method="GET" action="{{ route('admin.trash.index') }}" class="w-full">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 xl:gap-4 items-end w-full">
-                    
-                    <!-- Search Keyword -->
-                    <div class="sm:col-span-2 lg:col-span-4 flex flex-col justify-end">
-                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
-                            <i data-lucide="search" class="h-3.5 w-3.5 text-blue-500"></i>
-                            <span>Search Details</span>
-                        </label>
-                        <div class="relative w-full">
-                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-blue-400">
-                                <i data-lucide="search" class="h-4 w-4"></i>
-                            </div>
-                            <input type="text" name="search" id="search" value="{{ $search ?? '' }}"
-                                placeholder="Receipt No, File No, Petitioner, Phone..."
-                                class="w-full pl-10 pr-3 h-11 bg-white border border-blue-200/80 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300"
-                                style="color: #1e40af !important;">
+    <!-- Main Data Card: Filters & Table Unified -->
+    <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
+        <!-- Compact Filter Toolbar -->
+        <div class="p-4 sm:p-5 bg-slate-50/70 border-b border-slate-200">
+            <form method="GET" action="{{ route('admin.trash.index') }}" class="flex flex-wrap lg:flex-nowrap items-end gap-3">
+                <!-- Search Input -->
+                <div class="flex-1 min-w-[220px]">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Search Petitions</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="search" class="w-4 h-4"></i>
+                        </div>
+                        <input type="text" name="search" value="{{ $search ?? '' }}"
+                               placeholder="Receipt No, File No, Petitioner, Accused..."
+                               class="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all text-slate-800 placeholder-slate-400">
+                    </div>
+                </div>
+
+                <!-- Nature Dropdown -->
+                <div class="w-full sm:w-48">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nature</label>
+                    <div class="relative">
+                        <select name="nature"
+                                class="w-full pl-3 pr-8 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all text-slate-800 appearance-none cursor-pointer">
+                            <option value="">All Natures</option>
+                            @foreach($availableNatures as $nat)
+                                <option value="{{ $nat }}" {{ ($nature ?? '') === $nat ? 'selected' : '' }}>{{ $nat }}</option>
+                            @endforeach
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="chevron-down" class="w-4 h-4"></i>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Nature Filter -->
-                    <div class="sm:col-span-1 lg:col-span-3 flex flex-col justify-end">
-                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
-                            <i data-lucide="tag" class="h-3.5 w-3.5 text-blue-500"></i>
-                            <span>Petition Nature</span>
-                        </label>
-                        <div class="relative w-full">
-                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-blue-400">
-                                <i data-lucide="tag" class="h-4 w-4"></i>
-                            </div>
-                            <select name="nature" id="nature"
-                                class="w-full pl-10 pr-9 h-11 bg-white border border-blue-200/80 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300 appearance-none cursor-pointer"
-                                style="color: #1e40af !important;">
-                                <option value="">All Petition Natures</option>
-                                @foreach($availableNatures as $nat)
-                                    <option value="{{ $nat }}" {{ ($nature ?? '') === $nat ? 'selected' : '' }}>{{ $nat }}</option>
-                                @endforeach
-                            </select>
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-                                <i data-lucide="chevron-down" class="h-4 w-4"></i>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Date From -->
+                <div class="w-full sm:w-36">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Deleted From</label>
+                    <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}" max="{{ now()->format('Y-m-d') }}"
+                           class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all text-slate-800">
+                </div>
 
-                    <!-- Date From (Deleted) -->
-                    <div class="sm:col-span-1 lg:col-span-2 flex flex-col justify-end">
-                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
-                            <i data-lucide="calendar" class="h-3.5 w-3.5 text-blue-500"></i>
-                            <span>Deleted From</span>
-                        </label>
-                        <div class="relative w-full">
-                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                <i data-lucide="calendar" class="h-4 w-4 text-blue-400"></i>
-                            </div>
-                            <input type="date" name="date_from" id="date_from" value="{{ $dateFrom ?? '' }}" placeholder="DD-MM-YYYY"
-                                max="{{ now()->format('Y-m-d') }}"
-                                class="w-full pl-10 pr-3 h-11 bg-white border border-blue-200/80 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300"
-                                style="color: #1e40af !important;">
-                        </div>
-                    </div>
+                <!-- Date To -->
+                <div class="w-full sm:w-36">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Deleted To</label>
+                    <input type="date" name="date_to" value="{{ $dateTo ?? '' }}" max="{{ now()->format('Y-m-d') }}"
+                           class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all text-slate-800">
+                </div>
 
-                    <!-- Date To (Deleted) -->
-                    <div class="sm:col-span-1 lg:col-span-2 flex flex-col justify-end">
-                        <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
-                            <i data-lucide="calendar" class="h-3.5 w-3.5 text-blue-500"></i>
-                            <span>Deleted To</span>
-                        </label>
-                        <div class="relative w-full">
-                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                <i data-lucide="calendar" class="h-4 w-4 text-blue-400"></i>
-                            </div>
-                            <input type="date" name="date_to" id="date_to" value="{{ $dateTo ?? '' }}" placeholder="DD-MM-YYYY"
-                                max="{{ now()->format('Y-m-d') }}"
-                                class="w-full pl-10 pr-3 h-11 bg-white border border-blue-200/80 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300"
-                                style="color: #1e40af !important;">
-                        </div>
-                    </div>
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="submit"
+                            class="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-xs flex items-center gap-1.5 h-[38px] cursor-pointer">
+                        <i data-lucide="filter" class="w-3.5 h-3.5 text-slate-300"></i>
+                        <span>Filter</span>
+                    </button>
 
-                    <!-- Apply & Reset Actions -->
-                    <div class="sm:col-span-2 lg:col-span-1 flex flex-col justify-end">
-                        <div class="h-4 mb-1.5 hidden lg:block"></div>
-                        <div class="flex items-center gap-2 w-full h-11">
-                            <button type="submit"
-                                class="flex-1 h-11 px-3 text-sm font-bold text-white bg-teal-600 border border-teal-600 rounded-xl hover:bg-teal-700 hover:border-teal-700 shadow-sm shadow-teal-500/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer">
-                                <i data-lucide="filter" class="w-4 h-4 text-white"></i>
-                                <span>Apply</span>
-                            </button>
-
-                            @php
-                                $hasActiveFilters = !empty($search) || !empty($nature) || !empty($dateFrom) || !empty($dateTo);
-                            @endphp
-                            @if($hasActiveFilters)
-                                <a href="{{ route('admin.trash.index') }}" title="Clear Filters"
-                                    class="w-11 h-11 shrink-0 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-rose-600 shadow-sm flex items-center justify-center transition-all">
-                                    <i data-lucide="x" class="w-4 h-4"></i>
-                                </a>
-                            @endif
-                        </div>
-                    </div>
+                    @php
+                        $hasActiveFilters = !empty($search) || !empty($nature) || !empty($dateFrom) || !empty($dateTo);
+                    @endphp
+                    @if($hasActiveFilters)
+                        <a href="{{ route('admin.trash.index') }}"
+                           class="px-3.5 py-2 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-all flex items-center gap-1.5 h-[38px]"
+                           title="Clear Filters">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                            <span>Reset</span>
+                        </a>
+                    @endif
                 </div>
             </form>
         </div>
-    </div>
 
-    <!-- Data Table matching Inward Statistics Data Sheet style -->
-    <div class="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden mb-6">
-        <!-- Table Top Header -->
-        <div class="px-6 py-4.5 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-                <h3 class="text-base font-extrabold text-slate-900 tracking-tight">
-                    Deleted Petition Records
-                </h3>
-                <p class="text-xs text-slate-500 font-medium mt-0.5">
-                    Historical seat-wise records of soft-deleted petitions and evidence attachments.
-                </p>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="px-3 py-1 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 shadow-2xs">
-                    Showing {{ $trashedPetitions->count() }} of {{ $trashedPetitions->total() }} Records
-                </span>
-            </div>
-        </div>
-
+        <!-- Table -->
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-slate-50/80 border-b-2 border-slate-100 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                        <th class="px-5 py-4 w-12 text-center">#</th>
-                        <th class="px-5 py-4">Receipt & Nature</th>
-                        <th class="px-5 py-4">Petitioner (Complainant)</th>
-                        <th class="px-5 py-4">Accused / Subject</th>
-                        <th class="px-5 py-4">Desk & User</th>
-                        <th class="px-5 py-4">Deleted Date</th>
-                        <th class="px-5 py-4 text-right">Actions</th>
+                    <tr class="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                        <th class="px-5 py-3.5 w-12 text-center">#</th>
+                        <th class="px-5 py-3.5">Receipt & Nature</th>
+                        <th class="px-5 py-3.5">Petitioner (Complainant)</th>
+                        <th class="px-5 py-3.5">Accused / Subject</th>
+                        <th class="px-5 py-3.5">Desk & User</th>
+                        <th class="px-5 py-3.5">Deleted Date</th>
+                        <th class="px-5 py-3.5 text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-sm">
@@ -253,16 +189,16 @@
                                 'can_delete' => Auth::user()->canAccess('delete recycle bin'),
                             ];
                         @endphp
-                        <tr class="hover:bg-slate-50/60 transition-colors">
+                        <tr class="hover:bg-slate-50/70 transition-colors">
                             <!-- # SL -->
-                            <td class="px-5 py-4 text-center font-bold text-slate-400 text-xs">
+                            <td class="px-5 py-4 text-center font-semibold text-slate-400 text-xs">
                                 {{ ($trashedPetitions->currentPage() - 1) * $trashedPetitions->perPage() + $loop->iteration }}
                             </td>
 
                             <!-- Receipt No & Nature -->
                             <td class="px-5 py-4">
                                 <div class="flex items-center gap-2">
-                                    <span class="font-extrabold text-slate-900 text-sm tracking-tight">
+                                    <span class="font-bold text-slate-900 text-sm">
                                         {{ $petition->receipt_no ?? ('ID #' . $petition->petition_id) }}
                                     </span>
                                     @if($hasUploads)
@@ -278,7 +214,7 @@
                                 @endif
                                 <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
                                     @if($petition->nature_of_petition)
-                                        <span class="inline-block text-[11px] font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-md px-2 py-0.5">
+                                        <span class="inline-block text-[11px] font-semibold text-slate-700 bg-slate-100 border border-slate-200 rounded px-2 py-0.5">
                                             {{ $petition->nature_of_petition }}
                                         </span>
                                     @endif
@@ -293,12 +229,12 @@
                             <!-- Petitioner (Complainant) -->
                             <td class="px-5 py-4">
                                 @if($firstComplainant)
-                                    <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <div class="font-semibold text-slate-800 text-xs flex items-center gap-1.5">
                                         <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
                                         <span>{{ $firstComplainant->person_name ?: 'Unnamed Petitioner' }}</span>
                                         @if($complainants->count() > 1)
                                             <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded px-1.5 py-0.2">
-                                                +{{ $complainants->count() - 1 }} more
+                                                +{{ $complainants->count() - 1 }}
                                             </span>
                                         @endif
                                     </div>
@@ -318,7 +254,7 @@
                             <!-- Accused / Subject -->
                             <td class="px-5 py-4">
                                 @if($firstAccused)
-                                    <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <div class="font-semibold text-slate-800 text-xs flex items-center gap-1.5">
                                         <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-500 shrink-0"></i>
                                         <span>{{ $firstAccused->person_name ?: 'Unnamed Accused' }}</span>
                                         @if($accused->count() > 1)
@@ -344,7 +280,7 @@
 
                             <!-- Desk & Creator -->
                             <td class="px-5 py-4">
-                                <span class="font-bold text-slate-800 block text-xs">
+                                <span class="font-semibold text-slate-800 block text-xs">
                                     {{ $petition->seat->seat_name ?? 'No Seat' }}
                                 </span>
                                 <span class="text-xs text-slate-500 block mt-0.5">
@@ -359,7 +295,7 @@
 
                             <!-- Deleted Date -->
                             <td class="px-5 py-4">
-                                <div class="flex items-center gap-1.5 text-rose-600 font-bold text-xs">
+                                <div class="flex items-center gap-1.5 text-rose-600 font-semibold text-xs">
                                     <i data-lucide="clock" class="w-3.5 h-3.5 shrink-0"></i>
                                     <span>{{ \Carbon\Carbon::parse($petition->deleted_at)->diffForHumans() }}</span>
                                 </div>
@@ -374,7 +310,7 @@
                                     <!-- View Details Button -->
                                     <button type="button" 
                                             @click="openPreview(@js($previewPayload))"
-                                            class="px-2.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+                                            class="px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200 hover:text-slate-900 transition-colors flex items-center gap-1.5"
                                             title="View Record Details">
                                         <i data-lucide="eye" class="w-3.5 h-3.5 text-slate-500"></i>
                                         <span>Details</span>
@@ -387,7 +323,7 @@
                                               data-confirm="Are you sure you want to restore petition {{ $petition->receipt_no ?? ('ID ' . $petition->petition_id) }} back to active processing?">
                                             @csrf
                                             <button type="submit"
-                                                    class="px-2.5 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1.5"
+                                                    class="px-2.5 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1.5"
                                                     title="Restore Petition">
                                                 <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                                                 <span class="hidden sm:inline">Restore</span>
@@ -398,14 +334,14 @@
                                     <!-- Permanent Delete Button -->
                                     @if(Auth::user()->canAccess('delete recycle bin'))
                                         <form action="{{ route('admin.trash.forceDelete', $petition->petition_id) }}"
-                                              method="POST"
+                                              method="POST" 
                                               data-confirm="CRITICAL: This will PERMANENTLY purge petition {{ $petition->receipt_no ?? ('ID ' . $petition->petition_id) }} and delete all attached physical documents. This action CANNOT be reversed. Do you wish to proceed?">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                    class="px-2.5 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-colors flex items-center gap-1.5"
+                                                    class="px-2.5 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-colors flex items-center gap-1.5"
                                                     title="Permanently Purge Petition">
-                                                <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                                 <span class="hidden sm:inline">Purge</span>
                                             </button>
                                         </form>
@@ -415,19 +351,19 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-20">
+                            <td colspan="7" class="px-6 py-16">
                                 <div class="flex flex-col items-center justify-center text-center">
-                                    <div class="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mb-4 border border-rose-100 shadow-inner">
-                                        <i data-lucide="trash-2" class="w-10 h-10 text-rose-300"></i>
+                                    <div class="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-3 text-slate-400">
+                                        <i data-lucide="trash-2" class="w-8 h-8"></i>
                                     </div>
-                                    <h3 class="text-lg font-bold text-slate-800">
+                                    <h3 class="text-base font-bold text-slate-800">
                                         @if(!empty($search) || !empty($nature) || !empty($dateFrom) || !empty($dateTo))
                                             No Matching Trashed Records
                                         @else
                                             Recycle Bin is Empty
                                         @endif
                                     </h3>
-                                    <p class="text-slate-500 font-medium text-sm max-w-sm mx-auto mt-1">
+                                    <p class="text-slate-500 text-xs sm:text-sm max-w-sm mx-auto mt-1">
                                         @if(!empty($search) || !empty($nature) || !empty($dateFrom) || !empty($dateTo))
                                             No deleted petitions matched your search criteria. Try resetting the filters.
                                         @else
@@ -437,8 +373,8 @@
                                     @if(!empty($search) || !empty($nature) || !empty($dateFrom) || !empty($dateTo))
                                         <div class="mt-4">
                                             <a href="{{ route('admin.trash.index') }}" 
-                                               class="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shadow-xs">
-                                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Clear Search Filters
+                                               class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition-all">
+                                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Clear Filters
                                             </a>
                                         </div>
                                     @endif
@@ -447,17 +383,6 @@
                         </tr>
                     @endforelse
                 </tbody>
-                <!-- Total Summary Footer matching Inward Statistics -->
-                <tfoot>
-                    <tr class="bg-slate-900 text-white border-t-4 border-teal-500">
-                        <td colspan="5" class="px-5 py-4 text-right uppercase tracking-wider font-extrabold text-xs text-slate-300">
-                            Total Summary
-                        </td>
-                        <td colspan="2" class="px-5 py-4 text-left font-black text-base text-teal-400">
-                            {{ $trashedPetitions->total() }} {{ Str::plural('Record', $trashedPetitions->total()) }}
-                        </td>
-                    </tr>
-                </tfoot>
             </table>
         </div>
 

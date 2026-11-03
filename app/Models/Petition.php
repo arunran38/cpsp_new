@@ -788,6 +788,35 @@ class Petition extends Model
     }
 
     /**
+     * Unconditionally scope a query to exclude all T-Section confidential petitions.
+     * Prevents data leaks in non-confidential modules (Department-Wise Analysis, Inward Statistics).
+     */
+    public function scopeExcludeTSection(Builder $query): Builder
+    {
+        $tSeatIds = Seat::getTSectionSeatIds();
+        if (!empty($tSeatIds)) {
+            $query->where(function ($q) use ($tSeatIds) {
+                $q->whereNotIn('petitions.seat_id', $tSeatIds)
+                  ->orWhereNull('petitions.seat_id');
+            });
+        }
+
+        $query->whereDoesntHave('seat', function ($sq) {
+            $sq->where(function ($tq) {
+                $tq->where('seat_name', 'like', '%T Section%')
+                   ->orWhere('seat_name', 'like', '%T-Section%')
+                   ->orWhere('seat_name', 'like', 'T-%')
+                   ->orWhere('seat_name', 'like', 'T1%')
+                   ->orWhere('seat_name', 'like', 'T2%')
+                   ->orWhere('seat_name', 'like', 'T3%')
+                   ->orWhereHas('roles', fn($rq) => $rq->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']));
+            });
+        });
+
+        return $query;
+    }
+
+    /**
      * Scope to exclude T-Section petitions for users without secret clearance.
      */
     public function scopeExcludeTSectionIfNotAuthorized(Builder $query, ?User $user = null): Builder

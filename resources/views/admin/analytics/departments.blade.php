@@ -20,13 +20,7 @@
                     </h1>
                     <span
                         class="px-2.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/30">
-                        @if(($section ?? '') === 'cpsp')
-                            CPSP Section
-                        @elseif(($section ?? '') === 't_section')
-                            T-Section
-                        @else
-                            All Sections
-                        @endif
+                        CPSP Section
                     </span>
                 </div>
                 <p class="text-slate-300 font-medium max-w-2xl text-sm">
@@ -60,40 +54,17 @@
                             </div>
                         </div>
 
-                        <!-- Section Filter (Segmented Control) -->
-                        <div class="{{ ($canViewTSection ?? false) ? 'w-full sm:w-56 lg:w-56 xl:w-60' : 'w-full sm:w-28 lg:w-28' }} shrink-0 flex flex-col justify-end">
+                        <!-- Section Filter (Strictly CPSP Section) -->
+                        <div class="w-full sm:w-28 lg:w-28 shrink-0 flex flex-col justify-end">
                             <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
                                 <i data-lucide="layers" class="h-3.5 w-3.5 text-blue-500"></i>
                                 <span>Section</span>
                             </label>
                             <div class="flex items-center p-1 bg-blue-50/50 border border-blue-200/80 rounded-xl w-full h-11 shadow-inner">
-                                @if($canViewTSection ?? false)
-                                    <label class="flex-1 cursor-pointer h-full">
-                                        <input type="radio" name="section" value="all" class="sr-only peer"
-                                            {{ ($section ?? 'all') === 'all' ? 'checked' : '' }}>
-                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2">
-                                            All
-                                        </span>
-                                    </label>
-                                @endif
-
-                                <label class="flex-1 cursor-pointer h-full">
-                                    <input type="radio" name="section" value="cpsp" class="sr-only peer"
-                                        {{ ($section ?? '') === 'cpsp' || !($canViewTSection ?? false) ? 'checked' : '' }}>
-                                    <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2">
-                                        CPSP
-                                    </span>
-                                </label>
-
-                                @if($canViewTSection ?? false)
-                                    <label class="flex-1 cursor-pointer h-full">
-                                        <input type="radio" name="section" value="t_section" class="sr-only peer"
-                                            {{ ($section ?? '') === 't_section' ? 'checked' : '' }}>
-                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2">
-                                            T-Section
-                                        </span>
-                                    </label>
-                                @endif
+                                <div class="w-full h-full text-xs font-bold text-teal-700 bg-white shadow-xs rounded-lg flex items-center justify-center whitespace-nowrap select-none px-2">
+                                    CPSP
+                                </div>
+                                <input type="hidden" name="section" value="cpsp">
                             </div>
                         </div>
 

@@ -194,8 +194,11 @@ class Seat extends Model
             }
         } catch (\Exception $e) { }
 
-        return str_contains(strtolower($this->seat_name), 't section') || 
-               str_contains(strtolower($this->seat_name), 't-section');
+        $name = strtolower($this->seat_name ?? '');
+        return str_contains($name, 't section') || 
+               str_contains($name, 't-section') ||
+               str_starts_with($name, 't-') ||
+               (bool) preg_match('/^t\d+/i', $name);
     }
 
     /**
@@ -203,12 +206,19 @@ class Seat extends Model
      */
     public static function getTSectionSeatIds(): array
     {
-        return static::whereHas('roles', function ($q) {
-            $q->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']);
-        })->orWhere('seat_name', 'like', '%T Section%')
-          ->orWhere('seat_name', 'like', '%T-Section%')
-          ->pluck('seat_id')
-          ->toArray();
+        return static::where(function ($q) {
+            $q->whereHas('roles', function ($rq) {
+                $rq->whereIn('name', ['T Section', 't section', 'T-Section', 't-section']);
+            })
+            ->orWhere('seat_name', 'like', '%T Section%')
+            ->orWhere('seat_name', 'like', '%T-Section%')
+            ->orWhere('seat_name', 'like', 'T-%')
+            ->orWhere('seat_name', 'like', 'T1%')
+            ->orWhere('seat_name', 'like', 'T2%')
+            ->orWhere('seat_name', 'like', 'T3%');
+        })
+        ->pluck('seat_id')
+        ->toArray();
     }
 
     /**

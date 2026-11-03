@@ -25,9 +25,9 @@
             </div>
             <div class="flex items-center gap-3 z-10">
                 <a href="{{ route('admin.audit_logs.export', request()->query()) }}" 
-                   class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-white font-bold text-xs sm:text-sm border border-slate-700/80 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]">
-                    <i data-lucide="download" class="w-4 h-4 text-sky-400"></i>
-                    <span>Export CSV</span>
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 font-semibold text-xs sm:text-sm border border-emerald-500/30 rounded-xl shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                    <span>Excel Export</span>
                 </a>
             </div>
         </div>
@@ -189,7 +189,7 @@
                         <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">User & Seat</th>
                         <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Action / Module</th>
                         <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Activity Description</th>
-                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">IP & Method</th>
+                        <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">IP Address</th>
                         <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
                     </tr>
                 </thead>
@@ -269,12 +269,10 @@
                                 </div>
                             </td>
 
-                            <!-- IP & Method -->
+                            <!-- IP Address -->
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center gap-1.5 text-xs font-mono text-slate-600">
-                                    <span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-700 uppercase">
-                                        {{ $log->method ?? 'GET' }}
-                                    </span>
+                                    <i data-lucide="network" class="w-3.5 h-3.5 text-slate-400"></i>
                                     <span>{{ $log->ip_address ?? '127.0.0.1' }}</span>
                                 </div>
                             </td>
@@ -358,7 +356,7 @@
                     <p id="modalActionModule" class="font-bold text-sky-800 mt-0.5 text-sm"></p>
                 </div>
                 <div class="sm:col-span-2">
-                    <span class="text-slate-400 uppercase font-bold tracking-wider text-[10px]">IP & Method</span>
+                    <span class="text-slate-400 uppercase font-bold tracking-wider text-[10px]">IP Address</span>
                     <p id="modalIp" class="font-mono text-slate-700 mt-0.5 text-xs"></p>
                 </div>
             </div>
@@ -445,7 +443,7 @@
         document.getElementById('modalTimestamp').innerText = log.created_at ? new Date(log.created_at).toLocaleString() : 'N/A';
         document.getElementById('modalSessionDurationText').innerText = log.session_duration || 'Active Session';
         document.getElementById('modalActionModule').innerText = log.action + ' on ' + log.module;
-        document.getElementById('modalIp').innerText = (log.ip_address || 'N/A') + ' (' + (log.method || 'GET') + ')';
+        document.getElementById('modalIp').innerText = log.ip_address || '127.0.0.1';
         document.getElementById('modalDescription').innerText = log.description || 'N/A';
 
         const tableBody = document.getElementById('modalPropertiesTableBody');

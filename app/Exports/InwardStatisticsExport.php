@@ -85,11 +85,7 @@ class InwardStatisticsExport implements FromArray, WithHeadings, WithStyles, Sho
             $period .= 'All Time';
         }
 
-        $title = match ($this->section) {
-            'cpsp' => 'Inward CPSP Seats - Petition Statistics Data Sheet',
-            't_section' => 'Inward T-Section - Petition Statistics Data Sheet',
-            default => 'Inward Seat-Wise Petition Statistics Data Sheet (CPSP & T-Section)',
-        };
+        $title = 'Inward CPSP Seats - Petition Statistics Data Sheet';
 
         $headings = [
             [$title],
