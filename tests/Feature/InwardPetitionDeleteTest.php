@@ -7,6 +7,7 @@ use App\Models\Seat;
 use App\Models\SeatUser;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -24,6 +25,9 @@ class InwardPetitionDeleteTest extends TestCase
 
         $inwardRole = Role::firstOrCreate(['name' => 'Inward', 'guard_name' => 'web']);
         $cpspRole = Role::firstOrCreate(['name' => 'CPSP', 'guard_name' => 'web']);
+
+        $deletePerm = Permission::firstOrCreate(['name' => 'delete inward petitions', 'guard_name' => 'web']);
+        $inwardRole->givePermissionTo($deletePerm);
 
         $this->inwardUser = User::factory()->create();
         $this->inwardUser->assignRole($inwardRole);
