@@ -15,7 +15,15 @@ class UpdatePetitionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $id = $this->route('petition');
+        if ($id) {
+            $realId = HashidService::decode($id) ?? $id;
+            $petition = Petition::find($realId);
+            if ($petition) {
+                return $this->user()?->can('update', $petition) ?? false;
+            }
+        }
+        return $this->user()?->canAccess('update petitions') ?? false;
     }
 
     protected function prepareForValidation(): void
@@ -99,10 +107,11 @@ class UpdatePetitionRequest extends FormRequest
 
         return [
             'receipt_no' => [
-                'required',
+                'sometimes',
+                'nullable',
                 Rule::unique('petitions', 'receipt_no')->ignore($petitionId, 'petition_id'),
             ],
-            'date_of_petition_received' => 'required|date|before_or_equal:today',
+            'date_of_petition_received' => 'sometimes|nullable|date|before_or_equal:today',
             'nature_of_petition' => ['required', 'string', Rule::notIn(['General Inward'])],
             'mode_of_petition_received' => 'required',
             'unit_id' => [

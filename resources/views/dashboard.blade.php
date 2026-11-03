@@ -38,37 +38,30 @@
     } elseif ($isExecutive) {
         $basePetitionsQuery = \App\Models\Petition::whereNull('linked_petition_id')->excludeTSectionIfNotAuthorized($user);
     } elseif ($isInwardDesk) {
-        $inwardUserIds = \App\Models\User::role(['inward', 'Inward'])->pluck('user_id')->push($user->user_id)->unique();
-        $basePetitionsQuery = \App\Models\Petition::where(function($q) use ($inwardUserIds, $currentSeatUser) {
-            $q->whereIn('user_id', $inwardUserIds);
-            if ($currentSeatUser) {
-                $q->orWhere('seat_id', $currentSeatUser->seat_id);
-            }
-        })->whereNull('linked_petition_id')->excludeTSectionIfNotAuthorized($user);
+        $basePetitionsQuery = \App\Models\Petition::whereNull('linked_petition_id')->accessibleInwardPetitions($user);
     } elseif ($currentSeatUser) {
         $basePetitionsQuery = \App\Models\Petition::where('seat_id', $currentSeatUser->seat_id)
-            ->where('is_returned_to_inward', false)
             ->whereNull('linked_petition_id');
     } else {
         $basePetitionsQuery = \App\Models\Petition::where('user_id', $user->user_id)
-            ->where('is_returned_to_inward', false)
             ->whereNull('linked_petition_id');
     }
 
     // Optimize: Single SQL aggregation for high level metrics instead of 9 separate count queries
     $metrics = (clone $basePetitionsQuery)->selectRaw("
-        COUNT(*) as total_petitions,
-        COUNT(CASE WHEN is_cpsp_processed = 1 THEN 1 END) as processed,
+        COUNT(CASE WHEN is_returned_to_inward = 0 THEN 1 END) as desk_total_petitions,
+        COUNT(*) as total_inward_petitions,
+        COUNT(CASE WHEN is_cpsp_processed = 1 AND is_returned_to_inward = 0 THEN 1 END) as processed,
         COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 THEN 1 END) as unprocessed,
         COUNT(CASE WHEN is_returned_to_inward = 0 AND status = 'Forwarded' THEN 1 END) as forwarded,
         COUNT(CASE WHEN is_returned_to_inward = 0 AND status = 'VR_Received' THEN 1 END) as vr_reports,
         COUNT(CASE WHEN is_returned_to_inward = 0 AND status IN ('Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Closed') THEN 1 END) as decisions,
-        COUNT(CASE WHEN created_at >= ? THEN 1 END) as today_inward,
+        COUNT(CASE WHEN (date_of_petition_received = CURRENT_DATE OR (date_of_petition_received IS NULL AND created_at >= ?)) THEN 1 END) as today_inward,
         COUNT(CASE WHEN seat_id IS NOT NULL AND is_returned_to_inward = 0 THEN 1 END) as transferred_to_desks,
         COUNT(CASE WHEN is_returned_to_inward = 1 THEN 1 END) as returned_to_inward
     ", [now()->startOfDay()->toDateTimeString()])->first();
 
-    $totalPetitions = (int) ($metrics->total_petitions ?? 0);
+    $totalPetitions = $isInwardDesk ? (int) ($metrics->total_inward_petitions ?? 0) : (int) ($metrics->desk_total_petitions ?? 0);
     $processed = (int) ($metrics->processed ?? 0);
     $unprocessed = (int) ($metrics->unprocessed ?? 0);
     $forwarded = (int) ($metrics->forwarded ?? 0);
@@ -108,6 +101,7 @@
             ->excludeTSectionIfNotAuthorized($user)
             ->whereNull('linked_petition_id');
         $statusStats = $statusQuery->where('is_cpsp_processed', true)
+            ->where('is_returned_to_inward', false)
             ->groupBy('status')
             ->get(['status', \Illuminate\Support\Facades\DB::raw('count(*) as count')])
             ->pluck('count', 'status');
@@ -120,7 +114,8 @@
     $canSeeNature = !$isSuperAdmin && $user->canAccess('view petition nature chart');
     $chartPetitionsQuery = clone $basePetitionsQuery;
     if (!$isInwardDesk) {
-        $chartPetitionsQuery->where('is_cpsp_processed', true);
+        $chartPetitionsQuery->where('is_cpsp_processed', true)
+            ->where('is_returned_to_inward', false);
     }
 
     $startDate = \Carbon\Carbon::today()->subDays(6);
@@ -440,7 +435,7 @@
                 <h3 class="text-3xl font-black mt-3">{{ $totalPetitions }}</h3>
                 <p class="text-xs text-blue-100 mt-1 font-semibold">Petitions in Seat</p>
             </a>
-            <a href="{{ route('petitions.index', ['tab' => 'received']) }}"
+            <a href="{{ route('petitions.index', ['tab' => 'all']) }}"
                class="group relative block p-5 rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-md cursor-pointer border border-emerald-400/20">
                 <div class="flex items-center justify-between">
                     <i data-lucide="check-circle-2" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>

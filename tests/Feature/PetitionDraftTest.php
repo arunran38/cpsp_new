@@ -259,8 +259,6 @@ class PetitionDraftTest extends TestCase
         ]);
 
         $updateData = [
-            'receipt_no' => 'UPDATED-NO-1',
-            'date_of_petition_received' => '2024-02-02',
             'nature_of_petition' => 'Misuse of authority',
             'mode_of_petition_received' => 'Email',
             'description' => 'Updated description to verify draft clear',

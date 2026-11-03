@@ -34,6 +34,9 @@ class DepartmentAnalysisTest extends TestCase
 
         $perms = [
             'view seat diagnostics',
+            'view department-wise report',
+            'access cpsp section',
+            'access t-section',
             'view t-section diagnostics',
             'view t-section in reports',
             'export statistics',
@@ -63,12 +66,12 @@ class DepartmentAnalysisTest extends TestCase
         $this->adminUser->givePermissionTo($perms);
 
         // Give permissions to CPSP role so seats with CPSP role inherit them
-        $cpspRole->givePermissionTo(['view seat diagnostics', 'view petitions']);
+        $cpspRole->givePermissionTo(['view seat diagnostics', 'view department-wise report', 'access cpsp section', 'view petitions']);
 
         // CPSP Operational User (no T-Section clearance)
         $this->cpspUser = User::factory()->create(['name' => 'CPSP Desk Officer']);
         $this->cpspUser->assignRole($cpspRole);
-        $this->cpspUser->givePermissionTo(['view seat diagnostics', 'view petitions']);
+        $this->cpspUser->givePermissionTo(['view seat diagnostics', 'view department-wise report', 'access cpsp section', 'view petitions']);
         SeatUser::factory()->create([
             'user_id' => $this->cpspUser->user_id,
             'seat_id' => $this->cpspSeat->seat_id,

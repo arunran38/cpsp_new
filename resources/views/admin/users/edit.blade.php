@@ -1,7 +1,9 @@
 @extends('layouts.admin')
 
 @section('content')
-@php($selectedDesignation = old('designation', $user->designation))
+@php
+    $selectedDesignation = old('designation', $user->designation);
+@endphp
 <div class="max-w-4xl mx-auto" x-data="adminFormValidation({ designation: @json($selectedDesignation), userId: @json(encrypt($user->user_id)) })">
     <div class="flex items-center justify-between mb-8">
         <div>
@@ -112,6 +114,86 @@
                     <x-input label="Other Designation Details" name="other_designation" :value="$user->other_designation" icon="briefcase" />
                 </div>
             </div>
+
+            @if(isset($allRoles) && Auth::user()->canAccess('update roles'))
+            <!-- Roles Assignment -->
+            <div class="pt-6 border-t border-slate-100">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Assigned Roles</h3>
+                        <p class="text-xs text-slate-500">Assign system roles directly to this user.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    @php
+                        $userRoles = $user->roles->pluck('name')->toArray();
+                    @endphp
+                    @foreach($allRoles as $role)
+                    <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                        <input type="checkbox" name="roles[]" value="{{ $role->name }}" 
+                               class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                               {{ in_array($role->name, old('roles', $userRoles)) ? 'checked' : '' }}>
+                        <span class="text-sm font-medium text-slate-800">{{ $role->name }}</span>
+                    </label>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            @if(isset($allPermissions) && Auth::user()->canAccess('update permissions'))
+            <!-- Granular Permissions Assignment -->
+            <div class="pt-6 border-t border-slate-100" x-data="{ permSearch: '' }">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Direct Permissions</h3>
+                        <p class="text-xs text-slate-500">Grant or revoke individual granular permissions for this user.</p>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" x-model="permSearch" placeholder="Filter permissions..."
+                               class="w-full text-xs rounded-xl border-slate-200 pl-8 pr-3 py-1.5 focus:ring-indigo-500 focus:border-indigo-500">
+                        <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5"></i>
+                    </div>
+                </div>
+
+                @php
+                    $userPerms = $user->getDirectPermissions()->pluck('name')->toArray();
+                    $categories = \App\Services\PermissionCatalog::categories();
+                    $grouped = [];
+                    foreach ($allPermissions as $perm) {
+                        $cat = \App\Services\PermissionCatalog::categoryFor($perm->name);
+                        $grouped[$cat][] = $perm;
+                    }
+                @endphp
+
+                <div class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    @foreach($grouped as $catKey => $perms)
+                    @php
+                        $catMeta = $categories[$catKey] ?? ['title' => ucwords($catKey), 'badge' => 'bg-slate-50 text-slate-700 border-slate-200'];
+                    @endphp
+                    <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-600">{{ $catMeta['title'] }}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full border {{ $catMeta['badge'] }}">{{ count($perms) }}</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                            @foreach($perms as $perm)
+                            <label class="flex items-start gap-2 p-2 rounded-lg bg-white border border-slate-200 hover:border-indigo-300 cursor-pointer transition text-xs"
+                                   x-show="!permSearch || '{{ strtolower($perm->name) }}'.includes(permSearch.toLowerCase())">
+                                <input type="checkbox" name="permissions[]" value="{{ $perm->name }}"
+                                       class="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                       {{ in_array($perm->name, old('permissions', $userPerms)) ? 'checked' : '' }}>
+                                <div class="flex-1">
+                                    <span class="font-medium text-slate-800 block">{{ \App\Services\PermissionCatalog::label($perm->name) }}</span>
+                                    <span class="text-[10px] text-slate-400 font-mono">{{ $perm->name }}</span>
+                                </div>
+                            </label>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
 
             <div class="flex items-center justify-end gap-4 pt-6 border-t border-slate-100">
                 <x-button variant="primary" icon="refresh-cw" size="lg" type="submit">

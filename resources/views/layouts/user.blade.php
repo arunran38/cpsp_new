@@ -440,27 +440,24 @@
                 @endif
 
                 @php
-                    $hasInwardRole = Auth::check() && Auth::user()->currentSeatUser() && (
-                        Auth::user()->hasRole('inward') || 
-                        Auth::user()->hasRole('Inward') || 
-                        (Auth::user()->currentSeatUser()?->seat && (
-                            Auth::user()->currentSeatUser()->seat->hasRole('inward') || 
-                            Auth::user()->currentSeatUser()->seat->hasRole('Inward') || 
-                            str_contains(strtolower(Auth::user()->currentSeatUser()->seat->seat_name), 'inward')
-                        ))
+                    $canAccessInwardEntry = Auth::check() && (
+                        Auth::user()->canAccess('view inward registration') ||
+                        Auth::user()->canAccess('create inward petitions')
                     );
 
-                    $canAccessInwardEntry = Auth::check() && (
-                        $hasInwardRole ||
+                    $canAccessInwardView = Auth::check() && (
+                        Auth::user()->canAccess('view file transfer') ||
+                        Auth::user()->canAccess('view inward registration') ||
                         Auth::user()->canAccess('create inward petitions')
                     );
 
                     $canAccessInwardStats = Auth::check() && (
+                        Auth::user()->canAccess('view inward statistics') ||
                         Auth::user()->canAccess('inward statistics')
                     );
                 @endphp
 
-                @if($canAccessInwardEntry || $canAccessInwardStats)
+                @if($canAccessInwardEntry || $canAccessInwardView || $canAccessInwardStats)
                 <!-- Inward Dropdown with Hover & Click -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -500,15 +497,15 @@
                            <i data-lucide="file-plus-2" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.enter_petition') && !request()->boolean('hide_form') ? 'text-teal-400' : '' }}"></i>
                            <span class="whitespace-nowrap">Inward Registration</span>
                         </a>
-                        
-                        @if(Auth::user()->canAccess('view petitions'))
+                        @endif
+
+                        @if($canAccessInwardView)
                         <a href="{{ route('inward.enter_petition', ['hide_form' => 1]) }}#view-inward-petitions" 
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.enter_petition') && request()->boolean('hide_form') ? 'active-submenu' : 'submenu-link' }}">
                            <span class="submenu-indicator shrink-0"></span>
                            <i data-lucide="files" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.enter_petition') && request()->boolean('hide_form') ? 'text-teal-400' : '' }}"></i>
                            <span class="whitespace-nowrap">View Inward Petitions</span>
                         </a>
-                        @endif
                         @endif
 
                         @if($canAccessInwardStats)
@@ -595,13 +592,13 @@
                 </a>
                 @endif
                 
-                @if(Auth::check() && (Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view t-section diagnostics') || Auth::user()->canAccess('view t-section in reports') || Auth::user()->canAccess('view pendency details') || Auth::user()->canAccess('view recycle bin')))
+                @if(Auth::check() && (Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view department-wise report') || Auth::user()->canAccess('view pendency details') || Auth::user()->canAccess('view recycle bin')))
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Operations</p>
                 </div>
                 @endif
 
-                @if(Auth::check() && (Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view t-section diagnostics') || Auth::user()->canAccess('view t-section in reports') || Auth::user()->canAccess('view pendency details')))
+                @if(Auth::check() && (Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view department-wise report') || Auth::user()->canAccess('view pendency details')))
                 <!-- Statistical Reports Dropdown -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -642,7 +639,7 @@
                         </a>
                         @endif
                         
-                        @if(Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view t-section diagnostics') || Auth::user()->canAccess('view t-section in reports'))
+                        @if(Auth::user()->canAccess('view department-wise report'))
                         <a href="{{ route('admin.departments.analysis') }}" 
                            @click="reportsOpen = true"
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.departments.analysis') ? 'active-submenu' : 'submenu-link' }}">

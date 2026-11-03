@@ -26,9 +26,19 @@ class DecisionController extends Controller
             try {
                 $petitionId = HashidService::decode($request->petition_id) ?? $request->petition_id;
                 $petition = Petition::findOrFail($petitionId);
-                $this->authorize('update', $petition);
 
                 $user = Auth::user();
+                if ($petition->isTSection()) {
+                    abort_unless($user->canAccessTSection(), 403, 'Unauthorized. T-Section clearance required.');
+                } else {
+                    abort_unless($user->canAccessCpspSection() || $user->canAccess('access admin dashboard'), 403, 'Unauthorized. CPSP clearance required.');
+                }
+                abort_unless(
+                    $user->canAccess('record decisions'),
+                    403,
+                    'Unauthorized to record final decision.'
+                );
+
                 $seatUser = $user ? $user->currentSeatUser() : null;
                 $currentSeatId = $seatUser ? $seatUser->seat_id : 1;
 
@@ -66,8 +76,8 @@ class DecisionController extends Controller
      */
     public function pullbackDecision(int $id): RedirectResponse
     {
-        if (!Auth::user()->canAccess('access admin dashboard')) {
-            return back()->with('error', 'Only administrators can pull back a final decision.');
+        if (!Auth::user()->canAccess('pullback decisions') && !Auth::user()->canAccess('access admin dashboard')) {
+            return back()->with('error', 'Only authorized users can pull back a final decision.');
         }
 
         $decision = Decision::findOrFail($id);

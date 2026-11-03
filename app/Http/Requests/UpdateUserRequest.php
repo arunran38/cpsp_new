@@ -33,6 +33,10 @@ class UpdateUserRequest extends FormRequest
             'other_designation' => 'required_if:designation,Others|nullable|string|max:255',
             'status' => 'required|in:Active,Transferred',
             'password' => 'nullable|string|min:8',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string|exists:permissions,name',
+            'roles' => 'nullable|array',
+            'roles.*' => 'string|exists:roles,name',
         ];
     }
 

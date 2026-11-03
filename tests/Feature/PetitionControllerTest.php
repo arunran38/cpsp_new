@@ -616,12 +616,16 @@ class PetitionControllerTest extends TestCase
 
     public function test_user_can_update_petition(): void
     {
-        $petition = Petition::factory()->create(['user_id' => $this->user->user_id, 'seat_id' => $this->seat->seat_id]);
+        $petition = Petition::factory()->create([
+            'user_id' => $this->user->user_id, 
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'ORIGINAL-REC-101',
+            'date_of_petition_received' => '2024-01-15'
+        ]);
         
         $department = \App\Models\DepartmentList::firstOrCreate(['department_name' => 'Police']);
+        // Receipt Number and Date of Receipt are disabled and omitted from the update payload
         $updateData = [
-            'receipt_no' => 'UPDATED-NO-1',
-            'date_of_petition_received' => '2024-02-02',
             'nature_of_petition' => 'Misuse of authority',
             'mode_of_petition_received' => 'Email',
             'description' => 'Updated description content',
@@ -639,7 +643,8 @@ class PetitionControllerTest extends TestCase
         $response->assertRedirect(route('petitions.index', ['tab' => 'all']));
         $this->assertDatabaseHas('petitions', [
             'petition_id' => $petition->petition_id,
-            'receipt_no' => 'UPDATED-NO-1',
+            'receipt_no' => 'ORIGINAL-REC-101',
+            'date_of_petition_received' => '2024-01-15',
             'nature_of_petition' => 'Misuse of authority'
         ]);
     }

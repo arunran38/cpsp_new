@@ -116,26 +116,17 @@ class Seat extends Model
             'petitionsReceived as petitions_received_count' => fn($q) => 
                 $this->filterDates($q, $from, $to, 'date_of_petition_received')->where('status', Petition::STATUS_RECEIVED),
             
-            'petitionsReceived as forwardings_out_count' => function($q) use ($from, $to) {
-                $q->where('status', Petition::STATUS_FORWARDED);
-                if ($from || $to) {
-                    $q->whereHas('forwardings', fn($f) => $this->filterDates($f, $from, $to, 'forwarded_date'));
-                }
-            },
+            'petitionsReceived as forwardings_out_count' => fn($q) => 
+                $this->filterDates($q, $from, $to, 'date_of_petition_received')
+                    ->where('status', Petition::STATUS_FORWARDED),
             
-            'petitionsReceived as vr_received_count' => function($q) use ($from, $to) {
-                $q->where('status', Petition::STATUS_VR_RECEIVED);
-                if ($from || $to) {
-                    $q->whereHas('forwardings', fn($f) => $this->filterDates($f, $from, $to, 'vr_date'));
-                }
-            },
+            'petitionsReceived as vr_received_count' => fn($q) => 
+                $this->filterDates($q, $from, $to, 'date_of_petition_received')
+                    ->where('status', Petition::STATUS_VR_RECEIVED),
             
-            'petitionsReceived as decisions_made_count' => function($q) use ($from, $to) {
-                $q->whereIn('status', [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC, Petition::STATUS_INTERNAL_VIGILANCE]);
-                if ($from || $to) {
-                    $q->whereHas('decision', fn($d) => $this->filterDates($d, $from, $to, 'decision_date'));
-                }
-            },
+            'petitionsReceived as decisions_made_count' => fn($q) => 
+                $this->filterDates($q, $from, $to, 'date_of_petition_received')
+                    ->whereIn('status', [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC, Petition::STATUS_INTERNAL_VIGILANCE]),
 
             // Final Decision Type Breakdown
             'petitionsReceived as decisions_vc_count' => fn($q) => $this->filterDecisionType($q, 'VC', $from, $to),
@@ -160,10 +151,10 @@ class Seat extends Model
 
     private function filterDecisionType($query, $type, $from, $to)
     {
+        $this->filterDates($query, $from, $to, 'date_of_petition_received');
         $query->whereIn('status', [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC, Petition::STATUS_INTERNAL_VIGILANCE]);
-        return $query->whereHas('decision', function($q) use ($type, $from, $to) {
+        return $query->whereHas('decision', function($q) use ($type) {
             $q->where('final_decision', $type);
-            $this->filterDates($q, $from, $to, 'decision_date');
         });
     }
 

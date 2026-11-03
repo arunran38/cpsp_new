@@ -30,7 +30,8 @@ class PetitionPolicy
      */
     public function create(User $user): bool
     {
-        return $user->canAccess('create petitions');
+        return $user->canAccess('create petitions') && 
+            ($user->canAccessCpspSection() || $user->canAccessTSection() || $user->canAccess('access admin dashboard'));
     }
 
     /**
@@ -40,6 +41,19 @@ class PetitionPolicy
     {
         if (!$user->canAccess('update petitions')) {
             return false;
+        }
+
+        // Section isolation
+        if ($petition->isTSection()) {
+            if (!$user->canAccessTSection()) {
+                return false;
+            }
+        } else {
+            if (!$user->canAccessCpspSection() && !$user->canAccess('access admin dashboard')) {
+                if ($petition->user_id !== ($user->user_id ?? $user->id)) {
+                    return false;
+                }
+            }
         }
 
         if ($user->canAccess('access admin dashboard')) {
@@ -58,9 +72,16 @@ class PetitionPolicy
             return false;
         }
 
-        // T-Section confidential files require both delete permission, T-Section clearance, and admin access
+        // Section isolation
         if ($petition->isTSection()) {
-            return $user->canAccessTSection() && $user->canAccess('access admin dashboard');
+            if (!$user->canAccessTSection()) {
+                return false;
+            }
+            return $user->canAccess('access admin dashboard');
+        } else {
+            if (!$user->canAccessCpspSection() && !$user->canAccess('access admin dashboard')) {
+                return false;
+            }
         }
 
         if ($user->canAccess('access admin dashboard')) {
@@ -92,7 +113,14 @@ class PetitionPolicy
             return true;
         }
 
-        // T-Section desk users cannot view non-T-Section general petitions
+        // 2. CPSP Section: T-Section users without CPSP clearance cannot view general petitions
+        if (!$user->canAccessCpspSection() && !$user->canAccess('access admin dashboard')) {
+            if ($petition->user_id === ($user->user_id ?? $user->id)) {
+                return true;
+            }
+            return false;
+        }
+
         if ($currentSeat && $currentSeat->isTSection()) {
             return $petition->seat_id === $currentSeat->seat_id;
         }

@@ -105,7 +105,8 @@ class SeatController extends Controller
      */
     public function statistics(Request $request): View
     {
-        abort_unless(auth()->user()->canAccess('view seat diagnostics'), 403, 'Unauthorized access to seat statistics.');
+        $user = auth()->user();
+        abort_unless($user->canAccess('view seat diagnostics'), 403, 'Unauthorized access to seat statistics.');
 
         $this->validateDateRange($request);
 
@@ -116,9 +117,24 @@ class SeatController extends Controller
         $from = $dateFrom ? Carbon::parse($dateFrom)->startOfDay() : null;
         $to = $dateTo ? Carbon::parse($dateTo)->endOfDay() : null;
 
-        $canViewTSection = auth()->user()->canAccessTSectionDiagnostics();
+        $canCpsp = $user->canAccessCpspSection();
+        $canViewTSection = $user->canAccessTSectionDiagnostics() || $user->canAccessTSection();
+
+        if (!$canCpsp && !$canViewTSection) {
+            abort(403, 'Unauthorized. Section access permission required.');
+        }
+
         if (!$canViewTSection && $section === 't_section') {
             abort(403, 'Unauthorized. Special clearance required to access T-Section diagnostics.');
+        }
+        if (!$canCpsp && $section === 'cpsp') {
+            abort(403, 'Unauthorized. CPSP section clearance required.');
+        }
+        if (!$canViewTSection && $section === 'all') {
+            $section = 'cpsp';
+        }
+        if (!$canCpsp && $section === 'all') {
+            $section = 't_section';
         }
 
         $seats = $this->getFilteredSeatsQuery($section, $canViewTSection)
@@ -134,7 +150,8 @@ class SeatController extends Controller
      */
     public function exportStatistics(Request $request): HttpResponse
     {
-        abort_unless(auth()->user()->canAccess('view seat diagnostics') || auth()->user()->canAccess('export statistics'), 403, 'Unauthorized to export seat statistics.');
+        $user = auth()->user();
+        abort_unless($user->canAccess('view seat diagnostics') && $user->canAccess('export statistics'), 403, 'Unauthorized to export seat statistics.');
 
         $this->validateDateRange($request);
 
@@ -145,9 +162,24 @@ class SeatController extends Controller
         $from = $dateFrom ? Carbon::parse($dateFrom)->startOfDay() : null;
         $to = $dateTo ? Carbon::parse($dateTo)->endOfDay() : null;
 
-        $canViewTSection = auth()->user()->canAccessTSectionDiagnostics();
+        $canCpsp = $user->canAccessCpspSection();
+        $canViewTSection = $user->canAccessTSectionDiagnostics() || $user->canAccessTSection();
+
+        if (!$canCpsp && !$canViewTSection) {
+            abort(403, 'Unauthorized. Section access permission required.');
+        }
+
         if (!$canViewTSection && $section === 't_section') {
             abort(403, 'Unauthorized. Special clearance required to export T-Section statistics.');
+        }
+        if (!$canCpsp && $section === 'cpsp') {
+            abort(403, 'Unauthorized. CPSP section clearance required.');
+        }
+        if (!$canViewTSection && $section === 'all') {
+            $section = 'cpsp';
+        }
+        if (!$canCpsp && $section === 'all') {
+            $section = 't_section';
         }
 
         $seats = $this->getFilteredSeatsQuery($section, $canViewTSection)

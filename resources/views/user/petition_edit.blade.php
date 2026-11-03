@@ -31,11 +31,15 @@
 
                 <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 z-10">
                     <!-- Auto-save status -->
-                    <div x-show="isSavingDraft" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-400/30 text-amber-300 text-xs font-semibold backdrop-blur-sm shadow-sm" style="display: none;">
+                    <div x-show="isSavingDraft"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-400/30 text-amber-300 text-xs font-semibold backdrop-blur-sm shadow-sm"
+                        style="display: none;">
                         <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
                         <span>Saving draft...</span>
                     </div>
-                    <div x-show="!isSavingDraft && lastSavedText" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-semibold backdrop-blur-sm shadow-sm" style="display: none;">
+                    <div x-show="!isSavingDraft && lastSavedText"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-semibold backdrop-blur-sm shadow-sm"
+                        style="display: none;">
                         <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400"></i>
                         <span x-text="'Draft saved ' + lastSavedText"></span>
                     </div>
@@ -70,14 +74,17 @@
 
         <!-- Draft Restored Banner -->
         <div x-show="hasRestoredDraft && !dismissedRestoredBanner" x-transition
-            class="bg-indigo-950/80 border border-indigo-500/40 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-indigo-100 backdrop-blur-md mb-6" style="display: none;">
+            class="bg-indigo-950/80 border border-indigo-500/40 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-indigo-100 backdrop-blur-md mb-6"
+            style="display: none;">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-300 shrink-0">
                     <i data-lucide="history" class="w-5 h-5"></i>
                 </div>
                 <div>
                     <p class="text-sm font-bold text-white">Draft Changes Restored</p>
-                    <p class="text-xs text-indigo-200" x-text="'Your previously saved edit draft' + (lastSavedText ? ' from ' + lastSavedText : '') + ' has been automatically restored. You can continue editing or discard the draft.'"></p>
+                    <p class="text-xs text-indigo-200"
+                        x-text="'Your previously saved edit draft' + (lastSavedText ? ' from ' + lastSavedText : '') + ' has been automatically restored. You can continue editing or discard the draft.'">
+                    </p>
                 </div>
             </div>
             <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -209,7 +216,8 @@
         <!-- Form Sections (Minimalist Cards) -->
         <form method="POST" action="{{ route('petitions.update', $petition->hashid) }}" enctype="multipart/form-data"
             class="bg-white rounded-2xl shadow-sm border border-slate-200" id="petitionFormElement" novalidate
-            @submit="handleSubmit($event)" @focusout="validateField($event)" @input="clearError($event)" @change="clearError($event)">
+            @submit="handleSubmit($event)" @focusout="validateField($event)" @input="clearError($event)"
+            @change="clearError($event)">
             @csrf
             @method('PUT')
 
@@ -221,14 +229,11 @@
                 <div class="space-y-8">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div class="lg:col-span-1">
-                            <x-input label="Receipt No *" name="receipt_no" x-model="petitionDetails.receipt_no" required
-                                placeholder="Ex. 12589/{{ now()->year }}"
-                                @blur="formatReceiptNo()" />
+                            <x-input label="Receipt No" :value="$petition->receipt_no" disabled readonly />
                         </div>
                         <div class="lg:col-span-1">
-                            <x-input type="date" placeholder="DD-MM-YYYY" label="Date of Receipt *"
-                                name="date_of_petition_received" x-model="petitionDetails.date" required
-                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}" />
+                            <x-input type="date" label="Date of Receipt"
+                                :value="$petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d') : ''" disabled readonly />
                         </div>
                         <div class="lg:col-span-1">
                             <x-select label="Nature of Petition *" name="nature_of_petition"
@@ -257,8 +262,7 @@
                     <div x-show="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
                         x-transition:enter="transition ease-out duration-300"
                         x-transition:enter-start="opacity-0 -translate-y-2"
-                        x-transition:enter-end="opacity-100 translate-y-0"
-                        style="display: none;"
+                        x-transition:enter-end="opacity-100 translate-y-0" style="display: none;"
                         class="bg-indigo-50/60 p-5 rounded-xl border border-indigo-100 grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         <!-- Concerned Unit Name -->
@@ -296,14 +300,15 @@
                                 Date of Petition Received at Unit <span class="text-rose-500">*</span>
                             </label>
                             <input type="date" name="date_of_petition_received_at_unit"
-                                id="date_of_petition_received_at_unit" x-model="petitionDetails.date_of_petition_received_at_unit"
+                                id="date_of_petition_received_at_unit"
+                                x-model="petitionDetails.date_of_petition_received_at_unit"
                                 x-bind:required="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
                                 max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                @input="clearError($event)"
-                                @blur="validateField($event)"
+                                @input="clearError($event)" @blur="validateField($event)"
                                 class="block w-full px-4 py-2.5 text-sm bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
                             <template x-if="formErrors['date_of_petition_received_at_unit']">
-                                <p class="text-xs font-semibold text-rose-500 mt-1" x-text="formErrors['date_of_petition_received_at_unit']"></p>
+                                <p class="text-xs font-semibold text-rose-500 mt-1"
+                                    x-text="formErrors['date_of_petition_received_at_unit']"></p>
                             </template>
                             @error('date_of_petition_received_at_unit')
                                 <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
@@ -360,8 +365,7 @@
                             </template>
                         @endif
 
-                        <x-file-upload name="evidence_files[]" label=""
-                            :multiple="true" />
+                        <x-file-upload name="evidence_files[]" label="" :multiple="true" />
                     </div>
                 </div>
 
@@ -432,8 +436,7 @@
                                                 </button>
                                                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
                                                     <div>
-                                                        <label
-                                                            class="block text-sm font-bold text-slate-800 mb-1.5">Address
+                                                        <label class="block text-sm font-bold text-slate-800 mb-1.5">Address
                                                             Type</label>
                                                         <div class="relative flex items-center">
                                                             <select
@@ -586,7 +589,8 @@
                                 </div>
 
                                 <div class="flex items-center gap-2">
-                                    <button type="button" @click="clearAccused(index)" x-show="accused.length === 1 && (acc.name || acc.department_id || acc.phone || acc.pen_number)"
+                                    <button type="button" @click="clearAccused(index)"
+                                        x-show="accused.length === 1 && (acc.name || acc.department_id || acc.phone || acc.pen_number)"
                                         class="text-amber-800 hover:text-amber-900 text-xs font-bold flex items-center gap-1 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-lg transition-colors">
                                         <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Clear Accused Details
                                     </button>
@@ -606,14 +610,12 @@
                                         <div x-show="acc.entity_type === 'Person'">
                                             <x-input label="Full Name" name="acc_name"
                                                 x-bind:name="`accused[${index}][name]`" x-model="acc.name"
-                                                @input="onAccusedNameChange(index)"
-                                                placeholder="Legal Name" />
+                                                @input="onAccusedNameChange(index)" placeholder="Legal Name" />
                                         </div>
                                         <div x-show="acc.entity_type === 'Firm'">
                                             <x-input label="Firm / Project Name" name="acc_firm_name"
                                                 x-bind:name="`accused[${index}][name]`" x-model="acc.name"
-                                                @input="onAccusedNameChange(index)"
-                                                placeholder="Firm / Project Name" />
+                                                @input="onAccusedNameChange(index)" placeholder="Firm / Project Name" />
                                         </div>
                                         <div>
                                             <x-input label="Phone" name="acc_phone" x-bind:name="`accused[${index}][phone]`"
@@ -637,8 +639,7 @@
                                                 placeholder="Select Designation" />
                                         </div>
                                         <div>
-                                            <x-searchable-select
-                                                label="Department <span class='text-rose-500'>*</span>"
+                                            <x-searchable-select label="Department <span class='text-rose-500'>*</span>"
                                                 x-bind:name="`accused[${index}][department_id]`" x-model="acc.department_id"
                                                 :options="$departments->pluck('department_name', 'id')->toArray()"
                                                 placeholder="Select Department" />
@@ -663,8 +664,7 @@
                                                 </button>
                                                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
                                                     <div>
-                                                        <label
-                                                            class="block text-sm font-bold text-slate-800 mb-1.5">Address
+                                                        <label class="block text-sm font-bold text-slate-800 mb-1.5">Address
                                                             Type</label>
                                                         <div class="relative flex items-center">
                                                             <select
@@ -674,10 +674,14 @@
                                                                 style="background-image: none !important;">
                                                                 <option value="Permanent"
                                                                     :disabled="acc.entity_type === 'Firm' || acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Permanent')"
-                                                                    x-show="acc.entity_type !== 'Firm'" class="font-medium text-slate-900 bg-white">Permanent</option>
+                                                                    x-show="acc.entity_type !== 'Firm'"
+                                                                    class="font-medium text-slate-900 bg-white">Permanent
+                                                                </option>
                                                                 <option value="Temporary"
                                                                     :disabled="acc.entity_type === 'Firm' || acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Temporary')"
-                                                                    x-show="acc.entity_type !== 'Firm'" class="font-medium text-slate-900 bg-white">Temporary</option>
+                                                                    x-show="acc.entity_type !== 'Firm'"
+                                                                    class="font-medium text-slate-900 bg-white">Temporary
+                                                                </option>
                                                                 <option value="Office"
                                                                     :disabled="acc.entity_type !== 'Firm' && acc.addresses.some((a, i) => i !== addrIndex && a.address_type === 'Office')"
                                                                     class="font-medium text-slate-900 bg-white">
@@ -775,148 +779,160 @@
                 </div>
             </div>
 
-    <!-- Duplicate Detection Modal (Redesigned) -->
-    <div x-show="showDuplicateModal" x-cloak
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md"
-        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-        <div class="bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh]"
-            @click.stop x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0 scale-95 translate-y-4"
-            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-            x-transition:leave-end="opacity-0 scale-95 translate-y-4">
+            <!-- Duplicate Detection Modal (Redesigned) -->
+            <div x-show="showDuplicateModal" x-cloak
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md"
+                x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                <div class="bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh]"
+                    @click.stop x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                    x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 scale-95 translate-y-4">
 
-            <!-- Premium Header -->
-            <div class="relative overflow-hidden bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 px-8 py-6">
-                <!-- Background decorative elements -->
-                <div
-                    class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 blur-2xl rounded-full pointer-events-none">
-                </div>
-                <div class="absolute bottom-0 left-10 w-32 h-32 bg-indigo-400/20 blur-2xl rounded-full pointer-events-none">
-                </div>
-
-                <div class="relative z-10 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
+                    <!-- Premium Header -->
+                    <div
+                        class="relative overflow-hidden bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 px-8 py-6">
+                        <!-- Background decorative elements -->
                         <div
-                            class="p-3 bg-white/10 rounded-2xl shadow-inner border border-white/10 backdrop-blur-sm text-indigo-100">
-                            <i data-lucide="copy" class="w-6 h-6"></i>
+                            class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 blur-2xl rounded-full pointer-events-none">
                         </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-white tracking-tight">Potential Duplicates Found</h3>
-                            <p class="text-indigo-100 text-sm mt-0.5">We found matches based on your recent inputs. Review
-                                and link if needed.</p>
+                        <div
+                            class="absolute bottom-0 left-10 w-32 h-32 bg-indigo-400/20 blur-2xl rounded-full pointer-events-none">
+                        </div>
+
+                        <div class="relative z-10 flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="p-3 bg-white/10 rounded-2xl shadow-inner border border-white/10 backdrop-blur-sm text-indigo-100">
+                                    <i data-lucide="copy" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold text-white tracking-tight">Potential Duplicates Found</h3>
+                                    <p class="text-indigo-100 text-sm mt-0.5">We found matches based on your recent inputs.
+                                        Review
+                                        and link if needed.</p>
+                                </div>
+                            </div>
+                            <button type="button" @click="showDuplicateModal = false"
+                                class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/20">
+                                <i data-lucide="x" class="w-6 h-6"></i>
+                            </button>
                         </div>
                     </div>
-                    <button type="button" @click="showDuplicateModal = false"
-                        class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/20">
-                        <i data-lucide="x" class="w-6 h-6"></i>
-                    </button>
-                </div>
-            </div>
 
-            <!-- Content Area -->
-            <div class="p-6 sm:p-8 overflow-y-auto custom-scrollbar bg-slate-50/50" style="max-height: calc(90vh - 100px);">
+                    <!-- Content Area -->
+                    <div class="p-6 sm:p-8 overflow-y-auto custom-scrollbar bg-slate-50/50"
+                        style="max-height: calc(90vh - 100px);">
 
-                <div class="grid grid-cols-1 gap-6">
-                    <template x-for="dup in duplicates" :key="dup.petition_id">
-                        <div
-                            class="group relative bg-white rounded-2xl border border-slate-200 p-6 flex flex-col xl:flex-row gap-6 items-start xl:items-center justify-between shadow-sm hover:shadow-xl hover:border-indigo-300 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-                            <!-- Subtle highlight strip on hover -->
-                            <div
-                                class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                            </div>
-
-                            <div class="flex-1 w-full space-y-5">
-                                <!-- Top Row: Badges -->
-                                <div class="flex flex-wrap items-center gap-3">
-                                    <div
-                                        class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm">
-                                        <i data-lucide="hash" class="w-4 h-4"></i>
-                                        <span class="text-sm font-bold tracking-wide" x-text="dup.receipt_no"></span>
-                                    </div>
-                                    <template x-if="dup.file_no">
-                                        <div
-                                            class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm">
-                                            <i data-lucide="folder-open" class="w-4 h-4 text-blue-500"></i>
-                                            <span class="text-sm font-semibold" x-text="dup.file_no"></span>
-                                        </div>
-                                    </template>
-                                    <div
-                                        class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-                                        <i data-lucide="calendar-days" class="w-4 h-4 text-slate-500"></i>
-                                        <span class="text-sm font-semibold" x-text="dup.date"></span>
-                                    </div>
-                                    <div
-                                        class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100 shadow-sm">
-                                        <span
-                                            class="text-xs font-bold uppercase tracking-wider text-emerald-600">Status</span>
-                                        <span class="text-sm font-bold" x-text="dup.status"></span>
-                                    </div>
-                                    <template x-if="dup.decision">
-                                        <div
-                                            class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-100 shadow-sm">
-                                            <span
-                                                class="text-xs font-bold uppercase tracking-wider text-amber-600">Decision</span>
-                                            <span class="text-sm font-bold" x-text="dup.decision"></span>
-                                        </div>
-                                    </template>
-                                </div>
-
-                                <!-- Middle Row: Complainant and Suspect Details -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div class="flex items-start gap-3">
-                                        <div
-                                            class="mt-1 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 border border-blue-200">
-                                            <i data-lucide="user" class="w-4 h-4"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-[11px] font-bold text-blue-500 uppercase tracking-widest">
-                                                Complainant</p>
-                                            <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.complainant"></p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-start gap-3">
-                                        <div
-                                            class="mt-1 w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0 border border-rose-200">
-                                            <i data-lucide="user-x" class="w-4 h-4"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-[11px] font-bold text-rose-500 uppercase tracking-widest">Suspect
-                                            </p>
-                                            <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.accused"></p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Bottom Row: Description Preview -->
+                        <div class="grid grid-cols-1 gap-6">
+                            <template x-for="dup in duplicates" :key="dup.petition_id">
                                 <div
-                                    class="bg-gradient-to-r from-slate-50 to-white p-4 rounded-xl border border-slate-100 shadow-inner group-hover:bg-slate-50 transition-colors">
-                                    <p class="text-sm text-slate-600 italic leading-relaxed line-clamp-2">"<span
-                                            x-text="dup.description"></span>"</p>
-                                </div>
-                            </div>
+                                    class="group relative bg-white rounded-2xl border border-slate-200 p-6 flex flex-col xl:flex-row gap-6 items-start xl:items-center justify-between shadow-sm hover:shadow-xl hover:border-indigo-300 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                                    <!-- Subtle highlight strip on hover -->
+                                    <div
+                                        class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    </div>
 
-                            <!-- Action Button -->
-                            @if(Auth::user()->canAccess('link petitions'))
-                            <div class="w-full xl:w-auto shrink-0 flex items-center">
-                                <button type="button" @click="linkPetition(dup.receipt_no)" :disabled="isLinkingDuplicate"
-                                    class="w-full xl:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-teal-600 active:scale-95 transition-all flex justify-center items-center gap-2 group-hover:animate-pulse focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                                    <i data-lucide="link" class="w-4 h-4 transition-transform group-hover:rotate-12"></i>
-                                    <span x-text="isLinkingDuplicate ? 'Linking...' : 'Link & Merge'"></span>
-                                </button>
-                            </div>
-                            @endif
+                                    <div class="flex-1 w-full space-y-5">
+                                        <!-- Top Row: Badges -->
+                                        <div class="flex flex-wrap items-center gap-3">
+                                            <div
+                                                class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm">
+                                                <i data-lucide="hash" class="w-4 h-4"></i>
+                                                <span class="text-sm font-bold tracking-wide"
+                                                    x-text="dup.receipt_no"></span>
+                                            </div>
+                                            <template x-if="dup.file_no">
+                                                <div
+                                                    class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm">
+                                                    <i data-lucide="folder-open" class="w-4 h-4 text-blue-500"></i>
+                                                    <span class="text-sm font-semibold" x-text="dup.file_no"></span>
+                                                </div>
+                                            </template>
+                                            <div
+                                                class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                                                <i data-lucide="calendar-days" class="w-4 h-4 text-slate-500"></i>
+                                                <span class="text-sm font-semibold" x-text="dup.date"></span>
+                                            </div>
+                                            <div
+                                                class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100 shadow-sm">
+                                                <span
+                                                    class="text-xs font-bold uppercase tracking-wider text-emerald-600">Status</span>
+                                                <span class="text-sm font-bold" x-text="dup.status"></span>
+                                            </div>
+                                            <template x-if="dup.decision">
+                                                <div
+                                                    class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-100 shadow-sm">
+                                                    <span
+                                                        class="text-xs font-bold uppercase tracking-wider text-amber-600">Decision</span>
+                                                    <span class="text-sm font-bold" x-text="dup.decision"></span>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <!-- Middle Row: Complainant and Suspect Details -->
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div class="flex items-start gap-3">
+                                                <div
+                                                    class="mt-1 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 border border-blue-200">
+                                                    <i data-lucide="user" class="w-4 h-4"></i>
+                                                </div>
+                                                <div>
+                                                    <p
+                                                        class="text-[11px] font-bold text-blue-500 uppercase tracking-widest">
+                                                        Complainant</p>
+                                                    <p class="text-sm font-bold text-slate-800 mt-0.5"
+                                                        x-text="dup.complainant"></p>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-start gap-3">
+                                                <div
+                                                    class="mt-1 w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0 border border-rose-200">
+                                                    <i data-lucide="user-x" class="w-4 h-4"></i>
+                                                </div>
+                                                <div>
+                                                    <p
+                                                        class="text-[11px] font-bold text-rose-500 uppercase tracking-widest">
+                                                        Suspect
+                                                    </p>
+                                                    <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.accused">
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Bottom Row: Description Preview -->
+                                        <div
+                                            class="bg-gradient-to-r from-slate-50 to-white p-4 rounded-xl border border-slate-100 shadow-inner group-hover:bg-slate-50 transition-colors">
+                                            <p class="text-sm text-slate-600 italic leading-relaxed line-clamp-2">"<span
+                                                    x-text="dup.description"></span>"</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action Button -->
+                                    @if(Auth::user()->canAccess('link petitions'))
+                                        <div class="w-full xl:w-auto shrink-0 flex items-center">
+                                            <button type="button" @click="linkPetition(dup.receipt_no)"
+                                                :disabled="isLinkingDuplicate"
+                                                class="w-full xl:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-teal-600 active:scale-95 transition-all flex justify-center items-center gap-2 group-hover:animate-pulse focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                                                <i data-lucide="link"
+                                                    class="w-4 h-4 transition-transform group-hover:rotate-12"></i>
+                                                <span x-text="isLinkingDuplicate ? 'Linking...' : 'Link & Merge'"></span>
+                                            </button>
+                                        </div>
+                                    @endif
+                                </div>
+                            </template>
                         </div>
-                    </template>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-    </form>
-    @include('user.partials.return_to_inward_modal')
+        </form>
+        @include('user.partials.return_to_inward_modal')
     </div>
 
     <script>
@@ -931,7 +947,7 @@
                 nature: sanitizedOriginalNature,
                 mode: {!! json_encode($petition->mode_of_petition_received ?? '') !!},
                 mode_others: {!! json_encode($petition->mode_of_petition_received_others ?? '') !!},
-                unit_id: {!! json_encode($petition->unit_id ? (string)$petition->unit_id : '') !!},
+                unit_id: {!! json_encode($petition->unit_id ? (string) $petition->unit_id : '') !!},
                 date_of_petition_received_at_unit: {!! json_encode($petition->date_of_petition_received_at_unit ? $petition->date_of_petition_received_at_unit->format('Y-m-d') : '') !!},
                 description: {!! json_encode($petition->description ?? '') !!},
                 proposed_action: {!! json_encode($petition->proposed_action ?? '') !!}
@@ -961,7 +977,7 @@
                             isRestored = true;
                         }
                     }
-                } catch(e) {}
+                } catch (e) { }
             }
 
             const oldComplainants = @json(old('complainants'));
@@ -985,7 +1001,7 @@
                 petitionDetails: {
                     receipt_no: {!! json_encode($petition->receipt_no) !!},
                     date: {!! json_encode($petition->date_of_petition_received) !!},
-                    nature: (function() {
+                    nature: (function () {
                         const oldNature = {!! json_encode(old('nature_of_petition')) !!};
                         if (oldNature && oldNature !== 'General Inward' && validNatures.includes(oldNature)) return oldNature;
                         const draftNature = initialDraft?.petitionDetails?.nature;
@@ -1037,7 +1053,7 @@
                             form_data: payload.form_data,
                             timestamp: new Date().toISOString()
                         }));
-                    } catch(e) {}
+                    } catch (e) { }
 
                     fetch('{{ route('petitions.draft.save') }}', {
                         method: 'POST',
@@ -1048,17 +1064,17 @@
                         },
                         body: JSON.stringify(payload)
                     })
-                    .then(res => res.json())
-                    .then(data => {
-                        this.isSavingDraft = false;
-                        if (data.success) {
-                            this.lastSavedText = data.saved_at || 'just now';
-                            this.refreshIcons();
-                        }
-                    })
-                    .catch(() => {
-                        this.isSavingDraft = false;
-                    });
+                        .then(res => res.json())
+                        .then(data => {
+                            this.isSavingDraft = false;
+                            if (data.success) {
+                                this.lastSavedText = data.saved_at || 'just now';
+                                this.refreshIcons();
+                            }
+                        })
+                        .catch(() => {
+                            this.isSavingDraft = false;
+                        });
                 },
 
                 confirmClearDraft() {
@@ -1086,7 +1102,7 @@
                 clearDraft() {
                     try {
                         localStorage.removeItem(this.localStorageKey);
-                    } catch(e) {}
+                    } catch (e) { }
 
                     fetch('{{ route('petitions.draft.clear') }}', {
                         method: 'DELETE',
@@ -1100,20 +1116,20 @@
                             petition_id: this.draftPetitionId
                         })
                     })
-                    .finally(() => {
-                        this.resetFormState();
-                        if (window.showToast) {
-                            window.showToast('success', 'Draft changes discarded. Reverted to original petition records.');
-                        } else if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                title: 'Draft Discarded',
-                                text: 'The form has been reverted to saved petition records.',
-                                icon: 'success',
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
-                        }
-                    });
+                        .finally(() => {
+                            this.resetFormState();
+                            if (window.showToast) {
+                                window.showToast('success', 'Draft changes discarded. Reverted to original petition records.');
+                            } else if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: 'Draft Discarded',
+                                    text: 'The form has been reverted to saved petition records.',
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+                            }
+                        });
                 },
 
                 resetFormState() {
@@ -1342,7 +1358,7 @@
 
                     try {
                         localStorage.removeItem(this.localStorageKey);
-                    } catch(e) {}
+                    } catch (e) { }
 
                     return true;
                 },
@@ -1411,8 +1427,6 @@
                     // Explicit check for step 1 required fields in Alpine model
                     if (step === 1) {
                         const step1Required = [
-                            { key: 'receipt_no', name: 'receipt_no', message: 'This field is required.' },
-                            { key: 'date', name: 'date_of_petition_received', message: 'This field is required.' },
                             { key: 'nature', name: 'nature_of_petition', message: 'This field is required.' },
                             { key: 'mode', name: 'mode_of_petition_received', message: 'This field is required.' },
                             { key: 'description', name: 'description', message: 'This field is required.' }
@@ -1574,7 +1588,7 @@
                         return;
                     }
 
-                    if (fieldName === 'date_of_petition_received' || fieldName === 'date_of_petition_received_at_unit') {
+                    if (fieldName === 'date_of_petition_received_at_unit') {
                         if (!fieldValue) {
                             this.formErrors[fieldName] = 'This field is required.';
                         } else {

@@ -508,7 +508,9 @@
 
 
                 @php
-                    $canAccessInwardAdmin = Auth::user()->canAccess('create inward petitions') || 
+                    $canAccessInwardAdmin = Auth::user()->canAccess('view inward registration') || 
+                                           Auth::user()->canAccess('create inward petitions') || 
+                                           Auth::user()->canAccess('view inward statistics') || 
                                            Auth::user()->canAccess('inward statistics') || 
                                            Auth::user()->canAccess('view file transfer');
                 @endphp
@@ -642,7 +644,7 @@
                 </a>
                 @endif
 
-                @if(Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view t-section diagnostics') || Auth::user()->canAccess('view t-section in reports') || Auth::user()->canAccess('view pendency details'))
+                @if(Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view department-wise report') || Auth::user()->canAccess('view pendency details'))
                 <!-- Statistical Reports Dropdown -->
                 <div x-data="{ 
                         hoverOpen: false,
@@ -683,7 +685,7 @@
                         </a>
                         @endif
                         
-                        @if(Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view t-section diagnostics') || Auth::user()->canAccess('view t-section in reports'))
+                        @if(Auth::user()->canAccess('view department-wise report'))
                         <a href="{{ route('admin.departments.analysis') }}" 
                            @click="reportsOpen = true"
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.departments.analysis') ? 'active-submenu' : 'submenu-link' }}">

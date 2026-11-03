@@ -93,8 +93,10 @@ class UserController extends Controller
         abort_unless(auth()->user()->canAccess('update users'), 403, 'Unauthorized access to edit users.');
 
         try {
-            $user = User::findOrFail(decrypt($id));
-            return view("admin.users.edit", compact("user"));
+            $user = User::with(['permissions', 'roles'])->findOrFail(decrypt($id));
+            $allPermissions = \Spatie\Permission\Models\Permission::orderBy('name')->get();
+            $allRoles = \Spatie\Permission\Models\Role::orderBy('name')->get();
+            return view("admin.users.edit", compact("user", "allPermissions", "allRoles"));
         } catch (\Exception $e) {
             return redirect()->route("users.index")->with('error', 'Invalid user selection.');
         }
@@ -121,6 +123,15 @@ class UserController extends Controller
                 }
 
                 $user->update($userData);
+
+                // Granular PBAC: Only users authorized with 'update permissions' / 'update roles' can assign/revoke them
+                if (auth()->user()->canAccess('update permissions') && $request->has('permissions')) {
+                    $user->syncPermissions($request->input('permissions', []));
+                }
+
+                if (auth()->user()->canAccess('update roles') && $request->has('roles')) {
+                    $user->syncRoles($request->input('roles', []));
+                }
 
 
 

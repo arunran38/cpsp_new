@@ -27,13 +27,24 @@ class PetitionForwardingController extends Controller
             try {
                 $petitionId = HashidService::decode($request->petition_id) ?? $request->petition_id;
                 $petition = Petition::findOrFail($petitionId);
-                $this->authorize('update', $petition);
 
                 $user = Auth::user();
+                if ($petition->isTSection()) {
+                    abort_unless($user->canAccessTSection(), 403, 'Unauthorized. T-Section clearance required.');
+                } else {
+                    abort_unless($user->canAccessCpspSection() || $user->canAccess('access admin dashboard'), 403, 'Unauthorized. CPSP clearance required.');
+                }
+
                 $seatUser = $user ? $user->currentSeatUser() : null;
                 $currentSeatId = $seatUser ? $seatUser->seat_id : 1;
 
                 if ($request->action === 'Forward_To_Unit') {
+                    abort_unless(
+                        $user->canAccess('forward petitions') || ($petition->isTSection() && $user->canAccess('forward t-section petitions')),
+                        403,
+                        'Unauthorized to forward petitions.'
+                    );
+
                     PetitionForwarding::create([
                         'petition_id' => $petition->petition_id,
                         'from_seat_id' => $currentSeatId,
@@ -44,6 +55,12 @@ class PetitionForwardingController extends Controller
                     ]);
                     $status = Petition::STATUS_FORWARDED;
                 } else {
+                    abort_unless(
+                        $user->canAccess('record decisions'),
+                        403,
+                        'Unauthorized to record decisions.'
+                    );
+
                     $status = match($request->action) {
                         'Sent_to_Govt' => Petition::STATUS_SENT_TO_GOVT,
                         'Sent_to_SPC' => Petition::STATUS_SENT_TO_SPC,
@@ -142,8 +159,8 @@ class PetitionForwardingController extends Controller
      */
     public function pullbackForwarding(int $id): RedirectResponse
     {
-        if (!Auth::user()->canAccess('access admin dashboard')) {
-            return back()->with('error', 'Only administrators can pull back a forwarding.');
+        if (!Auth::user()->canAccess('pullback forwardings') && !Auth::user()->canAccess('access admin dashboard')) {
+            return back()->with('error', 'Only authorized users can pull back a forwarding.');
         }
 
         $forwarding = PetitionForwarding::findOrFail($id);
@@ -174,8 +191,8 @@ class PetitionForwardingController extends Controller
      */
     public function pullbackVr(int $id): RedirectResponse
     {
-        if (!Auth::user()->canAccess('access admin dashboard')) {
-            return back()->with('error', 'Only administrators can pull back a verification report.');
+        if (!Auth::user()->canAccess('pullback forwardings') && !Auth::user()->canAccess('access admin dashboard')) {
+            return back()->with('error', 'Only authorized users can pull back a verification report.');
         }
 
         $forwarding = PetitionForwarding::findOrFail($id);

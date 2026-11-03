@@ -30,7 +30,9 @@ class TrashController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
-        $query = Petition::onlyTrashed()
+        $baseTrashedQuery = Petition::onlyTrashed()->excludeTSectionIfNotAuthorized(Auth::user());
+
+        $query = (clone $baseTrashedQuery)
             ->with([
                 'user',
                 'seat',
@@ -72,12 +74,12 @@ class TrashController extends Controller
             ->withQueryString();
 
         // Metrics for top cards
-        $totalTrashed = Petition::onlyTrashed()->count();
-        $trashedThisMonth = Petition::onlyTrashed()->where('deleted_at', '>=', now()->startOfMonth())->count();
-        $trashedWithFiles = Petition::onlyTrashed()->whereHas('uploads', fn($q) => $q->withTrashed())->count();
+        $totalTrashed = (clone $baseTrashedQuery)->count();
+        $trashedThisMonth = (clone $baseTrashedQuery)->where('deleted_at', '>=', now()->startOfMonth())->count();
+        $trashedWithFiles = (clone $baseTrashedQuery)->whereHas('uploads', fn($q) => $q->withTrashed())->count();
 
         // Available natures for filter
-        $availableNatures = Petition::onlyTrashed()
+        $availableNatures = (clone $baseTrashedQuery)
             ->whereNotNull('nature_of_petition')
             ->where('nature_of_petition', '!=', '')
             ->distinct()

@@ -123,76 +123,112 @@ class User extends Authenticatable
     }   
 
     /**
-     * Check if the user can access a permission based on their active seat.
+     * Check if the user can access a permission based on their active seat or direct permissions.
      */
     public function canAccess(string $permission): bool
     {
-        $permission = str_replace('_', ' ', trim($permission));
+        $permission = strtolower(str_replace('_', ' ', trim($permission)));
+
+        $aliases = [
+            'view inward registration' => ['view inward registration', 'create inward petitions'],
+            'create inward petitions' => ['create inward petitions', 'view inward registration'],
+            'view inward statistics' => ['view inward statistics', 'inward statistics'],
+            'inward statistics' => ['inward statistics', 'view inward statistics'],
+            'view pendency details' => ['view pendency details', 'pendency details'],
+            'pendency details' => ['view pendency details', 'pendency details'],
+            'view department-wise report' => ['view department-wise report', 'view department wise report'],
+            'view department wise report' => ['view department-wise report', 'view department wise report'],
+            'update petitions' => ['update petitions', 'edit petitions'],
+            'edit petitions' => ['update petitions', 'edit petitions'],
+            'access t-section' => ['access t-section', 'access t section', \App\Services\TSectionPermissionRegistry::ACCESS_DASHBOARD],
+            'access cpsp section' => ['access cpsp section', 'access cpsp'],
+            'export petitions' => ['export petitions', 'export statistics'],
+        ];
+
+        $candidates = $aliases[$permission] ?? [$permission];
 
         $currentSeatUser = $this->currentSeatUser();
         $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
 
-        // Permissions that are strict feature toggles or confidential (like T-Section permissions)
-        // MUST be explicitly granted to the active seat / role and NEVER bypassed unconditionally.
+        // Permissions that are strict feature toggles, confidential, operational, or reporting
+        // MUST be explicitly granted to the active seat / role / user and NEVER bypassed unconditionally.
         $strictPermissions = array_merge([
-            'view recent petitions',
-            'view seat diagnostics',
+            'access cpsp section',
+            'access t-section',
+            'view inward registration',
+            'create inward petitions',
+            'view inward statistics',
             'inward statistics',
+            'view own inward statistics',
+            'view other inward statistics',
+            'view all inward statistics',
+            'view seat diagnostics',
+            'view department-wise report',
+            'view department wise report',
             'view pendency details',
             'pendency details',
         ], \App\Services\TSectionPermissionRegistry::all());
 
-        if (in_array($permission, $strictPermissions, true)) {
-            if ($currentSeat) {
-                try {
-                    return $currentSeat->hasPermissionTo($permission);
-                } catch (\Exception $e) {
-                    return false;
-                }
-            }
-
-            try {
-                return $this->hasPermissionTo($permission);
-            } catch (\Exception $e) {
-                return false;
+        $isStrict = false;
+        foreach ($candidates as $cand) {
+            if (in_array($cand, $strictPermissions, true)) {
+                $isStrict = true;
+                break;
             }
         }
 
-        // If sitting in a seat, the seat's permissions govern access (even when switched/impersonating)
+        // 1. Check if active seat explicitly has permission
+        if ($currentSeat) {
+            foreach ($candidates as $cand) {
+                try {
+                    if ($currentSeat->hasPermissionTo($cand, 'web')) {
+                        return true;
+                    }
+                } catch (\Throwable $e) { }
+            }
+        }
+
+        // 2. Check if user personally has permission (directly or through assigned roles)
+        foreach ($candidates as $cand) {
+            try {
+                if ($this->hasPermissionTo($cand, 'web')) {
+                    return true;
+                }
+            } catch (\Throwable $e) { }
+        }
+
+        // Strict permissions must be explicitly granted; no fallback bypass
+        if ($isStrict) {
+            return false;
+        }
+
+        // If sitting in an operational seat, seat governing rules apply
         if ($currentSeat) {
             try {
                 if ($currentSeat->hasRole(['developer', 'Developer', 'super admin', 'Super Admin'])) {
                     return true;
                 }
-                if ($currentSeat->hasPermissionTo($permission)) {
-                    return true;
-                }
-            } catch (\Exception $e) { }
+            } catch (\Throwable $e) { }
 
-            // Still allow global admin dashboard access if the user has it personally (e.g. to switch back)
+            // Allow global admin dashboard access if the user has it personally (e.g. to switch back)
             if ($permission === 'access admin dashboard') {
                 try {
                     return $this->hasRole(['developer', 'Developer', 'super admin', 'Super Admin'])
                         || $this->hasPermissionTo($permission);
-                } catch (\Exception $e) { }
+                } catch (\Throwable $e) { }
             }
 
             return false;
         }
 
-        // Developer & Super Admin have unrestricted full access when not in an operational seat
+        // Developer & Super Admin have unrestricted full access for general administrative entities
         try {
             if ($this->hasRole(['developer', 'Developer', 'super admin', 'Super Admin'])) {
                 return true;
             }
-        } catch (\Exception $e) { }
+        } catch (\Throwable $e) { }
 
-        // If not in a seat (or impersonating), fallback to personal permissions
-        try {
-            return $this->hasPermissionTo($permission);
-        } catch (\Exception $e) {
-            return false;
-        }
+        return false;
     }
 
     /**
@@ -284,12 +320,17 @@ class User extends Authenticatable
 
     /**
      * Check if user has clearance to access T-Section data.
-     * Strictly governed by RBAC: requires occupying a T-Section seat, holding a T-Section role, or having 'access t-section dashboard'.
+     * Strictly governed by RBAC: requires occupying a T-Section seat, holding a T-Section role, or having 'access t-section'.
      */
     public function canAccessTSection(): bool
     {
         $currentSeatUser = $this->currentSeatUser();
         $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
+
+        // If in an active CPSP seat or role, strict cross-isolation applies unless granted access t-section
+        if ($currentSeat && ($currentSeat->hasRole(['cpsp', 'CPSP']) || str_starts_with(strtoupper($currentSeat->seat_name), 'CPSP')) && !$this->canAccess('access t-section')) {
+            return false;
+        }
 
         if ($currentSeat && $currentSeat->isTSection()) {
             return true;
@@ -299,7 +340,58 @@ class User extends Authenticatable
             return true;
         }
 
-        return $this->canAccess(\App\Services\TSectionPermissionRegistry::ACCESS_DASHBOARD);
+        return $this->canAccess('access t-section')
+            || $this->canAccess(\App\Services\TSectionPermissionRegistry::ACCESS_DASHBOARD);
+    }
+
+    /**
+     * Check if user has clearance to access CPSP Section data.
+     */
+    public function canAccessCpspSection(): bool
+    {
+        $currentSeatUser = $this->currentSeatUser();
+        $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
+
+        // If in an active T-Section seat or role, strict cross-isolation applies
+        if ($currentSeat && $currentSeat->isTSection() && !$this->canAccess('access cpsp section')) {
+            return false;
+        }
+
+        if ($this->isTSectionRole() && !$this->canAccess('access cpsp section')) {
+            return false;
+        }
+
+        if ($this->canAccess('access cpsp section')) {
+            return true;
+        }
+
+        if ($currentSeat && ($currentSeat->hasRole(['cpsp', 'CPSP']) || str_starts_with(strtoupper($currentSeat->seat_name), 'CPSP'))) {
+            return true;
+        }
+
+        try {
+            if ($this->hasRole(['cpsp', 'CPSP'])) {
+                return true;
+            }
+        } catch (\Throwable $e) { }
+
+        // Inward seat / role receives and processes CPSP petitions
+        if ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || str_contains(strtolower($currentSeat->seat_name), 'inward'))) {
+            return true;
+        }
+
+        try {
+            if ($this->hasRole(['inward', 'Inward', 'developer', 'Developer', 'super admin', 'Super Admin'])) {
+                return true;
+            }
+        } catch (\Throwable $e) { }
+
+        // Permissions that operate on CPSP petitions by default unless cross-isolated
+        if ($this->canAccess('view pendency details') || $this->canAccess('inward statistics') || $this->canAccess('create inward petitions')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

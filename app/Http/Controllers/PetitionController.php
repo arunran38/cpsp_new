@@ -81,17 +81,12 @@ class PetitionController extends Controller
                 str_contains(strtolower($currentSeat->seat_name), 'cpsp')
             ));
 
-        // Permission Check: Must have inward petition access, file transfer access, or appropriate role
-        $canAccessInwardModule = $isAdminOrSuperAdmin ||
-            $isInwardUser ||
-            $isCpspUser ||
-            $user->canAccess('create inward petitions') || 
-            $user->canAccess('view file transfer') ||
-            $user->canAccess('view petitions') ||
-            $user->canAccess('view all petitions');
+        // Permission Check: Must have inward petition access
+        $canAccessInwardModule = $user->canAccess('view inward registration') ||
+            $user->canAccess('create inward petitions');
 
         if (!$canAccessInwardModule) {
-            abort(403, 'Unauthorized. Inward or petition viewing access required.');
+            abort(403, 'Unauthorized. Inward registration access required.');
         }
 
         $filters = $request->validate([
@@ -112,16 +107,25 @@ class PetitionController extends Controller
         $defaultSeatId = null;
         $currentSeatName = null;
 
+        $canCpsp = $user->canAccessCpspSection();
+        $canT = $user->canAccessTSection();
+        $tSeatIds = Seat::getTSectionSeatIds();
+
         if ($isCpspUser && !$isAdminOrSuperAdmin && !$user->canAccess('view all petitions') && $currentSeat) {
             $isSeatLocked = true;
             $defaultSeatId = $currentSeat->seat_id;
             $currentSeatName = $currentSeat->seat_name;
             $seats = collect([$currentSeat]);
         } else {
-            $seats = Seat::eligibleForInward()
-                ->with(['activeAssignment.user'])
-                ->get()
-                ->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+            $seatsQuery = Seat::eligibleForInward()->with(['activeAssignment.user']);
+            if ($canCpsp && !$canT) {
+                $seatsQuery->whereNotIn('seat_id', $tSeatIds);
+            } elseif (!$canCpsp && $canT) {
+                $seatsQuery->whereIn('seat_id', $tSeatIds);
+            } elseif (!$canCpsp && !$canT) {
+                $seatsQuery->whereRaw('1 = 0');
+            }
+            $seats = $seatsQuery->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         }
 
         $inwardSeats = Seat::where('seat_name', 'like', '%Inward%')->where('is_active', true)->get();
@@ -225,33 +229,11 @@ class PetitionController extends Controller
         $currentSeatUser = $user->currentSeatUser();
         $currentSeat = $currentSeatUser?->seat;
 
-        $isAdminOrSuperAdmin = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
-            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin'])) ||
-            $user->canAccess('access admin dashboard');
+        $canAccessInward = $user->canAccess('view inward registration') || $user->canAccess('create inward petitions');
+        $canExport = $user->canAccess('export statistics') || $user->canAccess('export petitions');
 
-        $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
-            ($currentSeat && (
-                $currentSeat->hasRole(['inward', 'Inward']) || 
-                str_contains(strtolower($currentSeat->seat_name), 'inward')
-            ));
-
-        $isCpspUser = $user->hasRole(['cpsp', 'CPSP']) || 
-            ($currentSeat && (
-                $currentSeat->hasRole(['cpsp', 'CPSP']) || 
-                str_contains(strtolower($currentSeat->seat_name), 'cpsp')
-            ));
-
-        $canExport = $isAdminOrSuperAdmin ||
-            $isInwardUser ||
-            $isCpspUser ||
-            $user->canAccess('create inward petitions') || 
-            $user->canAccess('export statistics') ||
-            $user->canAccess('view file transfer') ||
-            $user->canAccess('view petitions') ||
-            $user->canAccess('view all petitions');
-
-        if (!$canExport) {
-            abort(403, 'Unauthorized.');
+        if (!$canAccessInward || !$canExport) {
+            abort(403, 'Unauthorized. Inward registration and export permissions required.');
         }
 
         $filters = $request->validate([
@@ -344,6 +326,9 @@ class PetitionController extends Controller
      */
     public function returnToInward(Request $request, $id = null): RedirectResponse
     {
+        $user = Auth::user();
+        abort_unless($user->canAccess('return petitions to inward') || $user->canAccess('access admin dashboard'), 403, 'Unauthorized to return petition to inward.');
+
         $id = $id ?? $request->input('petition_id');
         if (!$id) {
             return back()->with('error', 'Petition ID is required to return to Inward.');
@@ -351,8 +336,13 @@ class PetitionController extends Controller
 
         $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
-        $user = Auth::user();
-        $this->authorize('update', $petition);
+
+        // Section isolation
+        if ($petition->isTSection()) {
+            abort_unless($user->canAccessTSection(), 403, 'Unauthorized. T-Section clearance required.');
+        } else {
+            abort_unless($user->canAccessCpspSection() || $user->canAccess('access admin dashboard'), 403, 'Unauthorized. CPSP clearance required.');
+        }
 
         $currentSeat = $user->currentSeatUser();
 
@@ -386,21 +376,7 @@ class PetitionController extends Controller
     public function reassignInward(Request $request, $id): RedirectResponse
     {
         $user = Auth::user();
-        $currentSeat = $user->currentSeatUser()?->seat;
-        $isAdmin = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
-            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin'])) ||
-            $user->canAccess('access admin dashboard');
-
-        $canReassign = $isAdmin ||
-            $user->canAccess('reassign inward petitions') ||
-            $user->canAccess('create inward petitions') ||
-            $user->canAccess('view file transfer') || 
-            $user->hasRole(['inward', 'Inward']) ||
-            ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || str_contains(strtolower($currentSeat->seat_name), 'inward')));
-
-        if (!$canReassign) {
-            abort(403, 'Unauthorized to reassign inward petitions.');
-        }
+        abort_unless($user->canAccess('reassign inward petitions') || $user->canAccess('access admin dashboard'), 403, 'Unauthorized to reassign inward petitions.');
 
         $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
@@ -431,21 +407,7 @@ class PetitionController extends Controller
     public function destroyInward(Request $request, $id): RedirectResponse
     {
         $user = Auth::user();
-        $currentSeat = $user->currentSeatUser()?->seat;
-
-        $isAdmin = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
-            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin'])) ||
-            $user->canAccess('access admin dashboard');
-
-        $canDeleteInward = $isAdmin ||
-            $user->canAccess('delete inward petitions') ||
-            $user->canAccess('create inward petitions') ||
-            $user->hasRole(['inward', 'Inward']) ||
-            ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || str_contains(strtolower($currentSeat->seat_name), 'inward')));
-
-        if (!$canDeleteInward) {
-            abort(403, 'Unauthorized to delete inward petitions.');
-        }
+        abort_unless($user->canAccess('delete inward petitions') || $user->canAccess('access admin dashboard'), 403, 'Unauthorized to delete inward petitions.');
 
         $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
@@ -495,42 +457,42 @@ class PetitionController extends Controller
             }
         } catch (\Exception $e) { }
 
-        // Role & Administrator clearance checks
-        $isAdminOrDeveloper = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
-            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']));
+        $isPendencyRoute = $request->routeIs('admin.reports.pendency*');
+        $canAccessPendency = $user->canAccess('view pendency details');
 
-        $hasAdminDashboard = $user->canAccess('access admin dashboard');
+        if ($isPendencyRoute) {
+            if (!$canAccessPendency) {
+                abort(403, 'Unauthorized. Permission view pendency details required to view Pendency Details.');
+            }
+            $canViewAllStats = true;
+            $canViewOtherStats = true;
+            $canViewOwnStats = true;
+        } else {
+            // Role & Administrator clearance checks
+            $isAdminOrDeveloper = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
+                ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']));
 
-        // Check granular PBAC permissions for Inward Statistics
-        $canViewAllStats = $isAdminOrDeveloper
-            || $hasAdminDashboard
-            || $user->canAccess('view all inward statistics')
-            || $user->canAccess('view_all_inward_statistics')
-            || $user->canAccess('view all petitions');
+            $hasAdminDashboard = $user->canAccess('access admin dashboard');
 
-        $canViewOtherStats = $canViewAllStats
-            || $user->canAccess('view other inward statistics')
-            || $user->canAccess('view_other_inward_statistics')
-            || $user->canAccess('view pendency details');
+            // Check granular PBAC permissions for Inward Statistics
+            $canViewAllStats = $isAdminOrDeveloper
+                || $hasAdminDashboard
+                || $user->canAccess('view all inward statistics')
+                || $user->canAccess('view_all_inward_statistics')
+                || $user->canAccess('view all petitions');
 
-        $canViewOwnStats = $canViewOtherStats
-            || $user->canAccess('view own inward statistics')
-            || $user->canAccess('inward statistics')
-            || $user->canAccess('view pendency details')
-            || $user->canAccess('create inward petitions')
-            || $user->hasRole(['inward', 'Inward'])
-            || ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || str_contains(strtolower($currentSeat->seat_name), 'inward')));
+            $canViewOtherStats = $canViewAllStats
+                || $user->canAccess('view other inward statistics')
+                || $user->canAccess('view_other_inward_statistics');
 
-        if (!$canViewOwnStats) {
-            abort(403, 'Unauthorized. You do not have permission to view inward statistics.');
-        }
+            $canViewOwnStats = $canViewOtherStats
+                || $user->canAccess('view own inward statistics')
+                || $user->canAccess('view inward statistics')
+                || $user->canAccess('inward statistics');
 
-        $canAccessPendency = $user->canAccess('view pendency details') ||
-            $user->hasRole(['developer', 'Developer', 'super admin', 'Super Admin']) ||
-            ($currentSeat && $currentSeat->hasRole(['developer', 'Developer', 'super admin', 'Super Admin']));
-
-        if ($request->routeIs('admin.reports.pendency*') && !$canAccessPendency) {
-            abort(403, 'Unauthorized. Permission view pendency details required to view Pendency Details.');
+            if (!$canViewOwnStats) {
+                abort(403, 'Unauthorized. You do not have permission to view inward statistics.');
+            }
         }
 
         // 1. Fetch only users who hold the Inward role or are assigned to an active Inward seat
@@ -632,15 +594,25 @@ class PetitionController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
-        $section = $request->input('section', 'cpsp');
+        $canCpsp = $user->canAccessCpspSection();
         $canViewTSection = $user->canAccessTSectionPending()
-            || $user->canAccessTSectionDiagnostics();
+            || $user->canAccessTSectionDiagnostics()
+            || $user->canAccessTSection();
+
+        $defaultSection = $canCpsp ? 'cpsp' : ($canViewTSection ? 't_section' : 'cpsp');
+        $section = $request->input('section', $defaultSection);
 
         if (!$canViewTSection && $section === 't_section') {
             abort(403, 'Unauthorized. Special clearance required to view T-Section statistics.');
         }
+        if (!$canCpsp && $section === 'cpsp') {
+            abort(403, 'Unauthorized. CPSP section clearance required.');
+        }
         if (!$canViewTSection && $section === 'all') {
             $section = 'cpsp';
+        }
+        if (!$canCpsp && $section === 'all') {
+            $section = 't_section';
         }
 
         $tSeatIds = Seat::getTSectionSeatIds();
@@ -815,8 +787,11 @@ class PetitionController extends Controller
 
         // Handle Excel Export
         if ($request->input('export') === 'csv') {
-            if (!$user->canAccess('export statistics')) {
-                abort(403, 'Unauthorized. Permission export_statistics required to export statistics.');
+            $canExportThis = $isPendencyRoute
+                ? ($user->canAccess('view pendency details') || $user->canAccess('export statistics'))
+                : $user->canAccess('export statistics');
+            if (!$canExportThis) {
+                abort(403, 'Unauthorized. Permission required to export statistics.');
             }
             $periodSuffix = '';
             if ($dateFrom && $dateTo) {
@@ -1073,10 +1048,11 @@ class PetitionController extends Controller
     public function export(Request $request): HttpResponse
     {
         $user = Auth::user();
-        if (!Auth::user()->canAccess('export statistics') && !Auth::user()->canAccess('view master reports')) {
-            if (!($user->isTSectionRole() && $user->canAccess(TSectionPermissionRegistry::EXPORT_PETITIONS))) {
-                abort(403, 'Unauthorized to export petitions.');
-            }
+        $canExport = $user->canAccess('export petitions') || $user->canAccess('export statistics') || ($user->isTSectionRole() && $user->canAccess(TSectionPermissionRegistry::EXPORT_PETITIONS));
+        $canViewReports = $user->canAccess('view master reports') || ($user->isTSectionRole() && $user->canAccess(TSectionPermissionRegistry::EXPORT_PETITIONS));
+
+        if (!$canViewReports || !$canExport) {
+            abort(403, 'Unauthorized to export petitions.');
         }
 
         $tab = $request->input('tab', 'all');
@@ -1593,7 +1569,22 @@ class PetitionController extends Controller
      */
     private function applyPetitionAccessScope(Builder $query, User $user): Builder
     {
-        $query->excludeTSectionIfNotAuthorized($user);
+        $canCpsp = $user->canAccessCpspSection();
+        $canT = $user->canAccessTSection();
+        $tSeatIds = Seat::getTSectionSeatIds();
+
+        if ($canCpsp && !$canT) {
+            $query->where(function ($q) use ($tSeatIds) {
+                $q->whereNotIn('petitions.seat_id', $tSeatIds)
+                  ->orWhereNull('petitions.seat_id');
+            });
+        } elseif (!$canCpsp && $canT) {
+            $query->whereIn('petitions.seat_id', $tSeatIds);
+        } elseif (!$canCpsp && !$canT) {
+            $query->where('petitions.user_id', $user->user_id ?? $user->id);
+        } else {
+            $query->excludeTSectionIfNotAuthorized($user);
+        }
 
         if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
             $currentSeat = $user->currentSeatUser();

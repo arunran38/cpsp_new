@@ -28,33 +28,40 @@ class DepartmentController extends Controller
     {
         $user = auth()->user();
         abort_unless(
-            $user->canAccess('view seat diagnostics') ||
-            $user->canAccess('view t-section diagnostics') ||
-            $user->canAccess('view t-section in reports'),
+            $user->canAccess('view department-wise report'),
             403,
-            'Unauthorized access to Statistical Reports.'
+            'Unauthorized access to Department-wise Report.'
         );
 
         $search = $request->input('search');
         $date_from = $request->input('date_from');
         $date_to = $request->input('date_to');
 
-        // Check clearance for T-Section access
+        // Check clearance for CPSP and T-Section access
+        $canCpsp = $user->canAccessCpspSection();
         $canViewTSection = $user->canAccessTSectionInReports()
             || $user->canAccessTSectionDiagnostics()
             || $user->canAccessTSectionPending()
             || $user->canAccessTSection();
 
+        if (!$canCpsp && !$canViewTSection) {
+            abort(403, 'Unauthorized. Section access permission required.');
+        }
+
         $availableSections = [];
-        if ($canViewTSection) {
+        if ($canCpsp && $canViewTSection) {
             $availableSections = [
                 'all' => 'All Sections',
                 'cpsp' => 'CPSP',
                 't_section' => 'T-Section',
             ];
-        } else {
+        } elseif ($canCpsp) {
             $availableSections = [
                 'cpsp' => 'CPSP',
+            ];
+        } else {
+            $availableSections = [
+                't_section' => 'T-Section',
             ];
         }
 
@@ -62,10 +69,13 @@ class DepartmentController extends Controller
         if (!$canViewTSection && $rawSection === 't_section') {
             abort(403, 'Unauthorized. Special clearance required to access T-Section analysis.');
         }
+        if (!$canCpsp && $rawSection === 'cpsp') {
+            abort(403, 'Unauthorized. CPSP section clearance required.');
+        }
 
         $section = $rawSection;
         if (!$section || !array_key_exists($section, $availableSections)) {
-            $section = 'cpsp';
+            $section = $canCpsp ? 'cpsp' : 't_section';
         }
 
         $tSeatIds = Seat::getTSectionSeatIds();
@@ -80,6 +90,8 @@ class DepartmentController extends Controller
             ->join('petitions', 'addresses.petition_id', '=', 'petitions.petition_id')
             ->where('addresses.person_type', 'Accused')
             ->whereNull('petitions.deleted_at')
+            ->whereNull('petitions.linked_petition_id')
+            ->where('petitions.is_returned_to_inward', false)
             ->whereNull('addresses.deleted_at')
             ->whereNull('department_lists.deleted_at')
             ->when($search, function ($q) use ($search) {
@@ -157,10 +169,9 @@ class DepartmentController extends Controller
         $query->groupBy('department_lists.id', 'department_lists.department_name')
             ->orderBy('total_petitions', 'desc');
 
+        $all_data = (clone $query)->get();
+        $total_sum = (int) $all_data->sum('total_petitions');
         $analysis = $query->paginate(10)->withQueryString();
-        
-        $all_data = $query->get();
-        $total_sum = $all_data->sum('total_petitions');
 
         if ($request->ajax()) {
             return view('admin.departments.partials.table', compact('analysis', 'search', 'date_from', 'date_to', 'section', 'canViewTSection', 'availableSections', 'total_sum'))->render();
@@ -173,34 +184,41 @@ class DepartmentController extends Controller
     {
         $user = auth()->user();
         abort_unless(
-            $user->canAccess('view seat diagnostics') ||
-            $user->canAccess('view t-section diagnostics') ||
-            $user->canAccess('view t-section in reports') ||
+            $user->canAccess('view department-wise report') &&
             $user->canAccess('export statistics'),
             403,
-            'Unauthorized access to Statistical Reports.'
+            'Unauthorized to export department analysis.'
         );
 
         $search = $request->input('search');
         $date_from = $request->input('date_from');
         $date_to = $request->input('date_to');
 
-        // Check clearance for T-Section access
+        // Check clearance for CPSP and T-Section access
+        $canCpsp = $user->canAccessCpspSection();
         $canViewTSection = $user->canAccessTSectionInReports()
             || $user->canAccessTSectionDiagnostics()
             || $user->canAccessTSectionPending()
             || $user->canAccessTSection();
 
+        if (!$canCpsp && !$canViewTSection) {
+            abort(403, 'Unauthorized. Section access permission required.');
+        }
+
         $availableSections = [];
-        if ($canViewTSection) {
+        if ($canCpsp && $canViewTSection) {
             $availableSections = [
                 'all' => 'All Sections',
                 'cpsp' => 'CPSP',
                 't_section' => 'T-Section',
             ];
-        } else {
+        } elseif ($canCpsp) {
             $availableSections = [
                 'cpsp' => 'CPSP',
+            ];
+        } else {
+            $availableSections = [
+                't_section' => 'T-Section',
             ];
         }
 
@@ -208,10 +226,13 @@ class DepartmentController extends Controller
         if (!$canViewTSection && $rawSection === 't_section') {
             abort(403, 'Unauthorized. Special clearance required to export T-Section analysis.');
         }
+        if (!$canCpsp && $rawSection === 'cpsp') {
+            abort(403, 'Unauthorized. CPSP section clearance required.');
+        }
 
         $section = $rawSection;
         if (!$section || !array_key_exists($section, $availableSections)) {
-            $section = 'cpsp';
+            $section = $canCpsp ? 'cpsp' : 't_section';
         }
 
         $tSeatIds = Seat::getTSectionSeatIds();
@@ -226,6 +247,8 @@ class DepartmentController extends Controller
             ->join('petitions', 'addresses.petition_id', '=', 'petitions.petition_id')
             ->where('addresses.person_type', 'Accused')
             ->whereNull('petitions.deleted_at')
+            ->whereNull('petitions.linked_petition_id')
+            ->where('petitions.is_returned_to_inward', false)
             ->whereNull('addresses.deleted_at')
             ->whereNull('department_lists.deleted_at')
             ->when($search, function ($q) use ($search) {

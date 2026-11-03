@@ -13,7 +13,7 @@ class StorePetitionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('create', \App\Models\Petition::class) ?? false;
     }
 
     protected function prepareForValidation(): void

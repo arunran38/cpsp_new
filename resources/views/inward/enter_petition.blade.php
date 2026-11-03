@@ -366,7 +366,7 @@
                 </a>
                 <a href="{{ route('petitions.index', ['tab' => 'received']) }}"
                     class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent">
-                    <span>Petitions Processed</span>
+                    <span>Desk Petitions</span>
                     <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors bg-white/20 text-white">{{ $unifiedCounts['received'] ?? 0 }}</span>
                 </a>
                 <a href="{{ route('petitions.index', ['tab' => 'forwarded']) }}"

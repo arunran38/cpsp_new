@@ -31,7 +31,7 @@ class ComplianceController extends Controller
 
         // Get final decisions that are PE, VC, VE, CV, SC but have no compliance record yet
         $pendingQuery = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'CS', 'SC'])
-            ->has('petition')
+            ->whereHas('petition', fn($pq) => $pq->excludeTSectionIfNotAuthorized(Auth::user())->whereNull('linked_petition_id'))
             ->whereDoesntHave('petition.compliance')
             ->with(['petition', 'decidedBySeat']);
 
@@ -55,7 +55,7 @@ class ComplianceController extends Controller
             
         // Get final decisions that are PE, VC, VE, CV, SC AND have a compliance record
         $compliedQuery = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'CS', 'SC'])
-            ->has('petition')
+            ->whereHas('petition', fn($pq) => $pq->excludeTSectionIfNotAuthorized(Auth::user())->whereNull('linked_petition_id'))
             ->whereHas('petition.compliance')
             ->with(['petition.compliance.createdBy.seatUsers.seat', 'decidedBySeat']);
 
@@ -98,7 +98,7 @@ class ComplianceController extends Controller
             'CV' => $pendingDecisionsAll->whereIn('final_decision', ['CV', 'CS'])->count(),
             'SC' => $pendingDecisionsAll->where('final_decision', 'SC')->count(),
             'Total' => $pendingDecisionsAll->count(),
-            'Overdue' => $pendingDecisionsAll->filter(fn($d) => \Carbon\Carbon::parse($d->decision_date)->diffInDays(now()) > 10)->count(),
+            'Overdue' => $pendingDecisionsAll->filter(fn($d) => !empty($d->decision_date) && \Carbon\Carbon::parse($d->decision_date)->startOfDay()->lte(now()->subDays(10)->startOfDay()))->count(),
         ];
 
         // Apply filterDecision
@@ -128,7 +128,7 @@ class ComplianceController extends Controller
         $dateTo = $request->input('date_to');
 
         $query = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'CS', 'SC'])
-            ->has('petition');
+            ->whereHas('petition', fn($pq) => $pq->excludeTSectionIfNotAuthorized(Auth::user())->whereNull('linked_petition_id'));
 
         if ($dateFrom) {
             $query->whereDate('decision_date', '>=', $dateFrom);
@@ -182,7 +182,7 @@ class ComplianceController extends Controller
         $dateTo = $request->input('date_to');
 
         $query = Decision::whereIn('final_decision', ['PE', 'VC', 'VE', 'CV', 'CS', 'SC'])
-            ->has('petition');
+            ->whereHas('petition', fn($pq) => $pq->excludeTSectionIfNotAuthorized(Auth::user())->whereNull('linked_petition_id'));
 
         if ($dateFrom) {
             $query->whereDate('decision_date', '>=', $dateFrom);

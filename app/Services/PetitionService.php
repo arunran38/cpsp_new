@@ -112,8 +112,8 @@ class PetitionService
             }
 
             $updatePayload = [
-                'receipt_no' => $data['receipt_no'],
-                'date_of_petition_received' => $data['date_of_petition_received'],
+                'receipt_no' => $petition->receipt_no,
+                'date_of_petition_received' => $petition->date_of_petition_received,
                 'unit_id' => $unitId,
                 'date_of_petition_received_at_unit' => $unitReceivedDate,
                 'nature_of_petition' => $data['nature_of_petition'],

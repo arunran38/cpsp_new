@@ -20,6 +20,11 @@ class InwardStatisticsTest extends TestCase
         $cpspRole = Role::firstOrCreate(['name' => 'CPSP', 'guard_name' => 'web']);
         $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
 
+        $inwardRole->givePermissionTo(
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'inward statistics', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'create inward petitions', 'guard_name' => 'web'])
+        );
+
         $ssCpspSeat = Seat::factory()->create(['seat_name' => 'SS CPSP']);
         $ssCpspSeat->assignRole($inwardRole, $cpspRole);
 
