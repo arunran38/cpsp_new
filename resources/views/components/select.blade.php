@@ -5,6 +5,11 @@
     'selected' => '',
     'placeholder' => null
 ])
+@php
+    $fieldName = $attributes->get('name') ?? $name;
+    $bindName = $attributes->get('x-bind:name') ?? $attributes->get(':name');
+    $nameExpr = $bindName ? $bindName : ($fieldName ? "'{$fieldName}'" : "''");
+@endphp
 <div class="space-y-1.5">
     @if($label)
         <label @if($name) for="{{ $name }}" @endif class="block text-sm font-bold text-slate-800">
@@ -14,13 +19,12 @@
     <div class="relative flex items-center group">
         <select 
             {{ $attributes->merge([
-                'class' => 'block w-full px-4 py-2.5 text-sm font-semibold bg-white border rounded-xl text-slate-900 transition-all duration-200 outline-none appearance-none group-hover:border-slate-300 cursor-pointer shadow-sm !bg-none',
+                'class' => 'block w-full px-4 py-2.5 text-sm font-semibold bg-white border rounded-xl text-slate-900 transition-all duration-200 outline-none appearance-none cursor-pointer shadow-sm !bg-none',
                 'id' => $name,
             ]) }}
             style="background-image: none !important;"
-            :class="(typeof formErrors !== 'undefined' && formErrors && $refs.select && formErrors[$refs.select.name]) ? 'border-rose-500 ring-4 ring-rose-500/10 focus:border-rose-500 focus:ring-rose-500/10' : 'border-slate-200 focus:ring-4 focus:ring-primary/10 focus:border-primary'"
-            :aria-invalid="Boolean(typeof formErrors !== 'undefined' && formErrors && $refs.select && formErrors[$refs.select.name])"
-            x-ref="select"
+            :class="(typeof formErrors !== 'undefined' && formErrors && formErrors[{!! $nameExpr !!}]) ? 'border-rose-500 ring-4 ring-rose-500/10 focus:border-rose-500 focus:ring-rose-500/10 group-hover:border-rose-500' : 'border-slate-200 focus:ring-4 focus:ring-primary/10 focus:border-primary group-hover:border-slate-300'"
+            :aria-invalid="Boolean(typeof formErrors !== 'undefined' && formErrors && formErrors[{!! $nameExpr !!}])"
             @if(!($attributes->has(':name') || $attributes->has('::name') || $attributes->has('x-bind:name'))) name="{{ $name }}" @endif
             @change="if (typeof clearError === 'function') clearError($event); if (typeof validateField === 'function') validateField($event);"
             @input="if (typeof clearError === 'function') clearError($event);"
@@ -41,7 +45,8 @@
                 {{ $slot }}
             @endif
         </select>
-        <div class="absolute right-4 pointer-events-none text-slate-400 group-hover:text-slate-600 transition-colors">
+        <div class="absolute right-4 pointer-events-none transition-colors"
+            :class="(typeof formErrors !== 'undefined' && formErrors && formErrors[{!! $nameExpr !!}]) ? 'text-rose-400' : 'text-slate-400 group-hover:text-slate-600'">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="m6 9 6 6 6-6"/></svg>
         </div>
     </div>
@@ -52,7 +57,7 @@
             </div>
         @enderror
     @endif
-    <template x-if="typeof formErrors !== 'undefined' && formErrors && $refs.select && formErrors[$refs.select.name]">
-        <p role="alert" aria-live="polite" class="text-xs font-semibold text-rose-600 mt-1" x-text="Array.isArray(formErrors[$refs.select.name]) ? formErrors[$refs.select.name][0] : formErrors[$refs.select.name]"></p>
+    <template x-if="typeof formErrors !== 'undefined' && formErrors && formErrors[{!! $nameExpr !!}]">
+        <p role="alert" aria-live="polite" class="text-xs font-semibold text-rose-600 mt-1" x-text="Array.isArray(formErrors[{!! $nameExpr !!}]) ? formErrors[{!! $nameExpr !!}][0] : formErrors[{!! $nameExpr !!}]"></p>
     </template>
 </div>

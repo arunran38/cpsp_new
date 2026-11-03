@@ -160,10 +160,11 @@ class InwardStatisticsTest extends TestCase
         $response->assertDontSee('Seat Diagnostics');
         $response->assertDontSee('reportsOpen: true', false);
 
-        // 2. Super Admin (who has view seat diagnostics) visiting Inward Statistics
+        // 2. Super Admin (who has view seat diagnostics and view pendency details)
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view pendency details', 'guard_name' => 'web']);
         $adminSeat = Seat::factory()->create(['seat_name' => 'Director Admin']);
         $adminSeat->assignRole($superAdminRole);
-        $superAdminRole->givePermissionTo('access admin dashboard', 'view seat diagnostics', 'inward statistics');
+        $superAdminRole->givePermissionTo('access admin dashboard', 'view seat diagnostics', 'inward statistics', 'view pendency details');
 
         $superAdmin = User::factory()->create(['name' => 'System Super Admin']);
         $superAdmin->assignRole($superAdminRole);
@@ -175,12 +176,108 @@ class InwardStatisticsTest extends TestCase
         ]);
         session(['current_seat_id' => $adminSeat->seat_id]);
 
+        // When Super Admin visits Inward Statistics:
+        // Statistical Reports should exist in the sidebar for admin, but must NOT be triggered open by inward statistics
         $adminResponse = $this->actingAs($superAdmin)->get(route('inward.statistics'));
         $adminResponse->assertOk();
-        // Statistical Reports should exist in the sidebar for admin, but must NOT be triggered open by inward statistics
         $adminResponse->assertSee('reportsOpen: false', false);
         $adminResponse->assertDontSee('reportsOpen: true', false);
-        // Pendency Details duplicate link pointing to inward.statistics must NOT be rendered
-        $adminResponse->assertDontSee('Pendency Details');
+        // Pendency Details menu item is visible under Statistical Reports pointing to admin.reports.pendency
+        $adminResponse->assertSee(route('admin.reports.pendency'));
+        $adminResponse->assertSee('Pendency Details');
+
+        // 3. Visiting Pendency Details under Statistical Reports
+        $pendencyResponse = $this->actingAs($superAdmin)->get(route('admin.reports.pendency'));
+        $pendencyResponse->assertOk();
+        $pendencyResponse->assertSee('reportsOpen: true', false);
+        $pendencyResponse->assertSee('Pendency Details');
+        $pendencyResponse->assertSee('CPSP Seats - Petition Pendency Data Sheet');
+
+        // 4. Exporting Pendency Details
+        $exportResponse = $this->actingAs($superAdmin)->get(route('admin.reports.pendency.export'));
+        $exportResponse->assertOk();
+
+        // 5. Unauthorized user cannot access Pendency Details route
+        $unauthorizedUser = User::factory()->create();
+        $this->actingAs($unauthorizedUser)
+            ->get(route('admin.reports.pendency'))
+            ->assertForbidden();
+    }
+
+    public function test_inward_role_cannot_access_or_view_pendency_details(): void
+    {
+        $inwardRole = Role::firstOrCreate(['name' => 'Inward', 'guard_name' => 'web']);
+        $compliancesRole = Role::firstOrCreate(['name' => 'Petition Compliances', 'guard_name' => 'web']);
+
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'inward statistics', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'create inward petitions', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'export statistics', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view pendency details', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'access admin dashboard', 'guard_name' => 'web']);
+
+        $inwardRole->syncPermissions([
+            'create inward petitions',
+            'inward statistics',
+            'export statistics',
+        ]);
+
+        $compliancesRole->syncPermissions([
+            'access admin dashboard',
+            'view pendency details',
+            'export statistics',
+        ]);
+
+        $inwardSeat = Seat::factory()->create(['seat_name' => 'Inward Counter']);
+        $inwardSeat->assignRole($inwardRole);
+
+        $inwardOfficer = User::factory()->create(['name' => 'Operational Inward Officer']);
+        $inwardOfficer->assignRole($inwardRole);
+        SeatUser::factory()->create([
+            'user_id' => $inwardOfficer->user_id,
+            'seat_id' => $inwardSeat->seat_id,
+            'is_active' => true,
+        ]);
+        session(['current_seat_id' => $inwardSeat->seat_id]);
+
+        // 1. Inward Officer visiting inward statistics sees Inward Registration & Inward Statistics, but NOT Statistical Reports or Pendency Details
+        $inwardStatsResponse = $this->actingAs($inwardOfficer)->get(route('inward.statistics'));
+        $inwardStatsResponse->assertOk();
+        $inwardStatsResponse->assertSee('Inward Statistics');
+        $inwardStatsResponse->assertDontSee('Statistical Reports');
+        $inwardStatsResponse->assertDontSee('Pendency Details');
+        $inwardStatsResponse->assertDontSee(route('admin.reports.pendency'));
+
+        // 2. Inward Officer attempting direct URL access to Pendency Details is blocked (403 Forbidden)
+        $directPendencyResponse = $this->actingAs($inwardOfficer)->get(route('admin.reports.pendency'));
+        $directPendencyResponse->assertForbidden();
+
+        // 3. Inward Officer attempting direct URL export of Pendency Details is blocked (403 Forbidden)
+        $directExportResponse = $this->actingAs($inwardOfficer)->get(route('admin.reports.pendency.export'));
+        $directExportResponse->assertForbidden();
+
+        // 4. Inward Officer can successfully access Inward functionality (Inward Statistics export)
+        $inwardExportResponse = $this->actingAs($inwardOfficer)->get(route('inward.statistics.export'));
+        $inwardExportResponse->assertOk();
+
+        // 5. Authorized role (Petition Compliances) CAN access Pendency Details and export it
+        $compliancesSeat = Seat::factory()->create(['seat_name' => 'Compliances Officer']);
+        $compliancesSeat->assignRole($compliancesRole);
+
+        $compliancesUser = User::factory()->create(['name' => 'Compliance Officer']);
+        $compliancesUser->assignRole($compliancesRole);
+        SeatUser::factory()->create([
+            'user_id' => $compliancesUser->user_id,
+            'seat_id' => $compliancesSeat->seat_id,
+            'is_active' => true,
+        ]);
+        session(['current_seat_id' => $compliancesSeat->seat_id]);
+
+        $compliancesResponse = $this->actingAs($compliancesUser)->get(route('admin.reports.pendency'));
+        $compliancesResponse->assertOk();
+        $compliancesResponse->assertSee('Pendency Details');
+        $compliancesResponse->assertSee(route('admin.reports.pendency'));
+
+        $compliancesExportResponse = $this->actingAs($compliancesUser)->get(route('admin.reports.pendency.export'));
+        $compliancesExportResponse->assertOk();
     }
 }

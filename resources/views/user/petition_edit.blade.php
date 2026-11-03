@@ -233,7 +233,7 @@
                         <div class="lg:col-span-1">
                             <x-select label="Nature of Petition *" name="nature_of_petition"
                                 x-model="petitionDetails.nature" required
-                                :selected="old('nature_of_petition', $petition->nature_of_petition ?? '')"
+                                :selected="old('nature_of_petition', ($petition->nature_of_petition === 'General Inward' ? '' : ($petition->nature_of_petition ?? '')))"
                                 :options="['' => 'Select Category', 'Amassment of Wealth' => 'Amassment of Wealth', 'Bribery' => 'Bribery', 'Misuse of authority' => 'Misuse of authority', 'Fraud / financial irregularities' => 'Fraud / financial irregularities', 'Serious negligence' => 'Serious negligence', 'others' => 'Others']" />
                         </div>
                         <div class="lg:col-span-1">
@@ -270,8 +270,9 @@
                             </label>
                             <select name="unit_id" id="unit_id" x-model="petitionDetails.unit_id"
                                 x-bind:required="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
-                                @change="validateField($event)"
-                                class="block w-full px-4 py-2.5 text-sm font-medium bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                                @change="validateField($event); if (petitionDetails.unit_id) delete formErrors['unit_id'];"
+                                class="block w-full px-4 py-2.5 text-sm font-medium bg-white border rounded-xl text-slate-900 outline-none transition-all"
+                                :class="formErrors['unit_id'] ? 'border-rose-500 ring-4 ring-rose-500/10 focus:border-rose-500 focus:ring-rose-500/10' : 'border-indigo-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600'">
                                 <option value="">-- Select Concerned Unit --</option>
                                 @foreach($unitsList as $unitItem)
                                     <option value="{{ $unitItem->unit_id }}" {{ (old('unit_id', $petition->unit_id) == $unitItem->unit_id) ? 'selected' : '' }}>
@@ -920,10 +921,14 @@
 
     <script>
         function petitionForm() {
+            const validNatures = ['Amassment of Wealth', 'Bribery', 'Misuse of authority', 'Fraud / financial irregularities', 'Serious negligence', 'others'];
+            const rawNature = {!! json_encode($petition->nature_of_petition ?? '') !!};
+            const sanitizedOriginalNature = (rawNature && rawNature !== 'General Inward' && validNatures.includes(rawNature)) ? rawNature : '';
+
             const originalPetitionDetails = {
                 receipt_no: {!! json_encode($petition->receipt_no) !!},
                 date: {!! json_encode($petition->date_of_petition_received) !!},
-                nature: {!! json_encode($petition->nature_of_petition ?? '') !!},
+                nature: sanitizedOriginalNature,
                 mode: {!! json_encode($petition->mode_of_petition_received ?? '') !!},
                 mode_others: {!! json_encode($petition->mode_of_petition_received_others ?? '') !!},
                 unit_id: {!! json_encode($petition->unit_id ? (string)$petition->unit_id : '') !!},
@@ -973,14 +978,20 @@
                 autoSaveTimer: null,
 
                 step: {{ old('step') ? old('step') : 'initialStep' }},
-                formErrors: @json($errors->getMessages()),
+                formErrors: @json((object) $errors->getMessages()),
                 showReturnModal: false,
                 returnPetitionId: {{ $petition->petition_id }},
                 returnReceiptNo: {!! json_encode($petition->receipt_no) !!},
                 petitionDetails: {
                     receipt_no: {!! json_encode($petition->receipt_no) !!},
                     date: {!! json_encode($petition->date_of_petition_received) !!},
-                    nature: {!! json_encode(old('nature_of_petition')) !!} || (initialDraft?.petitionDetails?.nature ?? originalPetitionDetails.nature),
+                    nature: (function() {
+                        const oldNature = {!! json_encode(old('nature_of_petition')) !!};
+                        if (oldNature && oldNature !== 'General Inward' && validNatures.includes(oldNature)) return oldNature;
+                        const draftNature = initialDraft?.petitionDetails?.nature;
+                        if (draftNature && draftNature !== 'General Inward' && validNatures.includes(draftNature)) return draftNature;
+                        return originalPetitionDetails.nature || '';
+                    })(),
                     mode: {!! json_encode(old('mode_of_petition_received')) !!} || (initialDraft?.petitionDetails?.mode ?? originalPetitionDetails.mode),
                     mode_others: {!! json_encode(old('mode_others')) !!} || (initialDraft?.petitionDetails?.mode_others ?? originalPetitionDetails.mode_others),
                     unit_id: {!! json_encode(old('unit_id')) !!} || (initialDraft?.petitionDetails?.unit_id ?? originalPetitionDetails.unit_id),
@@ -1134,11 +1145,27 @@
                         if (newMode !== 'others') {
                             delete this.formErrors['mode_others'];
                         }
+                        this.formErrors = { ...this.formErrors };
+                    });
+                    this.$watch('petitionDetails.unit_id', (newUnit) => {
+                        if (newUnit && String(newUnit).trim() !== '') {
+                            delete this.formErrors['unit_id'];
+                            this.formErrors = { ...this.formErrors };
+                        }
+                    });
+                    this.$watch('petitionDetails.mode_others', (newVal) => {
+                        if (newVal && String(newVal).trim() !== '') {
+                            delete this.formErrors['mode_others'];
+                            this.formErrors = { ...this.formErrors };
+                        }
                     });
                     this.$watch('petitionDetails.nature', (newNature) => {
-                        if (newNature && String(newNature).trim() !== '') {
+                        if (newNature && String(newNature).trim() !== '' && newNature !== 'General Inward' && validNatures.includes(newNature)) {
                             delete this.formErrors['nature_of_petition'];
+                        } else {
+                            this.formErrors['nature_of_petition'] = 'This field is required.';
                         }
+                        this.formErrors = { ...this.formErrors };
                     });
                     this.$watch('accused', () => {
                         if (this.step === 3) this.debouncedCheckDuplicates();
@@ -1364,13 +1391,7 @@
                                 } else if (!el.checkValidity()) {
                                     isValid = false;
                                     if (el.validity.valueMissing) {
-                                        if (el.name === 'nature_of_petition') {
-                                            this.formErrors[el.name] = 'Nature of Petition is required.';
-                                        } else if (el.name === 'mode_of_petition_received') {
-                                            this.formErrors[el.name] = 'Mode of Petition is required.';
-                                        } else {
-                                            this.formErrors[el.name] = 'This field is required.';
-                                        }
+                                        this.formErrors[el.name] = 'This field is required.';
                                     } else if (el.validity.rangeOverflow) {
                                         this.formErrors[el.name] = 'Date cannot be in the future.';
                                     } else if (el.validity.patternMismatch) {
@@ -1392,13 +1413,14 @@
                         const step1Required = [
                             { key: 'receipt_no', name: 'receipt_no', message: 'This field is required.' },
                             { key: 'date', name: 'date_of_petition_received', message: 'This field is required.' },
-                            { key: 'nature', name: 'nature_of_petition', message: 'Nature of Petition is required.' },
-                            { key: 'mode', name: 'mode_of_petition_received', message: 'Mode of Petition is required.' },
+                            { key: 'nature', name: 'nature_of_petition', message: 'This field is required.' },
+                            { key: 'mode', name: 'mode_of_petition_received', message: 'This field is required.' },
                             { key: 'description', name: 'description', message: 'This field is required.' }
                         ];
                         step1Required.forEach(f => {
                             const val = this.petitionDetails[f.key];
-                            if (!val || String(val).trim() === '') {
+                            const isNatureInvalid = f.key === 'nature' && (!val || val === 'General Inward' || !validNatures.includes(val));
+                            if (!val || String(val).trim() === '' || isNatureInvalid) {
                                 this.formErrors[f.name] = f.message;
                                 isValid = false;
                             } else if (this.formErrors[f.name] === f.message) {
@@ -1413,11 +1435,11 @@
                         }
                         if (this.petitionDetails.mode && this.petitionDetails.mode.toLowerCase() === 'unit') {
                             if (!this.petitionDetails.unit_id || String(this.petitionDetails.unit_id).trim() === '') {
-                                this.formErrors['unit_id'] = 'Concerned Unit is required.';
+                                this.formErrors['unit_id'] = 'This field is required.';
                                 isValid = false;
                             }
                             if (!this.petitionDetails.date_of_petition_received_at_unit || String(this.petitionDetails.date_of_petition_received_at_unit).trim() === '') {
-                                this.formErrors['date_of_petition_received_at_unit'] = 'Date of petition received at unit is required.';
+                                this.formErrors['date_of_petition_received_at_unit'] = 'This field is required.';
                                 isValid = false;
                             }
                         } else {
@@ -1442,6 +1464,8 @@
                             }
                         });
                     }
+
+                    this.formErrors = { ...this.formErrors };
 
                     if (!isValid) {
                         this.$nextTick(() => {
@@ -1514,19 +1538,39 @@
                     }
 
                     if (fieldName === 'nature_of_petition') {
-                        if (!fieldValue) {
-                            this.formErrors[fieldName] = 'Nature of Petition is required.';
+                        if (!fieldValue || fieldValue === 'General Inward' || !validNatures.includes(fieldValue)) {
+                            this.formErrors[fieldName] = 'This field is required.';
                         } else {
                             delete this.formErrors[fieldName];
                         }
+                        this.formErrors = { ...this.formErrors };
                         return;
                     }
                     if (fieldName === 'mode_of_petition_received') {
                         if (!fieldValue) {
-                            this.formErrors[fieldName] = 'Mode of Petition is required.';
+                            this.formErrors[fieldName] = 'This field is required.';
                         } else {
                             delete this.formErrors[fieldName];
                         }
+                        this.formErrors = { ...this.formErrors };
+                        return;
+                    }
+                    if (fieldName === 'unit_id') {
+                        if (!fieldValue && this.petitionDetails.mode && this.petitionDetails.mode.toLowerCase() === 'unit') {
+                            this.formErrors[fieldName] = 'This field is required.';
+                        } else {
+                            delete this.formErrors[fieldName];
+                        }
+                        this.formErrors = { ...this.formErrors };
+                        return;
+                    }
+                    if (fieldName === 'mode_others') {
+                        if (!fieldValue && this.petitionDetails.mode === 'others') {
+                            this.formErrors[fieldName] = 'This field is required.';
+                        } else {
+                            delete this.formErrors[fieldName];
+                        }
+                        this.formErrors = { ...this.formErrors };
                         return;
                     }
 
@@ -1561,6 +1605,7 @@
                             }
                         }
                     }
+                    this.formErrors = { ...this.formErrors };
                 },
                 clearError(event) {
                     const el = event.target;
@@ -1594,9 +1639,17 @@
                             }
                         }
                     } else {
-                        if (fieldName === 'nature_of_petition' || fieldName === 'mode_of_petition_received') {
+                        if (fieldName === 'nature_of_petition') {
+                            if (fieldValue && fieldValue !== 'General Inward' && validNatures.includes(fieldValue)) {
+                                delete this.formErrors[fieldName];
+                                this.formErrors = { ...this.formErrors };
+                            }
+                            return;
+                        }
+                        if (fieldName === 'mode_of_petition_received' || fieldName === 'unit_id' || fieldName === 'mode_others') {
                             if (fieldValue) {
                                 delete this.formErrors[fieldName];
+                                this.formErrors = { ...this.formErrors };
                             }
                             return;
                         }
@@ -1604,6 +1657,7 @@
                             delete this.formErrors[fieldName];
                         }
                     }
+                    this.formErrors = { ...this.formErrors };
                 },
                 setStep(target) {
                     // Prevent moving forward if Step 1 is invalid

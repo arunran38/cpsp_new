@@ -101,7 +101,10 @@ class PetitionForwardingControllerTest extends TestCase
 
     public function test_admin_can_close_petition_from_forwarding_form(): void
     {
-        $petition = Petition::factory()->create(['status' => 'Received']);
+        $petition = Petition::factory()->create([
+            'status' => 'Received',
+            'date_of_petition_received' => '2024-01-01',
+        ]);
 
         $response = $this->actingAs($this->admin)->post(route('forwardings.store'), [
             'petition_id' => $petition->petition_id,
@@ -123,7 +126,10 @@ class PetitionForwardingControllerTest extends TestCase
 
     public function test_admin_can_send_to_govt_from_forwarding_form(): void
     {
-        $petition = Petition::factory()->create(['status' => 'Received']);
+        $petition = Petition::factory()->create([
+            'status' => 'Received',
+            'date_of_petition_received' => '2024-01-01',
+        ]);
 
         $response = $this->actingAs($this->admin)->post(route('forwardings.store'), [
             'petition_id' => $petition->petition_id,

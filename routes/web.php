@@ -136,6 +136,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/seats/statistics', [SeatController::class, 'statistics'])->name('admin.seats.statistics');
     Route::get('/seats/statistics/export', [SeatController::class, 'exportStatistics'])->name('admin.seats.statistics.export');
 
+    Route::get('/reports/pendency-details', [PetitionController::class, 'inwardStatistics'])->name('admin.reports.pendency');
+    Route::get('/reports/pendency-details/export', [PetitionController::class, 'inwardStatisticsExport'])->name('admin.reports.pendency.export');
+
 
     Route::resource("seats", SeatController::class)->names([
         'index' => 'admin.seats.index',

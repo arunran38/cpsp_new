@@ -18,9 +18,15 @@
                     <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
                         Department Wise Analysis
                     </h1>
-                    <span
+                    <span id="sectionBadge"
                         class="px-2.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/30">
-                        CPSP Section
+                        @if(($section ?? '') === 'cpsp')
+                            CPSP Section
+                        @elseif(($section ?? '') === 't_section')
+                            T-Section
+                        @else
+                            All Sections
+                        @endif
                     </span>
                 </div>
                 <p class="text-slate-300 font-medium max-w-2xl text-sm">
@@ -54,17 +60,25 @@
                             </div>
                         </div>
 
-                        <!-- Section Filter (Strictly CPSP Section) -->
-                        <div class="w-full sm:w-28 lg:w-28 shrink-0 flex flex-col justify-end">
+                        <!-- Section Filter Dropdown -->
+                        <div class="w-full sm:w-44 lg:w-48 shrink-0 flex flex-col justify-end">
                             <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
                                 <i data-lucide="layers" class="h-3.5 w-3.5 text-blue-500"></i>
                                 <span>Section</span>
                             </label>
-                            <div class="flex items-center p-1 bg-blue-50/50 border border-blue-200/80 rounded-xl w-full h-11 shadow-inner">
-                                <div class="w-full h-full text-xs font-bold text-teal-700 bg-white shadow-xs rounded-lg flex items-center justify-center whitespace-nowrap select-none px-2">
-                                    CPSP
+                            <div class="relative w-full">
+                                <select name="section" id="section"
+                                    class="w-full pl-3.5 pr-8 h-11 bg-white border border-blue-200/80 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 text-xs sm:text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300 appearance-none cursor-pointer"
+                                    style="color: #1e40af !important;">
+                                    @foreach(($availableSections ?? ['cpsp' => 'CPSP']) as $secKey => $secLabel)
+                                        <option value="{{ $secKey }}" {{ ($section ?? 'cpsp') === $secKey ? 'selected' : '' }}>
+                                            {{ $secLabel }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-blue-400">
+                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
                                 </div>
-                                <input type="hidden" name="section" value="cpsp">
                             </div>
                         </div>
 
@@ -177,6 +191,15 @@
                 }
 
                 window.history.pushState({}, '', url);
+
+                const sectionSelect = document.getElementById('section');
+                const sectionBadge = document.getElementById('sectionBadge');
+                if (sectionSelect && sectionBadge) {
+                    const selectedOption = sectionSelect.options[sectionSelect.selectedIndex];
+                    if (selectedOption) {
+                        sectionBadge.textContent = selectedOption.value === 'cpsp' ? 'CPSP Section' : selectedOption.text;
+                    }
+                }
 
                 const exportBtn = document.getElementById('exportExcelBtn');
                 if (exportBtn) {

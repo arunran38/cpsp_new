@@ -123,32 +123,60 @@ class TSectionConfidentialityExclusionTest extends TestCase
         ]);
     }
 
-    public function test_department_analysis_completely_excludes_t_section_even_for_multi_role_users(): void
+    public function test_department_analysis_defaults_to_cpsp_and_excludes_t_section_by_default(): void
     {
-        // Multi-role user has full T-Section permissions
+        // Multi-role user has full clearances but visiting without section query defaults to CPSP
         $response = $this->actingAs($this->multiRoleUser)->get(route('admin.departments.analysis'));
 
         $response->assertOk();
-        // The total count for Health & Family Welfare must be exactly 1 (only CPSP petition, NOT 2)
+        $response->assertViewHas('section', 'cpsp');
+        $response->assertViewHas('availableSections', [
+            'all' => 'All Sections',
+            'cpsp' => 'CPSP',
+            't_section' => 'T-Section',
+        ]);
+        // The total count for Health & Family Welfare must be exactly 1 (only CPSP petition, excluding T-Section)
         $response->assertViewHas('total_sum', 1);
         $response->assertSee('Health & Family Welfare');
-        $response->assertDontSee('T-Section');
         $response->assertSee('CPSP Section');
     }
 
-    public function test_department_analysis_cannot_be_bypassed_via_query_parameters(): void
+    public function test_department_analysis_filters_by_section_for_authorized_user(): void
     {
-        // Attempting to pass ?section=t_section must still exclude T-Section confidential data
-        $response = $this->actingAs($this->multiRoleUser)->get(route('admin.departments.analysis', ['section' => 't_section']));
+        // Filtering by T-Section
+        $tResponse = $this->actingAs($this->multiRoleUser)->get(route('admin.departments.analysis', ['section' => 't_section']));
+        $tResponse->assertOk();
+        $tResponse->assertViewHas('section', 't_section');
+        $tResponse->assertViewHas('total_sum', 1);
+        $tResponse->assertSee('T-Section');
 
-        $response->assertOk();
-        $response->assertViewHas('total_sum', 1);
+        // Filtering by All Sections
+        $allResponse = $this->actingAs($this->multiRoleUser)->get(route('admin.departments.analysis', ['section' => 'all']));
+        $allResponse->assertOk();
+        $allResponse->assertViewHas('section', 'all');
+        $allResponse->assertViewHas('total_sum', 2);
+        $allResponse->assertSee('All Sections');
+    }
 
-        // Attempting to pass ?section=all must still exclude T-Section confidential data
-        $responseAll = $this->actingAs($this->multiRoleUser)->get(route('admin.departments.analysis', ['section' => 'all']));
+    public function test_department_analysis_rejects_t_section_for_unauthorized_user(): void
+    {
+        // CPSP user without T-Section clearance should only see CPSP section option
+        $cpspResponse = $this->actingAs($this->cpspUser)->get(route('admin.departments.analysis'));
+        $cpspResponse->assertOk();
+        $cpspResponse->assertViewHas('availableSections', [
+            'cpsp' => 'CPSP',
+        ]);
 
-        $responseAll->assertOk();
-        $responseAll->assertViewHas('total_sum', 1);
+        // Attempting to pass ?section=t_section must be forbidden
+        $this->actingAs($this->cpspUser)
+            ->get(route('admin.departments.analysis', ['section' => 't_section']))
+            ->assertForbidden();
+
+        // Attempting to pass ?section=all falls back to cpsp
+        $allResponse = $this->actingAs($this->cpspUser)->get(route('admin.departments.analysis', ['section' => 'all']));
+        $allResponse->assertOk();
+        $allResponse->assertViewHas('section', 'cpsp');
+        $allResponse->assertViewHas('total_sum', 1);
     }
 
     public function test_inward_statistics_defaults_to_cpsp_and_offers_t_section_with_clearance(): void

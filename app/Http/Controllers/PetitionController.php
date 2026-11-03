@@ -510,17 +510,27 @@ class PetitionController extends Controller
 
         $canViewOtherStats = $canViewAllStats
             || $user->canAccess('view other inward statistics')
-            || $user->canAccess('view_other_inward_statistics');
+            || $user->canAccess('view_other_inward_statistics')
+            || $user->canAccess('view pendency details');
 
         $canViewOwnStats = $canViewOtherStats
             || $user->canAccess('view own inward statistics')
             || $user->canAccess('inward statistics')
+            || $user->canAccess('view pendency details')
             || $user->canAccess('create inward petitions')
             || $user->hasRole(['inward', 'Inward'])
             || ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || str_contains(strtolower($currentSeat->seat_name), 'inward')));
 
         if (!$canViewOwnStats) {
             abort(403, 'Unauthorized. You do not have permission to view inward statistics.');
+        }
+
+        $canAccessPendency = $user->canAccess('view pendency details') ||
+            $user->hasRole(['developer', 'Developer', 'super admin', 'Super Admin']) ||
+            ($currentSeat && $currentSeat->hasRole(['developer', 'Developer', 'super admin', 'Super Admin']));
+
+        if ($request->routeIs('admin.reports.pendency*') && !$canAccessPendency) {
+            abort(403, 'Unauthorized. Permission view pendency details required to view Pendency Details.');
         }
 
         // 1. Fetch only users who hold the Inward role or are assigned to an active Inward seat
@@ -860,8 +870,19 @@ class PetitionController extends Controller
     public function inwardStatisticsExport(Request $request): StreamedResponse|View|\Symfony\Component\HttpFoundation\BinaryFileResponse
     {
         $user = Auth::user();
-        if (!$user->canAccess('export statistics')) {
-            abort(403, 'Unauthorized. Permission export_statistics required to export statistics.');
+        $currentSeatUser = $user->currentSeatUser();
+        $currentSeat = $currentSeatUser?->seat;
+
+        $canAccessPendency = $user->canAccess('view pendency details') ||
+            $user->hasRole(['developer', 'Developer', 'super admin', 'Super Admin']) ||
+            ($currentSeat && $currentSeat->hasRole(['developer', 'Developer', 'super admin', 'Super Admin']));
+
+        if ($request->routeIs('admin.reports.pendency*') && !$canAccessPendency) {
+            abort(403, 'Unauthorized. Permission view pendency details required to export Pendency Details.');
+        }
+
+        if (!$user->canAccess('export statistics') && !$canAccessPendency) {
+            abort(403, 'Unauthorized. Permission export_statistics or view pendency details required to export statistics.');
         }
 
         $request->merge(['export' => 'csv']);

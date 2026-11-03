@@ -16,15 +16,15 @@
             <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
                 <div class="text-center sm:text-left z-10">
                     <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
-                        Inward Statistics
+                        {{ request()->routeIs('admin.reports.pendency*') ? 'Pendency Details' : 'Inward Statistics' }}
                     </h1>
                     <p class="text-slate-300 font-medium max-w-2xl text-sm">
-                        Detailed seat-wise data sheet of petitions registered in Inward.
+                        {{ request()->routeIs('admin.reports.pendency*') ? 'Detailed seat-wise petition pendency and status data sheet.' : 'Detailed seat-wise data sheet of petitions registered in Inward.' }}
                     </p>
                 </div>
                 <div class="flex items-center gap-3 z-10">
-                    @if(Auth::user()->canAccess('export statistics') || Auth::user()->canAccess('access admin dashboard'))
-                        <a href="{{ route('inward.statistics.export', array_merge(request()->query(), ['creator_id' => $selectedCreator ?? 'all'])) }}"
+                    @if(Auth::user()->canAccess('export statistics') || Auth::user()->canAccess('view pendency details') || Auth::user()->canAccess('access admin dashboard'))
+                        <a href="{{ route(request()->routeIs('admin.reports.pendency*') ? 'admin.reports.pendency.export' : 'inward.statistics.export', array_merge(request()->query(), ['creator_id' => $selectedCreator ?? 'all'])) }}"
                             class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 rounded-xl hover:bg-emerald-500/20 transition-all font-semibold text-sm shadow-sm">
                             <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                             Excel Export
@@ -41,7 +41,7 @@
                     <i data-lucide="filter" class="w-4 h-4 text-teal-600"></i>
                     <h3 class="text-xs font-bold text-blue-600 uppercase tracking-wider">Filter Statistics</h3>
                 </div>
-                <form method="GET" action="{{ route('inward.statistics') }}" class="w-full">
+                <form method="GET" action="{{ request()->routeIs('admin.reports.pendency*') ? route('admin.reports.pendency') : route('inward.statistics') }}" class="w-full">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3.5 xl:gap-4 items-end w-full">
                         <!-- Section Filter -->
                         <div class="sm:col-span-1 lg:col-span-3 flex flex-col justify-end">
@@ -171,7 +171,7 @@
                                     $hasActiveFilters = $dateFrom || $dateTo || (($section ?? 'all') !== 'all') || (($selectedCreator ?? '') !== $defaultCreatorScope);
                                 @endphp
                                 @if($hasActiveFilters)
-                                    <a href="{{ route('inward.statistics') }}" title="Clear Filters"
+                                    <a href="{{ request()->routeIs('admin.reports.pendency*') ? route('admin.reports.pendency') : route('inward.statistics') }}" title="Clear Filters"
                                         class="w-11 h-11 shrink-0 text-sm font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-rose-600 shadow-sm flex items-center justify-center transition-all">
                                         <i data-lucide="x" class="w-4 h-4"></i>
                                     </a>
@@ -191,7 +191,7 @@
                 class="px-8 py-6 border-b border-slate-100 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:p-0 print:border-b-2 print:border-slate-800">
                 <div>
                     <h2 class="text-lg font-extrabold text-slate-900">
-                        CPSP Seats - Petition Statistics Data Sheet
+                        {{ request()->routeIs('admin.reports.pendency*') ? 'CPSP Seats - Petition Pendency Data Sheet' : 'CPSP Seats - Petition Statistics Data Sheet' }}
                     </h2>
                     <div class="flex flex-wrap items-center gap-2 mt-1.5">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-800 border border-teal-200 shadow-sm">

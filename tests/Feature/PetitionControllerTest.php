@@ -56,7 +56,7 @@ class PetitionControllerTest extends TestCase
         $response->assertStatus(200);
         $response->assertViewIs('user.petition_add');
         $response->assertSee('name="nature_of_petition"', false)
-            ->assertSee('Nature of Petition is required.', false);
+            ->assertSee('This field is required.', false);
     }
 
     public function test_normal_petition_create_requires_nature_of_petition(): void
@@ -342,7 +342,7 @@ class PetitionControllerTest extends TestCase
             ->assertSee('original_receipt_no', false)
             ->assertSee('fetch(', false)
             ->assertSee('name="nature_of_petition"', false)
-            ->assertSee('Nature of Petition is required.', false);
+            ->assertSee('This field is required.', false);
     }
 
     public function test_petition_update_requires_nature_of_petition(): void
@@ -369,6 +369,42 @@ class PetitionControllerTest extends TestCase
             ]);
 
         $response->assertOk()
+            ->assertSee('Nature of Petition is required.')
+            ->assertSee('"nature_of_petition":["Nature of Petition is required."]', false);
+    }
+
+    public function test_inward_petition_general_inward_nature_is_treated_as_empty_and_required_on_edit(): void
+    {
+        $petition = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'nature_of_petition' => 'General Inward',
+        ]);
+        $department = \App\Models\DepartmentList::firstOrCreate(['department_name' => 'Nature Inward Department']);
+
+        // Check edit view renders without selected General Inward
+        $response = $this->actingAs($this->user)->get(route('petitions.edit', $petition->hashid));
+        $response->assertOk();
+        $response->assertDontSee('value="General Inward" selected', false);
+
+        // Attempt update with General Inward - should fail validation
+        $updateResponse = $this->followingRedirects()
+            ->actingAs($this->user)
+            ->from(route('petitions.edit', $petition->hashid))
+            ->put(route('petitions.update', $petition->petition_id), [
+                'receipt_no' => $petition->receipt_no,
+                'date_of_petition_received' => now()->toDateString(),
+                'nature_of_petition' => 'General Inward',
+                'mode_of_petition_received' => 'Direct',
+                'description' => 'Inward petition processed',
+                'accused' => [[
+                    'name' => 'Test Suspect',
+                    'entity_type' => 'Person',
+                    'department_id' => $department->id,
+                ]],
+            ]);
+
+        $updateResponse->assertOk()
             ->assertSee('Nature of Petition is required.')
             ->assertSee('"nature_of_petition":["Nature of Petition is required."]', false);
     }

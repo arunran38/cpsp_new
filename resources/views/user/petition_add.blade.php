@@ -253,8 +253,9 @@
                             </label>
                             <select name="unit_id" id="unit_id" x-model="petitionDetails.unit_id"
                                 x-bind:required="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
-                                @change="validateField($event)"
-                                class="block w-full px-4 py-2.5 text-sm font-medium bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                                @change="validateField($event); if (petitionDetails.unit_id) delete formErrors['unit_id'];"
+                                class="block w-full px-4 py-2.5 text-sm font-medium bg-white border rounded-xl text-slate-900 outline-none transition-all"
+                                :class="formErrors['unit_id'] ? 'border-rose-500 ring-4 ring-rose-500/10 focus:border-rose-500 focus:ring-rose-500/10' : 'border-indigo-200 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600'">
                                 <option value="">-- Select Concerned Unit --</option>
                                 @foreach($unitsList as $unitItem)
                                     <option value="{{ $unitItem->unit_id }}" {{ old('unit_id') == $unitItem->unit_id ? 'selected' : '' }}>
@@ -1126,6 +1127,7 @@
                 } catch(e) {}
             }
 
+            const validNatures = ['Amassment of Wealth', 'Bribery', 'Misuse of authority', 'Fraud / financial irregularities', 'Serious negligence', 'others'];
             const defaultComplainants = [{ id: Date.now(), name: '', phone: '', email: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }];
             const defaultAccused = [{ id: Date.now() + 1, entity_type: 'Person', designation_id: '', department_id: '', name: '', phone: '', pen_number: '', addresses: [{ address_type: 'Permanent', address: '', district_id: '', pincode: '' }] }];
 
@@ -1145,13 +1147,19 @@
                 step: {{ old('step') ? old('step') : 'initialStep' }},
                 districtNames: @json($districts->pluck('district_name', 'district_id')),
                 unitNames: @json($unitsList->pluck('unit_name', 'unit_id')),
-                formErrors: @json($errors->getMessages()),
+                formErrors: @json((object) $errors->getMessages()),
 
                 showPreview: false,
                 petitionDetails: {
                     receipt_no: '{{ old('receipt_no') }}' || (initialDraft?.petitionDetails?.receipt_no || ''),
                     date: '{{ old('date_of_petition_received') }}' || (initialDraft?.petitionDetails?.date || ''),
-                    nature: '{{ old('nature_of_petition') }}' || (initialDraft?.petitionDetails?.nature || ''),
+                    nature: (function() {
+                        const oldNature = '{{ old('nature_of_petition') }}';
+                        if (oldNature && oldNature !== 'General Inward' && validNatures.includes(oldNature)) return oldNature;
+                        const draftNature = initialDraft?.petitionDetails?.nature;
+                        if (draftNature && draftNature !== 'General Inward' && validNatures.includes(draftNature)) return draftNature;
+                        return '';
+                    })(),
                     mode: '{{ old('mode_of_petition_received') }}' || (initialDraft?.petitionDetails?.mode || ''),
                     mode_others: '{{ old('mode_others') }}' || (initialDraft?.petitionDetails?.mode_others || ''),
                     unit_id: '{{ old('unit_id') }}' || (initialDraft?.petitionDetails?.unit_id || ''),
@@ -1327,11 +1335,27 @@
                         if (newMode !== 'others') {
                             delete this.formErrors['mode_others'];
                         }
+                        this.formErrors = { ...this.formErrors };
+                    });
+                    this.$watch('petitionDetails.unit_id', (newUnit) => {
+                        if (newUnit && String(newUnit).trim() !== '') {
+                            delete this.formErrors['unit_id'];
+                            this.formErrors = { ...this.formErrors };
+                        }
+                    });
+                    this.$watch('petitionDetails.mode_others', (newVal) => {
+                        if (newVal && String(newVal).trim() !== '') {
+                            delete this.formErrors['mode_others'];
+                            this.formErrors = { ...this.formErrors };
+                        }
                     });
                     this.$watch('petitionDetails.nature', (newNature) => {
-                        if (newNature && String(newNature).trim() !== '') {
+                        if (newNature && String(newNature).trim() !== '' && newNature !== 'General Inward' && validNatures.includes(newNature)) {
                             delete this.formErrors['nature_of_petition'];
+                        } else {
+                            this.formErrors['nature_of_petition'] = 'This field is required.';
                         }
+                        this.formErrors = { ...this.formErrors };
                     });
                     this.$watch('accused', () => {
                         if (this.step === 3) this.debouncedCheckDuplicates();
@@ -1485,13 +1509,7 @@
                                 if (!el.checkValidity()) {
                                     isValid = false;
                                     if (el.validity.valueMissing) {
-                                        if (el.name === 'nature_of_petition') {
-                                            this.formErrors[el.name] = 'Nature of Petition is required.';
-                                        } else if (el.name === 'mode_of_petition_received') {
-                                            this.formErrors[el.name] = 'Mode of Petition is required.';
-                                        } else {
-                                            this.formErrors[el.name] = 'This field is required.';
-                                        }
+                                        this.formErrors[el.name] = 'This field is required.';
                                     } else if (el.validity.rangeOverflow) {
                                         this.formErrors[el.name] = 'Date cannot be in the future.';
                                     } else if (el.validity.patternMismatch) {
@@ -1513,13 +1531,14 @@
                         const step1Required = [
                             { key: 'receipt_no', name: 'receipt_no', message: 'This field is required.' },
                             { key: 'date', name: 'date_of_petition_received', message: 'This field is required.' },
-                            { key: 'nature', name: 'nature_of_petition', message: 'Nature of Petition is required.' },
-                            { key: 'mode', name: 'mode_of_petition_received', message: 'Mode of Petition is required.' },
+                            { key: 'nature', name: 'nature_of_petition', message: 'This field is required.' },
+                            { key: 'mode', name: 'mode_of_petition_received', message: 'This field is required.' },
                             { key: 'description', name: 'description', message: 'This field is required.' }
                         ];
                         step1Required.forEach(f => {
                             const val = this.petitionDetails[f.key];
-                            if (!val || String(val).trim() === '') {
+                            const isNatureInvalid = f.key === 'nature' && (!val || val === 'General Inward' || !validNatures.includes(val));
+                            if (!val || String(val).trim() === '' || isNatureInvalid) {
                                 this.formErrors[f.name] = f.message;
                                 isValid = false;
                             } else if (this.formErrors[f.name] === f.message) {
@@ -1534,11 +1553,11 @@
                         }
                         if (this.petitionDetails.mode && this.petitionDetails.mode.toLowerCase() === 'unit') {
                             if (!this.petitionDetails.unit_id || String(this.petitionDetails.unit_id).trim() === '') {
-                                this.formErrors['unit_id'] = 'Concerned Unit is required.';
+                                this.formErrors['unit_id'] = 'This field is required.';
                                 isValid = false;
                             }
                             if (!this.petitionDetails.date_of_petition_received_at_unit || String(this.petitionDetails.date_of_petition_received_at_unit).trim() === '') {
-                                this.formErrors['date_of_petition_received_at_unit'] = 'Date of petition received at unit is required.';
+                                this.formErrors['date_of_petition_received_at_unit'] = 'This field is required.';
                                 isValid = false;
                             }
                         } else {
@@ -1603,6 +1622,8 @@
                             });
                         }
                     }
+
+                    this.formErrors = { ...this.formErrors };
 
                     if (!isValid) {
                         this.$nextTick(() => {
@@ -1731,19 +1752,39 @@
                     // For Step 1 and other steps, normal validation
                     // Custom validation rules by field
                     if (fieldName === 'nature_of_petition') {
-                        if (!fieldValue) {
-                            this.formErrors[fieldName] = 'Nature of Petition is required.';
+                        if (!fieldValue || fieldValue === 'General Inward' || !validNatures.includes(fieldValue)) {
+                            this.formErrors[fieldName] = 'This field is required.';
                         } else {
                             delete this.formErrors[fieldName];
                         }
+                        this.formErrors = { ...this.formErrors };
                         return;
                     }
                     if (fieldName === 'mode_of_petition_received') {
                         if (!fieldValue) {
-                            this.formErrors[fieldName] = 'Mode of Petition is required.';
+                            this.formErrors[fieldName] = 'This field is required.';
                         } else {
                             delete this.formErrors[fieldName];
                         }
+                        this.formErrors = { ...this.formErrors };
+                        return;
+                    }
+                    if (fieldName === 'unit_id') {
+                        if (!fieldValue && this.petitionDetails.mode && this.petitionDetails.mode.toLowerCase() === 'unit') {
+                            this.formErrors[fieldName] = 'This field is required.';
+                        } else {
+                            delete this.formErrors[fieldName];
+                        }
+                        this.formErrors = { ...this.formErrors };
+                        return;
+                    }
+                    if (fieldName === 'mode_others') {
+                        if (!fieldValue && this.petitionDetails.mode === 'others') {
+                            this.formErrors[fieldName] = 'This field is required.';
+                        } else {
+                            delete this.formErrors[fieldName];
+                        }
+                        this.formErrors = { ...this.formErrors };
                         return;
                     }
                     if (fieldName.includes('[phone]') || fieldName === 'comp_phone') {
@@ -1804,6 +1845,7 @@
                             }
                         }
                     }
+                    this.formErrors = { ...this.formErrors };
                 },
                 async checkPetitionNumberUniqueness(petitionNo) {
                     if (!petitionNo || !petitionNo.trim()) return;
@@ -1888,9 +1930,17 @@
                         }
                     } else {
                         // For Step 1 and other steps, normal clearing logic
-                        if (fieldName === 'nature_of_petition' || fieldName === 'mode_of_petition_received') {
+                        if (fieldName === 'nature_of_petition') {
+                            if (fieldValue && fieldValue !== 'General Inward' && validNatures.includes(fieldValue)) {
+                                delete this.formErrors[fieldName];
+                                this.formErrors = { ...this.formErrors };
+                            }
+                            return;
+                        }
+                        if (fieldName === 'mode_of_petition_received' || fieldName === 'unit_id' || fieldName === 'mode_others') {
                             if (fieldValue) {
                                 delete this.formErrors[fieldName];
+                                this.formErrors = { ...this.formErrors };
                             }
                             return;
                         }
@@ -1918,6 +1968,7 @@
                             }
                         }
                     }
+                    this.formErrors = { ...this.formErrors };
                 },
                 setStep(target) {
                     // Prevent moving forward if Step 1 is invalid

@@ -26,13 +26,48 @@ class DepartmentController extends Controller
 
     public function analysis(Request $request)
     {
-        abort_unless(auth()->user()->canAccess('view seat diagnostics'), 403, 'Unauthorized access to Statistical Reports.');
+        $user = auth()->user();
+        abort_unless(
+            $user->canAccess('view seat diagnostics') ||
+            $user->canAccess('view t-section diagnostics') ||
+            $user->canAccess('view t-section in reports'),
+            403,
+            'Unauthorized access to Statistical Reports.'
+        );
+
         $search = $request->input('search');
         $date_from = $request->input('date_from');
         $date_to = $request->input('date_to');
 
-        // Department-Wise Analysis strictly excludes confidential T-Section petitions unconditionally.
-        // Users with multiple roles or elevated clearances cannot view T-Section confidential data here.
+        // Check clearance for T-Section access
+        $canViewTSection = $user->canAccessTSectionInReports()
+            || $user->canAccessTSectionDiagnostics()
+            || $user->canAccessTSectionPending()
+            || $user->canAccessTSection();
+
+        $availableSections = [];
+        if ($canViewTSection) {
+            $availableSections = [
+                'all' => 'All Sections',
+                'cpsp' => 'CPSP',
+                't_section' => 'T-Section',
+            ];
+        } else {
+            $availableSections = [
+                'cpsp' => 'CPSP',
+            ];
+        }
+
+        $rawSection = $request->input('section');
+        if (!$canViewTSection && $rawSection === 't_section') {
+            abort(403, 'Unauthorized. Special clearance required to access T-Section analysis.');
+        }
+
+        $section = $rawSection;
+        if (!$section || !array_key_exists($section, $availableSections)) {
+            $section = 'cpsp';
+        }
+
         $tSeatIds = Seat::getTSectionSeatIds();
 
         $query = \Illuminate\Support\Facades\DB::table('department_lists')
@@ -57,30 +92,50 @@ class DepartmentController extends Controller
                 $q->whereDate('petitions.date_of_petition_received', '<=', $date_to);
             });
 
-        // Unconditionally exclude T-Section confidential data at query level
-        if (!empty($tSeatIds)) {
+        // Apply Section filter
+        if ($section === 't_section' && $canViewTSection) {
             $query->where(function ($q) use ($tSeatIds) {
-                $q->whereNotIn('petitions.seat_id', $tSeatIds)
-                  ->orWhereNull('petitions.seat_id');
+                if (!empty($tSeatIds)) {
+                    $q->whereIn('petitions.seat_id', $tSeatIds);
+                }
+                $q->orWhereExists(function ($sub) {
+                    $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                        ->from('seats')
+                        ->whereColumn('seats.seat_id', 'petitions.seat_id')
+                        ->where(function ($sq) {
+                            $sq->where('seats.seat_name', 'like', '%T Section%')
+                               ->orWhere('seats.seat_name', 'like', '%T-Section%')
+                               ->orWhere('seats.seat_name', 'like', 'T-%')
+                               ->orWhere('seats.seat_name', 'like', 'T1%')
+                               ->orWhere('seats.seat_name', 'like', 'T2%')
+                               ->orWhere('seats.seat_name', 'like', 'T3%');
+                        });
+                });
+            });
+        } elseif ($section === 'cpsp' || !$canViewTSection) {
+            if (!empty($tSeatIds)) {
+                $query->where(function ($q) use ($tSeatIds) {
+                    $q->whereNotIn('petitions.seat_id', $tSeatIds)
+                      ->orWhereNull('petitions.seat_id');
+                });
+            }
+            $query->whereNotExists(function ($sub) {
+                $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                    ->from('seats')
+                    ->whereColumn('seats.seat_id', 'petitions.seat_id')
+                    ->where(function ($sq) {
+                        $sq->where('seats.seat_name', 'like', '%T Section%')
+                           ->orWhere('seats.seat_name', 'like', '%T-Section%')
+                           ->orWhere('seats.seat_name', 'like', 'T-%')
+                           ->orWhere('seats.seat_name', 'like', 'T1%')
+                           ->orWhere('seats.seat_name', 'like', 'T2%')
+                           ->orWhere('seats.seat_name', 'like', 'T3%');
+                    });
             });
         }
-        $query->whereNotExists(function ($sub) {
-            $sub->select(\Illuminate\Support\Facades\DB::raw(1))
-                ->from('seats')
-                ->whereColumn('seats.seat_id', 'petitions.seat_id')
-                ->where(function ($sq) {
-                    $sq->where('seats.seat_name', 'like', '%T Section%')
-                       ->orWhere('seats.seat_name', 'like', '%T-Section%')
-                       ->orWhere('seats.seat_name', 'like', 'T-%')
-                       ->orWhere('seats.seat_name', 'like', 'T1%')
-                       ->orWhere('seats.seat_name', 'like', 'T2%')
-                       ->orWhere('seats.seat_name', 'like', 'T3%');
-                });
-        });
 
         // CPSP Data Access Scoping:
         // Operational CPSP users view only the data they are authorized to access (their assigned seat / own creations).
-        $user = auth()->user();
         $currentSeatUser = $user->currentSeatUser();
         $currentSeat = $currentSeatUser?->seat;
         $isCpspUser = $user->hasRole(['cpsp', 'CPSP']) || ($currentSeat && ($currentSeat->hasRole(['cpsp', 'CPSP']) || str_contains(strtolower($currentSeat->seat_name), 'cpsp')));
@@ -88,7 +143,7 @@ class DepartmentController extends Controller
             || $user->canAccess('view all petitions') 
             || $user->canAccess('access admin dashboard');
 
-        if ($isCpspUser && !$hasGlobalAccess) {
+        if ($isCpspUser && !$hasGlobalAccess && ($section === 'cpsp' || !$canViewTSection)) {
             $query->where(function ($q) use ($user, $currentSeat) {
                 if ($currentSeat) {
                     $q->where('petitions.seat_id', $currentSeat->seat_id)
@@ -106,24 +161,59 @@ class DepartmentController extends Controller
         
         $all_data = $query->get();
         $total_sum = $all_data->sum('total_petitions');
-        $section = 'cpsp';
-        $canViewTSection = false;
 
         if ($request->ajax()) {
-            return view('admin.departments.partials.table', compact('analysis', 'search', 'date_from', 'date_to', 'section', 'canViewTSection', 'total_sum'))->render();
+            return view('admin.departments.partials.table', compact('analysis', 'search', 'date_from', 'date_to', 'section', 'canViewTSection', 'availableSections', 'total_sum'))->render();
         }
 
-        return view('admin.analytics.departments', compact('analysis', 'search', 'date_from', 'date_to', 'section', 'canViewTSection', 'total_sum'));
+        return view('admin.analytics.departments', compact('analysis', 'search', 'date_from', 'date_to', 'section', 'canViewTSection', 'availableSections', 'total_sum'));
     }
 
     public function exportAnalysis(Request $request)
     {
-        abort_unless(auth()->user()->canAccess('view seat diagnostics'), 403, 'Unauthorized access to Statistical Reports.');
+        $user = auth()->user();
+        abort_unless(
+            $user->canAccess('view seat diagnostics') ||
+            $user->canAccess('view t-section diagnostics') ||
+            $user->canAccess('view t-section in reports') ||
+            $user->canAccess('export statistics'),
+            403,
+            'Unauthorized access to Statistical Reports.'
+        );
+
         $search = $request->input('search');
         $date_from = $request->input('date_from');
         $date_to = $request->input('date_to');
 
-        // Department-Wise Analysis strictly excludes confidential T-Section petitions unconditionally.
+        // Check clearance for T-Section access
+        $canViewTSection = $user->canAccessTSectionInReports()
+            || $user->canAccessTSectionDiagnostics()
+            || $user->canAccessTSectionPending()
+            || $user->canAccessTSection();
+
+        $availableSections = [];
+        if ($canViewTSection) {
+            $availableSections = [
+                'all' => 'All Sections',
+                'cpsp' => 'CPSP',
+                't_section' => 'T-Section',
+            ];
+        } else {
+            $availableSections = [
+                'cpsp' => 'CPSP',
+            ];
+        }
+
+        $rawSection = $request->input('section');
+        if (!$canViewTSection && $rawSection === 't_section') {
+            abort(403, 'Unauthorized. Special clearance required to export T-Section analysis.');
+        }
+
+        $section = $rawSection;
+        if (!$section || !array_key_exists($section, $availableSections)) {
+            $section = 'cpsp';
+        }
+
         $tSeatIds = Seat::getTSectionSeatIds();
 
         $query = \Illuminate\Support\Facades\DB::table('department_lists')
@@ -148,29 +238,49 @@ class DepartmentController extends Controller
                 $q->whereDate('petitions.date_of_petition_received', '<=', $date_to);
             });
 
-        // Unconditionally exclude T-Section confidential data at query level
-        if (!empty($tSeatIds)) {
+        // Apply Section filter
+        if ($section === 't_section' && $canViewTSection) {
             $query->where(function ($q) use ($tSeatIds) {
-                $q->whereNotIn('petitions.seat_id', $tSeatIds)
-                  ->orWhereNull('petitions.seat_id');
+                if (!empty($tSeatIds)) {
+                    $q->whereIn('petitions.seat_id', $tSeatIds);
+                }
+                $q->orWhereExists(function ($sub) {
+                    $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                        ->from('seats')
+                        ->whereColumn('seats.seat_id', 'petitions.seat_id')
+                        ->where(function ($sq) {
+                            $sq->where('seats.seat_name', 'like', '%T Section%')
+                               ->orWhere('seats.seat_name', 'like', '%T-Section%')
+                               ->orWhere('seats.seat_name', 'like', 'T-%')
+                               ->orWhere('seats.seat_name', 'like', 'T1%')
+                               ->orWhere('seats.seat_name', 'like', 'T2%')
+                               ->orWhere('seats.seat_name', 'like', 'T3%');
+                        });
+                });
+            });
+        } elseif ($section === 'cpsp' || !$canViewTSection) {
+            if (!empty($tSeatIds)) {
+                $query->where(function ($q) use ($tSeatIds) {
+                    $q->whereNotIn('petitions.seat_id', $tSeatIds)
+                      ->orWhereNull('petitions.seat_id');
+                });
+            }
+            $query->whereNotExists(function ($sub) {
+                $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                    ->from('seats')
+                    ->whereColumn('seats.seat_id', 'petitions.seat_id')
+                    ->where(function ($sq) {
+                        $sq->where('seats.seat_name', 'like', '%T Section%')
+                           ->orWhere('seats.seat_name', 'like', '%T-Section%')
+                           ->orWhere('seats.seat_name', 'like', 'T-%')
+                           ->orWhere('seats.seat_name', 'like', 'T1%')
+                           ->orWhere('seats.seat_name', 'like', 'T2%')
+                           ->orWhere('seats.seat_name', 'like', 'T3%');
+                    });
             });
         }
-        $query->whereNotExists(function ($sub) {
-            $sub->select(\Illuminate\Support\Facades\DB::raw(1))
-                ->from('seats')
-                ->whereColumn('seats.seat_id', 'petitions.seat_id')
-                ->where(function ($sq) {
-                    $sq->where('seats.seat_name', 'like', '%T Section%')
-                       ->orWhere('seats.seat_name', 'like', '%T-Section%')
-                       ->orWhere('seats.seat_name', 'like', 'T-%')
-                       ->orWhere('seats.seat_name', 'like', 'T1%')
-                       ->orWhere('seats.seat_name', 'like', 'T2%')
-                       ->orWhere('seats.seat_name', 'like', 'T3%');
-                });
-        });
 
         // CPSP Data Access Scoping
-        $user = auth()->user();
         $currentSeatUser = $user->currentSeatUser();
         $currentSeat = $currentSeatUser?->seat;
         $isCpspUser = $user->hasRole(['cpsp', 'CPSP']) || ($currentSeat && ($currentSeat->hasRole(['cpsp', 'CPSP']) || str_contains(strtolower($currentSeat->seat_name), 'cpsp')));
@@ -178,7 +288,7 @@ class DepartmentController extends Controller
             || $user->canAccess('view all petitions') 
             || $user->canAccess('access admin dashboard');
 
-        if ($isCpspUser && !$hasGlobalAccess) {
+        if ($isCpspUser && !$hasGlobalAccess && ($section === 'cpsp' || !$canViewTSection)) {
             $query->where(function ($q) use ($user, $currentSeat) {
                 if ($currentSeat) {
                     $q->where('petitions.seat_id', $currentSeat->seat_id)
@@ -203,7 +313,11 @@ class DepartmentController extends Controller
             default => "DEPARTMENT WISE ANALYSIS OF PETITIONS (All Time)",
         };
 
-        $sectionLabel = ' (CPSP Section)';
+        $sectionLabel = match ($section) {
+            'cpsp' => ' (CPSP Section)',
+            't_section' => ' (T-Section)',
+            default => ' (All Sections)',
+        };
         $mainHeading .= $sectionLabel;
 
         if ($search) {

@@ -144,7 +144,7 @@ class StorePetitionRequest extends FormRequest
             $rules['accused.*.pen_number'] = 'nullable|digits_between:6,7';
             $rules['accused.*.addresses'] = 'nullable|array';
         } else {
-            $rules['nature_of_petition'] = 'required|string';
+            $rules['nature_of_petition'] = ['required', 'string', Rule::notIn(['General Inward'])];
             $rules['description'] = 'required|string';
             $rules['complainants'] = 'nullable|array';
             $rules['complainants.*.name'] = 'nullable|string|max:255';
@@ -193,6 +193,7 @@ class StorePetitionRequest extends FormRequest
         return [
             'date_of_petition_received.before_or_equal' => 'Date of receipt cannot be in the future.',
             'nature_of_petition.required' => 'Nature of Petition is required.',
+            'nature_of_petition.not_in' => 'Nature of Petition is required.',
             'accused.required' => 'At least one suspect department is required.',
             'accused.min' => 'At least one suspect department is required.',
             'accused.*.department_id.required' => 'The department field is mandatory.',

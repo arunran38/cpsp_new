@@ -103,7 +103,7 @@ class UpdatePetitionRequest extends FormRequest
                 Rule::unique('petitions', 'receipt_no')->ignore($petitionId, 'petition_id'),
             ],
             'date_of_petition_received' => 'required|date|before_or_equal:today',
-            'nature_of_petition' => 'required|string',
+            'nature_of_petition' => ['required', 'string', Rule::notIn(['General Inward'])],
             'mode_of_petition_received' => 'required',
             'unit_id' => [
                 'nullable',
@@ -167,6 +167,7 @@ class UpdatePetitionRequest extends FormRequest
         return [
             'date_of_petition_received.before_or_equal' => 'Date of receipt cannot be in the future.',
             'nature_of_petition.required' => 'Nature of Petition is required.',
+            'nature_of_petition.not_in' => 'Nature of Petition is required.',
             'accused.required' => 'At least one suspect department is required.',
             'accused.min' => 'At least one suspect department is required.',
             'accused.*.department_id.required' => 'The department field is mandatory.',

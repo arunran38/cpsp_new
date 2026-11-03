@@ -361,7 +361,9 @@ class RolesAndPermissionsSeeder extends Seeder
                 'view petition trends chart',
                 'view petitions',
                 'view recent petitions',
+                'view seat diagnostics',
                 'view t-section diagnostics',
+                'view t-section in reports',
                 'view t-section pending details',
             ],
         ];
