@@ -13,7 +13,19 @@ class StorePetitionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->can('create', \App\Models\Petition::class) ?? false;
+        $user = $this->user();
+        if (!$user) {
+            return false;
+        }
+
+        // Inward petition entry requires 'create inward petitions' permission
+        if ($this->boolean('is_inward_entry') || $this->filled('seat_id')) {
+            return $user->canAccess('create inward petitions') 
+                || $user->canAccess('create petitions')
+                || $user->can('create', \App\Models\Petition::class);
+        }
+
+        return $user->can('create', \App\Models\Petition::class);
     }
 
     protected function prepareForValidation(): void
