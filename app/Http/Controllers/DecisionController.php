@@ -58,7 +58,14 @@ class DecisionController extends Controller
                     'Sent to SPC' => Petition::STATUS_SENT_TO_SPC,
                     default => Petition::STATUS_CLOSED,
                 };
-                $petition->update(['status' => $status]);
+                $petitionData = ['status' => $status];
+                if (!$petition->is_cpsp_processed) {
+                    $petitionData['is_cpsp_processed'] = true;
+                    $petitionData['processed_at'] = now();
+                    $petitionData['processed_by_user_id'] = Auth::id();
+                    $petitionData['processed_by_seat_id'] = Auth::user()?->currentSeatUser()?->seat_id ?? $petition->seat_id;
+                }
+                $petition->update($petitionData);
 
                 if ($request->hasFile('final_order_file')) {
                     $this->handleFinalOrderUpload($petition->petition_id, $request->file('final_order_file'));

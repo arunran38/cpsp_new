@@ -736,10 +736,16 @@ class Petition extends Model
             });
         }
 
-        if ($parsedFrom) $query->whereDate($column, '>=', $parsedFrom);
-        if ($parsedTo) $query->whereDate($column, '<=', $parsedTo);
-
-        return $query;
+        // Combined OR filter: include petitions received within the date range OR processed within the date range
+        return $query->where(function ($q) use ($parsedFrom, $parsedTo) {
+            $q->where(function ($sub) use ($parsedFrom, $parsedTo) {
+                if ($parsedFrom) $sub->whereDate('date_of_petition_received', '>=', $parsedFrom);
+                if ($parsedTo) $sub->whereDate('date_of_petition_received', '<=', $parsedTo);
+            })->orWhere(function ($sub) use ($parsedFrom, $parsedTo) {
+                if ($parsedFrom) $sub->whereDate('processed_at', '>=', $parsedFrom);
+                if ($parsedTo) $sub->whereDate('processed_at', '<=', $parsedTo);
+            });
+        });
     }
 
     /**

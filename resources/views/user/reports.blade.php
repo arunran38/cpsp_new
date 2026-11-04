@@ -630,6 +630,7 @@
                                     '#' => 'Sl No',
                                     'Receipt No' => 'Receipt No',
                                     'Received Date' => 'Received Date',
+                                    'Processed Date' => 'Processed Date',
                                     'File No' => 'File No',
                                     'File Date' => 'File Date',
                                     'Complainant Name' => 'Complainant Name',

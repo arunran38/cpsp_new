@@ -90,11 +90,18 @@ class PetitionForwardingController extends Controller
                     }
                 }
 
-                $petition->update([
+                $petitionData = [
                     'status' => $status,
                     'file_no' => $request->file_no,
                     'file_created_date' => $request->file_created_date,
-                ]);
+                ];
+                if (!$petition->is_cpsp_processed) {
+                    $petitionData['is_cpsp_processed'] = true;
+                    $petitionData['processed_at'] = now();
+                    $petitionData['processed_by_user_id'] = Auth::id();
+                    $petitionData['processed_by_seat_id'] = $currentSeatId ?? $petition->seat_id;
+                }
+                $petition->update($petitionData);
 
                 return back()->with('success', 'Petition processed successfully.');
             } catch (\Exception $e) {

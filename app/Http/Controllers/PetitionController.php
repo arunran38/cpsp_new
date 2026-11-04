@@ -1067,7 +1067,7 @@ class PetitionController extends Controller
         if ($requestedColumns && is_array($requestedColumns)) {
             $columns = $requestedColumns;
         } else {
-            $columns = ['#', 'Receipt No', 'Received Date', 'Complainant Name & Address', 'Suspect Name & Address', 'Nature', 'Description', 'Mode', 'Proposed Action', 'Present Status', 'Final Recommendation', 'Recommendation Type'];
+            $columns = ['#', 'Receipt No', 'Received Date', 'Processed Date', 'Complainant Name & Address', 'Suspect Name & Address', 'Nature', 'Description', 'Mode', 'Proposed Action', 'Present Status', 'Final Recommendation', 'Recommendation Type'];
             if (Auth::user()->canAccess('view all petitions')) $columns[] = 'Seat';
             if ($tab === 'forwarded') $columns[] = 'Unit';
             if ($tab === 'vrs') { $columns[] = 'VR Ref No'; $columns[] = 'VR Date'; }
@@ -1078,7 +1078,7 @@ class PetitionController extends Controller
         $maxDate = $petitions->max('date_of_petition_received');
         $dateFrom = $request->filled('date_from') ? date('d/m/Y', strtotime($request->date_from)) : ($minDate ? date('d/m/Y', strtotime($minDate)) : '...');
         $dateTo = $request->filled('date_to') ? date('d/m/Y', strtotime($request->date_to)) : ($maxDate ? date('d/m/Y', strtotime($maxDate)) : date('d/m/Y'));
-        $mainHeading = "DETAILS OF PETITIONS RECEIVED FROM $dateFrom TO $dateTo";
+        $mainHeading = "DETAILS OF PETITIONS RECEIVED / PROCESSED FROM $dateFrom TO $dateTo";
 
         $content = view('exports.petitions_export', compact('petitions', 'tab', 'columns', 'mainHeading'))->render();
 

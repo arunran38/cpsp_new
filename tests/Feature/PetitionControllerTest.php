@@ -1009,4 +1009,61 @@ class PetitionControllerTest extends TestCase
         $this->assertStringContainsString('17 A Sanction', $customContent);
         $this->assertStringContainsString('Report with Recommendations', $customContent);
     }
+
+    public function test_excel_export_includes_petitions_processed_today_even_if_received_earlier(): void
+    {
+        $yesterday = now()->subDays(2)->format('Y-m-d');
+        $today = now()->format('Y-m-d');
+
+        // Petition 1: Received 2 days ago, but processed today
+        $petitionProcessedToday = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-PROC-TODAY-001',
+            'date_of_petition_received' => $yesterday,
+            'is_cpsp_processed' => true,
+            'processed_at' => now(),
+        ]);
+
+        // Petition 2: Received 2 days ago, and NOT processed today (processed 2 days ago)
+        $petitionProcessedEarlier = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-PROC-OLD-002',
+            'date_of_petition_received' => $yesterday,
+            'is_cpsp_processed' => true,
+            'processed_at' => now()->subDays(2),
+        ]);
+
+        // Petition 3: Received today, processed today
+        $petitionReceivedToday = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-RCVD-TODAY-003',
+            'date_of_petition_received' => $today,
+            'is_cpsp_processed' => true,
+            'processed_at' => now(),
+        ]);
+
+        // Query Excel export for today
+        $response = $this->actingAs($this->user)->get(route('petitions.export', [
+            'date_from' => $today,
+            'date_to' => $today,
+        ]));
+
+        $response->assertStatus(200);
+        $content = $response->getContent();
+
+        // Must include 'Processed Date' column header
+        $this->assertStringContainsString('Processed Date', $content);
+
+        // Petition received earlier but processed today MUST be included
+        $this->assertStringContainsString('RCPT-PROC-TODAY-001', $content);
+
+        // Petition received today MUST be included
+        $this->assertStringContainsString('RCPT-RCVD-TODAY-003', $content);
+
+        // Petition received earlier and processed earlier MUST NOT be included
+        $this->assertStringNotContainsString('RCPT-PROC-OLD-002', $content);
+    }
 }

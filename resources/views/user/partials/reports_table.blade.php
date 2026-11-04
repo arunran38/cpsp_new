@@ -220,7 +220,10 @@
                                 </span>
                             @endif
                             <span
-                                class="block text-xs text-slate-500 mt-1">{{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}</span>
+                                class="block text-xs text-slate-500 mt-1" title="Received Date">Rec: {{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}</span>
+                            @if($petition->processed_at)
+                                <span class="block text-[11px] text-teal-600 font-medium mt-0.5" title="Processed Date">Proc: {{ \Carbon\Carbon::parse($petition->processed_at)->format('d M, Y') }}</span>
+                            @endif
                         </td>
                         <td class="px-6 py-4 text-slate-600">
                             @php

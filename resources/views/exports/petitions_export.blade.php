@@ -92,7 +92,8 @@
                     $rowData = [
                         '#' => '<td class="text-center">' . ($index + 1) . '</td>',
                         'Receipt No' => '<td style="mso-number-format:\'\@\';" class="bold">' . $petition->receipt_no . '</td>',
-                        'Received Date' => '<td class="text-center">' . date('d-m-Y', strtotime($petition->date_of_petition_received)) . '</td>',
+                        'Received Date' => '<td class="text-center">' . ($petition->date_of_petition_received ? date('d-m-Y', strtotime($petition->date_of_petition_received)) : 'N/A') . '</td>',
+                        'Processed Date' => '<td class="text-center">' . ($petition->processed_at ? date('d-m-Y', strtotime($petition->processed_at)) : 'N/A') . '</td>',
                         'File No' => '<td class="text-center">' . ($petition->file_no ?? 'N/A') . '</td>',
                         'File Date' => '<td class="text-center">' . ($petition->file_created_date ? date('d-m-Y', strtotime($petition->file_created_date)) : 'N/A') . '</td>',
                         'Complainant Name & Address' => '<td>' . $getNameAndAddress($complainants) . '</td>',
