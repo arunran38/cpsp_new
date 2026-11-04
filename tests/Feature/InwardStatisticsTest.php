@@ -21,7 +21,7 @@ class InwardStatisticsTest extends TestCase
         $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
 
         $inwardRole->givePermissionTo(
-            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'inward statistics', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view inward statistics', 'guard_name' => 'web']),
             \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'create inward petitions', 'guard_name' => 'web'])
         );
 
@@ -136,7 +136,7 @@ class InwardStatisticsTest extends TestCase
     {
         $inwardRole = Role::firstOrCreate(['name' => 'Inward', 'guard_name' => 'web']);
         $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
-        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'inward statistics', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view inward statistics', 'guard_name' => 'web']);
         \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'create inward petitions', 'guard_name' => 'web']);
         \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view seat diagnostics', 'guard_name' => 'web']);
         \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'access admin dashboard', 'guard_name' => 'web']);
@@ -146,7 +146,7 @@ class InwardStatisticsTest extends TestCase
 
         $inwardUser = User::factory()->create(['name' => 'Inward Desk Officer']);
         $inwardUser->assignRole($inwardRole);
-        $inwardUser->givePermissionTo('inward statistics', 'create inward petitions');
+        $inwardUser->givePermissionTo('view inward statistics', 'create inward petitions');
 
         SeatUser::factory()->create([
             'user_id' => $inwardUser->user_id,
@@ -169,7 +169,7 @@ class InwardStatisticsTest extends TestCase
         \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view pendency details', 'guard_name' => 'web']);
         $adminSeat = Seat::factory()->create(['seat_name' => 'Director Admin']);
         $adminSeat->assignRole($superAdminRole);
-        $superAdminRole->givePermissionTo('access admin dashboard', 'view seat diagnostics', 'inward statistics', 'view pendency details');
+        $superAdminRole->givePermissionTo('access admin dashboard', 'view seat diagnostics', 'view inward statistics', 'view pendency details');
 
         $superAdmin = User::factory()->create(['name' => 'System Super Admin']);
         $superAdmin->assignRole($superAdminRole);
@@ -214,7 +214,7 @@ class InwardStatisticsTest extends TestCase
         $inwardRole = Role::firstOrCreate(['name' => 'Inward', 'guard_name' => 'web']);
         $compliancesRole = Role::firstOrCreate(['name' => 'Petition Compliances', 'guard_name' => 'web']);
 
-        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'inward statistics', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view inward statistics', 'guard_name' => 'web']);
         \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'create inward petitions', 'guard_name' => 'web']);
         \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'export statistics', 'guard_name' => 'web']);
         \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view pendency details', 'guard_name' => 'web']);
@@ -222,7 +222,7 @@ class InwardStatisticsTest extends TestCase
 
         $inwardRole->syncPermissions([
             'create inward petitions',
-            'inward statistics',
+            'view inward statistics',
             'export statistics',
         ]);
 

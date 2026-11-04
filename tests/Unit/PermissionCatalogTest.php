@@ -11,7 +11,7 @@ class PermissionCatalogTest extends TestCase
     {
         $this->assertSame(
             'View Inward Statistics',
-            PermissionCatalog::label('inward statistics')
+            PermissionCatalog::label('view inward statistics')
         );
         $this->assertSame(
             'View Pendency Details',
@@ -32,7 +32,7 @@ class PermissionCatalogTest extends TestCase
         $this->assertSame('users', PermissionCatalog::categoryFor('access admin dashboard'));
         $this->assertSame('inward', PermissionCatalog::categoryFor('filter transfer'));
         $this->assertSame('analytics', PermissionCatalog::categoryFor('view seat diagnostics'));
-        $this->assertSame('analytics', PermissionCatalog::categoryFor('inward statistics'));
+        $this->assertSame('analytics', PermissionCatalog::categoryFor('view inward statistics'));
         $this->assertSame('analytics', PermissionCatalog::categoryFor('view pendency details'));
         $this->assertSame('t_section', PermissionCatalog::categoryFor('view t-section diagnostics'));
         $this->assertSame('maintenance', PermissionCatalog::categoryFor('restore recycle bin'));

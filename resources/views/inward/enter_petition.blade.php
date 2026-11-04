@@ -537,11 +537,13 @@
                                 Filter
                             </button>
                             
+                            @if(Auth::user()->canAccess('export petitions'))
                             <button type="submit" formaction="{{ route('inward.export') }}"
                                 class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 font-semibold px-4 py-[9px] rounded-lg text-sm flex items-center gap-2 shadow-sm transition-all whitespace-nowrap">
                                 <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
                                 Export
                             </button>
+                            @endif
                         </div>
                     </form>
                 </div>

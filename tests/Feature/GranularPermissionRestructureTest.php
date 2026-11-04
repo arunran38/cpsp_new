@@ -204,16 +204,17 @@ class GranularPermissionRestructureTest extends TestCase
         ]);
         $user = $this->createUserInSeat('Inward Registration Staff', $regSeat, [
             'view inward registration',
-            'create inward petitions',
             'access cpsp section',
         ]);
         session(['current_seat_id' => $regSeat->seat_id]);
 
         $this->actingAs($user);
 
-        // Can access Inward Registration / Create page
-        $this->get(route('inward.create'))
+        // Can view inward records without being able to register a petition.
+        $response = $this->get(route('inward.create'));
+        $response
             ->assertOk();
+        $response->assertDontSee('id="inwardPetitionForm"', false);
 
         // Inward Statistics is strictly forbidden (403)
         $this->get(route('inward.statistics'))

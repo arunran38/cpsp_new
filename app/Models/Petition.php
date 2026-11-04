@@ -357,7 +357,20 @@ class Petition extends Model
             ];
         }
 
-        // 2. Transferred from Inward, awaiting CPSP processing
+        // 2. Duplicate / Linked (Evaluated before unprocessed check to ensure processed linked status)
+        if ($this->linked_petition_id || $this->status === self::STATUS_DUPLICATE) {
+            $origReceipt = $this->originalPetition?->receipt_no;
+            return [
+                'label' => 'Duplicate',
+                'description' => $origReceipt ? 'Linked to ' . $origReceipt : 'Linked Duplicate',
+                'badge_class' => 'bg-slate-50 text-slate-700 border border-slate-200',
+                'pill_class' => 'bg-slate-100 text-slate-700 border border-slate-200',
+                'dot_class' => 'bg-slate-400',
+                'color' => 'slate',
+            ];
+        }
+
+        // 3. Transferred from Inward, awaiting CPSP processing
         if (!$this->is_cpsp_processed) {
             return [
                 'label' => 'Transferred',
@@ -366,18 +379,6 @@ class Petition extends Model
                 'pill_class' => 'bg-amber-100 text-amber-800 border border-amber-200',
                 'dot_class' => 'bg-amber-500',
                 'color' => 'amber',
-            ];
-        }
-
-        // 3. Duplicate / Linked
-        if ($this->linked_petition_id || $this->status === self::STATUS_DUPLICATE) {
-            return [
-                'label' => 'Duplicate',
-                'description' => 'Linked Duplicate',
-                'badge_class' => 'bg-slate-50 text-slate-700 border border-slate-200',
-                'pill_class' => 'bg-slate-100 text-slate-700 border border-slate-200',
-                'dot_class' => 'bg-slate-400',
-                'color' => 'slate',
             ];
         }
 
@@ -582,7 +583,10 @@ class Petition extends Model
     public function scopeFilterByTab(Builder $query, string $tab): Builder
     {
         return match ($tab) {
-            'inward' => $query->where('is_cpsp_processed', false)->where('is_returned_to_inward', false),
+            'inward' => $query->where('is_cpsp_processed', false)
+                              ->where('is_returned_to_inward', false)
+                              ->whereNull('linked_petition_id')
+                              ->where('status', '!=', self::STATUS_DUPLICATE),
             'received' => $query->where('status', self::STATUS_RECEIVED)->where('is_cpsp_processed', true),
             'forwarded' => $query->where('status', self::STATUS_FORWARDED),
             'vrs' => $query->where('status', self::STATUS_VR_RECEIVED),

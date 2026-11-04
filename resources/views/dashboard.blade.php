@@ -38,7 +38,7 @@
     } elseif ($isExecutive) {
         $basePetitionsQuery = \App\Models\Petition::whereNull('linked_petition_id')->excludeTSectionIfNotAuthorized($user);
     } elseif ($isInwardDesk) {
-        $basePetitionsQuery = \App\Models\Petition::whereNull('linked_petition_id')->accessibleInwardPetitions($user);
+        $basePetitionsQuery = \App\Models\Petition::accessibleInwardPetitions($user);
     } elseif ($currentSeatUser) {
         $basePetitionsQuery = \App\Models\Petition::where('seat_id', $currentSeatUser->seat_id)
             ->whereNull('linked_petition_id');
@@ -52,7 +52,7 @@
         COUNT(CASE WHEN is_returned_to_inward = 0 THEN 1 END) as desk_total_petitions,
         COUNT(*) as total_inward_petitions,
         COUNT(CASE WHEN is_cpsp_processed = 1 AND is_returned_to_inward = 0 THEN 1 END) as processed,
-        COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 THEN 1 END) as unprocessed,
+        COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 AND linked_petition_id IS NULL AND status != 'Duplicate' THEN 1 END) as unprocessed,
         COUNT(CASE WHEN is_returned_to_inward = 0 AND status = 'Forwarded' THEN 1 END) as forwarded,
         COUNT(CASE WHEN is_returned_to_inward = 0 AND status = 'VR_Received' THEN 1 END) as vr_reports,
         COUNT(CASE WHEN is_returned_to_inward = 0 AND status IN ('Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Closed') THEN 1 END) as decisions,
@@ -229,7 +229,7 @@
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>
                         <span>New Registration</span>
                     </a>
-                @elseif($user->canAccess('create petitions') || $user->canAccess('create inward petitions') || $user->canAccess('inward form'))
+                @elseif($user->canAccess('create petitions'))
                     <a href="{{ route('petitions.create') }}"
                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold text-xs shadow-lg shadow-teal-500/20 hover:scale-105 transition-all">
                         <i data-lucide="plus-circle" class="w-4 h-4"></i>

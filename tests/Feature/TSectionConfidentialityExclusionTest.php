@@ -45,7 +45,7 @@ class TSectionConfidentialityExclusionTest extends TestCase
             'view t-section pending details',
             'view t-section in reports',
             'access t-section dashboard',
-            'inward statistics',
+            'view inward statistics',
             'view all inward statistics',
             'view other inward statistics',
             'view own inward statistics',
@@ -79,7 +79,7 @@ class TSectionConfidentialityExclusionTest extends TestCase
         $this->multiRoleUser->givePermissionTo($perms);
 
         // Give permissions to CPSP role so seats with CPSP role inherit them
-        $cpspRole->givePermissionTo(['view seat diagnostics', 'view department-wise report', 'access cpsp section', 'view own inward statistics', 'inward statistics', 'view petitions']);
+        $cpspRole->givePermissionTo(['view seat diagnostics', 'view department-wise report', 'access cpsp section', 'view own inward statistics', 'view inward statistics', 'view petitions']);
 
         // Create CPSP User (Restricted to CPSP 1)
         $this->cpspUser = User::factory()->create([
@@ -228,7 +228,7 @@ class TSectionConfidentialityExclusionTest extends TestCase
         ]);
         $inwardRole = Role::findByName('Inward', 'web');
         $inwardSeat->assignRole($inwardRole);
-        $inwardRole->givePermissionTo('inward statistics', 'view t-section pending details');
+        $inwardRole->givePermissionTo('view inward statistics', 'view t-section pending details');
 
         $inwardOfficer = User::factory()->create(['name' => 'Inward Statistics Officer']);
         $inwardOfficer->assignRole($inwardRole);
@@ -300,7 +300,7 @@ class TSectionConfidentialityExclusionTest extends TestCase
         ]);
         $inwardRole = Role::firstOrCreate(['name' => 'Inward', 'guard_name' => 'web']);
         $inwardSeat->assignRole($inwardRole);
-        $inwardRole->givePermissionTo(['create inward petitions', 'inward statistics']);
+        $inwardRole->givePermissionTo(['create inward petitions', 'view inward statistics']);
 
         $inwardOfficer = User::factory()->create(['name' => 'Anudev S']);
         $inwardOfficer->assignRole($inwardRole);

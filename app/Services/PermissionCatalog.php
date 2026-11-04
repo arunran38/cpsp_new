@@ -80,15 +80,12 @@ class PermissionCatalog
         'manage petition drafts' => 'Manage Petition Drafts',
         'export petitions' => 'Export Petitions to Spreadsheet',
         'view master reports' => 'View Master Reports',
-        'inward statistics' => 'View Inward Statistics',
         'view inward statistics' => 'View Inward Statistics',
         'view own inward statistics' => 'View Own Seat Inward Statistics',
         'view other inward statistics' => 'View Other Seats Inward Statistics',
         'view all inward statistics' => 'View All Inward Statistics',
         'view pendency details' => 'View Pendency Details',
-        'pendency details' => 'View Pendency Details',
         'view department-wise report' => 'View Department-wise Report',
-        'view department wise report' => 'View Department-wise Report',
         'export statistics' => 'Export Statistics',
         'view processed statistics' => 'View Processed Petition Statistics',
         'view seat distribution chart' => 'View Seat Distribution Chart',
@@ -116,7 +113,7 @@ class PermissionCatalog
         'view recent petitions' => 'View the recently received petitions available to the current user.',
         'view duplicate warnings' => 'See possible duplicate matches while entering or reviewing petitions.',
         'link petitions' => 'Link or unlink duplicate petition records.',
-        'view inward registration' => 'Open and access the Inward petition registration desk.',
+        'view inward registration' => 'View petitions recorded through the Inward registration desk.',
         'create inward petitions' => 'Open the Inward registration desk, record incoming petitions, and transfer them to seats.',
         'delete inward petitions' => 'Remove returned inward petitions from records.',
         'reassign inward petitions' => 'Reassign a returned inward petition to another eligible seat.',
@@ -130,16 +127,13 @@ class PermissionCatalog
         'manage petition drafts' => 'Save, retrieve, and discard in-progress petition drafts.',
         'export petitions' => 'Export petition registers and tables to Excel spreadsheets.',
         'view master reports' => 'Open consolidated petition reports with custom filtering.',
-        'inward statistics' => 'View Inward seat statistics and registration counts.',
         'view inward statistics' => 'View Inward seat statistics and registration counts.',
         'view own inward statistics' => 'View inward statistics for petitions created by the current user or seat.',
         'view other inward statistics' => 'View inward statistics for petitions assigned to other seats.',
         'view all inward statistics' => 'Full departmental oversight of inward petition volume across all seats.',
         'view pendency details' => 'View seat-wise petition pendency and status details.',
-        'pendency details' => 'View seat-wise petition pendency and status details.',
         'view department-wise report' => 'View department-wise petition distribution and analytical reports.',
-        'view department wise report' => 'View department-wise petition distribution and analytical reports.',
-        'export statistics' => 'Download available statistics and tabular reports as a spreadsheet.',
+        'export statistics' => 'Download statistical summaries and analytics as a spreadsheet; petition register exports use Export Petitions.',
         'view processed statistics' => 'View processed and pending counts and progress in Inward statistics.',
         'view seat distribution chart' => 'View the seat distribution chart on the dashboard.',
         'view petition status chart' => 'View the petition status chart on the dashboard.',
@@ -178,7 +172,7 @@ class PermissionCatalog
     {
         $permission = strtolower(trim($permission));
 
-        if (in_array($permission, ['access cpsp section', 'access cpsp', 'access t-section', 'access t section'], true)) {
+        if (in_array($permission, ['access cpsp section', 'access t-section'], true)) {
             return 'sections';
         }
 
@@ -198,7 +192,7 @@ class PermissionCatalog
             return 'organization';
         }
 
-        if (preg_match('/^(view|create|update|delete|edit) petitions$/', $permission)
+        if (preg_match('/^(view|create|update|delete) petitions$/', $permission)
             || in_array($permission, [
                 'view own petitions',
                 'view all petitions',
@@ -233,15 +227,12 @@ class PermissionCatalog
 
         if (in_array($permission, [
             'view master reports',
-            'inward statistics',
             'view inward statistics',
             'view own inward statistics',
             'view other inward statistics',
             'view all inward statistics',
             'view pendency details',
-            'pendency details',
             'view department-wise report',
-            'view department wise report',
             'export statistics',
             'view processed statistics',
             'view seat distribution chart',

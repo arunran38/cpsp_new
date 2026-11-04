@@ -24,7 +24,7 @@
                     </p>
                 </div>
                 <div class="flex items-center gap-3 z-10">
-                    @if(Auth::user()->canAccess('export statistics') || Auth::user()->canAccess('access admin dashboard'))
+                    @if(Auth::user()->canAccess('export petitions') || (Auth::user()->isTSectionRole() && Auth::user()->canAccess(\App\Services\TSectionPermissionRegistry::EXPORT_PETITIONS)))
                     <button type="button" @click="if (window.syncFiltersToExport) window.syncFiltersToExport(); showExportModal = true"
                         class="flex items-center gap-2 px-4 py-2 bg-indigo-50/10 text-indigo-200 border border-indigo-500/30 rounded-xl hover:bg-indigo-500/20 transition-all font-semibold text-sm shadow-sm">
                         <i data-lucide="settings-2" class="w-4 h-4"></i>
@@ -854,4 +854,3 @@
         });
     </script>
 @endsection
-

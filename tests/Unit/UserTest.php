@@ -62,7 +62,7 @@ class UserTest extends TestCase
         $superAdmin->assignRole($role);
 
         $this->assertFalse($superAdmin->canAccess('view seat diagnostics'));
-        $this->assertFalse($superAdmin->canAccess('inward_statistics'));
+        $this->assertFalse($superAdmin->canAccess('view inward statistics'));
         $this->assertFalse($superAdmin->canAccessTSectionDiagnostics());
         $this->assertFalse($superAdmin->canAccessTSectionPending());
 
@@ -75,16 +75,34 @@ class UserTest extends TestCase
 
         $role->givePermissionTo(
             Permission::firstOrCreate(['name' => 'view seat diagnostics', 'guard_name' => 'web']),
-            Permission::firstOrCreate(['name' => 'inward statistics', 'guard_name' => 'web']),
+            Permission::firstOrCreate(['name' => 'view inward statistics', 'guard_name' => 'web']),
             Permission::firstOrCreate(['name' => 'view pendency details', 'guard_name' => 'web']),
             Permission::firstOrCreate(['name' => 'view t-section diagnostics', 'guard_name' => 'web']),
             Permission::firstOrCreate(['name' => 'view t-section pending details', 'guard_name' => 'web'])
         );
 
         $this->assertTrue($superAdmin->canAccess('view seat diagnostics'));
-        $this->assertTrue($superAdmin->canAccess('inward_statistics'));
+        $this->assertTrue($superAdmin->canAccess('view inward statistics'));
         $this->assertTrue($superAdmin->canAccess('view pendency details'));
         $this->assertTrue($superAdmin->canAccessTSectionDiagnostics());
         $this->assertTrue($superAdmin->canAccessTSectionPending());
+    }
+
+    public function test_distinct_permissions_do_not_grant_overlapping_access(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo(
+            Permission::firstOrCreate(['name' => 'view inward registration', 'guard_name' => 'web']),
+            Permission::firstOrCreate(['name' => 'export statistics', 'guard_name' => 'web']),
+            Permission::firstOrCreate(['name' => 'access t-section dashboard', 'guard_name' => 'web'])
+        );
+
+        $this->assertTrue($user->canAccess('view inward registration'));
+        $this->assertFalse($user->canAccess('create inward petitions'));
+        $this->assertTrue($user->canAccess('export statistics'));
+        $this->assertFalse($user->canAccess('export petitions'));
+        $this->assertTrue($user->canAccess('access t-section dashboard'));
+        $this->assertFalse($user->canAccess('access t-section'));
+        $this->assertFalse($user->canAccessTSection());
     }
 }

@@ -149,6 +149,15 @@
                                     <span>Delete</span>
                                 </button>
                             </div>
+                        @elseif($item->linked_petition_id || $item->status === 'Duplicate')
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                Linked Duplicate
+                            </span>
+                            @if($item->originalPetition)
+                                <a href="{{ route('petitions.show', $item->originalPetition->hashid) }}" class="block text-[10px] text-indigo-600 font-semibold hover:underline mt-1" title="View Original Petition">
+                                    Linked to {{ $item->originalPetition->receipt_no }}
+                                </a>
+                            @endif
                         @elseif($item->is_cpsp_processed)
                             @if(in_array($item->status, ['Closed', 'Sent_to_Govt', 'Internal_Vigilance']))
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">

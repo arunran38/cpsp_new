@@ -23,7 +23,7 @@
                     </p>
                 </div>
                 <div class="flex items-center gap-3 z-10">
-                    @if(Auth::user()->canAccess('export statistics') || Auth::user()->canAccess('view pendency details') || Auth::user()->canAccess('access admin dashboard'))
+                    @if(Auth::user()->canAccess('export statistics') || (request()->routeIs('admin.reports.pendency*') && Auth::user()->canAccess('view pendency details')))
                         <a href="{{ route(request()->routeIs('admin.reports.pendency*') ? 'admin.reports.pendency.export' : 'inward.statistics.export', array_merge(request()->query(), ['creator_id' => $selectedCreator ?? 'all'])) }}"
                             class="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 rounded-xl hover:bg-emerald-500/20 transition-all font-semibold text-sm shadow-sm">
                             <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>

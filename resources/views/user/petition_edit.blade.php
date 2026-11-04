@@ -232,8 +232,8 @@
                             <x-input label="Receipt No" :value="$petition->receipt_no" disabled readonly />
                         </div>
                         <div class="lg:col-span-1">
-                            <x-input type="date" label="Date of Receipt"
-                                :value="$petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d') : ''" disabled readonly />
+                            <x-input type="date" label="Date of Receipt" :value="$petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d') : ''" disabled
+                                readonly />
                         </div>
                         <div class="lg:col-span-1">
                             <x-select label="Nature of Petition *" name="nature_of_petition"
@@ -434,8 +434,8 @@
                                                     class="absolute top-4 right-4 z-10 text-slate-400 hover:text-rose-600 transition-colors">
                                                     <i data-lucide="x" class="w-4 h-4"></i>
                                                 </button>
-                                                <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
-                                                    <div>
+                                                <div class="grid grid-cols-1 gap-5 md:grid-cols-6 xl:grid-cols-12">
+                                                    <div class="min-w-0 md:col-span-2 xl:col-span-2">
                                                         <label class="block text-sm font-bold text-slate-800 mb-1.5">Address
                                                             Type</label>
                                                         <div class="relative flex items-center">
@@ -466,26 +466,25 @@
                                                             </svg>
                                                         </div>
                                                     </div>
-                                                    <div class="lg:col-span-2">
-                                                        <x-input label="Address *" name="comp_address"
+                                                    <div class="min-w-0 md:col-span-4 xl:col-span-5">
+                                                        <x-input label="Address" name="comp_address"
                                                             x-bind:name="`complainants[${index}][addresses][${addrIndex}][address]`"
                                                             x-model="addr.address" x-bind:required="step === 2"
                                                             placeholder="House No, Street, Locality" />
                                                     </div>
-                                                    <div class="grid grid-cols-2 gap-4">
-                                                        <div>
-                                                            <x-select label="District *"
+                                                    <div class="min-w-0 md:col-span-4 xl:col-span-3">
+                                                            <x-select label="District"
                                                                 x-bind:name="`complainants[${index}][addresses][${addrIndex}][district_id]`"
                                                                 x-model="addr.district_id" x-bind:required="step === 2"
                                                                 placeholder="Select District"
+                                                                class="min-w-0 pr-10 text-left"
                                                                 :options="$districts->pluck('district_name', 'district_id')->toArray()" />
-                                                        </div>
-                                                        <div>
-                                                            <x-input label="Pincode *" name="comp_pincode"
+                                                    </div>
+                                                    <div class="min-w-0 md:col-span-2 xl:col-span-2">
+                                                            <x-input label="Pincode" name="comp_pincode"
                                                                 x-bind:name="`complainants[${index}][addresses][${addrIndex}][pincode]`"
                                                                 x-model="addr.pincode" x-bind:required="step === 2"
                                                                 placeholder="Code" />
-                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -662,8 +661,8 @@
                                                     class="absolute top-4 right-4 z-10 text-slate-400 hover:text-rose-600 transition-colors">
                                                     <i data-lucide="x" class="w-4 h-4"></i>
                                                 </button>
-                                                <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
-                                                    <div>
+                                                <div class="grid grid-cols-1 gap-5 md:grid-cols-6 xl:grid-cols-12">
+                                                    <div class="min-w-0 md:col-span-2 xl:col-span-2">
                                                         <label class="block text-sm font-bold text-slate-800 mb-1.5">Address
                                                             Type</label>
                                                         <div class="relative flex items-center">
@@ -696,26 +695,25 @@
                                                             </svg>
                                                         </div>
                                                     </div>
-                                                    <div class="lg:col-span-2">
+                                                    <div class="min-w-0 md:col-span-4 xl:col-span-5">
                                                         <x-input label="Address" name="acc_address"
                                                             x-bind:name="`accused[${index}][addresses][${addrIndex}][address]`"
                                                             x-model="addr.address" x-bind:required="step === 3"
                                                             placeholder="House No, Name, Locality" />
                                                     </div>
-                                                    <div class="grid grid-cols-2 gap-4">
-                                                        <div>
+                                                    <div class="min-w-0 md:col-span-4 xl:col-span-3">
                                                             <x-select label="District"
                                                                 x-bind:name="`accused[${index}][addresses][${addrIndex}][district_id]`"
                                                                 x-model="addr.district_id" x-bind:required="step === 3"
                                                                 placeholder="Select District"
+                                                                class="min-w-0 pr-10 text-left"
                                                                 :options="$districts->pluck('district_name', 'district_id')->toArray()" />
-                                                        </div>
-                                                        <div>
+                                                    </div>
+                                                    <div class="min-w-0 md:col-span-2 xl:col-span-2">
                                                             <x-input label="Pincode"
                                                                 x-bind:name="`accused[${index}][addresses][${addrIndex}][pincode]`"
                                                                 x-model="addr.pincode" x-bind:required="step === 3"
                                                                 placeholder="Code" />
-                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

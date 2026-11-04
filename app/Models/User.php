@@ -129,23 +129,7 @@ class User extends Authenticatable
     {
         $permission = strtolower(str_replace('_', ' ', trim($permission)));
 
-        $aliases = [
-            'view inward registration' => ['view inward registration', 'create inward petitions'],
-            'create inward petitions' => ['create inward petitions', 'view inward registration'],
-            'view inward statistics' => ['view inward statistics', 'inward statistics'],
-            'inward statistics' => ['inward statistics', 'view inward statistics'],
-            'view pendency details' => ['view pendency details', 'pendency details'],
-            'pendency details' => ['view pendency details', 'pendency details'],
-            'view department-wise report' => ['view department-wise report', 'view department wise report'],
-            'view department wise report' => ['view department-wise report', 'view department wise report'],
-            'update petitions' => ['update petitions', 'edit petitions'],
-            'edit petitions' => ['update petitions', 'edit petitions'],
-            'access t-section' => ['access t-section', 'access t section', \App\Services\TSectionPermissionRegistry::ACCESS_DASHBOARD],
-            'access cpsp section' => ['access cpsp section', 'access cpsp'],
-            'export petitions' => ['export petitions', 'export statistics'],
-        ];
-
-        $candidates = $aliases[$permission] ?? [$permission];
+        $candidates = [$permission];
 
         $currentSeatUser = $this->currentSeatUser();
         $currentSeat = $currentSeatUser ? $currentSeatUser->seat : null;
@@ -158,15 +142,12 @@ class User extends Authenticatable
             'view inward registration',
             'create inward petitions',
             'view inward statistics',
-            'inward statistics',
             'view own inward statistics',
             'view other inward statistics',
             'view all inward statistics',
             'view seat diagnostics',
             'view department-wise report',
-            'view department wise report',
             'view pendency details',
-            'pendency details',
         ], \App\Services\TSectionPermissionRegistry::all());
 
         $isStrict = false;
@@ -340,8 +321,7 @@ class User extends Authenticatable
             return true;
         }
 
-        return $this->canAccess('access t-section')
-            || $this->canAccess(\App\Services\TSectionPermissionRegistry::ACCESS_DASHBOARD);
+        return $this->canAccess('access t-section');
     }
 
     /**
@@ -387,7 +367,7 @@ class User extends Authenticatable
         } catch (\Throwable $e) { }
 
         // Permissions that operate on CPSP petitions by default unless cross-isolated
-        if ($this->canAccess('view pendency details') || $this->canAccess('inward statistics') || $this->canAccess('create inward petitions')) {
+        if ($this->canAccess('view pendency details') || $this->canAccess('view inward statistics') || $this->canAccess('create inward petitions')) {
             return true;
         }
 

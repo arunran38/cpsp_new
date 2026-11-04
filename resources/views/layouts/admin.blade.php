@@ -500,7 +500,7 @@
                 </div>
                 @endif
 
-                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view master reports') || Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('view compliances'))
+                @if(Auth::user()->canAccess('view petitions') || Auth::user()->canAccess('view master reports') || Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view recycle bin') || Auth::user()->canAccess('view inward registration') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('view inward statistics') || Auth::user()->canAccess('view file transfer') || Auth::user()->canAccess('view compliances'))
                 <div class="pt-6 pb-2">
                     <p class="px-4 text-xs font-bold tracking-wider text-blue-500 uppercase">Operations</p>
                 </div>
@@ -511,7 +511,6 @@
                     $canAccessInwardAdmin = Auth::user()->canAccess('view inward registration') || 
                                            Auth::user()->canAccess('create inward petitions') || 
                                            Auth::user()->canAccess('view inward statistics') || 
-                                           Auth::user()->canAccess('inward statistics') || 
                                            Auth::user()->canAccess('view file transfer');
                 @endphp
 
@@ -553,6 +552,8 @@
                             <i data-lucide="file-plus-2" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('inward.enter_petition') && !request()->boolean('hide_form') ? 'text-teal-400' : '' }}"></i>
                             <span class="whitespace-nowrap">Inward Registration</span>
                         </a>
+                        @endif
+                        @if(Auth::user()->canAccess('view inward registration') || Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('view file transfer'))
                         <a href="{{ route('inward.enter_petition', ['hide_form' => 1]) }}#view-inward-petitions" 
                            @click="inwardOpen = true"
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.enter_petition') && request()->boolean('hide_form') ? 'active-submenu' : 'submenu-link' }}">
@@ -561,7 +562,7 @@
                             <span class="whitespace-nowrap">View Inward Petitions</span>
                         </a>
                         @endif
-                        @if(Auth::user()->canAccess('inward statistics'))
+                        @if(Auth::user()->canAccess('view inward statistics'))
                         <a href="{{ route('inward.statistics') }}" 
                            @click="inwardOpen = true"
                            class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('inward.statistics') ? 'active-submenu' : 'submenu-link' }}">

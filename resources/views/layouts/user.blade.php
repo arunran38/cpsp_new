@@ -440,10 +440,7 @@
                 @endif
 
                 @php
-                    $canAccessInwardEntry = Auth::check() && (
-                        Auth::user()->canAccess('view inward registration') ||
-                        Auth::user()->canAccess('create inward petitions')
-                    );
+                    $canAccessInwardEntry = Auth::check() && Auth::user()->canAccess('create inward petitions');
 
                     $canAccessInwardView = Auth::check() && (
                         Auth::user()->canAccess('view file transfer') ||
@@ -452,8 +449,7 @@
                     );
 
                     $canAccessInwardStats = Auth::check() && (
-                        Auth::user()->canAccess('view inward statistics') ||
-                        Auth::user()->canAccess('inward statistics')
+                        Auth::user()->canAccess('view inward statistics')
                     );
                 @endphp
 

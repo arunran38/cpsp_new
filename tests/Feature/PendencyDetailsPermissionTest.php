@@ -18,7 +18,7 @@ class PendencyDetailsPermissionTest extends TestCase
     {
         parent::setUp();
         Permission::firstOrCreate(['name' => 'view pendency details', 'guard_name' => 'web']);
-        Permission::firstOrCreate(['name' => 'inward statistics', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'view inward statistics', 'guard_name' => 'web']);
         Permission::firstOrCreate(['name' => 'view own inward statistics', 'guard_name' => 'web']);
         Permission::firstOrCreate(['name' => 'export statistics', 'guard_name' => 'web']);
     }
@@ -26,7 +26,7 @@ class PendencyDetailsPermissionTest extends TestCase
     public function test_user_without_permission_cannot_access_pendency_details_regardless_of_role(): void
     {
         $inwardRole = Role::firstOrCreate(['name' => 'Inward', 'guard_name' => 'web']);
-        $inwardRole->syncPermissions(['inward statistics']);
+        $inwardRole->syncPermissions(['view inward statistics']);
 
         $seat = Seat::factory()->create(['seat_name' => 'Inward Counter 1']);
         $seat->assignRole($inwardRole);
@@ -61,7 +61,7 @@ class PendencyDetailsPermissionTest extends TestCase
         $inwardRole = Role::firstOrCreate(['name' => 'Inward', 'guard_name' => 'web']);
         // Assign view pendency details to Inward role
         $inwardRole->syncPermissions([
-            'inward statistics',
+            'view inward statistics',
             'view pendency details',
         ]);
 
@@ -123,4 +123,3 @@ class PendencyDetailsPermissionTest extends TestCase
             ->assertOk();
     }
 }
-

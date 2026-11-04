@@ -134,8 +134,7 @@ class PetitionController extends Controller
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
 
-        $transfersQuery = Petition::with(['seat.activeAssignment.user', 'user', 'addresses', 'originalPetition.addresses', 'cpspOpenedByUser', 'cpspOpenedBySeat', 'returnedByUser', 'processedByUser', 'processedBySeat'])
-            ->whereNull('linked_petition_id')
+        $transfersQuery = Petition::with(['seat.activeAssignment.user', 'user', 'addresses', 'originalPetition.addresses', 'cpspOpenedByUser', 'cpspOpenedBySeat', 'returnedByUser', 'processedByUser', 'processedBySeat', 'originalPetition'])
             ->accessibleInwardPetitions($user, $request->input('scope'));
 
         if ($request->filled('creator_id')) {
@@ -230,7 +229,7 @@ class PetitionController extends Controller
         $currentSeat = $currentSeatUser?->seat;
 
         $canAccessInward = $user->canAccess('view inward registration') || $user->canAccess('create inward petitions');
-        $canExport = $user->canAccess('export statistics') || $user->canAccess('export petitions');
+        $canExport = $user->canAccess('export petitions');
 
         if (!$canAccessInward || !$canExport) {
             abort(403, 'Unauthorized. Inward registration and export permissions required.');
@@ -244,8 +243,7 @@ class PetitionController extends Controller
 
         $filter = $request->query('filter', 'all');
 
-        $transfersQuery = Petition::with(['user', 'seat.activeAssignment.user', 'unit', 'addresses', 'originalPetition.addresses'])
-            ->whereNull('linked_petition_id')
+        $transfersQuery = Petition::with(['user', 'seat.activeAssignment.user', 'unit', 'addresses', 'originalPetition.addresses', 'originalPetition'])
             ->accessibleInwardPetitions($user, $request->input('scope'));
 
         if ($isCpspUser && !$isAdminOrSuperAdmin && !$user->canAccess('view all petitions') && $currentSeat) {
@@ -487,8 +485,7 @@ class PetitionController extends Controller
 
             $canViewOwnStats = $canViewOtherStats
                 || $user->canAccess('view own inward statistics')
-                || $user->canAccess('view inward statistics')
-                || $user->canAccess('inward statistics');
+                || $user->canAccess('view inward statistics');
 
             if (!$canViewOwnStats) {
                 abort(403, 'Unauthorized. You do not have permission to view inward statistics.');
@@ -683,8 +680,7 @@ class PetitionController extends Controller
         $seats = $seatsQuery->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $includedSeatIds = $seats->pluck('seat_id')->toArray();
 
-        $petitionsQuery = Petition::whereNull('linked_petition_id')
-            ->whereIn('seat_id', $includedSeatIds);
+        $petitionsQuery = Petition::whereIn('seat_id', $includedSeatIds);
 
         // Apply Creator Filter
         if ($targetCreatorUser) {
@@ -715,12 +711,12 @@ class PetitionController extends Controller
             ->selectRaw("
                 seat_id,
                 COUNT(*) as total_count,
-                COUNT(CASE WHEN status = 'Received' THEN 1 END) as received,
+                COUNT(CASE WHEN status = 'Received' AND linked_petition_id IS NULL THEN 1 END) as received,
                 COUNT(CASE WHEN status = 'Forwarded' THEN 1 END) as forwarded,
                 COUNT(CASE WHEN status = 'VR_Received' THEN 1 END) as vrs,
                 COUNT(CASE WHEN status IN ('Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Closed') THEN 1 END) as decisions,
                 COUNT(CASE WHEN is_cpsp_processed = 1 THEN 1 END) as processed,
-                COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 THEN 1 END) as pending
+                COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 AND linked_petition_id IS NULL AND status != 'Duplicate' THEN 1 END) as pending
             ")
             ->whereNotNull('seat_id')
             ->groupBy('seat_id')
@@ -890,6 +886,7 @@ class PetitionController extends Controller
                     $this->authorize('view', $originalPetition);
                 }
 
+                $currentSeat = $request->user()?->currentSeatUser();
                 $petition = new Petition();
                 $petition->receipt_no = $request->receipt_no;
                 $petition->date_of_petition_received = $request->date_of_petition_received;
@@ -900,6 +897,10 @@ class PetitionController extends Controller
                 $petition->linked_petition_id = $originalPetition->petition_id;
                 $petition->user_id = $request->user()->user_id;
                 $petition->status = Petition::STATUS_DUPLICATE;
+                $petition->is_cpsp_processed = true;
+                $petition->processed_at = now();
+                $petition->processed_by_user_id = $request->user()->user_id;
+                $petition->processed_by_seat_id = $currentSeat?->seat_id;
                 $petition->save();
 
                 // Clear creation draft on duplicate linking
@@ -1048,7 +1049,7 @@ class PetitionController extends Controller
     public function export(Request $request): HttpResponse
     {
         $user = Auth::user();
-        $canExport = $user->canAccess('export petitions') || $user->canAccess('export statistics') || ($user->isTSectionRole() && $user->canAccess(TSectionPermissionRegistry::EXPORT_PETITIONS));
+        $canExport = $user->canAccess('export petitions') || ($user->isTSectionRole() && $user->canAccess(TSectionPermissionRegistry::EXPORT_PETITIONS));
         $canViewReports = $user->canAccess('view master reports') || ($user->isTSectionRole() && $user->canAccess(TSectionPermissionRegistry::EXPORT_PETITIONS));
 
         if (!$canViewReports || !$canExport) {
@@ -1284,10 +1285,20 @@ class PetitionController extends Controller
         }
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($petition, $originalPetition) {
+            $user = Auth::user();
+            $currentSeat = $user?->currentSeatUser();
+            $currentSeatId = $currentSeat?->seat_id;
+
             $petition->update([
                 'linked_petition_id' => $originalPetition->petition_id,
                 'previous_status' => $petition->status,
                 'status' => Petition::STATUS_DUPLICATE,
+                'is_cpsp_processed' => true,
+                'processed_at' => now(),
+                'processed_by_user_id' => $user->user_id ?? $user->id,
+                'processed_by_seat_id' => $currentSeatId,
+                'updated_by_user_id' => $user->user_id ?? $user->id,
+                'updated_by_seat_id' => $currentSeatId,
             ]);
 
             foreach ($petition->uploads as $upload) {
@@ -1329,10 +1340,20 @@ class PetitionController extends Controller
 
         $originalPetition = $petition->originalPetition;
 
+        $user = Auth::user();
+        $currentSeat = $user?->currentSeatUser();
+        $wasProcessedBeforeLinking = $petition->previous_status && $petition->previous_status !== Petition::STATUS_RECEIVED;
+
         $petition->update([
             'linked_petition_id' => null,
             'status' => $petition->previous_status ?: Petition::STATUS_RECEIVED,
             'previous_status' => null,
+            'is_cpsp_processed' => (bool)$wasProcessedBeforeLinking,
+            'processed_at' => $wasProcessedBeforeLinking ? $petition->processed_at : null,
+            'processed_by_user_id' => $wasProcessedBeforeLinking ? $petition->processed_by_user_id : null,
+            'processed_by_seat_id' => $wasProcessedBeforeLinking ? $petition->processed_by_seat_id : null,
+            'updated_by_user_id' => $user->user_id ?? $user->id,
+            'updated_by_seat_id' => $currentSeat?->seat_id,
         ]);
 
         if ($originalPetition) {
