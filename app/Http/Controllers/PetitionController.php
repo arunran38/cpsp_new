@@ -1714,23 +1714,7 @@ class PetitionController extends Controller
         ]);
 
         $user = Auth::user();
-        $query = Petition::with([
-            'addresses.department',
-            'addresses.district',
-            'latestForwarding.toUnit',
-            'latestForwarding.processedBy',
-            'decision.processedBy',
-            'user.seatUsers.seat',
-            'seat.activeAssignment.user',
-            'unit',
-            'originalPetition.addresses.department',
-            'originalPetition.addresses.district',
-            'returnedByUser',
-            'processedByUser',
-            'processedBySeat',
-            'updatedByUser',
-            'updatedBySeat'
-        ]);
+        $query = Petition::with(['addresses', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user.seatUsers.seat', 'seat.activeAssignment.user', 'unit', 'originalPetition.addresses', 'returnedByUser', 'processedByUser', 'processedBySeat', 'updatedByUser', 'updatedBySeat']);
         $this->applyPetitionAccessScope($query, $user);
         $isInwardOnly = $user && ($user->hasRole(['inward', 'Inward']) || str_contains(strtolower($user->currentSeatUser()?->seat?->seat_name ?? ''), 'inward'));
         $defaultTab = $isInwardOnly ? 'inward' : 'all';
