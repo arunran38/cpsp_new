@@ -1066,4 +1066,110 @@ class PetitionControllerTest extends TestCase
         // Petition received earlier and processed earlier MUST NOT be included
         $this->assertStringNotContainsString('RCPT-PROC-OLD-002', $content);
     }
+
+    public function test_excel_export_suspect_address_and_department_formatting(): void
+    {
+        $deptRevenue = \App\Models\DepartmentList::firstOrCreate(['department_name' => 'Revenue Department']);
+        $deptPolice = \App\Models\DepartmentList::firstOrCreate(['department_name' => 'Police Department']);
+
+        $petition = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-SUSPECT-TEST-001',
+            'is_cpsp_processed' => true,
+            'processed_at' => now(),
+        ]);
+
+        // Suspect 1: Has Department and Address
+        \App\Models\Address::create([
+            'petition_id' => $petition->petition_id,
+            'person_name' => 'Suspect With Dept And Addr',
+            'person_type' => 'Accused',
+            'entity_type' => 'Person',
+            'department_id' => $deptRevenue->id,
+            'full_address' => 'TC 10/20 Kowdiar',
+            'district_id' => null,
+            'pincode' => '695003',
+        ]);
+
+        // Suspect 2: Has Department but NO address (placeholder "Not provided")
+        \App\Models\Address::create([
+            'petition_id' => $petition->petition_id,
+            'person_name' => 'Suspect With Dept Only',
+            'person_type' => 'Accused',
+            'entity_type' => 'Person',
+            'department_id' => $deptPolice->id,
+            'full_address' => 'Not provided',
+            'district_id' => null,
+            'pincode' => null,
+        ]);
+
+        // Suspect 3: Has Address but NO department
+        \App\Models\Address::create([
+            'petition_id' => $petition->petition_id,
+            'person_name' => 'Suspect With Addr Only',
+            'person_type' => 'Accused',
+            'entity_type' => 'Person',
+            'department_id' => null,
+            'full_address' => 'MG Road Ernakulam',
+            'district_id' => null,
+            'pincode' => null,
+        ]);
+
+        // Suspect 4: Neither address nor department
+        \App\Models\Address::create([
+            'petition_id' => $petition->petition_id,
+            'person_name' => 'Suspect With Neither',
+            'person_type' => 'Accused',
+            'entity_type' => 'Person',
+            'department_id' => null,
+            'full_address' => 'Not provided',
+            'district_id' => null,
+            'pincode' => null,
+        ]);
+
+        // Standard Export (includes Suspect Name & Address)
+        $response = $this->actingAs($this->user)->get(route('petitions.export', [
+            'search' => 'RCPT-SUSPECT-TEST-001',
+        ]));
+
+        $response->assertStatus(200);
+        $content = $response->getContent();
+
+        // 1. "Not Provided" or "Not provided" MUST NOT be present
+        $this->assertStringNotContainsString('Not provided', $content);
+        $this->assertStringNotContainsString('Not Provided', $content);
+
+        // 2. Suspect 1 (Both): must display department and address
+        $this->assertStringContainsString('Suspect With Dept And Addr', $content);
+        $this->assertStringContainsString('Department: Revenue Department', $content);
+        $this->assertStringContainsString('TC 10/20 Kowdiar, 695003', $content);
+
+        // 3. Suspect 2 (Dept only): must display department
+        $this->assertStringContainsString('Suspect With Dept Only', $content);
+        $this->assertStringContainsString('Department: Police Department', $content);
+
+        // 4. Suspect 3 (Addr only): must display address
+        $this->assertStringContainsString('Suspect With Addr Only', $content);
+        $this->assertStringContainsString('MG Road Ernakulam', $content);
+
+        // 5. Suspect 4 (Neither): must display name only without bogus placeholders
+        $this->assertStringContainsString('Suspect With Neither', $content);
+
+        // Custom Export with 'Suspect Address' column
+        $responseCustom = $this->actingAs($this->user)->get(route('petitions.export', [
+            'search' => 'RCPT-SUSPECT-TEST-001',
+            'custom_columns' => ['Receipt No', 'Suspect Address'],
+        ]));
+
+        $responseCustom->assertStatus(200);
+        $customContent = $responseCustom->getContent();
+
+        $this->assertStringNotContainsString('Not provided', $customContent);
+        $this->assertStringNotContainsString('Not Provided', $customContent);
+        $this->assertStringContainsString('Department: Revenue Department', $customContent);
+        $this->assertStringContainsString('TC 10/20 Kowdiar, 695003', $customContent);
+        $this->assertStringContainsString('Department: Police Department', $customContent);
+        $this->assertStringContainsString('MG Road Ernakulam', $customContent);
+    }
 }

@@ -45,15 +45,87 @@
                     $complainants = $displayAddresses->where('person_type', 'Complainant');
                     $accused = $displayAddresses->where('person_type', 'Accused');
                     
-                    // Helpers to extract specific fields
+                    // Helpers to clean and format fields (filters out placeholders like 'Not provided', 'N/A', etc.)
+                    $cleanPart = function($val) {
+                        if ($val === null) return null;
+                        $trimmed = trim((string) $val, ", \t\n\r");
+                        if ($trimmed === '' || in_array(strtolower($trimmed), ['not provided', 'not_provided', 'n/a', 'none', 'null', 'nil', '-'], true)) {
+                            return null;
+                        }
+                        return e($trimmed);
+                    };
+
                     $getNames = fn($list) => implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $list->pluck('person_name')->toArray());
                     $getPhones = fn($list) => implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $list->pluck('phone')->filter()->toArray());
                     $getEmails = fn($list) => implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $list->pluck('email')->filter()->toArray());
-                    
-                    $getAddresses = function($list) {
+
+                    // Helper to build suspect address & department details per suspect record
+                    $buildSuspectAddressDetails = function($addr) use ($cleanPart) {
+                        $parts = [];
+
+                        // 1. Suspect Department (if available)
+                        $dept = $cleanPart($addr->department?->department_name);
+                        if ($dept) {
+                            $parts[] = "Department: " . $dept;
+                        }
+
+                        // 2. Suspect Physical Address (full_address, district, pincode)
+                        $addrParts = array_filter([
+                            $cleanPart($addr->full_address),
+                            $cleanPart($addr->district?->district_name),
+                            $cleanPart($addr->pincode)
+                        ]);
+                        if (!empty($addrParts)) {
+                            $parts[] = implode(', ', $addrParts);
+                        }
+
+                        return $parts;
+                    };
+
+                    // Extract suspect address details (address and/or department, blank if neither)
+                    $getSuspectAddresses = function($list) use ($buildSuspectAddressDetails) {
+                        $suspectBlocks = [];
+                        foreach ($list as $addr) {
+                            $parts = $buildSuspectAddressDetails($addr);
+                            if (!empty($parts)) {
+                                $suspectBlocks[] = implode('<br style="mso-data-placement:same-cell;">', $parts);
+                            }
+                        }
+                        return implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $suspectBlocks);
+                    };
+
+                    // Extract suspect name, department, address, and contact details
+                    $getSuspectNameAndAddress = function($list) use ($cleanPart, $buildSuspectAddressDetails) {
+                        $suspectBlocks = [];
+                        foreach ($list as $addr) {
+                            $lines = [];
+                            $name = $cleanPart($addr->person_name) ?? 'Unknown';
+                            $nameLine = "<strong>" . $name . "</strong>";
+                            if ($addr->entity_type === 'Firm' && !empty($addr->contact_person)) {
+                                $nameLine .= " (Contact: " . e($addr->contact_person) . ")";
+                            }
+                            $lines[] = $nameLine;
+
+                            $details = $buildSuspectAddressDetails($addr);
+                            foreach ($details as $d) {
+                                $lines[] = $d;
+                            }
+
+                            $phone = $cleanPart($addr->phone);
+                            if ($phone) $lines[] = "Ph: " . $phone;
+
+                            $email = $cleanPart($addr->email);
+                            if ($email) $lines[] = "Email: " . $email;
+
+                            $suspectBlocks[] = implode('<br style="mso-data-placement:same-cell;">', $lines);
+                        }
+                        return implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $suspectBlocks);
+                    };
+
+                    // Helpers for complainant details
+                    $getComplainantAddresses = function($list) use ($cleanPart) {
                         $details = [];
                         foreach ($list as $addr) {
-                            $cleanPart = fn($val) => !empty(trim($val ?? '', ", \t\n\r")) ? e(trim($val, ", \t\n\r")) : null;
                             $addrParts = array_filter([
                                 $cleanPart($addr->full_address),
                                 $cleanPart($addr->district?->district_name),
@@ -66,25 +138,33 @@
                         return implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $details);
                     };
 
-                    $getNameAndAddress = function($list) {
+                    $getComplainantNameAndAddress = function($list) use ($cleanPart) {
                         $details = [];
                         foreach ($list as $addr) {
-                            $detail = "<strong>" . e($addr->person_name) . "</strong>";
+                            $lines = [];
+                            $name = $cleanPart($addr->person_name) ?? 'Anonymous';
+                            $nameLine = "<strong>" . $name . "</strong>";
                             if ($addr->entity_type === 'Firm' && !empty($addr->contact_person)) {
-                                $detail .= " (Contact: " . e($addr->contact_person) . ")";
+                                $nameLine .= " (Contact: " . e($addr->contact_person) . ")";
                             }
-                            
-                            $cleanPart = fn($val) => !empty(trim($val ?? '', ", \t\n\r")) ? e(trim($val, ", \t\n\r")) : null;
+                            $lines[] = $nameLine;
+
                             $addrParts = array_filter([
                                 $cleanPart($addr->full_address),
                                 $cleanPart($addr->district?->district_name),
-                                $cleanPart($addr->pincode),
-                                !empty($addr->phone) ? "Ph: " . $cleanPart($addr->phone) : null,
-                                !empty($addr->email) ? "Email: " . $cleanPart($addr->email) : null
+                                $cleanPart($addr->pincode)
                             ]);
-                            
-                            if (count($addrParts) > 0) $detail .= "<br style=\"mso-data-placement:same-cell;\">" . implode(', ', $addrParts);
-                            $details[] = $detail;
+                            if (!empty($addrParts)) {
+                                $lines[] = implode(', ', $addrParts);
+                            }
+
+                            $phone = $cleanPart($addr->phone);
+                            if ($phone) $lines[] = "Ph: " . $phone;
+
+                            $email = $cleanPart($addr->email);
+                            if ($email) $lines[] = "Email: " . $email;
+
+                            $details[] = implode('<br style="mso-data-placement:same-cell;">', $lines);
                         }
                         return implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $details);
                     };
@@ -96,16 +176,16 @@
                         'Processed Date' => '<td class="text-center">' . ($petition->processed_at ? date('d-m-Y', strtotime($petition->processed_at)) : 'N/A') . '</td>',
                         'File No' => '<td class="text-center">' . ($petition->file_no ?? 'N/A') . '</td>',
                         'File Date' => '<td class="text-center">' . ($petition->file_created_date ? date('d-m-Y', strtotime($petition->file_created_date)) : 'N/A') . '</td>',
-                        'Complainant Name & Address' => '<td>' . $getNameAndAddress($complainants) . '</td>',
-                        'Suspect Name & Address' => '<td>' . $getNameAndAddress($accused) . '</td>',
+                        'Complainant Name & Address' => '<td>' . $getComplainantNameAndAddress($complainants) . '</td>',
+                        'Suspect Name & Address' => '<td>' . $getSuspectNameAndAddress($accused) . '</td>',
                         'Complainant Name' => '<td>' . $getNames($complainants) . '</td>',
                         'Complainant Phone' => '<td>' . $getPhones($complainants) . '</td>',
                         'Complainant Email' => '<td>' . $getEmails($complainants) . '</td>',
-                        'Complainant Address' => '<td>' . $getAddresses($complainants) . '</td>',
+                        'Complainant Address' => '<td>' . $getComplainantAddresses($complainants) . '</td>',
                         'Suspect Name' => '<td>' . $getNames($accused) . '</td>',
                         'Suspect Phone' => '<td>' . $getPhones($accused) . '</td>',
                         'Suspect Email' => '<td>' . $getEmails($accused) . '</td>',
-                        'Suspect Address' => '<td>' . $getAddresses($accused) . '</td>',
+                        'Suspect Address' => '<td>' . $getSuspectAddresses($accused) . '</td>',
                         'Nature' => '<td>' . $petition->nature_of_petition . '</td>',
                         'Description' => '<td>' . $petition->description . '</td>',
                         'Mode' => '<td class="text-center">' . $petition->mode_of_petition_received . (strtolower($petition->mode_of_petition_received) === 'unit' && $petition->unit ? ' (' . $petition->unit->unit_name . ')' : '') . '</td>',
