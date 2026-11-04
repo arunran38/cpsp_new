@@ -45,17 +45,26 @@
                     $complainants = $displayAddresses->where('person_type', 'Complainant');
                     $accused = $displayAddresses->where('person_type', 'Accused');
                     
-                    // Helpers to extract specific fields
-                    $getNames = fn($list) => implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $list->pluck('person_name')->toArray());
-                    $getPhones = fn($list) => implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $list->pluck('phone')->filter()->toArray());
-                    $getEmails = fn($list) => implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $list->pluck('email')->filter()->toArray());
+                    $isPlaceholderText = function (?string $val): bool {
+                        if ($val === null) {
+                            return true;
+                        }
+                        $trimmed = trim(strtolower($val), " \t\n\r\0\x0B.,-");
+                        return in_array($trimmed, ['', 'not provided', 'not provided.', 'not available', 'not available.', 'n/a', 'na', 'none', 'nil', 'null'], true);
+                    };
+
+                    // Complainant helpers
+                    $getComplainantNames = fn($list) => implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $list->pluck('person_name')->filter()->unique()->toArray());
+                    $getComplainantPhones = fn($list) => implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $list->pluck('phone')->filter()->unique()->toArray());
+                    $getComplainantEmails = fn($list) => implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $list->pluck('email')->filter()->unique()->toArray());
                     
-                    $getAddresses = function($list) {
+                    $getComplainantAddresses = function($list) use ($isPlaceholderText) {
                         $details = [];
                         foreach ($list as $addr) {
                             $cleanPart = fn($val) => !empty(trim($val ?? '', ", \t\n\r")) ? e(trim($val, ", \t\n\r")) : null;
+                            $validFull = $isPlaceholderText($addr->full_address) ? null : $cleanPart($addr->full_address);
                             $addrParts = array_filter([
-                                $cleanPart($addr->full_address),
+                                $validFull,
                                 $cleanPart($addr->district?->district_name),
                                 $cleanPart($addr->pincode)
                             ]);
@@ -63,10 +72,10 @@
                                 $details[] = implode(', ', $addrParts);
                             }
                         }
-                        return implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $details);
+                        return implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', array_unique($details));
                     };
 
-                    $getNameAndAddress = function($list) {
+                    $getComplainantNameAndAddress = function($list) use ($isPlaceholderText) {
                         $details = [];
                         foreach ($list as $addr) {
                             $detail = "<strong>" . e($addr->person_name) . "</strong>";
@@ -75,19 +84,119 @@
                             }
                             
                             $cleanPart = fn($val) => !empty(trim($val ?? '', ", \t\n\r")) ? e(trim($val, ", \t\n\r")) : null;
+                            $validFull = $isPlaceholderText($addr->full_address) ? null : $cleanPart($addr->full_address);
                             $addrParts = array_filter([
-                                $cleanPart($addr->full_address),
+                                $validFull,
                                 $cleanPart($addr->district?->district_name),
                                 $cleanPart($addr->pincode),
                                 !empty($addr->phone) ? "Ph: " . $cleanPart($addr->phone) : null,
                                 !empty($addr->email) ? "Email: " . $cleanPart($addr->email) : null
                             ]);
                             
-                            if (count($addrParts) > 0) $detail .= "<br style=\"mso-data-placement:same-cell;\">" . implode(', ', $addrParts);
+                            if (count($addrParts) > 0) {
+                                $detail .= "<br style=\"mso-data-placement:same-cell;\">" . implode(', ', $addrParts);
+                            }
                             $details[] = $detail;
                         }
                         return implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $details);
                     };
+
+                    // Suspect (Accused) structured processing
+                    $accusedGroups = $accused->groupBy(function ($addr) {
+                        if (in_array($addr->person_name, ['Unknown', 'Unknown Suspect', 'Anonymous / Unknown'])) {
+                            return $addr->person_name . '_' . ($addr->department_id ?? '') . '_' . ($addr->designation_id ?? '') . '_' . ($addr->phone ?? '') . '_' . ($addr->pen_number ?? '') . '_' . ($addr->entity_type ?? '');
+                        }
+                        return $addr->person_name . '_' . ($addr->department_id ?? '') . '_' . ($addr->entity_type ?? '');
+                    });
+
+                    $suspectEntries = [];
+                    foreach ($accusedGroups as $group) {
+                        $first = $group->first();
+                        $name = $first->person_name;
+                        $entityType = $first->entity_type;
+                        $contactPerson = $first->contact_person;
+                        $phone = $group->pluck('phone')->filter()->first();
+                        $email = $group->pluck('email')->filter()->first();
+                        
+                        // Department details
+                        $deptName = null;
+                        if ($first->department && !empty(trim($first->department->department_name ?? ''))) {
+                            $deptName = trim($first->department->department_name);
+                        }
+
+                        // Collect valid addresses for this suspect (ignoring default/placeholder text)
+                        $validAddresses = [];
+                        foreach ($group as $addr) {
+                            $cleanPart = fn($val) => !empty(trim($val ?? '', ", \t\n\r")) ? e(trim($val, ", \t\n\r")) : null;
+                            $validFull = $isPlaceholderText($addr->full_address) ? null : $cleanPart($addr->full_address);
+                            
+                            $parts = array_filter([
+                                $validFull,
+                                $cleanPart($addr->district?->district_name),
+                                $cleanPart($addr->pincode)
+                            ]);
+                            if (!empty($parts)) {
+                                $validAddresses[] = implode(', ', $parts);
+                            }
+                        }
+                        $validAddresses = array_values(array_unique($validAddresses));
+
+                        // Combined address and department with clear separation
+                        $combinedAddressDept = [];
+                        if (!empty($validAddresses)) {
+                            $combinedAddressDept[] = implode('<br style="mso-data-placement:same-cell;">', $validAddresses);
+                        }
+                        if (!empty($deptName)) {
+                            $combinedAddressDept[] = "Department: " . e($deptName);
+                        }
+
+                        // Full block for 'Suspect Name & Address'
+                        $nameAndAddressBlock = "<strong>" . e($name) . "</strong>";
+                        if ($entityType === 'Firm' && !empty($contactPerson)) {
+                            $nameAndAddressBlock .= " (Contact: " . e($contactPerson) . ")";
+                        }
+                        if (!empty($combinedAddressDept)) {
+                            $nameAndAddressBlock .= "<br style=\"mso-data-placement:same-cell;\">" . implode('<br style="mso-data-placement:same-cell;">', $combinedAddressDept);
+                        }
+                        if (!empty($phone)) {
+                            $nameAndAddressBlock .= "<br style=\"mso-data-placement:same-cell;\">Ph: " . e($phone);
+                        }
+                        if (!empty($email)) {
+                            $nameAndAddressBlock .= "<br style=\"mso-data-placement:same-cell;\">Email: " . e($email);
+                        }
+
+                        $suspectEntries[] = [
+                            'name' => e($name) . ($entityType === 'Firm' && !empty($contactPerson) ? " (Contact: " . e($contactPerson) . ")" : ""),
+                            'name_and_address' => $nameAndAddressBlock,
+                            'address_and_dept' => !empty($combinedAddressDept) ? implode('<br style="mso-data-placement:same-cell;">', $combinedAddressDept) : null,
+                            'phone' => !empty($phone) ? e($phone) : null,
+                            'email' => !empty($email) ? e($email) : null,
+                        ];
+                    }
+
+                    $suspectNameAndAddressCell = !empty($suspectEntries)
+                        ? implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', array_column($suspectEntries, 'name_and_address'))
+                        : '';
+
+                    $suspectAddressesOnly = array_filter(array_column($suspectEntries, 'address_and_dept'));
+                    $suspectAddressCell = !empty($suspectAddressesOnly)
+                        ? implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $suspectAddressesOnly)
+                        : '';
+
+                    $suspectNamesOnly = array_filter(array_column($suspectEntries, 'name'));
+                    $suspectNameCell = !empty($suspectNamesOnly)
+                        ? implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $suspectNamesOnly)
+                        : '';
+
+                    $suspectPhonesOnly = array_filter(array_column($suspectEntries, 'phone'));
+                    $suspectPhoneCell = !empty($suspectPhonesOnly)
+                        ? implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $suspectPhonesOnly)
+                        : '';
+
+                    $suspectEmailsOnly = array_filter(array_column($suspectEntries, 'email'));
+                    $suspectEmailCell = !empty($suspectEmailsOnly)
+                        ? implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $suspectEmailsOnly)
+                        : '';
 
                     $rowData = [
                         '#' => '<td class="text-center">' . ($index + 1) . '</td>',
@@ -95,16 +204,16 @@
                         'Received Date' => '<td class="text-center">' . date('d-m-Y', strtotime($petition->date_of_petition_received)) . '</td>',
                         'File No' => '<td class="text-center">' . ($petition->file_no ?? 'N/A') . '</td>',
                         'File Date' => '<td class="text-center">' . ($petition->file_created_date ? date('d-m-Y', strtotime($petition->file_created_date)) : 'N/A') . '</td>',
-                        'Complainant Name & Address' => '<td>' . $getNameAndAddress($complainants) . '</td>',
-                        'Suspect Name & Address' => '<td>' . $getNameAndAddress($accused) . '</td>',
-                        'Complainant Name' => '<td>' . $getNames($complainants) . '</td>',
-                        'Complainant Phone' => '<td>' . $getPhones($complainants) . '</td>',
-                        'Complainant Email' => '<td>' . $getEmails($complainants) . '</td>',
-                        'Complainant Address' => '<td>' . $getAddresses($complainants) . '</td>',
-                        'Suspect Name' => '<td>' . $getNames($accused) . '</td>',
-                        'Suspect Phone' => '<td>' . $getPhones($accused) . '</td>',
-                        'Suspect Email' => '<td>' . $getEmails($accused) . '</td>',
-                        'Suspect Address' => '<td>' . $getAddresses($accused) . '</td>',
+                        'Complainant Name & Address' => '<td>' . $getComplainantNameAndAddress($complainants) . '</td>',
+                        'Suspect Name & Address' => '<td>' . $suspectNameAndAddressCell . '</td>',
+                        'Complainant Name' => '<td>' . $getComplainantNames($complainants) . '</td>',
+                        'Complainant Phone' => '<td>' . $getComplainantPhones($complainants) . '</td>',
+                        'Complainant Email' => '<td>' . $getComplainantEmails($complainants) . '</td>',
+                        'Complainant Address' => '<td>' . $getComplainantAddresses($complainants) . '</td>',
+                        'Suspect Name' => '<td>' . $suspectNameCell . '</td>',
+                        'Suspect Phone' => '<td>' . $suspectPhoneCell . '</td>',
+                        'Suspect Email' => '<td>' . $suspectEmailCell . '</td>',
+                        'Suspect Address' => '<td>' . $suspectAddressCell . '</td>',
                         'Nature' => '<td>' . $petition->nature_of_petition . '</td>',
                         'Description' => '<td>' . $petition->description . '</td>',
                         'Mode' => '<td class="text-center">' . $petition->mode_of_petition_received . (strtolower($petition->mode_of_petition_received) === 'unit' && $petition->unit ? ' (' . $petition->unit->unit_name . ')' : '') . '</td>',
