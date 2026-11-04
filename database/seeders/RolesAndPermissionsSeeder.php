@@ -18,6 +18,48 @@ class RolesAndPermissionsSeeder extends Seeder
         // Reset cached roles and permissions
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
+        // 0. Consolidate & Clean Up Legacy/Redundant Duplicate Permissions
+        $redundantPermissionMap = [
+            'inward statistics' => 'view inward statistics',
+            'pendency details' => 'view pendency details',
+            'view department wise report' => 'view department-wise report',
+            'edit petitions' => 'update petitions',
+        ];
+
+        foreach ($redundantPermissionMap as $redundantName => $canonicalName) {
+            $canonicalPerm = Permission::firstOrCreate(['name' => $canonicalName, 'guard_name' => 'web']);
+            $redundantPerms = Permission::where('name', $redundantName)->get();
+
+            foreach ($redundantPerms as $redundantPerm) {
+                // Re-link role assignments to canonical permission
+                $roleIds = \Illuminate\Support\Facades\DB::table('role_has_permissions')
+                    ->where('permission_id', $redundantPerm->id)
+                    ->pluck('role_id');
+                foreach ($roleIds as $roleId) {
+                    \Illuminate\Support\Facades\DB::table('role_has_permissions')->insertOrIgnore([
+                        'permission_id' => $canonicalPerm->id,
+                        'role_id' => $roleId,
+                    ]);
+                }
+
+                // Re-link direct model/user assignments to canonical permission
+                $userAssignments = \Illuminate\Support\Facades\DB::table('model_has_permissions')
+                    ->where('permission_id', $redundantPerm->id)
+                    ->get();
+                foreach ($userAssignments as $assignment) {
+                    \Illuminate\Support\Facades\DB::table('model_has_permissions')->insertOrIgnore([
+                        'permission_id' => $canonicalPerm->id,
+                        'model_type' => $assignment->model_type,
+                        'model_id' => $assignment->model_id,
+                    ]);
+                }
+
+                \Illuminate\Support\Facades\DB::table('role_has_permissions')->where('permission_id', $redundantPerm->id)->delete();
+                \Illuminate\Support\Facades\DB::table('model_has_permissions')->where('permission_id', $redundantPerm->id)->delete();
+                $redundantPerm->delete();
+            }
+        }
+
         // 1. Standard CRUD Entities
         $crudEntities = [
             'users',
@@ -71,19 +113,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'pullback decisions',
             'manage petition drafts',
             'export petitions',
-            'edit petitions',
 
             // Reports & Operational Statistics
             'view master reports',
             'view inward statistics',
-            'inward statistics',
             'view own inward statistics',
             'view other inward statistics',
             'view all inward statistics',
             'view pendency details',
-            'pendency details',
             'view department-wise report',
-            'view department wise report',
             'export statistics',
             'view processed statistics',
 
@@ -176,14 +214,12 @@ class RolesAndPermissionsSeeder extends Seeder
                 'delete seats',
                 'delete units',
                 'delete users',
-                'edit petitions',
                 'export petitions',
                 'export statistics',
                 'export t-section petitions',
                 'filter transfer',
                 'forward petitions',
                 'forward t-section petitions',
-                'inward statistics',
                 'link petitions',
                 'manage petition drafts',
                 'pullback decisions',
@@ -205,7 +241,6 @@ class RolesAndPermissionsSeeder extends Seeder
                 'view all petitions',
                 'view compliances',
                 'view department-wise report',
-                'view department wise report',
                 'view departments',
                 'view designations',
                 'view duplicate warnings',
@@ -218,7 +253,6 @@ class RolesAndPermissionsSeeder extends Seeder
                 'view own inward statistics',
                 'view own petitions',
                 'view pendency details',
-                'pendency details',
                 'view permissions',
                 'view petition nature chart',
                 'view petition status chart',
@@ -241,7 +275,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'CPSP' => [
                 'access cpsp section',
                 'create petitions',
-                'edit petitions',
                 'export petitions',
                 'export statistics',
                 'forward petitions',
@@ -268,7 +301,6 @@ class RolesAndPermissionsSeeder extends Seeder
                 'export petitions',
                 'export statistics',
                 'filter transfer',
-                'inward statistics',
                 'reassign inward petitions',
                 'view file transfer',
                 'view inward registration',
@@ -285,14 +317,11 @@ class RolesAndPermissionsSeeder extends Seeder
                 'create compliances',
                 'delete compliances',
                 'export statistics',
-                'inward statistics',
-                'pendency details',
                 'update compliances',
                 'view all inward statistics',
                 'view all petitions',
                 'view compliances',
                 'view department-wise report',
-                'view department wise report',
                 'view inward statistics',
                 'view master reports',
                 'view pendency details',
@@ -308,7 +337,6 @@ class RolesAndPermissionsSeeder extends Seeder
                 'access t-section dashboard',
                 'create petitions',
                 'delete petitions',
-                'edit petitions',
                 'export petitions',
                 'export statistics',
                 'export t-section petitions',
@@ -335,12 +363,10 @@ class RolesAndPermissionsSeeder extends Seeder
                 'delete recycle bin',
                 'export petitions',
                 'export statistics',
-                'pendency details',
                 'restore recycle bin',
                 'view all inward statistics',
                 'view all petitions',
                 'view department-wise report',
-                'view department wise report',
                 'view master reports',
                 'view other inward statistics',
                 'view pendency details',
@@ -358,7 +384,7 @@ class RolesAndPermissionsSeeder extends Seeder
         foreach ($rolePermissions as $roleName => $permissions) {
             $role = Role::where('name', $roleName)->first();
             if ($role) {
-                $role->syncPermissions($permissions);
+                $role->syncPermissions(array_values(array_unique($permissions)));
             }
         }
 

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use App\Services\TSectionPermissionRegistry;
 
 class TSectionDiagnosticsPermissionsSeeder extends Seeder
@@ -15,7 +16,7 @@ class TSectionDiagnosticsPermissionsSeeder extends Seeder
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // 1. Create the new granular permissions
         $permissions = [
@@ -30,10 +31,14 @@ class TSectionDiagnosticsPermissionsSeeder extends Seeder
             ]);
         }
 
-        // 2. Grant to Developer and Super Admin roles
-        $roles = Role::whereIn('name', ['Developer', 'developer', 'super admin', 'Super Admin'])->get();
-        foreach ($roles as $role) {
-            $role->givePermissionTo($permissions);
+        // 2. Grant to Developer and super admin roles
+        foreach (['Developer', 'super admin'] as $roleName) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role) {
+                $role->givePermissionTo($permissions);
+            }
         }
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 }

@@ -20,21 +20,17 @@ class DeveloperRoleSeeder extends Seeder
         // 1. Create or retrieve Developer role
         $developerRole = Role::firstOrCreate([
             'name' => 'Developer',
-            'guard_name' => 'web'
+            'guard_name' => 'web',
         ]);
 
         // 2. Assign all permissions in the system to Developer
         $allPermissions = Permission::all();
         $developerRole->syncPermissions($allPermissions);
 
-        // Also ensure Super Admin retains its configured permissions
+        // 3. Also ensure Super Admin retains all permissions
         $superAdmin = Role::where('name', 'super admin')->first();
         if ($superAdmin) {
-            $superAdminPermissions = Permission::whereNotIn('name', [
-                'forward t-section petitions',
-                'export t-section petitions',
-            ])->get();
-            $superAdmin->syncPermissions($superAdminPermissions);
+            $superAdmin->syncPermissions($allPermissions);
         }
 
         // Reset cache again

@@ -231,7 +231,6 @@ class GranularPermissionRestructureTest extends TestCase
         ]);
         $user = $this->createUserInSeat('Statistics Staff', $statsSeat, [
             'view inward statistics',
-            'inward statistics',
             'access cpsp section',
         ]);
         session(['current_seat_id' => $statsSeat->seat_id]);
