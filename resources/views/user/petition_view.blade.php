@@ -6,17 +6,19 @@
         @open-return-modal.window="returnPetitionId = $event.detail.id; returnReceiptNo = $event.detail.receipt; showReturnModal = true"
         class="space-y-6">
         <!-- Premium Header Section -->
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2">
+        <div
+            class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2">
             <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
                 <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
             </div>
             <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
                 <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
             </div>
-            
+
             <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
                 <div class="flex items-center gap-4 z-10">
-                    <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-400/20 text-teal-400 shadow-inner shrink-0">
+                    <div
+                        class="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-400/20 text-teal-400 shadow-inner shrink-0">
                         <i data-lucide="scroll-text" class="w-6 h-6"></i>
                     </div>
                     <div class="text-center sm:text-left">
@@ -55,32 +57,38 @@
             <a href="{{ route('petitions.index', ['tab' => 'inward']) }}"
                 class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'inward' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                 <span>Inward Petitions</span>
-                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'inward' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['inward'] ?? 0 }}</span>
+                <span
+                    class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'inward' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['inward'] ?? 0 }}</span>
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'all']) }}"
                 class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'all' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                 <span>All Petitions</span>
-                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'all' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['all'] ?? 0 }}</span>
+                <span
+                    class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'all' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['all'] ?? 0 }}</span>
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'received']) }}"
                 class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'received' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
-                <span>Desk Petitions</span>
-                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'received' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['received'] ?? 0 }}</span>
+                <span>Processed Petitions</span>
+                <span
+                    class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'received' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['received'] ?? 0 }}</span>
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'forwarded']) }}"
                 class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'forwarded' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                 <span>Forwarded Petitions</span>
-                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'forwarded' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['forwarded'] ?? 0 }}</span>
+                <span
+                    class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'forwarded' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['forwarded'] ?? 0 }}</span>
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'vrs']) }}"
                 class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'vrs' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)] border border-indigo-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                 <span>Verification Reports Received</span>
-                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'vrs' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['vrs'] ?? 0 }}</span>
+                <span
+                    class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'vrs' ? 'bg-white text-indigo-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['vrs'] ?? 0 }}</span>
             </a>
             <a href="{{ route('petitions.index', ['tab' => 'decisions']) }}"
                 class="flex-1 text-center flex items-center justify-center gap-2 px-4 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-300 {{ $tab === 'decisions' ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                 <span>Final Decisions</span>
-                <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'decisions' ? 'bg-white text-emerald-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['decisions'] ?? 0 }}</span>
+                <span
+                    class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[11px] font-black px-1.5 transition-colors {{ $tab === 'decisions' ? 'bg-white text-emerald-700' : 'bg-white/20 text-white' }}">{{ $unifiedCounts['decisions'] ?? 0 }}</span>
             </a>
         </div>
 
@@ -107,7 +115,8 @@
                     <a href="{{ route('petitions.index', ['tab' => 'decisions', 'status' => $value]) }}"
                         class="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-300 {{ request('status') == $value ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] border border-emerald-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                         <span>{{ $label }}</span>
-                        <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[10px] font-black px-1.5 transition-colors {{ request('status') == $value ? 'bg-white text-emerald-700' : 'bg-white/20 text-white' }}">{{ $decisionCounts[$label] ?? 0 }}</span>
+                        <span
+                            class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[10px] font-black px-1.5 transition-colors {{ request('status') == $value ? 'bg-white text-emerald-700' : 'bg-white/20 text-white' }}">{{ $decisionCounts[$label] ?? 0 }}</span>
                     </a>
                 @endforeach
             </div>
@@ -141,7 +150,8 @@
                         <a href="{{ $recUrl }}"
                             class="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-300 {{ $isSelected ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)] border border-emerald-400/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/80 border border-transparent' }}">
                             <span>{{ $label }}</span>
-                            <span class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[10px] font-black px-1.5 transition-colors {{ $isSelected ? 'bg-white text-emerald-700' : 'bg-white/20 text-white' }}">{{ $govtRecCounts[$label] ?? 0 }}</span>
+                            <span
+                                class="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-full text-[10px] font-black px-1.5 transition-colors {{ $isSelected ? 'bg-white text-emerald-700' : 'bg-white/20 text-white' }}">{{ $govtRecCounts[$label] ?? 0 }}</span>
                         </a>
                     @endforeach
                 </div>
@@ -229,72 +239,69 @@
                     </button>
                 </div>
 
-                <form action="{{ route('forwardings.store') }}" method="POST" enctype="multipart/form-data"
-                    x-data="{ 
-                        action: '', 
-                        recommendationType: '',
-                        recommendationTypeError: '',
-                        fileNo: '', 
-                        fileNoError: '',
-                        fileCreatedDate: '',
-                        forwardedDate: '',
-                        checkEmpty() {
-                            if (!this.fileNo.trim()) {
-                                this.fileNoError = 'this field is required';
-                            } else {
-                                this.fileNoError = '';
-                            }
-                        },
-                        async checkFileNoUniqueness() {
-                            if (!this.fileNo.trim()) {
-                                this.fileNoError = 'this field is required';
-                                return;
-                            }
-                            try {
-                                const response = await fetch('/petitions/check-file-no', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
-                                    },
-                                    body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
-                                });
-                                const data = await response.json();
-                                if (data.exists) {
-                                    this.fileNoError = 'File number already exists';
+                <form action="{{ route('forwardings.store') }}" method="POST" enctype="multipart/form-data" x-data="{ 
+                            action: '', 
+                            recommendationType: '',
+                            recommendationTypeError: '',
+                            fileNo: '', 
+                            fileNoError: '',
+                            fileCreatedDate: '',
+                            forwardedDate: '',
+                            checkEmpty() {
+                                if (!this.fileNo.trim()) {
+                                    this.fileNoError = 'this field is required';
                                 } else {
                                     this.fileNoError = '';
                                 }
-                            } catch (error) {
-                                console.error(error);
-                            }
-                        },
-                        validateForm(e) {
-                            this.recommendationTypeError = '';
-                            if (this.action === 'Sent_to_Govt' && !this.recommendationType) {
-                                this.recommendationTypeError = 'Recommendation Type is required.';
-                                if (e) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
+                            },
+                            async checkFileNoUniqueness() {
+                                if (!this.fileNo.trim()) {
+                                    this.fileNoError = 'this field is required';
+                                    return;
                                 }
-                                return false;
-                            }
-                            if (this.fileNoError) {
-                                if (e) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
+                                try {
+                                    const response = await fetch('/petitions/check-file-no', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
+                                        },
+                                        body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
+                                    });
+                                    const data = await response.json();
+                                    if (data.exists) {
+                                        this.fileNoError = 'File number already exists';
+                                    } else {
+                                        this.fileNoError = '';
+                                    }
+                                } catch (error) {
+                                    console.error(error);
                                 }
-                                return false;
+                            },
+                            validateForm(e) {
+                                this.recommendationTypeError = '';
+                                if (this.action === 'Sent_to_Govt' && !this.recommendationType) {
+                                    this.recommendationTypeError = 'Recommendation Type is required.';
+                                    if (e) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    }
+                                    return false;
+                                }
+                                if (this.fileNoError) {
+                                    if (e) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    }
+                                    return false;
+                                }
+                                return true;
                             }
-                            return true;
-                        }
-                    }"
-                    x-init="
-                        $watch('action', val => { if (val !== 'Sent_to_Govt') { recommendationType = ''; recommendationTypeError = ''; } });
-                        $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
-                        $watch('fileCreatedDate', val => { if (val && forwardedDate && forwardedDate < val) { forwardedDate = val; } });
-                    "
-                    @submit="if (!validateForm($event)) return false;">
+                        }" x-init="
+                            $watch('action', val => { if (val !== 'Sent_to_Govt') { recommendationType = ''; recommendationTypeError = ''; } });
+                            $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
+                            $watch('fileCreatedDate', val => { if (val && forwardedDate && forwardedDate < val) { forwardedDate = val; } });
+                        " @submit="if (!validateForm($event)) return false;">
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 
@@ -312,8 +319,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-slate-700 mb-1">File Date</label>
                                 <input type="date" name="file_created_date" x-model="fileCreatedDate"
-                                    :min="activePetitionDate || null" max="{{ date('Y-m-d') }}"
-                                    placeholder="DD-MM-YYYY"
+                                    :min="activePetitionDate || null" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                                     class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
                                     style="color: #1e40af !important;">
                             </div>
@@ -340,9 +346,9 @@
                                 ];
                             @endphp
                             <x-select label="Recommendation Type" name="govt_recommendation_type" :options="$govtRecOptions"
-                                x-model="recommendationType"
-                                placeholder="Select Recommendation Type..." />
-                            <p x-show="recommendationTypeError" x-text="recommendationTypeError" x-cloak class="mt-1 text-xs font-semibold text-rose-600"></p>
+                                x-model="recommendationType" placeholder="Select Recommendation Type..." />
+                            <p x-show="recommendationTypeError" x-text="recommendationTypeError" x-cloak
+                                class="mt-1 text-xs font-semibold text-rose-600"></p>
                         </div>
 
                         <div x-show="action === 'Forward_To_Unit'" x-cloak class="pt-2">
@@ -356,12 +362,14 @@
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Action Date</label>
                             <input type="date" name="forwarded_date" x-model="forwardedDate"
-                                :min="fileCreatedDate || activePetitionDate || null" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                                :min="fileCreatedDate || activePetitionDate || null" max="{{ date('Y-m-d') }}"
+                                placeholder="DD-MM-YYYY"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                                 style="color: #1e40af !important;" required>
                         </div>
 
-                        <div x-show="action === 'Close' || action === 'Sent_to_Govt' || action === 'Sent_to_SPC' || action === 'Internal_Vigilance'" x-cloak class="pt-2">
+                        <div x-show="action === 'Close' || action === 'Sent_to_Govt' || action === 'Sent_to_SPC' || action === 'Internal_Vigilance'"
+                            x-cloak class="pt-2">
                             <label class="block text-sm font-medium text-slate-700 mb-1">Directorate Order Number</label>
                             <input type="text" name="directorate_order_number"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 mb-3"
@@ -383,7 +391,8 @@
                         <div class="flex justify-end gap-3 pt-6">
                             <button type="button" @click="showForwardModal = false"
                                 class="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 border border-transparent rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>
-                            <button type="submit" @click="if (!validateForm($event)) return false;" :disabled="fileNoError !== ''"
+                            <button type="submit" @click="if (!validateForm($event)) return false;"
+                                :disabled="fileNoError !== ''"
                                 class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                                 Submit Action <i data-lucide="arrow-right" class="w-4 h-4"></i>
                             </button>
@@ -490,27 +499,25 @@
 
                 <form action="{{ route('decisions.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4"
                     x-data="{ 
-                        finalDecision: '', 
-                        recommendationType: '',
-                        recommendationTypeError: '',
-                        validateDecision(e) {
-                            this.recommendationTypeError = '';
-                            if (this.finalDecision === 'Sent to Govt' && !this.recommendationType) {
-                                this.recommendationTypeError = 'Recommendation Type is required.';
-                                if (e) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
+                            finalDecision: '', 
+                            recommendationType: '',
+                            recommendationTypeError: '',
+                            validateDecision(e) {
+                                this.recommendationTypeError = '';
+                                if (this.finalDecision === 'Sent to Govt' && !this.recommendationType) {
+                                    this.recommendationTypeError = 'Recommendation Type is required.';
+                                    if (e) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                    }
+                                    return false;
                                 }
-                                return false;
+                                return true;
                             }
-                            return true;
-                        }
-                    }"
-                    x-init="
-                        $watch('finalDecision', val => { if (val !== 'Sent to Govt') { recommendationType = ''; recommendationTypeError = ''; } });
-                        $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
-                    "
-                    @submit="if (!validateDecision($event)) return false;">
+                        }" x-init="
+                            $watch('finalDecision', val => { if (val !== 'Sent to Govt') { recommendationType = ''; recommendationTypeError = ''; } });
+                            $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
+                        " @submit="if (!validateDecision($event)) return false;">
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 
@@ -530,8 +537,7 @@
                             ];
                         @endphp
                         <x-select label="Final Decision" name="final_decision" :options="$decisionOptions"
-                            x-model="finalDecision"
-                            placeholder="Select..." required />
+                            x-model="finalDecision" placeholder="Select..." required />
 
                         <div x-show="finalDecision === 'Sent to Govt'" x-cloak class="pt-2">
                             @php
@@ -542,14 +548,15 @@
                                 ];
                             @endphp
                             <x-select label="Recommendation Type" name="govt_recommendation_type" :options="$govtRecOptions"
-                                x-model="recommendationType"
-                                placeholder="Select Recommendation Type..." />
-                            <p x-show="recommendationTypeError" x-text="recommendationTypeError" x-cloak class="mt-1 text-xs font-semibold text-rose-600"></p>
+                                x-model="recommendationType" placeholder="Select Recommendation Type..." />
+                            <p x-show="recommendationTypeError" x-text="recommendationTypeError" x-cloak
+                                class="mt-1 text-xs font-semibold text-rose-600"></p>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Decision Date</label>
-                            <input type="date" name="decision_date" :min="activePetitionDate || null" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                            <input type="date" name="decision_date" :min="activePetitionDate || null"
+                                max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-slate-800 font-semibold"
                                 style="color: #1e40af !important;" required>
                         </div>

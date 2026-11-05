@@ -1761,7 +1761,7 @@ class PetitionController extends Controller
             $query->where('nature_of_petition', 'like', '%' . $request->nature_of_petition . '%');
         }
         if ($request->filled('mode_of_petition')) {
-            $query->where('mode_of_petition_received', $request->mode_of_petition);
+            $query->whereRaw('LOWER(mode_of_petition_received) = ?', [strtolower($request->mode_of_petition)]);
         }
         if ($request->filled('seat_id')) {
             $query->where('seat_id', $request->seat_id);

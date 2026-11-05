@@ -251,7 +251,7 @@ class AuditLogMiddleware
             if (str_contains($routeName, 'export')) {
                 $action = 'EXPORT';
                 $description = "Exported {$module} records to Excel/CSV";
-                $properties = $request->except(['_token']);
+                $properties = $this->sanitizeInputs($request->except(['_token']));
             }
             // User Initiated Search
             elseif (!empty($searchInputs)) {
@@ -391,10 +391,17 @@ class AuditLogMiddleware
             unset($inputs[$key]);
         }
 
-        // Limit size of logged text fields
         foreach ($inputs as $key => $val) {
-            if (is_string($val) && strlen($val) > 250) {
+            if ($val instanceof \Illuminate\Http\UploadedFile) {
+                $inputs[$key] = '[File: ' . $val->getClientOriginalName() . ']';
+            } elseif (is_array($val)) {
+                $inputs[$key] = $this->sanitizeInputs($val);
+            } elseif (is_string($val) && strlen($val) > 250) {
                 $inputs[$key] = substr($val, 0, 250) . '...';
+            } elseif (is_object($val)) {
+                $inputs[$key] = '[Object: ' . get_class($val) . ']';
+            } elseif (!is_scalar($val) && !is_null($val)) {
+                $inputs[$key] = '[Non-scalar value]';
             }
         }
 

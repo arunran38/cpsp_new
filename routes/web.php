@@ -17,46 +17,16 @@ use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
+use App\Http\Controllers\DashboardController;
 
-Route::get('/dashboard', function () {
-    $user = Auth::user();
-    if ($user && $user->isTSectionRole() && !$user->canAccess(\App\Services\TSectionPermissionRegistry::ACCESS_DASHBOARD)) {
-        return redirect()->route('petitions.index', ['tab' => 'all']);
-    }
-    return view('dashboard');
-})->middleware(['auth'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 
-Route::get('/', function () {
-    if (Auth::check()) {
-        if (Auth::user()->isPetitionComplianceRole()) {
-            return redirect()->route('compliances.index');
-        }
-        if (Auth::user()->isTSectionRole()) {
-            return Auth::user()->canAccess(\App\Services\TSectionPermissionRegistry::ACCESS_DASHBOARD)
-                ? redirect()->route('dashboard')
-                : redirect()->route('petitions.index', ['tab' => 'all']);
-        }
-        return redirect()->route('dashboard');
-    }
-    return view('welcome');
-});
+Route::get('/', [DashboardController::class, 'welcome'])->name('home');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/admin/dashboard', function () {
-        $user = Auth::user();
-        if ($user && $user->isTSectionRole() && !$user->canAccess(\App\Services\TSectionPermissionRegistry::ACCESS_DASHBOARD)) {
-            return redirect()->route('petitions.index', ['tab' => 'all']);
-        }
-        return view('dashboard');
-    })->name('admin.dashboard');
+    Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
-    Route::get('/user/dashboard', function () {
-        $user = Auth::user();
-        if ($user && $user->isTSectionRole() && !$user->canAccess(\App\Services\TSectionPermissionRegistry::ACCESS_DASHBOARD)) {
-            return redirect()->route('petitions.index', ['tab' => 'all']);
-        }
-        return view('dashboard');
-    })->name('user.dashboard');
+    Route::get('/user/dashboard', [DashboardController::class, 'index'])->name('user.dashboard');
 
     Route::resource("users", UserController::class);
     Route::patch('/users/{id}/status', [UserController::class, 'updateStatus'])->name('users.updateStatus');
@@ -159,9 +129,7 @@ Route::middleware(['auth'])->group(function () {
         'destroy' => 'admin.seatuser.destroy',
     ]);
 
-    Route::get('/admin/components-showcase', function () {
-        return view('admin.components_showcase');
-    })->name('admin.components-showcase');
+    Route::get('/admin/components-showcase', [DashboardController::class, 'componentsShowcase'])->name('admin.components-showcase');
 
     // Trash bin routes
     Route::get('/admin/trash', [TrashController::class, 'index'])->name('admin.trash.index');

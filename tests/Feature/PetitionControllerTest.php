@@ -1172,4 +1172,73 @@ class PetitionControllerTest extends TestCase
         $this->assertStringContainsString('Department: Police Department', $customContent);
         $this->assertStringContainsString('MG Road Ernakulam', $customContent);
     }
+
+    public function test_master_reports_mode_of_receipt_dropdown_options_and_filtering(): void
+    {
+        $response = $this->actingAs($this->user)->get(route('petitions.reports'));
+        $response->assertStatus(200);
+
+        // Verify all reference modes are present in the dropdown with proper labels
+        $expectedModes = [
+            'Email' => 'Email',
+            'Whatsapp' => 'Whatsapp',
+            'Tollfree' => 'Tollfree',
+            'Direct' => 'Direct',
+            'Unit' => 'Unit',
+            'Tapal' => 'Tapal',
+            'iaps' => 'iAPS',
+            'others' => 'Others',
+        ];
+
+        foreach ($expectedModes as $val => $label) {
+            $response->assertSee('<option value="' . $val . '"', false);
+            $response->assertSee($label, false);
+        }
+
+        // Test filtering by newly added modes
+        $unitPetition = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-UNIT-MODE-001',
+            'mode_of_petition_received' => 'Unit',
+            'is_cpsp_processed' => true,
+            'processed_at' => now(),
+        ]);
+
+        $tapalPetition = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-TAPAL-MODE-001',
+            'mode_of_petition_received' => 'Tapal',
+            'is_cpsp_processed' => true,
+            'processed_at' => now(),
+        ]);
+
+        $iapsPetition = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-IAPS-MODE-001',
+            'mode_of_petition_received' => 'iaps',
+            'is_cpsp_processed' => true,
+            'processed_at' => now(),
+        ]);
+
+        // Filter Unit
+        $resUnit = $this->actingAs($this->user)->get(route('petitions.reports', ['mode_of_petition' => 'Unit']));
+        $resUnit->assertStatus(200);
+        $resUnit->assertSee('RCPT-UNIT-MODE-001');
+        $resUnit->assertDontSee('RCPT-TAPAL-MODE-001');
+
+        // Filter Tapal
+        $resTapal = $this->actingAs($this->user)->get(route('petitions.reports', ['mode_of_petition' => 'Tapal']));
+        $resTapal->assertStatus(200);
+        $resTapal->assertSee('RCPT-TAPAL-MODE-001');
+        $resTapal->assertDontSee('RCPT-UNIT-MODE-001');
+
+        // Filter iAPS
+        $resIaps = $this->actingAs($this->user)->get(route('petitions.reports', ['mode_of_petition' => 'iaps']));
+        $resIaps->assertStatus(200);
+        $resIaps->assertSee('RCPT-IAPS-MODE-001');
+        $resIaps->assertDontSee('RCPT-UNIT-MODE-001');
+    }
 }

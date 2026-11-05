@@ -205,9 +205,21 @@
                                 class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white appearance-none pr-10"
                                 style="background-image: none !important;">
                                 <option value="" class="font-medium text-slate-800 bg-white py-1">All Modes</option>
-                                @foreach(['Direct', 'Email', 'Whatsapp', 'Tollfree', 'others'] as $mode)
-                                    <option value="{{ $mode }}" {{ request('mode_of_petition') == $mode ? 'selected' : '' }}
-                                        class="font-medium text-slate-800 bg-white py-1">{{ $mode }}</option>
+                                @php
+                                    $modeOptions = [
+                                        'Email' => 'Email',
+                                        'Whatsapp' => 'Whatsapp',
+                                        'Tollfree' => 'Tollfree',
+                                        'Direct' => 'Direct',
+                                        'Unit' => 'Unit',
+                                        'Tapal' => 'Tapal',
+                                        'iaps' => 'iAPS',
+                                        'others' => 'Others',
+                                    ];
+                                @endphp
+                                @foreach($modeOptions as $val => $label)
+                                    <option value="{{ $val }}" {{ (request('mode_of_petition') == $val || strtolower((string)request('mode_of_petition')) === strtolower($val)) ? 'selected' : '' }}
+                                        class="font-medium text-slate-800 bg-white py-1">{{ $label }}</option>
                                 @endforeach
                             </select>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
