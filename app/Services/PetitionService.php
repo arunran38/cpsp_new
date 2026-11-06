@@ -53,6 +53,10 @@ class PetitionService
             $isInwardWorkflow = !empty($data['is_inward_entry'])
                 || $isInwardUser;
 
+            if ($isInwardWorkflow) {
+                $data['date_of_petition_received'] = now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d');
+            }
+
             $petition = Petition::create([
                 'receipt_no' => $data['receipt_no'],
                 'date_of_petition_received' => $data['date_of_petition_received'],

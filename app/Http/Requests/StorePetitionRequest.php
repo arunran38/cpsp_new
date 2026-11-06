@@ -30,6 +30,13 @@ class StorePetitionRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        // For inward petition creation, automatically populate the present date and treat it as read-only/immutable
+        if ($this->boolean('is_inward_entry')) {
+            $this->merge([
+                'date_of_petition_received' => now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d'),
+            ]);
+        }
+
         // Clean complainants: trim strings and remove completely empty complainants
         if ($this->has('complainants') && is_array($this->complainants)) {
             $cleanedComplainants = [];

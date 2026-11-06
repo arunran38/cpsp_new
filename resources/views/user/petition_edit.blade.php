@@ -405,10 +405,10 @@
                                     <div>
                                         <x-input label="Full Name" name="comp_name"
                                             x-bind:name="`complainants[${index}][name]`" x-model="comp.name"
-                                            placeholder="Legal Name" />
+                                            placeholder="Full Name" />
                                     </div>
                                     <div>
-                                        <x-input label="Phone Number (Optional)" name="comp_phone"
+                                        <x-input label="Phone Number" name="comp_phone"
                                             x-bind:name="`complainants[${index}][phone]`" x-model="comp.phone"
                                             placeholder="10-digit Mobile" />
                                     </div>
@@ -609,7 +609,7 @@
                                         <div x-show="acc.entity_type === 'Person'">
                                             <x-input label="Full Name" name="acc_name"
                                                 x-bind:name="`accused[${index}][name]`" x-model="acc.name"
-                                                @input="onAccusedNameChange(index)" placeholder="Legal Name" />
+                                                @input="onAccusedNameChange(index)" placeholder="Full Name" />
                                         </div>
                                         <div x-show="acc.entity_type === 'Firm'">
                                             <x-input label="Firm / Project Name" name="acc_firm_name"
@@ -617,7 +617,7 @@
                                                 @input="onAccusedNameChange(index)" placeholder="Firm / Project Name" />
                                         </div>
                                         <div>
-                                            <x-input label="Phone" name="acc_phone" x-bind:name="`accused[${index}][phone]`"
+                                            <x-input label="Phone Number" name="acc_phone" x-bind:name="`accused[${index}][phone]`"
                                                 x-model="acc.phone" placeholder="Mobile Number" />
                                         </div>
                                         <div x-show="acc.entity_type === 'Person'">

@@ -107,7 +107,7 @@
                             </td>
                             <td class="px-6 py-4 text-center">
                                 @if($petition->latestForwarding && $petition->latestForwarding->vr_ref_no)
-                                    <span class="inline-flex items-center px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700 border border-blue-200">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-blue-700 text-white border border-blue-800 shadow-sm">
                                         VR RECEIVED
                                     </span>
                                 @else

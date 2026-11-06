@@ -540,7 +540,7 @@
                                 :class="acc.entity_type === 'Person' ? 'md:grid-cols-3' : 'md:grid-cols-2'">
                                 <div x-show="acc.entity_type === 'Person'">
                                     <x-input label="Full Name" name="acc_name" x-bind:name="`accused[${index}][name]`"
-                                        x-model="acc.name" @input="onAccusedNameChange(index)" placeholder="Legal Name" />
+                                        x-model="acc.name" @input="onAccusedNameChange(index)" placeholder="Full Name" />
                                 </div>
                                 <div x-show="acc.entity_type === 'Firm'">
                                     <x-input label="Firm / Project Name" name="acc_firm_name"
