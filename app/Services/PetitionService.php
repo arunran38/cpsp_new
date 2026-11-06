@@ -42,12 +42,13 @@ class PetitionService
                 $unitReceivedDate = $data['date_of_petition_received_at_unit'] ?? null;
             }
 
-            $isInwardUser = $user->hasRole('inward') || 
-                $user->hasRole('Inward') || 
-                ($user->currentSeatUser()?->seat && (
-                    $user->currentSeatUser()->seat->hasRole('inward') || 
-                    $user->currentSeatUser()->seat->hasRole('Inward') || 
-                    str_contains(strtolower($user->currentSeatUser()->seat->seat_name), 'inward')
+            $currentSeatUser = $user->currentSeatUser();
+            $currentSeat = $currentSeatUser?->seat;
+
+            $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
+                ($currentSeat && (
+                    $currentSeat->hasRole(['inward', 'Inward']) || 
+                    str_contains(strtolower($currentSeat->seat_name), 'inward')
                 ));
 
             $isInwardWorkflow = !empty($data['is_inward_entry'])
@@ -55,6 +56,19 @@ class PetitionService
 
             if ($isInwardWorkflow) {
                 $data['date_of_petition_received'] = now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d');
+            }
+
+            // Determine created_by_seat_id
+            $createdBySeatId = null;
+            if ($isInwardWorkflow) {
+                if ($currentSeat && ($currentSeat->hasRole(['inward', 'Inward']) || str_contains(strtolower($currentSeat->seat_name), 'inward'))) {
+                    $createdBySeatId = $currentSeat->seat_id;
+                } else {
+                    $inwardSeatIds = \App\Models\Seat::getInwardSeatIds();
+                    $createdBySeatId = $inwardSeatIds[0] ?? null;
+                }
+            } else {
+                $createdBySeatId = $currentSeat?->seat_id;
             }
 
             $petition = Petition::create([
@@ -69,6 +83,7 @@ class PetitionService
                 'status' => Petition::STATUS_RECEIVED,
                 'user_id' => Auth::id(),
                 'seat_id' => $seatId,
+                'created_by_seat_id' => $createdBySeatId,
                 'unit_id' => $unitId,
                 'linked_petition_id' => $data['linked_petition_id'] ?? null,
                 'is_cpsp_processed' => !$isInwardWorkflow,

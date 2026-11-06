@@ -492,17 +492,25 @@ class PetitionController extends Controller
             }
         }
 
-        // 1. Fetch only users who hold the Inward role or are assigned to an active Inward seat
+        $inwardSeatIds = Seat::getInwardSeatIds();
+
+        // 1. Fetch only users who hold the Inward role, are assigned to an active Inward seat, or have created inward petitions
         $creators = \App\Models\User::query()
             ->with(['seatUsers.seat.roles', 'roles'])
-            ->where(function ($q) {
+            ->where(function ($q) use ($inwardSeatIds) {
                 $q->whereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward']))
-                  ->orWhereHas('seatUsers', function ($su) {
+                  ->orWhereHas('seatUsers', function ($su) use ($inwardSeatIds) {
                       $su->where('is_active', true)
-                         ->whereHas('seat', function ($s) {
-                             $s->where('seat_name', 'like', '%Inward%')
-                               ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward']));
+                         ->where(function ($sQuery) use ($inwardSeatIds) {
+                             $sQuery->whereIn('seat_id', $inwardSeatIds)
+                                    ->orWhereHas('seat', function ($s) {
+                                        $s->where('seat_name', 'like', '%Inward%')
+                                          ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward']));
+                                    });
                          });
+                  })
+                  ->orWhereHas('petitions', function ($pq) use ($inwardSeatIds) {
+                      $pq->whereIn('created_by_seat_id', $inwardSeatIds);
                   });
             })
             ->whereDoesntHave('seatUsers', function ($su) {
@@ -533,7 +541,15 @@ class PetitionController extends Controller
                 $rawSeatName = strtoupper(trim($inwardSeat->seat_name));
                 $designation = preg_replace('/^(INWARD)\s*(\d+)$/i', '$1 $2', $rawSeatName);
             } else {
-                $designation = 'INWARD';
+                $petitionSeat = Petition::where('user_id', $creator->user_id)
+                    ->whereIn('created_by_seat_id', $inwardSeatIds)
+                    ->with('createdBySeat')
+                    ->first()?->createdBySeat;
+                if ($petitionSeat) {
+                    $designation = strtoupper(trim($petitionSeat->seat_name));
+                } else {
+                    $designation = 'INWARD';
+                }
             }
 
             $creator->inward_display_name = "{$creator->name} ({$designation})";
@@ -1608,18 +1624,22 @@ class PetitionController extends Controller
         }
 
         if (!$user->canAccess('view all petitions') || session('is_impersonating_seat')) {
-            $currentSeat = $user->currentSeatUser();
+            $currentSeatUser = $user->currentSeatUser();
+            $currentSeat = $currentSeatUser?->seat;
 
-            if ($user->hasRole(['inward', 'Inward'])) {
-                $inwardUserIds = User::role(['inward', 'Inward'])->pluck('user_id');
-                $query->where(function (Builder $scopedQuery) use ($inwardUserIds, $currentSeat) {
-                    $scopedQuery->whereIn('petitions.user_id', $inwardUserIds);
-                    if ($currentSeat) {
-                        $scopedQuery->orWhere('petitions.seat_id', $currentSeat->seat_id);
+            $isInward = $user->hasRole(['inward', 'Inward']) || ($currentSeat && $currentSeat->isInward());
+
+            if ($isInward) {
+                $inwardSeatIds = Seat::getInwardSeatIds();
+                $query->where(function (Builder $scopedQuery) use ($inwardSeatIds, $currentSeatUser, $user) {
+                    $scopedQuery->whereIn('petitions.created_by_seat_id', $inwardSeatIds)
+                                ->orWhere('petitions.user_id', $user->user_id ?? $user->id);
+                    if ($currentSeatUser) {
+                        $scopedQuery->orWhere('petitions.seat_id', $currentSeatUser->seat_id);
                     }
                 });
-            } elseif ($currentSeat) {
-                $query->where('petitions.seat_id', $currentSeat->seat_id);
+            } elseif ($currentSeatUser) {
+                $query->where('petitions.seat_id', $currentSeatUser->seat_id);
             } else {
                 $query->where('petitions.user_id', $user->user_id ?? $user->id);
             }

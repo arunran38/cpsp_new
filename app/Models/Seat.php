@@ -245,5 +245,26 @@ class Seat extends Model
     {
         return $this->scopeEligibleForInward($query);
     }
+
+    /**
+     * Get IDs of all Inward seats.
+     */
+    public static function getInwardSeatIds(): array
+    {
+        return self::where(function ($q) {
+            $q->where('seat_name', 'like', '%inward%')
+              ->orWhere('seat_name', 'like', '%Inward%')
+              ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward', 'INWARD']));
+        })->pluck('seat_id')->toArray();
+    }
+
+    /**
+     * Check if this seat is an Inward seat.
+     */
+    public function isInward(): bool
+    {
+        return str_contains(strtolower($this->seat_name), 'inward') ||
+            $this->hasRole(['inward', 'Inward', 'INWARD']);
+    }
 }
 

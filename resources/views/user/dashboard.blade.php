@@ -34,10 +34,13 @@
         } catch (\Exception $e) { }
     }
 
+    $inwardSeatIds = \App\Models\Seat::getInwardSeatIds();
+
     if ($isInwardRole) {
         $inwardUserIds = \App\Models\User::role(['inward', 'Inward'])->pluck('user_id')->push($user->user_id)->unique();
-        $petitions = \App\Models\Petition::where(function($q) use ($inwardUserIds, $currentSeat) {
-                $q->whereIn('user_id', $inwardUserIds);
+        $petitions = \App\Models\Petition::where(function($q) use ($inwardSeatIds, $inwardUserIds, $currentSeat) {
+                $q->whereIn('created_by_seat_id', $inwardSeatIds)
+                  ->orWhereIn('user_id', $inwardUserIds);
                 if ($currentSeat) {
                     $q->orWhere('seat_id', $currentSeat->seat_id);
                 }
@@ -129,8 +132,9 @@
     if ($canSeeRecentPetitions) {
         if ($isInwardRole) {
             $recentPetitions = \App\Models\Petition::with(['addresses', 'latestForwarding', 'decision'])
-                ->where(function($q) use ($inwardUserIds, $currentSeat) {
-                    $q->whereIn('user_id', $inwardUserIds);
+                ->where(function($q) use ($inwardSeatIds, $inwardUserIds, $currentSeat) {
+                    $q->whereIn('created_by_seat_id', $inwardSeatIds)
+                      ->orWhereIn('user_id', $inwardUserIds);
                     if ($currentSeat) {
                         $q->orWhere('seat_id', $currentSeat->seat_id);
                     }

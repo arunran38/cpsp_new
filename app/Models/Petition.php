@@ -43,6 +43,7 @@ class Petition extends Model
         'previous_status',
         'user_id',
         'seat_id',
+        'created_by_seat_id',
         'unit_id',
         'date_of_petition_received_at_unit',
         'linked_petition_id',
@@ -84,6 +85,14 @@ class Petition extends Model
     public function seat(): BelongsTo
     {
         return $this->belongsTo(Seat::class, 'seat_id', 'seat_id');
+    }
+
+    /**
+     * Relationship: Originating Creation Seat (e.g. Inward Seat)
+     */
+    public function createdBySeat(): BelongsTo
+    {
+        return $this->belongsTo(Seat::class, 'created_by_seat_id', 'seat_id');
     }
 
     /**
@@ -275,6 +284,10 @@ class Petition extends Model
      */
     public function isFromInward(): bool
     {
+        if ($this->created_by_seat_id) {
+            return in_array($this->created_by_seat_id, Seat::getInwardSeatIds());
+        }
+
         if (!$this->is_cpsp_processed) {
             return true;
         }
@@ -446,75 +459,56 @@ class Petition extends Model
     // --- Scopes ---
 
     /**
-     * Get IDs of users whose assigned role is strictly Inward (excluding Admin, Super Admin, Developer, CPSP).
+     * Get IDs of users who have created inward petitions or hold Inward seats/roles.
      */
     public static function getInwardCreatorUserIds(): array
     {
-        static $cachedInwardUserIds = null;
-        if ($cachedInwardUserIds !== null) {
-            return $cachedInwardUserIds;
-        }
+        $inwardSeatIds = Seat::getInwardSeatIds();
 
-        // 1. Users with direct 'Inward' or 'inward' role
-        $directInwardIds = User::role(['inward', 'Inward'])->pluck('user_id')->toArray();
+        $userIdsFromPetitions = self::whereIn('created_by_seat_id', $inwardSeatIds)
+            ->whereNotNull('user_id')
+            ->pluck('user_id')
+            ->toArray();
 
-        // 2. Users assigned to Inward seats (active or historical)
-        $seatInwardIds = SeatUser::whereHas('seat', function ($sq) {
-            $sq->where(function ($q) {
-                $q->role(['inward', 'Inward'])
-                  ->orWhere('seat_name', 'like', '%inward%');
-            });
-        })->pluck('user_id')->toArray();
+        $userIdsFromSeats = SeatUser::whereIn('seat_id', $inwardSeatIds)
+            ->pluck('user_id')
+            ->toArray();
 
-        $allInwardIds = array_unique(array_merge($directInwardIds, $seatInwardIds));
+        $userIdsFromRoles = User::role(['inward', 'Inward'])->pluck('user_id')->toArray();
 
-        // 3. Exclude users with Admin, Super Admin, Developer, CPSP roles (unless they also hold Inward role or seat)
-        $excludedDirectIds = User::role([
-            'super admin', 'Super Admin', 
-            'developer', 'Developer', 
-            'admin', 'Admin', 
-            'cpsp', 'CPSP'
-        ])->whereDoesntHave('roles', function ($rq) {
-            $rq->whereIn('name', ['inward', 'Inward']);
-        })->pluck('user_id')->toArray();
+        $allIds = array_values(array_unique(array_merge($userIdsFromPetitions, $userIdsFromSeats, $userIdsFromRoles)));
 
-        $excludedSeatIds = SeatUser::whereHas('seat', function ($sq) {
-            $sq->role([
-                'super admin', 'Super Admin', 
-                'developer', 'Developer', 
-                'admin', 'Admin', 
-                'cpsp', 'CPSP'
-            ])->whereDoesntHave('roles', function ($rq) {
-                $rq->whereIn('name', ['inward', 'Inward']);
-            })->where('seat_name', 'not like', '%inward%');
-        })->pluck('user_id')->toArray();
-
-        $allExcludedIds = array_unique(array_merge($excludedDirectIds, $excludedSeatIds));
-
-        $validIds = array_values(array_diff($allInwardIds, $allExcludedIds));
-
-        return $cachedInwardUserIds = (empty($validIds) ? [-1] : $validIds);
+        return empty($allIds) ? [-1] : $allIds;
     }
 
     /**
      * Scope: Filter petitions for the View Inward Petitions module based on user role and permissions.
-     * Enforces strictly that only petitions created or registered by users with the Inward role are returned.
-     * Excludes all petitions created by Admin, Super Admin, CPSP, and other roles.
+     * Enforces strictly that only petitions created or registered by Inward seats or Inward workflow are returned.
      */
     public function scopeAccessibleInwardPetitions(Builder $query, User $user, ?string $scopeFilter = null): Builder
     {
         // Strictly exclude T-Section confidential petitions if user does not have clearance
         $query->excludeTSectionIfNotAuthorized($user);
 
-        $inwardCreatorIds = self::getInwardCreatorUserIds();
+        $inwardSeatIds = Seat::getInwardSeatIds();
 
-        // MANDATORY BASE: Only petitions created or registered by users whose assigned role is exactly Inward
-        $query->whereIn('petitions.user_id', $inwardCreatorIds);
+        // MANDATORY BASE: Only petitions that originated from an Inward Seat or Inward registration
+        $query->where(function ($q) use ($inwardSeatIds) {
+            $q->whereIn('petitions.created_by_seat_id', $inwardSeatIds)
+              ->orWhere(function ($fallbackQ) use ($inwardSeatIds) {
+                  $fallbackQ->whereNull('petitions.created_by_seat_id')
+                            ->where(function ($sub) use ($inwardSeatIds) {
+                                $sub->where('nature_of_petition', 'General Inward')
+                                    ->orWhere('is_cpsp_processed', false)
+                                    ->orWhereIn('cpsp_opened_by_seat_id', $inwardSeatIds);
+                            });
+              });
+        });
 
         $currentSeatUser = $user->currentSeatUser();
         $currentSeat = $currentSeatUser?->seat;
 
-        // 1. Admin / Super Admin / Developer: View all inward petitions (strictly created by Inward role users)
+        // 1. Admin / Super Admin / Developer: View all inward petitions
         $isAdminOrSuperAdmin = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
             ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin'])) ||
             $user->canAccess('access admin dashboard');
@@ -523,21 +517,20 @@ class Petition extends Model
             return $query;
         }
 
-        // 2. Inward Role: View only inward petitions created or registered by their own user account
+        // 2. Inward Role / Current Inward Seat: View inward petitions
         $isInwardUser = $user->hasRole(['inward', 'Inward']) || 
-            ($currentSeat && (
-                $currentSeat->hasRole(['inward', 'Inward']) || 
-                str_contains(strtolower($currentSeat->seat_name), 'inward')
-            ));
+            ($currentSeat && $currentSeat->isInward());
 
         if ($isInwardUser) {
-            if (($scopeFilter === 'all' && $user->canAccess('view all petitions')) || $user->canAccess('view file transfer')) {
+            if (($scopeFilter === 'all' && $user->canAccess('view all petitions')) || $user->canAccess('view file transfer') || $user->canAccess('view inward registration')) {
                 return $query;
             }
             return $query->where(function ($q) use ($user, $currentSeat) {
-                $q->where('petitions.user_id', $user->user_id);
                 if ($currentSeat) {
-                    $q->orWhere('petitions.seat_id', $currentSeat->seat_id);
+                    $q->where('petitions.created_by_seat_id', $currentSeat->seat_id)
+                      ->orWhere('petitions.user_id', $user->user_id);
+                } else {
+                    $q->where('petitions.user_id', $user->user_id);
                 }
             });
         }

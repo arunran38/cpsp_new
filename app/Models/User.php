@@ -42,6 +42,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Relationship: Petitions created by this user
+     */
+    public function petitions(): HasMany
+    {
+        return $this->hasMany(Petition::class, 'user_id', 'user_id');
+    }
+
+    /**
      * Relationship: Seat Assignments
      */
     public function seatUsers(): HasMany
