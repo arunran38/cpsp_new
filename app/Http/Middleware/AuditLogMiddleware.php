@@ -277,12 +277,7 @@ elseif (str_contains($routeName, '.show')) {
     }
 }
 
-            // // Viewing detailed single record
-            // elseif (str_contains($routeName, '.show')) {
-            //     $action = 'READ';
-            //     $id = $route ? ($route->parameter('id') ?? $route->parameter('petition') ?? $route->parameter('user') ?? '') : '';
-            //     $description = "Viewed {$module} details" . ($id ? " (#{$id})" : '');
-            // }
+      
         } elseif ($method === 'POST') {
             // Specific Actions
             if (str_contains($routeName, 'restore')) {
