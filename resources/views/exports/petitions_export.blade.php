@@ -70,13 +70,9 @@
                         }
 
                         // 2. Suspect Physical Address (full_address, district, pincode)
-                        $addrParts = array_filter([
-                            $cleanPart($addr->full_address),
-                            $cleanPart($addr->district?->district_name),
-                            $cleanPart($addr->pincode)
-                        ]);
-                        if (!empty($addrParts)) {
-                            $parts[] = implode(', ', $addrParts);
+                        $formatted = $addr->formatted_address;
+                        if ($formatted && $formatted !== 'Not provided') {
+                            $parts[] = e($formatted);
                         }
 
                         return $parts;
@@ -123,16 +119,12 @@
                     };
 
                     // Helpers for complainant details
-                    $getComplainantAddresses = function($list) use ($cleanPart) {
+                    $getComplainantAddresses = function($list) {
                         $details = [];
                         foreach ($list as $addr) {
-                            $addrParts = array_filter([
-                                $cleanPart($addr->full_address),
-                                $cleanPart($addr->district?->district_name),
-                                $cleanPart($addr->pincode)
-                            ]);
-                            if (!empty($addrParts)) {
-                                $details[] = implode(', ', $addrParts);
+                            $formatted = $addr->formatted_address;
+                            if ($formatted && $formatted !== 'Not provided') {
+                                $details[] = e($formatted);
                             }
                         }
                         return implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $details);
@@ -149,13 +141,9 @@
                             }
                             $lines[] = $nameLine;
 
-                            $addrParts = array_filter([
-                                $cleanPart($addr->full_address),
-                                $cleanPart($addr->district?->district_name),
-                                $cleanPart($addr->pincode)
-                            ]);
-                            if (!empty($addrParts)) {
-                                $lines[] = implode(', ', $addrParts);
+                            $formatted = $addr->formatted_address;
+                            if ($formatted && $formatted !== 'Not provided') {
+                                $lines[] = e($formatted);
                             }
 
                             $phone = $cleanPart($addr->phone);

@@ -110,12 +110,11 @@
                                         <h5 class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Addresses</h5>
                                         @foreach($addresses as $addr)
                                             <div
-                                                class="flex items-start gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                                class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
                                                 <span
-                                                    class="bg-blue-100 text-blue-800 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded tracking-widest w-16 text-center shrink-0">{{ $addr->address_type }}</span>
+                                                    class="inline-flex items-center justify-center bg-blue-100 text-blue-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wider w-20 text-center shrink-0 leading-normal">{{ $addr->address_type }}</span>
                                                 <span
-                                                    class="text-xs font-medium text-gray-800 leading-snug">{{ $addr->full_address }},
-                                                    {{ $addr->district }} - {{ $addr->pincode }}</span>
+                                                    class="text-xs font-medium text-gray-800 leading-normal">{{ $addr->formatted_address }}</span>
                                             </div>
                                         @endforeach
                                     </div>
@@ -154,12 +153,11 @@
                                         <h5 class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Addresses</h5>
                                         @foreach($addresses as $addr)
                                             <div
-                                                class="flex items-start gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                                class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
                                                 <span
-                                                    class="bg-rose-100 text-rose-800 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded tracking-widest w-16 text-center shrink-0">{{ $addr->address_type }}</span>
+                                                    class="inline-flex items-center justify-center bg-rose-100 text-rose-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wider w-20 text-center shrink-0 leading-normal">{{ $addr->address_type }}</span>
                                                 <span
-                                                    class="text-xs font-medium text-gray-800 leading-snug">{{ $addr->full_address }},
-                                                    {{ $addr->district }} - {{ $addr->pincode }}</span>
+                                                    class="text-xs font-medium text-gray-800 leading-normal">{{ $addr->formatted_address }}</span>
                                             </div>
                                         @endforeach
                                     </div>
@@ -487,7 +485,7 @@
                                                 CPSP date</label>
                                             <input type="date" placeholder="DD-MM-YYYY" name="vr_received_at_cpsp_date"
                                                 class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-gray-900"
-                                                value="{{ date('Y-m-d') }}" required
+                                                value="{{ old('vr_received_at_cpsp_date') }}" required
                                                 max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                                         </div>
                                         <button type="submit"

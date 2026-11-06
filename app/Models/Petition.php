@@ -411,9 +411,9 @@ class Petition extends Model
             return [
                 'label' => 'VR Received',
                 'description' => 'Verification Report Received',
-                'badge_class' => 'bg-purple-50 text-purple-700 border border-purple-200',
-                'pill_class' => 'bg-purple-100 text-purple-800 border border-purple-200',
-                'dot_class' => 'bg-purple-500',
+                'badge_class' => 'bg-purple-100 text-purple-900 border border-purple-300',
+                'pill_class' => 'bg-purple-100 text-purple-900 border border-purple-300',
+                'dot_class' => 'bg-purple-600',
                 'color' => 'purple',
             ];
         }

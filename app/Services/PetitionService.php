@@ -203,6 +203,8 @@ class PetitionService
                     }
 
                     $hasValidAddress = true;
+                    $cleanedAddress = trim(preg_replace('/\s*,\s*/', ', ', preg_replace('/,\s*,+/', ',', (string) ($addr['address'] ?? ''))), ", \t\n\r");
+
                     Address::create([
                         'petition_id' => $petitionId,
                         'person_name' => $personName,
@@ -215,7 +217,7 @@ class PetitionService
                         'phone' => $phone,
                         'email' => $email,
                         'pen_number' => $penNumber,
-                        'full_address' => $addr['address'],
+                        'full_address' => $cleanedAddress !== '' ? $cleanedAddress : 'Not provided',
                         'district_id' => !empty($addr['district_id']) ? $addr['district_id'] : null,
                         'pincode' => !empty($addr['pincode']) ? substr((string) $addr['pincode'], 0, 6) : null,
                     ]);

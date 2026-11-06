@@ -142,4 +142,44 @@ class DecisionControllerTest extends TestCase
         $this->assertSoftDeleted('decisions', ['decision_id' => $decision->decision_id]);
         $this->assertDatabaseHas('petitions', ['petition_id' => $petition->petition_id, 'status' => 'VR_Received']);
     }
+
+    public function test_can_record_decision_with_past_date_earlier_than_receipt_date(): void
+    {
+        $petition = Petition::factory()->create([
+            'status' => 'VR_Received',
+            'date_of_petition_received' => now()->format('Y-m-d')
+        ]);
+        $pastDecisionDate = now()->subDays(10)->format('Y-m-d');
+
+        $response = $this->actingAs($this->admin)->post(route('decisions.store'), [
+            'petition_id' => $petition->petition_id,
+            'final_decision' => 'Closed',
+            'directorate_order_number' => 'ORD-PAST-001',
+            'final_remarks' => 'Past decision date verified.',
+            'decision_date' => $pastDecisionDate,
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('decisions', [
+            'petition_id' => $petition->petition_id,
+            'decision_date' => $pastDecisionDate
+        ]);
+    }
+
+    public function test_cannot_record_decision_with_future_date(): void
+    {
+        $petition = Petition::factory()->create(['status' => 'VR_Received']);
+        $futureDate = now()->addDays(2)->format('Y-m-d');
+
+        $response = $this->actingAs($this->admin)->post(route('decisions.store'), [
+            'petition_id' => $petition->petition_id,
+            'final_decision' => 'Closed',
+            'directorate_order_number' => 'ORD-FUT-001',
+            'final_remarks' => 'Future decision date test.',
+            'decision_date' => $futureDate,
+        ]);
+
+        $response->assertSessionHasErrors(['decision_date']);
+    }
 }

@@ -614,12 +614,12 @@
                                                 <i data-lucide="map-pin" class="w-3 h-3 text-blue-500"></i> Localities
                                             </p>
                                             <template x-for="(addr, aIdx) in comp.addresses" :key="aIdx">
-                                                <div x-show="addr.address" class="flex gap-3 text-sm">
+                                                <div x-show="addr.address || addr.district" class="flex items-center gap-3 text-sm">
                                                     <span
-                                                        class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shadow-sm mt-0.5 w-16 text-center shrink-0"
+                                                        class="inline-flex items-center justify-center bg-blue-100 text-blue-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wider w-20 text-center shrink-0 leading-normal"
                                                         x-text="addr.address_type"></span>
-                                                    <span class="font-medium text-slate-700"
-                                                        x-text="`${addr.address}, ${addr.district} — PIN:${addr.pincode}`"></span>
+                                                    <span class="font-medium text-slate-800 text-xs leading-normal"
+                                                        x-text="formatAddressPreview(addr)"></span>
                                                 </div>
                                             </template>
                                         </div>
@@ -678,12 +678,12 @@
                                                 <i data-lucide="map-pin" class="w-3 h-3 text-rose-500"></i> Localities
                                             </p>
                                             <template x-for="(addr, aIdx) in acc.addresses" :key="aIdx">
-                                                <div x-show="addr.address" class="flex gap-3 text-sm">
+                                                <div x-show="addr.address || addr.district" class="flex items-center gap-3 text-sm">
                                                     <span
-                                                        class="bg-slate-100 text-slate-600 border border-slate-200 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shadow-sm mt-0.5 w-16 text-center shrink-0"
+                                                        class="inline-flex items-center justify-center bg-rose-100 text-rose-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wider w-20 text-center shrink-0 leading-normal"
                                                         x-text="addr.address_type"></span>
-                                                    <span class="font-medium text-slate-700"
-                                                        x-text="`${addr.address}, ${addr.district} — PIN:${addr.pincode}`"></span>
+                                                    <span class="font-medium text-slate-800 text-xs leading-normal"
+                                                        x-text="formatAddressPreview(addr)"></span>
                                                 </div>
                                             </template>
                                         </div>
@@ -1180,6 +1180,28 @@
                     if (this.accused[accIndex].addresses.length > 1) {
                         this.accused[accIndex].addresses.splice(addrIndex, 1);
                     }
+                },
+                formatAddressPreview(addr) {
+                    if (!addr) return '';
+                    let address = (addr.address || '').replace(/,\s*,+/g, ',').replace(/\s*,\s*/g, ', ').trim().replace(/^,+|,+$/g, '').trim();
+                    let district = (addr.district || '').trim();
+                    let pincode = (addr.pincode || '').toString().trim();
+
+                    let parts = [];
+                    if (address && !['not provided', 'not_provided', 'n/a', 'none', 'null', 'nil', '-'].includes(address.toLowerCase())) {
+                        parts.push(address);
+                    }
+                    if (district) {
+                        parts.push(district);
+                    }
+
+                    let location = parts.join(', ');
+                    if (location && pincode) {
+                        return `${location} - ${pincode}`;
+                    }
+                    if (location) return location;
+                    if (pincode) return pincode;
+                    return 'Not provided';
                 },
                 refreshIcons() {
                     if (typeof lucide !== 'undefined') {

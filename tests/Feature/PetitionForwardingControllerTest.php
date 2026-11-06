@@ -230,4 +230,122 @@ class PetitionForwardingControllerTest extends TestCase
         ]);
         $this->assertDatabaseHas('petitions', ['petition_id' => $petition->petition_id, 'status' => 'Forwarded']);
     }
+
+    public function test_can_forward_with_past_action_and_file_dates(): void
+    {
+        $petition = Petition::factory()->create([
+            'status' => 'Received',
+            'date_of_petition_received' => now()->format('Y-m-d')
+        ]);
+        $unit = Unit::factory()->create();
+
+        // Action date can be in the past (even earlier than date_of_petition_received or file_created_date)
+        $pastActionDate = now()->subDays(5)->format('Y-m-d');
+        $pastFileDate = now()->subDays(2)->format('Y-m-d');
+
+        $response = $this->actingAs($this->admin)->post(route('forwardings.store'), [
+            'petition_id' => $petition->petition_id,
+            'action' => 'Forward_To_Unit',
+            'director_remarks' => 'Past date verification test.',
+            'to_unit_id' => $unit->unit_id,
+            'file_no' => 'FILE-PAST-001',
+            'file_created_date' => $pastFileDate,
+            'forwarded_date' => $pastActionDate,
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('petitions', [
+            'petition_id' => $petition->petition_id,
+            'file_created_date' => $pastFileDate . ' 00:00:00'
+        ]);
+        $this->assertDatabaseHas('petition_forwardings', [
+            'petition_id' => $petition->petition_id,
+            'forwarded_date' => $pastActionDate
+        ]);
+    }
+
+    public function test_cannot_forward_with_future_action_or_file_date(): void
+    {
+        $petition = Petition::factory()->create(['status' => 'Received']);
+        $unit = Unit::factory()->create();
+
+        $futureDate = now()->addDays(2)->format('Y-m-d');
+
+        $response = $this->actingAs($this->admin)->post(route('forwardings.store'), [
+            'petition_id' => $petition->petition_id,
+            'action' => 'Forward_To_Unit',
+            'director_remarks' => 'Future date test.',
+            'to_unit_id' => $unit->unit_id,
+            'file_no' => 'FILE-FUT-001',
+            'file_created_date' => $futureDate,
+            'forwarded_date' => $futureDate,
+        ]);
+
+        $response->assertSessionHasErrors(['forwarded_date', 'file_created_date']);
+    }
+
+    public function test_vr_date_and_received_at_cpsp_date_allow_past_dates(): void
+    {
+        $petition = Petition::factory()->create([
+            'status' => 'Forwarded',
+            'date_of_petition_received' => now()->format('Y-m-d')
+        ]);
+        $forwarding = PetitionForwarding::factory()->create([
+            'petition_id' => $petition->petition_id,
+            'forwarded_date' => now()->format('Y-m-d')
+        ]);
+
+        $pastVrDate = now()->subDays(10)->format('Y-m-d');
+        $pastCpspDate = now()->subDays(5)->format('Y-m-d');
+
+        $response = $this->actingAs($this->admin)->put(route('forwardings.updateVr', $forwarding->petition_forwarding_id), [
+            'vr_ref_no' => 'VR-PAST-01',
+            'vr_date' => $pastVrDate,
+            'vr_received_at_cpsp_date' => $pastCpspDate,
+            'vr_remarks' => 'VC'
+        ]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('petition_forwardings', [
+            'petition_forwarding_id' => $forwarding->petition_forwarding_id,
+            'vr_date' => $pastVrDate,
+            'vr_received_at_cpsp_date' => $pastCpspDate
+        ]);
+
+        // Also test receiveVr with a past date
+        $anotherPastDate = now()->subDays(3)->format('Y-m-d');
+        $receiveResponse = $this->actingAs($this->admin)->patch(route('forwardings.receiveVr', $forwarding->petition_forwarding_id), [
+            'vr_received_at_cpsp_date' => $anotherPastDate
+        ]);
+
+        $receiveResponse->assertStatus(302);
+        $receiveResponse->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('petition_forwardings', [
+            'petition_forwarding_id' => $forwarding->petition_forwarding_id,
+            'vr_received_at_cpsp_date' => $anotherPastDate
+        ]);
+    }
+
+    public function test_vr_date_and_received_at_cpsp_date_prevent_future_dates(): void
+    {
+        $forwarding = PetitionForwarding::factory()->create();
+        $futureDate = now()->addDays(2)->format('Y-m-d');
+
+        $response = $this->actingAs($this->admin)->put(route('forwardings.updateVr', $forwarding->petition_forwarding_id), [
+            'vr_ref_no' => 'VR-FUT-01',
+            'vr_date' => $futureDate,
+            'vr_received_at_cpsp_date' => $futureDate,
+            'vr_remarks' => 'VC'
+        ]);
+
+        $response->assertSessionHasErrors(['vr_date', 'vr_received_at_cpsp_date']);
+
+        $receiveResponse = $this->actingAs($this->admin)->patch(route('forwardings.receiveVr', $forwarding->petition_forwarding_id), [
+            'vr_received_at_cpsp_date' => $futureDate
+        ]);
+
+        $receiveResponse->assertSessionHasErrors(['vr_received_at_cpsp_date']);
+    }
 }

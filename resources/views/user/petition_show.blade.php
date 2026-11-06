@@ -321,17 +321,11 @@
                                         <h5 class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Addresses</h5>
                                         @foreach($addresses as $addr)
                                             <div
-                                                class="flex items-start gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                                class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
                                                 <span
-                                                    class="bg-blue-100 text-blue-800 text-[9px] font-bold uppercase px-2 py-0.5 rounded tracking-widest w-20 text-center shrink-0">{{ $addr->address_type }}</span>
-                                                <span class="text-xs font-medium text-gray-800 leading-snug">
-                                                    {{ $addr->full_address }}
-                                                    @if(!empty($addr->district->district_name))
-                                                        , {{ $addr->district->district_name }}
-                                                    @endif
-                                                    @if(!empty($addr->pincode))
-                                                        - {{ $addr->pincode }}
-                                                    @endif
+                                                    class="inline-flex items-center justify-center bg-blue-100 text-blue-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wider w-20 text-center shrink-0 leading-normal">{{ $addr->address_type }}</span>
+                                                <span class="text-xs font-medium text-gray-800 leading-normal">
+                                                    {{ $addr->formatted_address }}
                                                 </span>
                                             </div>
                                         @endforeach
@@ -418,17 +412,11 @@
                                         <h5 class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Addresses</h5>
                                         @foreach($addresses as $addr)
                                             <div
-                                                class="flex items-start gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                                class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
                                                 <span
-                                                    class="bg-rose-100 text-rose-800 text-[9px] font-bold uppercase px-2 py-0.5 rounded tracking-widest w-20 text-center shrink-0">{{ $addr->address_type }}</span>
-                                                <span class="text-xs font-medium text-gray-800 leading-snug">
-                                                    {{ $addr->full_address }}
-                                                    @if(!empty($addr->district->district_name))
-                                                        , {{ $addr->district->district_name }}
-                                                    @endif
-                                                    @if(!empty($addr->pincode))
-                                                        - {{ $addr->pincode }}
-                                                    @endif
+                                                    class="inline-flex items-center justify-center bg-rose-100 text-rose-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wider w-20 text-center shrink-0 leading-normal">{{ $addr->address_type }}</span>
+                                                <span class="text-xs font-medium text-gray-800 leading-normal">
+                                                    {{ $addr->formatted_address }}
                                                 </span>
                                             </div>
                                         @endforeach
@@ -516,20 +504,10 @@
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">File Date</label>
                                         <input type="date" name="file_created_date" id="fwd_file_created_date"
-                                            min="{{ $petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d') : ($petition->created_at ? $petition->created_at->format('Y-m-d') : '') }}"
                                             max="{{ date('Y-m-d') }}"
                                             placeholder="DD-MM-YYYY"
                                             class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
-                                            style="color: #1e40af !important;"
-                                            onchange="
-                                                const actionDateInput = document.getElementById('fwd_action_date');
-                                                if (actionDateInput) {
-                                                    actionDateInput.min = this.value || '{{ $petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d') : '' }}';
-                                                    if (actionDateInput.value && this.value && actionDateInput.value < this.value) {
-                                                        actionDateInput.value = this.value;
-                                                    }
-                                                }
-                                            ">
+                                            style="color: #1e40af !important;">
                                     </div>
                                 </div>
 
@@ -591,7 +569,6 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Action Date</label>
                                     <input type="date" name="forwarded_date" id="fwd_action_date"
-                                        min="{{ $petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d') : ($petition->created_at ? $petition->created_at->format('Y-m-d') : '') }}"
                                         max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                                         style="color: #1e40af !important;" required>
@@ -861,7 +838,7 @@
                                             CPSP date</label>
                                         <input type="date" placeholder="DD-MM-YYYY" name="vr_received_at_cpsp_date"
                                             class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-slate-800 font-semibold"
-                                            style="color: #1e40af !important;" value="{{ date('Y-m-d') }}" required
+                                            style="color: #1e40af !important;" value="{{ old('vr_received_at_cpsp_date') }}" required
                                             max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                                     </div>
                                     <button type="submit"

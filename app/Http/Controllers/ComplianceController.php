@@ -289,7 +289,7 @@ class ComplianceController extends Controller
         $request->validate([
             'decision_id' => 'required|exists:decisions,decision_id',
             'action_number' => 'required|string|max:255',
-            'action_date' => 'required|date',
+            'action_date' => 'required|date|before_or_equal:today',
             'unit_id' => 'required|exists:units,unit_id',
             'remarks' => 'nullable|string',
         ]);

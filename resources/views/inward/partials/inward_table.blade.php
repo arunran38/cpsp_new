@@ -164,7 +164,7 @@
                                     Finalized
                                 </span>
                             @elseif($item->status === 'VR_Received')
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-purple-100 text-purple-900 border border-purple-300">
                                     VR Received
                                 </span>
                             @elseif($item->status === 'Forwarded')

@@ -1143,7 +1143,7 @@ class PetitionControllerTest extends TestCase
         // 2. Suspect 1 (Both): must display department and address
         $this->assertStringContainsString('Suspect With Dept And Addr', $content);
         $this->assertStringContainsString('Department: Revenue Department', $content);
-        $this->assertStringContainsString('TC 10/20 Kowdiar, 695003', $content);
+        $this->assertStringContainsString('TC 10/20 Kowdiar - 695003', $content);
 
         // 3. Suspect 2 (Dept only): must display department
         $this->assertStringContainsString('Suspect With Dept Only', $content);
@@ -1168,7 +1168,7 @@ class PetitionControllerTest extends TestCase
         $this->assertStringNotContainsString('Not provided', $customContent);
         $this->assertStringNotContainsString('Not Provided', $customContent);
         $this->assertStringContainsString('Department: Revenue Department', $customContent);
-        $this->assertStringContainsString('TC 10/20 Kowdiar, 695003', $customContent);
+        $this->assertStringContainsString('TC 10/20 Kowdiar - 695003', $customContent);
         $this->assertStringContainsString('Department: Police Department', $customContent);
         $this->assertStringContainsString('MG Road Ernakulam', $customContent);
     }
