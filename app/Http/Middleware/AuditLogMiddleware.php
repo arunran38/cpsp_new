@@ -260,12 +260,29 @@ class AuditLogMiddleware
                 $description = "Searched {$module} with parameters: {$terms}";
                 $properties = $searchInputs;
             }
-            // Viewing detailed single record
-            elseif (str_contains($routeName, '.show')) {
-                $action = 'READ';
-                $id = $route ? ($route->parameter('id') ?? $route->parameter('petition') ?? $route->parameter('user') ?? '') : '';
-                $description = "Viewed {$module} details" . ($id ? " (#{$id})" : '');
-            }
+// Viewing detailed single record
+elseif (str_contains($routeName, '.show')) {
+    $action = 'READ';
+    $id = $route ? ($route->parameter('id') ?? $route->parameter('petition') ?? $route->parameter('user') ?? '') : '';
+    
+    if ($module === 'Petitions' && $id) {
+        // Hash ID ഡീകോഡ് ചെയ്ത് പെറ്റീഷന്റെ രസീത് നമ്പർ കണ്ടെത്തുന്നു
+        $realId = \App\Services\HashidService::decode($id) ?? $id;
+        $petition = \App\Models\Petition::select('receipt_no')->find($realId);
+        $petitionNumber = $petition?->receipt_no ?? $id;
+        
+        $description = "Viewed Petition [Receipt No: {$petitionNumber}]";
+    } else {
+        $description = "Viewed {$module} details" . ($id ? " (#{$id})" : '');
+    }
+}
+
+            // // Viewing detailed single record
+            // elseif (str_contains($routeName, '.show')) {
+            //     $action = 'READ';
+            //     $id = $route ? ($route->parameter('id') ?? $route->parameter('petition') ?? $route->parameter('user') ?? '') : '';
+            //     $description = "Viewed {$module} details" . ($id ? " (#{$id})" : '');
+            // }
         } elseif ($method === 'POST') {
             // Specific Actions
             if (str_contains($routeName, 'restore')) {
