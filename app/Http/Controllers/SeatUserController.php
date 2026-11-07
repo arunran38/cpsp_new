@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Seat;
 use App\Models\User;
 use App\Models\SeatUser;
+use App\Support\SafeExceptionHandler;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -29,7 +30,7 @@ class SeatUserController extends Controller
         abort_unless(auth()->user()->canAccess('create seats') || auth()->user()->canAccess('update seats'), 403, 'Unauthorized.');
         $users = User::all();
         $seats = Seat::where('is_active', true)->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
-        $selectedSeatId = $request->get('seat_id');
+        $selectedSeatId = $request->input('seat_id');
         
         return view('admin.seats.assignments.create', compact('users', 'seats', 'selectedSeatId'));
     }
@@ -94,8 +95,8 @@ class SeatUserController extends Controller
 
                 $suffix = $isAdditional ? ' as additional charge.' : '.';
                 return redirect()->route('admin.seatuser.index')->with('success', "Seat assigned successfully$suffix");
-            } catch (\Exception $e) {
-                return back()->with('error', 'Failed to assign seat: ' . $e->getMessage())->withInput();
+            } catch (\Throwable $e) {
+                return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to assign seat.'))->withInput();
             }
         });
     }
@@ -117,8 +118,8 @@ class SeatUserController extends Controller
                 // Fallback logic removed as primary charges are no longer revoked when assigning additional charges.
 
                 return redirect()->route('admin.seatuser.index')->with('success', 'Seat assignment revoked successfully.');
-            } catch (\Exception $e) {
-                return back()->with('error', 'Failed to revoke assignment.');
+            } catch (\Throwable $e) {
+                return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to revoke assignment.'));
             }
         });
     }

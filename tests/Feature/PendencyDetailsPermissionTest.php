@@ -122,4 +122,123 @@ class PendencyDetailsPermissionTest extends TestCase
             ->get(route('admin.reports.pendency.export'))
             ->assertOk();
     }
+
+    public function test_user_with_access_to_both_cpsp_and_t_section_defaults_to_all_on_pendency_details(): void
+    {
+        Permission::firstOrCreate(['name' => 'access cpsp section', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'access t-section', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'view t-section pending details', 'guard_name' => 'web']);
+
+        $role = Role::firstOrCreate(['name' => 'Admin Clearances', 'guard_name' => 'web']);
+        $role->syncPermissions([
+            'view pendency details',
+            'access cpsp section',
+            'access t-section',
+            'view t-section pending details',
+        ]);
+
+        $user = User::factory()->create(['name' => 'Full Clearance Officer']);
+        $user->assignRole($role);
+
+        // Visiting Pendency Details without explicit section parameter should default to 'all'
+        $response = $this->actingAs($user)->get(route('admin.reports.pendency'));
+        $response->assertOk();
+        $response->assertViewHas('section', 'all');
+        $response->assertViewHas('defaultSection', 'all');
+
+        // Export should also default to 'all'
+        $exportResponse = $this->actingAs($user)->get(route('admin.reports.pendency.export'));
+        $exportResponse->assertOk();
+    }
+
+    public function test_user_with_access_to_only_cpsp_defaults_to_cpsp_on_pendency_details(): void
+    {
+        Permission::firstOrCreate(['name' => 'access cpsp section', 'guard_name' => 'web']);
+
+        $cpspRole = Role::firstOrCreate(['name' => 'CPSP Only', 'guard_name' => 'web']);
+        $cpspRole->syncPermissions([
+            'view pendency details',
+            'access cpsp section',
+        ]);
+
+        $cpspSeat = Seat::factory()->create(['seat_name' => 'CPSP Counter 1', 'is_active' => true]);
+        $cpspSeat->assignRole($cpspRole);
+
+        $user = User::factory()->create(['name' => 'CPSP Only User']);
+        $user->assignRole($cpspRole);
+        SeatUser::factory()->create([
+            'user_id' => $user->user_id,
+            'seat_id' => $cpspSeat->seat_id,
+            'is_active' => true,
+        ]);
+        session(['current_seat_id' => $cpspSeat->seat_id]);
+
+        $response = $this->actingAs($user)->get(route('admin.reports.pendency'));
+        $response->assertOk();
+        $response->assertViewHas('section', 'cpsp');
+        $response->assertViewHas('defaultSection', 'cpsp');
+    }
+
+    public function test_user_with_access_to_only_t_section_defaults_to_t_section_on_pendency_details(): void
+    {
+        Permission::firstOrCreate(['name' => 'access t-section', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'view t-section pending details', 'guard_name' => 'web']);
+
+        $tRole = Role::firstOrCreate(['name' => 'T-Section', 'guard_name' => 'web']);
+        $tRole->syncPermissions([
+            'view pendency details',
+            'access t-section',
+            'view t-section pending details',
+        ]);
+
+        $tSeat = Seat::factory()->create(['seat_name' => 'T Section 1', 'is_active' => true]);
+        $tSeat->assignRole($tRole);
+
+        $user = User::factory()->create(['name' => 'T Section Officer']);
+        $user->assignRole($tRole);
+        SeatUser::factory()->create([
+            'user_id' => $user->user_id,
+            'seat_id' => $tSeat->seat_id,
+            'is_active' => true,
+        ]);
+        session(['current_seat_id' => $tSeat->seat_id]);
+
+        $response = $this->actingAs($user)->get(route('admin.reports.pendency'));
+        $response->assertOk();
+        $response->assertViewHas('section', 't_section');
+        $response->assertViewHas('defaultSection', 't_section');
+    }
+
+    public function test_pendency_details_filter_by_section_explicitly_persists_selection(): void
+    {
+        Permission::firstOrCreate(['name' => 'access cpsp section', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'access t-section', 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => 'view t-section pending details', 'guard_name' => 'web']);
+
+        $role = Role::firstOrCreate(['name' => 'Admin Dual', 'guard_name' => 'web']);
+        $role->syncPermissions([
+            'view pendency details',
+            'access cpsp section',
+            'access t-section',
+            'view t-section pending details',
+        ]);
+
+        $user = User::factory()->create(['name' => 'Dual User']);
+        $user->assignRole($role);
+
+        // Filter explicitly by cpsp
+        $cpspResponse = $this->actingAs($user)->get(route('admin.reports.pendency', ['section' => 'cpsp']));
+        $cpspResponse->assertOk();
+        $cpspResponse->assertViewHas('section', 'cpsp');
+
+        // Filter explicitly by t_section
+        $tResponse = $this->actingAs($user)->get(route('admin.reports.pendency', ['section' => 't_section']));
+        $tResponse->assertOk();
+        $tResponse->assertViewHas('section', 't_section');
+
+        // Filter explicitly by all
+        $allResponse = $this->actingAs($user)->get(route('admin.reports.pendency', ['section' => 'all']));
+        $allResponse->assertOk();
+        $allResponse->assertViewHas('section', 'all');
+    }
 }

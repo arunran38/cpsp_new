@@ -50,24 +50,26 @@
                                 <span>Section</span>
                             </label>
                             <div class="flex items-center p-1 bg-blue-50/50 border border-blue-200/80 rounded-xl w-full h-11 shadow-inner">
-                                @if($canViewTSection ?? false)
+                                @if(($canCpsp ?? true) && ($canViewTSection ?? false))
                                     <label class="flex-1 cursor-pointer h-full">
                                         <input type="radio" name="section" value="all" class="sr-only peer"
-                                            {{ ($section ?? 'cpsp') === 'all' ? 'checked' : '' }}
+                                            {{ ($section ?? '') === 'all' ? 'checked' : '' }}
                                             onchange="this.form.submit()">
                                         <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2">
-                                            All
+                                            All Sections
                                         </span>
                                     </label>
                                 @endif
-                                <label class="flex-1 cursor-pointer h-full">
-                                    <input type="radio" name="section" value="cpsp" class="sr-only peer"
-                                        {{ ($section ?? 'cpsp') === 'cpsp' ? 'checked' : '' }}
-                                        onchange="this.form.submit()">
-                                    <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2">
-                                        CPSP
-                                    </span>
-                                </label>
+                                @if($canCpsp ?? true)
+                                    <label class="flex-1 cursor-pointer h-full">
+                                        <input type="radio" name="section" value="cpsp" class="sr-only peer"
+                                            {{ ($section ?? '') === 'cpsp' ? 'checked' : '' }}
+                                            onchange="this.form.submit()">
+                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2">
+                                            CPSP
+                                        </span>
+                                    </label>
+                                @endif
                                 @if($canViewTSection ?? false)
                                     <label class="flex-1 cursor-pointer h-full">
                                         <input type="radio" name="section" value="t_section" class="sr-only peer"
@@ -168,7 +170,8 @@
 
                                 @php
                                     $defaultCreatorScope = ($canCreateInward ?? false) ? (($canViewAllStats ?? false) ? 'all' : 'my_petitions') : 'all';
-                                    $hasActiveFilters = $dateFrom || $dateTo || (($section ?? 'all') !== 'all') || (($selectedCreator ?? '') !== $defaultCreatorScope);
+                                    $defaultSec = $defaultSection ?? 'all';
+                                    $hasActiveFilters = $dateFrom || $dateTo || (($section ?? $defaultSec) !== $defaultSec) || (($selectedCreator ?? '') !== $defaultCreatorScope);
                                 @endphp
                                 @if($hasActiveFilters)
                                     <a href="{{ request()->routeIs('admin.reports.pendency*') ? route('admin.reports.pendency') : route('inward.statistics') }}" title="Clear Filters"
@@ -190,8 +193,16 @@
             <div
                 class="px-8 py-6 border-b border-slate-100 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:p-0 print:border-b-2 print:border-slate-800">
                 <div>
+                    @php
+                        $sectionTitle = match($section ?? 'cpsp') {
+                            'all' => 'All Seats',
+                            't_section' => 'T-Section Seats',
+                            default => 'CPSP Seats'
+                        };
+                        $reportType = request()->routeIs('admin.reports.pendency*') ? 'Petition Pendency Data Sheet' : 'Petition Statistics Data Sheet';
+                    @endphp
                     <h2 class="text-lg font-extrabold text-slate-900">
-                        {{ request()->routeIs('admin.reports.pendency*') ? 'CPSP Seats - Petition Pendency Data Sheet' : 'CPSP Seats - Petition Statistics Data Sheet' }}
+                        {{ $sectionTitle }} - {{ $reportType }}
                     </h2>
                     <div class="flex flex-wrap items-center gap-2 mt-1.5">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-800 border border-teal-200 shadow-sm">
@@ -205,7 +216,7 @@
                             </div>
                         @else
                             <p class="text-sm text-slate-500 font-medium">
-                                Overall petition summary assigned to CPSP seats.
+                                Overall petition summary assigned to {{ ($section ?? 'cpsp') === 'all' ? 'all' : (($section ?? 'cpsp') === 't_section' ? 'T-Section' : 'CPSP') }} seats.
                             </p>
                         @endif
                     </div>

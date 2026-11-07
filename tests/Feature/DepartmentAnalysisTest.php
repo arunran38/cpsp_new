@@ -117,9 +117,9 @@ class DepartmentAnalysisTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('name="section"', false);
-        $response->assertSee('<option value="all"', false);
-        $response->assertSee('<option value="cpsp"', false);
-        $response->assertSee('<option value="t_section"', false);
+        $response->assertSee('value="all"', false);
+        $response->assertSee('value="cpsp"', false);
+        $response->assertSee('value="t_section"', false);
         $response->assertSee('All Sections');
         $response->assertSee('T-Section');
         $response->assertViewHas('availableSections', [
@@ -127,7 +127,8 @@ class DepartmentAnalysisTest extends TestCase
             'cpsp' => 'CPSP',
             't_section' => 'T-Section',
         ]);
-        $response->assertViewHas('section', 'cpsp');
+        $response->assertViewHas('section', 'all');
+        $response->assertViewHas('total_sum', 2);
     }
 
     public function test_section_filter_dropdown_for_restricted_user_only_contains_cpsp(): void
@@ -136,11 +137,40 @@ class DepartmentAnalysisTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('name="section"', false);
-        $response->assertSee('<option value="cpsp"', false);
-        $response->assertDontSee('<option value="t_section"', false);
+        $response->assertSee('value="cpsp"', false);
+        $response->assertDontSee('value="t_section"', false);
         $response->assertViewHas('availableSections', [
             'cpsp' => 'CPSP',
         ]);
+        $response->assertViewHas('section', 'cpsp');
+    }
+
+    public function test_section_filter_for_t_section_only_user_defaults_to_t_section(): void
+    {
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'access t-section', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view department-wise report', 'guard_name' => 'web']);
+
+        $tRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'T Section Dept', 'guard_name' => 'web']);
+        $tRole->syncPermissions([
+            'view department-wise report',
+            'access t-section',
+        ]);
+
+        $tSeat = Seat::factory()->create(['seat_name' => 'T Dept Seat', 'is_active' => true]);
+        $tSeat->assignRole($tRole);
+
+        $user = User::factory()->create(['name' => 'T Section Dept User']);
+        $user->assignRole($tRole);
+        SeatUser::factory()->create([
+            'user_id' => $user->user_id,
+            'seat_id' => $tSeat->seat_id,
+            'is_active' => true,
+        ]);
+        session(['current_seat_id' => $tSeat->seat_id]);
+
+        $response = $this->actingAs($user)->get(route('admin.departments.analysis'));
+        $response->assertOk();
+        $response->assertViewHas('section', 't_section');
     }
 
     public function test_selecting_cpsp_section_filters_only_cpsp_petitions(): void

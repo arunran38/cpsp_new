@@ -7,6 +7,7 @@ use App\Models\Seat;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Support\SafeExceptionHandler;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class DepartmentController extends Controller
@@ -73,9 +74,13 @@ class DepartmentController extends Controller
             abort(403, 'Unauthorized. CPSP section clearance required.');
         }
 
+        $defaultSection = ($canCpsp && $canViewTSection) 
+            ? 'all' 
+            : ($canCpsp ? 'cpsp' : 't_section');
+
         $section = $rawSection;
         if (!$section || !array_key_exists($section, $availableSections)) {
-            $section = $canCpsp ? 'cpsp' : 't_section';
+            $section = $defaultSection;
         }
 
         $tSeatIds = Seat::getTSectionSeatIds();
@@ -174,10 +179,10 @@ class DepartmentController extends Controller
         $analysis = $query->paginate(10)->withQueryString();
 
         if ($request->ajax()) {
-            return view('admin.departments.partials.table', compact('analysis', 'search', 'date_from', 'date_to', 'section', 'canViewTSection', 'availableSections', 'total_sum'))->render();
+            return view('admin.departments.partials.table', compact('analysis', 'search', 'date_from', 'date_to', 'section', 'canCpsp', 'canViewTSection', 'defaultSection', 'availableSections', 'total_sum'))->render();
         }
 
-        return view('admin.analytics.departments', compact('analysis', 'search', 'date_from', 'date_to', 'section', 'canViewTSection', 'availableSections', 'total_sum'));
+        return view('admin.analytics.departments', compact('analysis', 'search', 'date_from', 'date_to', 'section', 'canCpsp', 'canViewTSection', 'defaultSection', 'availableSections', 'total_sum'));
     }
 
     public function exportAnalysis(Request $request)
@@ -230,9 +235,13 @@ class DepartmentController extends Controller
             abort(403, 'Unauthorized. CPSP section clearance required.');
         }
 
+        $defaultSection = ($canCpsp && $canViewTSection) 
+            ? 'all' 
+            : ($canCpsp ? 'cpsp' : 't_section');
+
         $section = $rawSection;
         if (!$section || !array_key_exists($section, $availableSections)) {
-            $section = $canCpsp ? 'cpsp' : 't_section';
+            $section = $defaultSection;
         }
 
         $tSeatIds = Seat::getTSectionSeatIds();
@@ -373,9 +382,9 @@ class DepartmentController extends Controller
             Department::create($request->all());
             Alert::success('Success', 'Department created successfully.');
             return redirect()->route('admin.departments.index');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Alert::error('Error', 'Failed to create department.');
-            return back()->with('error', 'Failed to create department: ' . $e->getMessage())->withInput();
+            return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to create department.'))->withInput();
         }
     }
 
@@ -394,8 +403,8 @@ class DepartmentController extends Controller
             $department = Department::findOrFail($id);
             $department->update($request->all());
             return redirect()->route('admin.departments.index')->with('success', 'Department updated successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to update department: ' . $e->getMessage())->withInput();
+        } catch (\Throwable $e) {
+            return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to update department.'))->withInput();
         }
     }
 
@@ -406,8 +415,8 @@ class DepartmentController extends Controller
             $department = Department::findOrFail($id);
             $department->delete();
             return redirect()->route('admin.departments.index')->with('success', 'Department deleted successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to delete department: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to delete department.'));
         }
     }
 }

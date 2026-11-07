@@ -6,6 +6,7 @@ use App\Models\Compliance;
 use App\Models\Decision;
 use App\Models\Petition;
 use App\Models\Unit;
+use App\Support\SafeExceptionHandler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -312,9 +313,9 @@ class ComplianceController extends Controller
             DB::commit();
 
             return back()->with('success', 'Compliance details updated successfully.');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->with('error', 'Error updating compliance: ' . $e->getMessage());
+            return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to update compliance details.'))->withInput();
         }
     }
 

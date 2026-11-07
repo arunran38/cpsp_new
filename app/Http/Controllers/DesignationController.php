@@ -6,6 +6,7 @@ use App\Models\Designation;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Support\SafeExceptionHandler;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class DesignationController extends Controller
@@ -32,9 +33,9 @@ class DesignationController extends Controller
             Designation::create($request->all());
             Alert::success('Success', 'Designation created successfully.');
             return redirect()->route('admin.designations.index');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Alert::error('Error', 'Failed to create designation.');
-            return back()->with('error', 'Failed to create designation: ' . $e->getMessage())->withInput();
+            return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to create designation.'))->withInput();
         }
     }
 
@@ -53,8 +54,8 @@ class DesignationController extends Controller
             $designation = Designation::findOrFail($id);
             $designation->update($request->all());
             return redirect()->route('admin.designations.index')->with('success', 'Designation updated successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to update designation: ' . $e->getMessage())->withInput();
+        } catch (\Throwable $e) {
+            return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to update designation.'))->withInput();
         }
     }
 
@@ -65,8 +66,8 @@ class DesignationController extends Controller
             $designation = Designation::findOrFail($id);
             $designation->delete();
             return redirect()->route('admin.designations.index')->with('success', 'Designation deleted successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to delete designation: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to delete designation.'));
         }
     }
 }

@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use RealRashid\SweetAlert\Facades\Alert;
+use App\Support\SafeExceptionHandler;
 
 class UnitController extends Controller
 {
@@ -44,8 +45,9 @@ class UnitController extends Controller
             Alert::success('Success', 'Unit created successfully.');
             return redirect()->route('admin.units.index');
         } catch (\Exception $e) {
-            Alert::error('Error', 'Failed to create unit.');
-            return back()->with('error', 'Failed to create unit: ' . $e->getMessage())->withInput();
+            $msg = SafeExceptionHandler::handle($e, 'Unit creation failed due to a database error.', 'UnitController@store');
+            Alert::error('Error', $msg);
+            return back()->with('error', $msg)->withInput();
         }
     }   
 
@@ -70,7 +72,8 @@ class UnitController extends Controller
             $unit->update($request->validated());
             return redirect()->route('admin.units.index')->with('success', 'Unit updated successfully.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to update unit: ' . $e->getMessage())->withInput();
+            $msg = SafeExceptionHandler::handle($e, 'Failed to update unit due to a database error.', 'UnitController@update');
+            return back()->with('error', $msg)->withInput();
         }
     }
 
@@ -85,7 +88,8 @@ class UnitController extends Controller
             $unit->delete();
             return redirect()->route('admin.units.index')->with('success', 'Unit deleted successfully.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to delete unit: ' . $e->getMessage());
+            $msg = SafeExceptionHandler::handle($e, 'Failed to delete unit due to a database error.', 'UnitController@destroy');
+            return back()->with('error', $msg);
         }
     }
 

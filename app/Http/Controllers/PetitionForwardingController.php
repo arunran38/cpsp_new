@@ -9,6 +9,7 @@ use App\Models\Upload;
 use App\Http\Requests\StoreForwardingRequest;
 use App\Http\Requests\UpdateVrRequest;
 use App\Services\HashidService;
+use App\Support\SafeExceptionHandler;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -104,8 +105,8 @@ class PetitionForwardingController extends Controller
                 $petition->update($petitionData);
 
                 return back()->with('success', 'Petition processed successfully.');
-            } catch (\Exception $e) {
-                return back()->with('error', 'Error processing petition: ' . $e->getMessage());
+            } catch (\Throwable $e) {
+                return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to process petition.'))->withInput();
             }
         });
     }
@@ -136,8 +137,8 @@ class PetitionForwardingController extends Controller
                 }
 
                 return back()->with('success', 'Verification Report submitted successfully.');
-            } catch (\Exception $e) {
-                return back()->with('error', 'Error submitting Verification Report: ' . $e->getMessage());
+            } catch (\Throwable $e) {
+                return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to submit Verification Report.'))->withInput();
             }
         });
     }
@@ -187,8 +188,8 @@ class PetitionForwardingController extends Controller
                 $petition->update(['status' => Petition::STATUS_RECEIVED]);
 
                 return back()->with('success', 'Forwarding pulled back successfully.');
-            } catch (\Exception $e) {
-                return back()->with('error', 'Error pulling back forwarding: ' . $e->getMessage());
+            } catch (\Throwable $e) {
+                return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to pull back forwarding.'));
             }
         });
     }
@@ -225,8 +226,8 @@ class PetitionForwardingController extends Controller
                     ->delete();
 
                 return back()->with('success', 'VR Report pulled back successfully.');
-            } catch (\Exception $e) {
-                return back()->with('error', 'Error pulling back VR: ' . $e->getMessage());
+            } catch (\Throwable $e) {
+                return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to pull back Verification Report.'));
             }
         });
     }

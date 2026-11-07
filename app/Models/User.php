@@ -369,7 +369,7 @@ class User extends Authenticatable
         }
 
         try {
-            if ($this->hasRole(['inward', 'Inward', 'developer', 'Developer', 'super admin', 'Super Admin'])) {
+            if ($this->hasRole(['admin', 'Admin', 'inward', 'Inward', 'developer', 'Developer', 'super admin', 'Super Admin'])) {
                 return true;
             }
         } catch (\Throwable $e) { }

@@ -128,20 +128,27 @@ class TSectionConfidentialityExclusionTest extends TestCase
 
     public function test_department_analysis_defaults_to_cpsp_and_excludes_t_section_by_default(): void
     {
-        // Multi-role user has full clearances but visiting without section query defaults to CPSP
+        // Multi-role user with both clearances defaults to 'all'
         $response = $this->actingAs($this->multiRoleUser)->get(route('admin.departments.analysis'));
 
         $response->assertOk();
-        $response->assertViewHas('section', 'cpsp');
+        $response->assertViewHas('section', 'all');
         $response->assertViewHas('availableSections', [
             'all' => 'All Sections',
             'cpsp' => 'CPSP',
             't_section' => 'T-Section',
         ]);
-        // The total count for Health & Family Welfare must be exactly 1 (only CPSP petition, excluding T-Section)
-        $response->assertViewHas('total_sum', 1);
+        // The total count for Health & Family Welfare includes both CPSP and T-Section (total_sum = 2)
+        $response->assertViewHas('total_sum', 2);
         $response->assertSee('Health & Family Welfare');
-        $response->assertSee('CPSP Section');
+        $response->assertSee('All Sections');
+
+        // CPSP user without T-Section clearance defaults to 'cpsp'
+        $cpspResponse = $this->actingAs($this->cpspUser)->get(route('admin.departments.analysis'));
+        $cpspResponse->assertOk();
+        $cpspResponse->assertViewHas('section', 'cpsp');
+        $cpspResponse->assertViewHas('total_sum', 1);
+        $cpspResponse->assertSee('CPSP Section');
     }
 
     public function test_department_analysis_filters_by_section_for_authorized_user(): void

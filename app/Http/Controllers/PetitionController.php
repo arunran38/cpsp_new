@@ -11,6 +11,7 @@ use App\Http\Requests\UpdatePetitionRequest;
 use App\Services\PetitionService;
 use App\Services\HashidService;
 use App\Services\TSectionPermissionRegistry;
+use App\Support\SafeExceptionHandler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -134,61 +135,7 @@ class PetitionController extends Controller
         $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
         $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
 
-        $transfersQuery = Petition::with(['seat.activeAssignment.user', 'user', 'addresses', 'originalPetition.addresses', 'cpspOpenedByUser', 'cpspOpenedBySeat', 'returnedByUser', 'processedByUser', 'processedBySeat', 'originalPetition'])
-            ->accessibleInwardPetitions($user, $request->input('scope'));
-
-        if ($request->filled('creator_id')) {
-            $cFilter = $request->creator_id;
-            if ($cFilter === 'my_petitions') {
-                $transfersQuery->where('petitions.user_id', $user->user_id);
-            } elseif ($cFilter !== 'all' && is_numeric($cFilter)) {
-                $transfersQuery->where('petitions.user_id', (int)$cFilter);
-            }
-        }
-
-        if ($isSeatLocked && $defaultSeatId) {
-            $transfersQuery->where('seat_id', $defaultSeatId);
-        } elseif ($request->filled('seat_id')) {
-            $transfersQuery->where('seat_id', $request->seat_id);
-        }
-
-        if ($request->filled('search')) {
-            $search = trim($request->search);
-            $transfersQuery->where(function ($q) use ($search) {
-                $q->where('receipt_no', 'like', "%{$search}%")
-                  ->orWhere('file_no', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhereHas('seat', function ($sq) use ($search) {
-                      $sq->where('seat_name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('addresses', function ($aq) use ($search) {
-                      $aq->where('person_name', 'like', "%{$search}%")
-                         ->orWhere('full_address', 'like', "%{$search}%")
-                         ->orWhere('phone', 'like', "%{$search}%")
-                         ->orWhere('pen_number', 'like', "%{$search}%");
-                  });
-            });
-        }
-
-        if (!empty($filters['date_from'])) {
-            $transfersQuery->where(function($q) use ($filters) {
-                $q->whereDate('date_of_petition_received', '>=', $filters['date_from'])
-                  ->orWhere(function($sub) use ($filters) {
-                      $sub->whereNull('date_of_petition_received')
-                          ->whereDate('created_at', '>=', $filters['date_from']);
-                  });
-            });
-        }
-
-        if (!empty($filters['date_to'])) {
-            $transfersQuery->where(function($q) use ($filters) {
-                $q->whereDate('date_of_petition_received', '<=', $filters['date_to'])
-                  ->orWhere(function($sub) use ($filters) {
-                      $sub->whereNull('date_of_petition_received')
-                          ->whereDate('created_at', '<=', $filters['date_to']);
-                  });
-            });
-        }
+        $transfersQuery = $this->buildInwardTransfersQuery($request, $user, $isSeatLocked, $defaultSeatId, $filters);
 
         $countsQuery = clone $transfersQuery;
         $counts = [
@@ -228,6 +175,16 @@ class PetitionController extends Controller
         $currentSeatUser = $user->currentSeatUser();
         $currentSeat = $currentSeatUser?->seat;
 
+        $isAdminOrSuperAdmin = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
+            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin'])) ||
+            $user->canAccess('access admin dashboard');
+
+        $isCpspUser = $user->hasRole(['cpsp', 'CPSP']) || 
+            ($currentSeat && (
+                $currentSeat->hasRole(['cpsp', 'CPSP']) || 
+                str_contains(strtolower($currentSeat->seat_name), 'cpsp')
+            ));
+
         $canAccessInward = $user->canAccess('view inward registration') || $user->canAccess('create inward petitions');
         $canExport = $user->canAccess('export petitions');
 
@@ -243,32 +200,10 @@ class PetitionController extends Controller
 
         $filter = $request->query('filter', 'all');
 
-        $transfersQuery = Petition::with(['user', 'seat.activeAssignment.user', 'unit', 'addresses', 'originalPetition.addresses', 'originalPetition'])
-            ->accessibleInwardPetitions($user, $request->input('scope'));
+        $isSeatLocked = ($isCpspUser && !$isAdminOrSuperAdmin && !$user->canAccess('view all petitions') && $currentSeat);
+        $defaultSeatId = $isSeatLocked ? $currentSeat->seat_id : null;
 
-        if ($isCpspUser && !$isAdminOrSuperAdmin && !$user->canAccess('view all petitions') && $currentSeat) {
-            $transfersQuery->where('seat_id', $currentSeat->seat_id);
-        } elseif ($request->filled('seat_id')) {
-            $transfersQuery->where('seat_id', $request->seat_id);
-        }
-
-        if ($request->filled('search')) {
-            $search = trim($request->search);
-            $transfersQuery->where(function ($q) use ($search) {
-                $q->where('receipt_no', 'like', "%{$search}%")
-                  ->orWhere('file_no', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhereHas('seat', function ($sq) use ($search) {
-                      $sq->where('seat_name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('addresses', function ($aq) use ($search) {
-                      $aq->where('person_name', 'like', "%{$search}%")
-                         ->orWhere('full_address', 'like', "%{$search}%")
-                         ->orWhere('phone', 'like', "%{$search}%")
-                         ->orWhere('pen_number', 'like', "%{$search}%");
-                  });
-            });
-        }
+        $transfersQuery = $this->buildInwardTransfersQuery($request, $user, $isSeatLocked, $defaultSeatId, $filters);
 
         if ($filter === 'transferred') {
             $transfersQuery->where('is_returned_to_inward', false);
@@ -495,7 +430,7 @@ class PetitionController extends Controller
         $inwardSeatIds = Seat::getInwardSeatIds();
 
         // 1. Fetch only users who hold the Inward role, are assigned to an active Inward seat, or have created inward petitions
-        $creators = \App\Models\User::query()
+        $creators = User::query()
             ->with(['seatUsers.seat.roles', 'roles'])
             ->where(function ($q) use ($inwardSeatIds) {
                 $q->whereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward']))
@@ -612,8 +547,19 @@ class PetitionController extends Controller
             || $user->canAccessTSectionDiagnostics()
             || $user->canAccessTSection();
 
-        $defaultSection = $canCpsp ? 'cpsp' : ($canViewTSection ? 't_section' : 'cpsp');
-        $section = $request->input('section', $defaultSection);
+        if ($isPendencyRoute) {
+            if ($canCpsp && $canViewTSection) {
+                $defaultSection = 'all';
+            } elseif ($canViewTSection && !$canCpsp) {
+                $defaultSection = 't_section';
+            } else {
+                $defaultSection = 'cpsp';
+            }
+        } else {
+            $defaultSection = $canCpsp ? 'cpsp' : ($canViewTSection ? 't_section' : 'cpsp');
+        }
+
+        $section = $request->filled('section') ? $request->input('section') : $defaultSection;
 
         if (!$canViewTSection && $section === 't_section') {
             abort(403, 'Unauthorized. Special clearance required to view T-Section statistics.');
@@ -741,97 +687,21 @@ class PetitionController extends Controller
 
         $totalAllPetitions = (clone $petitionsQuery)->count();
 
-        // Calculate statistics per seat
-        $seatStats = [];
-        $totalReceived = 0;
-        $totalForwarded = 0;
-        $totalVrs = 0;
-        $totalDecisions = 0;
-        $totalSentSum = 0;
-        $totalProcessedSum = 0;
-        $totalPendingSum = 0;
-
-        foreach ($seats as $seat) {
-            $seatData = $statsBySeat->get($seat->seat_id);
-            $totalCount = (int) ($seatData->total_count ?? 0);
-
-            $received = (int) ($seatData->received ?? 0);
-            $forwarded = (int) ($seatData->forwarded ?? 0);
-            $vrs = (int) ($seatData->vrs ?? 0);
-            $decisions = (int) ($seatData->decisions ?? 0);
-            $totalSent = $totalCount;
-            $processed = (int) ($seatData->processed ?? 0);
-            $pending = (int) ($seatData->pending ?? 0);
-
-            $totalReceived += $received;
-            $totalForwarded += $forwarded;
-            $totalVrs += $vrs;
-            $totalDecisions += $decisions;
-            $totalSentSum += $totalSent;
-            $totalProcessedSum += $processed;
-            $totalPendingSum += $pending;
-
-            $seatStats[] = [
-                'seat_id' => $seat->seat_id,
-                'seat_name' => $seat->seat_name,
-                'occupant' => $seat->activeAssignment?->user?->name ?? 'Vacant',
-                'total' => $totalCount,
-                'received' => $received,
-                'forwarded' => $forwarded,
-                'vrs' => $vrs,
-                'decisions' => $decisions,
-                'total_sent' => $totalSent,
-                'processed' => $processed,
-                'pending' => $pending,
-            ];
-        }
-
-        $summaryTotals = [
-            'total' => $totalAllPetitions,
-            'received' => $totalReceived,
-            'forwarded' => $totalForwarded,
-            'vrs' => $totalVrs,
-            'decisions' => $totalDecisions,
-            'totalSent' => $totalSentSum,
-            'processed' => $totalProcessedSum,
-            'pending' => $totalPendingSum,
-        ];
+        [$seatStats, $summaryTotals] = $this->calculateSeatStats($seats, $statsBySeat, $totalAllPetitions);
 
         // Handle Excel Export
         if ($request->input('export') === 'csv') {
-            $canExportThis = $isPendencyRoute
-                ? ($user->canAccess('view pendency details') || $user->canAccess('export statistics'))
-                : $user->canAccess('export statistics');
-            if (!$canExportThis) {
-                abort(403, 'Unauthorized. Permission required to export statistics.');
-            }
-            $periodSuffix = '';
-            if ($dateFrom && $dateTo) {
-                $periodSuffix = "_{$dateFrom}_to_{$dateTo}";
-            } elseif ($dateFrom) {
-                $periodSuffix = "_from_{$dateFrom}";
-            } elseif ($dateTo) {
-                $periodSuffix = "_to_{$dateTo}";
-            }
-            $sectionSuffix = match ($section) {
-                'cpsp' => '_cpsp',
-                't_section' => '_t_section',
-                default => '',
-            };
-            $creatorSuffix = $targetCreatorUser ? "_creator_{$targetCreatorUser->user_id}" : "_all_creators";
-            $filename = "inward_seat_statistics{$sectionSuffix}{$creatorSuffix}{$periodSuffix}_" . now()->format('Ymd_His') . ".xlsx";
-            
-            $canViewProcessed = $user->canAccess('view processed statistics');
-
-            return Excel::download(new InwardStatisticsExport(
+            return $this->exportInwardStatisticsExcel(
+                $user, 
+                $isPendencyRoute, 
                 $seatStats, 
                 $summaryTotals, 
                 $dateFrom, 
                 $dateTo, 
-                $canViewProcessed, 
-                $section,
+                $section, 
+                $targetCreatorUser, 
                 $selectedCreatorLabel
-            ), $filename);
+            );
         }
 
         return view('inward.statistics', compact(
@@ -840,7 +710,9 @@ class PetitionController extends Controller
             'dateTo', 
             'summaryTotals',
             'section',
+            'canCpsp',
             'canViewTSection',
+            'defaultSection',
             'creators',
             'selectedCreator',
             'selectedCreatorLabel',
@@ -942,9 +814,8 @@ class PetitionController extends Controller
             }
 
             return redirect()->route('petitions.index', ['tab' => 'all'])->with('success', 'Petition submitted successfully.');
-        } catch (\Exception $e) {
-            Log::error('Petition Store Exception: ' . $e->getMessage());
-            return back()->with('error', 'Failed to save petition: ' . $e->getMessage())->withInput();
+        } catch (\Throwable $e) {
+            return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to save petition.'))->withInput();
         }
     }
 
@@ -1022,7 +893,7 @@ class PetitionController extends Controller
 
             $seats = $seatsQuery->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
 
-            $usersQuery = \App\Models\User::whereHas('seatUsers', function ($query) use ($canViewTSection) {
+            $usersQuery = User::whereHas('seatUsers', function ($query) use ($canViewTSection) {
                 $query->where('is_active', true)
                     ->whereHas('seat', function ($sq) use ($canViewTSection) {
                         $sq->where('is_active', true)
@@ -1199,9 +1070,8 @@ class PetitionController extends Controller
                 ->delete();
 
             return redirect()->route('petitions.index', ['tab' => 'all'])->with('success', 'Petition updated successfully.');
-        } catch (\Exception $e) {
-            Log::error('Petition Update Error: ' . $e->getMessage());
-            return back()->with('error', 'Update Failed: ' . $e->getMessage())->withInput();
+        } catch (\Throwable $e) {
+            return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to update petition.'))->withInput();
         }
     }
 
@@ -1406,7 +1276,7 @@ class PetitionController extends Controller
 
         // We allow linking to duplicate petitions; the backend will automatically resolve to the root original.
 
-        $results = $petitions->take(10)->get()->map(function ($petition) {
+        $results = $petitions->take(10)->get()->map(function (Petition $petition) {
             $addresses = $petition->displayAddresses();
             $complainant = $addresses->firstWhere('person_type', 'Complainant');
             $accused = $addresses->firstWhere('person_type', 'Accused');
@@ -1569,7 +1439,7 @@ class PetitionController extends Controller
             
         });
 
-        $duplicates = $query->orderBy('date_of_petition_received', 'desc')->take(5)->get()->map(function($p) {
+        $duplicates = $query->orderBy('date_of_petition_received', 'desc')->take(5)->get()->map(function (Petition $p) {
             $addresses = $p->displayAddresses();
             $complainants = $addresses->where('person_type', 'Complainant');
             $primaryComplainant = $complainants->first();
@@ -1867,5 +1737,189 @@ class PetitionController extends Controller
                     ])->values()->all()
                 ];
             })->values()->all();
+    }
+
+    /**
+     * Build the query for inward petition transfers.
+     */
+    private function buildInwardTransfersQuery(
+        Request $request, 
+        User $user, 
+        bool $isSeatLocked = false, 
+        ?int $defaultSeatId = null, 
+        array $filters = []
+    ): Builder {
+        $transfersQuery = Petition::with([
+            'seat.activeAssignment.user', 'user', 'addresses', 
+            'originalPetition.addresses', 'cpspOpenedByUser', 'cpspOpenedBySeat', 
+            'returnedByUser', 'processedByUser', 'processedBySeat', 'originalPetition'
+        ])->accessibleInwardPetitions($user, $request->input('scope'));
+
+        if ($request->filled('creator_id')) {
+            $cFilter = $request->creator_id;
+            if ($cFilter === 'my_petitions') {
+                $transfersQuery->where('petitions.user_id', $user->user_id);
+            } elseif ($cFilter !== 'all' && is_numeric($cFilter)) {
+                $transfersQuery->where('petitions.user_id', (int)$cFilter);
+            }
+        }
+
+        if ($isSeatLocked && $defaultSeatId) {
+            $transfersQuery->where('seat_id', $defaultSeatId);
+        } elseif ($request->filled('seat_id')) {
+            $transfersQuery->where('seat_id', $request->seat_id);
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $transfersQuery->where(function ($q) use ($search) {
+                $q->where('receipt_no', 'like', "%{$search}%")
+                  ->orWhere('file_no', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('seat', function ($sq) use ($search) {
+                      $sq->where('seat_name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('addresses', function ($aq) use ($search) {
+                      $aq->where('person_name', 'like', "%{$search}%")
+                         ->orWhere('full_address', 'like', "%{$search}%")
+                         ->orWhere('phone', 'like', "%{$search}%")
+                         ->orWhere('pen_number', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if (!empty($filters['date_from'])) {
+            $transfersQuery->where(function($q) use ($filters) {
+                $q->whereDate('date_of_petition_received', '>=', $filters['date_from'])
+                  ->orWhere(function($sub) use ($filters) {
+                      $sub->whereNull('date_of_petition_received')
+                          ->whereDate('created_at', '>=', $filters['date_from']);
+                  });
+            });
+        }
+
+        if (!empty($filters['date_to'])) {
+            $transfersQuery->where(function($q) use ($filters) {
+                $q->whereDate('date_of_petition_received', '<=', $filters['date_to'])
+                  ->orWhere(function($sub) use ($filters) {
+                      $sub->whereNull('date_of_petition_received')
+                          ->whereDate('created_at', '<=', $filters['date_to']);
+                  });
+            });
+        }
+
+        return $transfersQuery;
+    }
+
+    /**
+     * Compute aggregated statistics per seat and summary totals.
+     */
+    private function calculateSeatStats($seats, $statsBySeat, int $totalAllPetitions): array
+    {
+        $seatStats = [];
+        $totalReceived = 0;
+        $totalForwarded = 0;
+        $totalVrs = 0;
+        $totalDecisions = 0;
+        $totalSentSum = 0;
+        $totalProcessedSum = 0;
+        $totalPendingSum = 0;
+
+        foreach ($seats as $seat) {
+            $seatData = $statsBySeat->get($seat->seat_id);
+            $totalCount = (int) ($seatData->total_count ?? 0);
+
+            $received = (int) ($seatData->received ?? 0);
+            $forwarded = (int) ($seatData->forwarded ?? 0);
+            $vrs = (int) ($seatData->vrs ?? 0);
+            $decisions = (int) ($seatData->decisions ?? 0);
+            $totalSent = $totalCount;
+            $processed = (int) ($seatData->processed ?? 0);
+            $pending = (int) ($seatData->pending ?? 0);
+
+            $totalReceived += $received;
+            $totalForwarded += $forwarded;
+            $totalVrs += $vrs;
+            $totalDecisions += $decisions;
+            $totalSentSum += $totalSent;
+            $totalProcessedSum += $processed;
+            $totalPendingSum += $pending;
+
+            $seatStats[] = [
+                'seat_id' => $seat->seat_id,
+                'seat_name' => $seat->seat_name,
+                'occupant' => $seat->activeAssignment?->user?->name ?? 'Vacant',
+                'total' => $totalCount,
+                'received' => $received,
+                'forwarded' => $forwarded,
+                'vrs' => $vrs,
+                'decisions' => $decisions,
+                'total_sent' => $totalSent,
+                'processed' => $processed,
+                'pending' => $pending,
+            ];
+        }
+
+        $summaryTotals = [
+            'total' => $totalAllPetitions,
+            'received' => $totalReceived,
+            'forwarded' => $totalForwarded,
+            'vrs' => $totalVrs,
+            'decisions' => $totalDecisions,
+            'totalSent' => $totalSentSum,
+            'processed' => $totalProcessedSum,
+            'pending' => $totalPendingSum,
+        ];
+
+        return [$seatStats, $summaryTotals];
+    }
+
+    /**
+     * Download Inward Statistics Excel export.
+     */
+    private function exportInwardStatisticsExcel(
+        User $user,
+        bool $isPendencyRoute,
+        array $seatStats,
+        array $summaryTotals,
+        ?string $dateFrom,
+        ?string $dateTo,
+        string $section,
+        ?User $targetCreatorUser,
+        string $selectedCreatorLabel
+    ): \Symfony\Component\HttpFoundation\BinaryFileResponse {
+        $canExportThis = $isPendencyRoute
+            ? ($user->canAccess('view pendency details') || $user->canAccess('export statistics'))
+            : $user->canAccess('export statistics');
+        if (!$canExportThis) {
+            abort(403, 'Unauthorized. Permission required to export statistics.');
+        }
+        $periodSuffix = '';
+        if ($dateFrom && $dateTo) {
+            $periodSuffix = "_{$dateFrom}_to_{$dateTo}";
+        } elseif ($dateFrom) {
+            $periodSuffix = "_from_{$dateFrom}";
+        } elseif ($dateTo) {
+            $periodSuffix = "_to_{$dateTo}";
+        }
+        $sectionSuffix = match ($section) {
+            'cpsp' => '_cpsp',
+            't_section' => '_t_section',
+            default => '',
+        };
+        $creatorSuffix = $targetCreatorUser ? "_creator_{$targetCreatorUser->user_id}" : "_all_creators";
+        $filename = "inward_seat_statistics{$sectionSuffix}{$creatorSuffix}{$periodSuffix}_" . now()->format('Ymd_His') . ".xlsx";
+        
+        $canViewProcessed = $user->canAccess('view processed statistics');
+
+        return Excel::download(new InwardStatisticsExport(
+            $seatStats, 
+            $summaryTotals, 
+            $dateFrom, 
+            $dateTo, 
+            $canViewProcessed, 
+            $section,
+            $selectedCreatorLabel
+        ), $filename);
     }
 }

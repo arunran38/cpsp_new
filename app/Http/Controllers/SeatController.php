@@ -7,6 +7,7 @@ use App\Models\SeatUser;
 use App\Models\Unit;
 use App\Http\Requests\StoreSeatRequest;
 use App\Http\Requests\UpdateSeatRequest;
+use App\Support\SafeExceptionHandler;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response as HttpResponse;
@@ -57,8 +58,8 @@ class SeatController extends Controller
                     $seat->syncRoles($roles);
                 }
                 return redirect()->route('admin.seats.index')->with('success', 'Seat created successfully with assigned roles.');
-            } catch (\Exception $e) {
-                return back()->with('error', 'Failed to create seat: ' . $e->getMessage())->withInput();
+            } catch (\Throwable $e) {
+                return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to create seat.'))->withInput();
             }
         });
     }
@@ -94,8 +95,8 @@ class SeatController extends Controller
                 $seat->syncRoles($roles);
 
                 return redirect()->route('admin.seats.index')->with('success', 'Seat updated successfully with assigned roles.');
-            } catch (\Exception $e) {
-                return back()->with('error', 'Failed to update seat: ' . $e->getMessage())->withInput();
+            } catch (\Throwable $e) {
+                return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to update seat.'))->withInput();
             }
         });
     }
@@ -297,8 +298,8 @@ class SeatController extends Controller
 
             $seat->delete();
             return redirect()->route('admin.seats.index')->with('success', 'Seat deleted successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to delete seat: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to delete seat.'));
         }
     }
 
@@ -330,8 +331,8 @@ class SeatController extends Controller
                 ->where('is_active', true)
                 ->update(['is_active' => false, 'revoked_at' => now()]);
             return redirect()->route('admin.seats.index')->with('success', 'Assignment revoked successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to revoke assignment: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to revoke assignment.'));
         }
     }
 

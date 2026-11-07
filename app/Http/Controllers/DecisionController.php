@@ -7,6 +7,7 @@ use App\Models\Decision;
 use App\Models\Upload;
 use App\Http\Requests\StoreDecisionRequest;
 use App\Services\HashidService;
+use App\Support\SafeExceptionHandler;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -72,8 +73,8 @@ class DecisionController extends Controller
                 }
 
                 return back()->with('success', 'Final Decision recorded.');
-            } catch (\Exception $e) {
-                return back()->with('error', 'Error recording decision: ' . $e->getMessage());
+            } catch (\Throwable $e) {
+                return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to record decision.'))->withInput();
             }
         });
     }
@@ -110,8 +111,8 @@ class DecisionController extends Controller
                     ->delete();
 
                 return back()->with('success', 'Final Decision pulled back successfully.');
-            } catch (\Exception $e) {
-                return back()->with('error', 'Error pulling back decision: ' . $e->getMessage());
+            } catch (\Throwable $e) {
+                return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to pull back decision.'));
             }
         });
     }

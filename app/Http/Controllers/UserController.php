@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
+use App\Support\SafeExceptionHandler;
 
 class UserController extends Controller
 {
@@ -78,9 +79,11 @@ class UserController extends Controller
                         return back()->withErrors(['email' => 'This email address is already registered.'])->withInput();
                     }
                 }
-                return back()->with('error', 'Failed to register user due to a database error.')->withInput();
+                $msg = SafeExceptionHandler::handle($e, 'Failed to register user due to a database error.', 'UserController@store');
+                return back()->with('error', $msg)->withInput();
             } catch (\Exception $e) {
-                return back()->with('error', 'Failed to register user: ' . $e->getMessage())->withInput();
+                $msg = SafeExceptionHandler::handle($e, 'Failed to register user.', 'UserController@store');
+                return back()->with('error', $msg)->withInput();
             }
         });
     }
@@ -159,9 +162,11 @@ class UserController extends Controller
                         return back()->withErrors(['email' => 'This email address is already registered.'])->withInput();
                     }
                 }
-                return back()->with('error', 'Failed to update user due to a database error.')->withInput();
+                $msg = SafeExceptionHandler::handle($e, 'Failed to update user due to a database error.', 'UserController@update');
+                return back()->with('error', $msg)->withInput();
             } catch (\Exception $e) {
-                return back()->with('error', 'Failed to update user: ' . $e->getMessage())->withInput();
+                $msg = SafeExceptionHandler::handle($e, 'Failed to update user.', 'UserController@update');
+                return back()->with('error', $msg)->withInput();
             }
         });
     }
@@ -185,7 +190,8 @@ class UserController extends Controller
             
             return redirect()->route("users.index")->with('success', 'User status updated successfully.');
         } catch (\Exception $e) {
-            return redirect()->route("users.index")->with('error', 'Failed to update user status.');
+            $msg = SafeExceptionHandler::handle($e, 'Failed to update user status.', 'UserController@updateStatus');
+            return redirect()->route("users.index")->with('error', $msg);
         }
     }
 
@@ -206,7 +212,8 @@ class UserController extends Controller
                 
                 return redirect()->route("users.index")->with('success', 'User deleted successfully.');
             } catch (\Exception $e) {
-                return redirect()->route("users.index")->with('error', 'Failed to delete user.');
+                $msg = SafeExceptionHandler::handle($e, 'Failed to delete user.', 'UserController@destroy');
+                return redirect()->route("users.index")->with('error', $msg);
             }
         });
     }

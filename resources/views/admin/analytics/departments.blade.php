@@ -60,25 +60,40 @@
                             </div>
                         </div>
 
-                        <!-- Section Filter Dropdown -->
-                        <div class="w-full sm:w-44 lg:w-48 shrink-0 flex flex-col justify-end">
+                        <!-- Section Segmented Buttons -->
+                        <div class="w-full sm:w-auto min-w-[270px] lg:min-w-[300px] xl:w-[320px] shrink-0 flex flex-col justify-end">
                             <label class="text-[11px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1.5 mb-1.5 h-4">
                                 <i data-lucide="layers" class="h-3.5 w-3.5 text-blue-500"></i>
                                 <span>Section</span>
                             </label>
-                            <div class="relative w-full">
-                                <select name="section" id="section"
-                                    class="w-full pl-3.5 pr-8 h-11 bg-white border border-blue-200/80 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 text-xs sm:text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300 appearance-none cursor-pointer"
-                                    style="color: #1e40af !important;">
-                                    @foreach(($availableSections ?? ['cpsp' => 'CPSP']) as $secKey => $secLabel)
-                                        <option value="{{ $secKey }}" {{ ($section ?? 'cpsp') === $secKey ? 'selected' : '' }}>
-                                            {{ $secLabel }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-blue-400">
-                                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
-                                </div>
+                            <div class="flex items-center p-1 bg-blue-50/50 border border-blue-200/80 rounded-xl w-full h-11 shadow-inner">
+                                @if(($canCpsp ?? true) && ($canViewTSection ?? false))
+                                    <label class="flex-1 cursor-pointer h-full">
+                                        <input type="radio" name="section" value="all" class="sr-only peer"
+                                            {{ ($section ?? 'all') === 'all' ? 'checked' : '' }}>
+                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2.5">
+                                            All Sections
+                                        </span>
+                                    </label>
+                                @endif
+                                @if($canCpsp ?? true)
+                                    <label class="flex-1 cursor-pointer h-full">
+                                        <input type="radio" name="section" value="cpsp" class="sr-only peer"
+                                            {{ ($section ?? '') === 'cpsp' ? 'checked' : '' }}>
+                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2.5">
+                                            CPSP
+                                        </span>
+                                    </label>
+                                @endif
+                                @if($canViewTSection ?? false)
+                                    <label class="flex-1 cursor-pointer h-full">
+                                        <input type="radio" name="section" value="t_section" class="sr-only peer"
+                                            {{ ($section ?? '') === 't_section' ? 'checked' : '' }}>
+                                        <span class="w-full h-full text-xs font-bold text-blue-600 rounded-lg flex items-center justify-center whitespace-nowrap transition-all duration-150 select-none peer-checked:bg-white peer-checked:text-teal-700 peer-checked:shadow-sm hover:text-blue-900 px-2.5">
+                                            T-Section
+                                        </span>
+                                    </label>
+                                @endif
                             </div>
                         </div>
 
@@ -192,13 +207,11 @@
 
                 window.history.pushState({}, '', url);
 
-                const sectionSelect = document.getElementById('section');
+                const selectedRadio = searchForm.querySelector('input[name="section"]:checked');
                 const sectionBadge = document.getElementById('sectionBadge');
-                if (sectionSelect && sectionBadge) {
-                    const selectedOption = sectionSelect.options[sectionSelect.selectedIndex];
-                    if (selectedOption) {
-                        sectionBadge.textContent = selectedOption.value === 'cpsp' ? 'CPSP Section' : selectedOption.text;
-                    }
+                if (selectedRadio && sectionBadge) {
+                    const secVal = selectedRadio.value;
+                    sectionBadge.textContent = secVal === 'cpsp' ? 'CPSP Section' : (secVal === 't_section' ? 'T-Section' : 'All Sections');
                 }
 
                 const exportBtn = document.getElementById('exportExcelBtn');
