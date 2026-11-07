@@ -39,9 +39,18 @@
                                     </span>
                                 @endif
                                 @if($petition->originalPetition)
-                                    <span class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-orange-100 text-orange-700 border border-orange-200">
-                                        <i data-lucide="link" class="w-3 h-3"></i> Linked
+                                    <span class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-orange-100 text-orange-700 border border-orange-200" title="Linked to {{ $petition->originalPetition->receipt_no }}">
+                                        <i data-lucide="link" class="w-3 h-3"></i> Linked to {{ $petition->originalPetition->receipt_no }}
                                     </span>
+                                @endif
+                                @if($petition->duplicates && $petition->duplicates->count() > 0)
+                                    <div class="mt-1 flex flex-wrap gap-1">
+                                        @foreach($petition->duplicates as $dup)
+                                            <a href="{{ route('petitions.show', $dup->hashid) }}" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors" title="Linked Duplicate Petition">
+                                                <i data-lucide="copy" class="w-2.5 h-2.5"></i> {{ $dup->receipt_no }}
+                                            </a>
+                                        @endforeach
+                                    </div>
                                 @endif
                                 <span class="text-[11px] font-medium text-blue-500 flex items-center gap-1 mt-0.5">
                                     {{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}
@@ -215,9 +224,18 @@
                                 </span>
                             @endif
                             @if($petition->originalPetition)
-                                <span class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-orange-100 text-orange-700 border border-orange-200">
-                                    <i data-lucide="link" class="w-3 h-3"></i> Linked
+                                <span class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-orange-100 text-orange-700 border border-orange-200" title="Linked to {{ $petition->originalPetition->receipt_no }}">
+                                    <i data-lucide="link" class="w-3 h-3"></i> Linked to {{ $petition->originalPetition->receipt_no }}
                                 </span>
+                            @endif
+                            @if($petition->duplicates && $petition->duplicates->count() > 0)
+                                <div class="mt-1 flex flex-wrap gap-1">
+                                    @foreach($petition->duplicates as $dup)
+                                        <a href="{{ route('petitions.show', $dup->hashid) }}" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors" title="Linked Duplicate Petition">
+                                            <i data-lucide="copy" class="w-2.5 h-2.5"></i> {{ $dup->receipt_no }}
+                                        </a>
+                                    @endforeach
+                                </div>
                             @endif
                             <span
                                 class="block text-xs text-slate-500 mt-1" title="Received Date">Rec: {{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}</span>
@@ -282,12 +300,16 @@
                         </td>
                         <td class="px-6 py-4 text-center">
                             @php
-                                $wf = $targetPetition->workflow_status;
+                                $wf = $petition->workflow_status;
+                                $isDuplicatePetition = (bool) $petition->linked_petition_id || $petition->status === \App\Models\Petition::STATUS_DUPLICATE;
                             @endphp
                             <span
-                                class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest {{ $wf['pill_class'] }}">
-                                @if($targetPetition->decision)
-                                    Final: {{ \App\Models\Decision::getDecisionLabel($targetPetition->decision->final_decision) }}
+                                class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest {{ $wf['pill_class'] }}"
+                                title="{{ $wf['description'] ?? $wf['label'] }}">
+                                @if($isDuplicatePetition)
+                                    Duplicate
+                                @elseif($petition->decision)
+                                    Final: {{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}
                                 @else
                                     {{ $wf['label'] }}
                                 @endif

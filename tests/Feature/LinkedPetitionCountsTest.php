@@ -143,5 +143,57 @@ class LinkedPetitionCountsTest extends TestCase
         $this->assertFalse((bool)$this->duplicatePetition->is_cpsp_processed);
         $this->assertNull($this->duplicatePetition->processed_at);
     }
+
+    public function test_excel_export_includes_linked_duplicate_petitions_with_appropriate_status_and_recommendation(): void
+    {
+        // 1. Link duplicate
+        $this->actingAs($this->cpspUser)
+            ->withSession(['current_seat_id' => $this->cpspSeat->seat_id])
+            ->post(route('petitions.linkDuplicate', $this->duplicatePetition->hashid), [
+                'original_receipt_no' => $this->originalPetition->receipt_no,
+            ]);
+
+        $this->duplicatePetition->refresh();
+
+        // 2. Admin user with export permissions exports
+        $adminUser = User::factory()->create();
+        $adminRole = Role::findByName('admin', 'web');
+        $adminUser->assignRole($adminRole);
+
+        $response = $this->actingAs($adminUser)->get(route('petitions.export', ['tab' => 'all']));
+        $response->assertOk();
+
+        $content = $response->getContent();
+
+        // Both original and linked duplicate must be present
+        $this->assertStringContainsString($this->originalPetition->receipt_no, $content);
+        $this->assertStringContainsString($this->duplicatePetition->receipt_no, $content);
+
+        // Status and Recommendation for duplicate
+        $this->assertStringContainsString('Duplicate (Linked to ' . $this->originalPetition->receipt_no . ')', $content);
+        $this->assertStringContainsString('Linked as Duplicate', $content);
+    }
+
+    public function test_reports_table_shows_linked_duplicate_badge_on_original_petition(): void
+    {
+        // 1. Link duplicate
+        $this->actingAs($this->cpspUser)
+            ->withSession(['current_seat_id' => $this->cpspSeat->seat_id])
+            ->post(route('petitions.linkDuplicate', $this->duplicatePetition->hashid), [
+                'original_receipt_no' => $this->originalPetition->receipt_no,
+            ]);
+
+        // 2. Access petitions index
+        $adminUser = User::factory()->create();
+        $adminRole = Role::findByName('admin', 'web');
+        $adminUser->assignRole($adminRole);
+
+        $response = $this->actingAs($adminUser)->get(route('petitions.index', ['tab' => 'all']));
+        $response->assertOk();
+
+        // Original petition row displays badge with duplicate's receipt number
+        $response->assertSee($this->originalPetition->receipt_no);
+        $response->assertSee($this->duplicatePetition->receipt_no);
+    }
 }
 

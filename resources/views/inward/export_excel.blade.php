@@ -47,7 +47,9 @@
                 $complainant = $item->displayAddresses()->firstWhere('person_type', 'Complainant');
                 $wf = $item->workflow_status;
                 $status = $wf['label'];
-                if ($wf['label'] === 'Transferred' && $item->seat) {
+                if ($wf['label'] === 'Duplicate' || $item->linked_petition_id) {
+                    $status = 'Duplicate' . ($item->originalPetition ? ' (Linked to ' . $item->originalPetition->receipt_no . ')' : '');
+                } elseif ($wf['label'] === 'Transferred' && $item->seat) {
                     $status = 'Transferred to ' . $item->seat->seat_name;
                 } elseif ($wf['label'] === 'Returned') {
                     $status = 'Returned to Inward';

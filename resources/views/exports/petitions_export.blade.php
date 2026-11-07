@@ -157,12 +157,31 @@
                         return implode('<br style="mso-data-placement:same-cell;"><br style="mso-data-placement:same-cell;">', $details);
                     };
 
+                    $isDuplicate = (bool) $petition->linked_petition_id || $petition->status === \App\Models\Petition::STATUS_DUPLICATE;
+                    $linkedOriginalNo = $petition->originalPetition?->receipt_no;
+                    $statusDisplay = $isDuplicate 
+                        ? 'Duplicate' . ($linkedOriginalNo ? " (Linked to {$linkedOriginalNo})" : '') 
+                        : $petition->status;
+                    $fileNoDisplay = $petition->file_no ?? ($linkedOriginalNo && $petition->originalPetition?->file_no ? $petition->originalPetition->file_no . ' (Original)' : 'N/A');
+                    $proposedActionDisplay = $isDuplicate && empty($petition->proposed_action)
+                        ? ($linkedOriginalNo ? "Linked as Duplicate of {$linkedOriginalNo}" : 'Linked as Duplicate')
+                        : ($petition->proposed_action ?? '-');
+                    $decisionDisplay = $petition->decision 
+                        ? \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) 
+                        : ($isDuplicate ? 'Linked as Duplicate' : 'N/A');
+                    $finalRecDisplay = $petition->decision 
+                        ? $petition->decision->final_decision 
+                        : ($isDuplicate ? 'Linked as Duplicate' : 'N/A');
+                    $recTypeDisplay = ($petition->decision && $petition->decision->govt_recommendation_type) 
+                        ? $petition->decision->govt_recommendation_type 
+                        : ($isDuplicate ? ($linkedOriginalNo ? "Linked to {$linkedOriginalNo}" : 'Duplicate') : 'N/A');
+
                     $rowData = [
                         '#' => '<td class="text-center">' . ($index + 1) . '</td>',
                         'Receipt No' => '<td style="mso-number-format:\'\@\';" class="bold">' . $petition->receipt_no . '</td>',
                         'Received Date' => '<td class="text-center">' . ($petition->date_of_petition_received ? date('d-m-Y', strtotime($petition->date_of_petition_received)) : 'N/A') . '</td>',
                         'Processed Date' => '<td class="text-center">' . ($petition->processed_at ? date('d-m-Y', strtotime($petition->processed_at)) : 'N/A') . '</td>',
-                        'File No' => '<td class="text-center">' . ($petition->file_no ?? 'N/A') . '</td>',
+                        'File No' => '<td class="text-center">' . $fileNoDisplay . '</td>',
                         'File Date' => '<td class="text-center">' . ($petition->file_created_date ? date('d-m-Y', strtotime($petition->file_created_date)) : 'N/A') . '</td>',
                         'Complainant Name & Address' => '<td>' . $getComplainantNameAndAddress($complainants) . '</td>',
                         'Suspect Name & Address' => '<td>' . $getSuspectNameAndAddress($accused) . '</td>',
@@ -177,8 +196,8 @@
                         'Nature' => '<td>' . $petition->nature_of_petition . '</td>',
                         'Description' => '<td>' . $petition->description . '</td>',
                         'Mode' => '<td class="text-center">' . $petition->mode_of_petition_received . (strtolower($petition->mode_of_petition_received) === 'unit' && $petition->unit ? ' (' . $petition->unit->unit_name . ')' : '') . '</td>',
-                        'Proposed Action' => '<td>' . $petition->proposed_action . '</td>',
-                        'Present Status' => '<td class="text-center"><span class="bold">' . $petition->status . '</span></td>',
+                        'Proposed Action' => '<td>' . $proposedActionDisplay . '</td>',
+                        'Present Status' => '<td class="text-center"><span class="bold">' . $statusDisplay . '</span></td>',
                         'Seat' => '<td>' . ($petition->seat->seat_name ?? 'N/A') . '</td>',
                         'Unit' => '<td>' . ($petition->latestForwarding->toUnit->unit_name ?? 'N/A') . '</td>',
                         'Forwarded Date' => '<td class="text-center">' . ($petition->latestForwarding?->forwarded_date ? date('d-m-Y', strtotime($petition->latestForwarding->forwarded_date)) : 'N/A') . '</td>',
@@ -186,10 +205,10 @@
                         'VR Date' => '<td class="text-center">' . ($petition->latestForwarding?->vr_date ? date('d-m-Y', strtotime($petition->latestForwarding->vr_date)) : 'N/A') . '</td>',
                         'VR Received At CPSP' => '<td class="text-center">' . ($petition->latestForwarding?->vr_received_at_cpsp_date ? date('d-m-Y', strtotime($petition->latestForwarding->vr_received_at_cpsp_date)) : 'N/A') . '</td>',
                         'VR Remarks' => '<td>' . ($petition->latestForwarding->vr_remarks ?? 'N/A') . '</td>',
-                        'Decision' => '<td>' . ($petition->decision ? \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) : 'N/A') . '</td>',
+                        'Decision' => '<td>' . $decisionDisplay . '</td>',
                         'Final Decision Date' => '<td class="text-center">' . ($petition->decision?->decision_date ? date('d-m-Y', strtotime($petition->decision->decision_date)) : 'N/A') . '</td>',
-                        'Final Recommendation' => '<td>' . ($petition->decision ? $petition->decision->final_decision : 'N/A') . '</td>',
-                        'Recommendation Type' => '<td class="text-center">' . (($petition->decision && $petition->decision->govt_recommendation_type) ? $petition->decision->govt_recommendation_type : 'N/A') . '</td>',
+                        'Final Recommendation' => '<td>' . $finalRecDisplay . '</td>',
+                        'Recommendation Type' => '<td class="text-center">' . $recTypeDisplay . '</td>',
                         'Directorate Order No' => '<td>' . ($petition->decision->directorate_order_number ?? 'N/A') . '</td>',
                     ];
                 @endphp

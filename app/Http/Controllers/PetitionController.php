@@ -1073,7 +1073,7 @@ class PetitionController extends Controller
         }
 
         $tab = $request->input('tab', 'all');
-        $query = $this->getPetitionsQuery($request);
+        $query = $this->getPetitionsQuery($request, includeDuplicates: true);
 
         $petitions = $query->get();
 
@@ -1747,7 +1747,7 @@ class PetitionController extends Controller
     /**
      * Helper to build the filtered petitions query.
      */
-    private function getPetitionsQuery(Request $request)
+    private function getPetitionsQuery(Request $request, bool $includeDuplicates = false)
     {
         $request->validate([
             'date_from' => 'nullable|date|before_or_equal:today',
@@ -1755,21 +1755,30 @@ class PetitionController extends Controller
         ]);
 
         $user = Auth::user();
-        $query = Petition::with(['addresses.district', 'addresses.department', 'addresses.designation', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user.seatUsers.seat', 'seat.activeAssignment.user', 'unit', 'originalPetition.addresses.district', 'originalPetition.addresses.department', 'originalPetition.addresses.designation', 'returnedByUser', 'processedByUser', 'processedBySeat', 'updatedByUser', 'updatedBySeat']);
+        $query = Petition::with(['addresses.district', 'addresses.department', 'addresses.designation', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user.seatUsers.seat', 'seat.activeAssignment.user', 'unit', 'originalPetition.addresses.district', 'originalPetition.addresses.department', 'originalPetition.addresses.designation', 'returnedByUser', 'processedByUser', 'processedBySeat', 'updatedByUser', 'updatedBySeat', 'duplicates']);
         $this->applyPetitionAccessScope($query, $user);
         $isInwardOnly = $user && ($user->hasRole(['inward', 'Inward']) || str_contains(strtolower($user->currentSeatUser()?->seat?->seat_name ?? ''), 'inward'));
         $defaultTab = $isInwardOnly ? 'inward' : 'all';
         $tab = $request->input('tab', $defaultTab);
 
         // Apply filters using scopes
-        $query->filterByTab($tab)
-              ->filterByStatus($request->status, $tab)
+        if ($includeDuplicates && $tab === 'received') {
+            // When exporting processed petitions, include duplicate petitions that were processed/linked
+            $query->where(function ($q) {
+                $q->where('status', Petition::STATUS_RECEIVED)
+                  ->orWhere('status', Petition::STATUS_DUPLICATE);
+            })->where('is_cpsp_processed', true);
+        } else {
+            $query->filterByTab($tab);
+        }
+
+        $query->filterByStatus($request->status, $tab)
               ->filterByRecommendationType($request->recommendation_type, $request->status)
               ->search($request->search, $request->search_type)
               ->filterDates($request->date_from, $request->date_to, $request->status, $tab);
 
-        // Hide duplicate (linked) petitions from general list, unless explicitly searched
-        if (!$request->filled('receipt_no') && !$request->filled('search')) {
+        // Hide duplicate (linked) petitions from general list, unless explicitly searched or explicitly included (e.g. for Excel export)
+        if (!$includeDuplicates && !$request->filled('receipt_no') && !$request->filled('search')) {
             $query->whereNull('linked_petition_id');
         }
 
