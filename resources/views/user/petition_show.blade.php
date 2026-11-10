@@ -30,6 +30,10 @@
                             <span class="inline-block w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
                             <span>Unit: <span class="font-bold text-indigo-700">{{ $petition->unit->unit_name }}</span></span>
                         @endif
+                        @if($petition->concernedDistrict)
+                            <span class="inline-block w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
+                            <span>District: <span class="font-bold text-rose-700">{{ $petition->concernedDistrict->district_name }}</span></span>
+                        @endif
                         @if($petition->user)
                             <span class="inline-block w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
                             <span>Created By: <span class="font-bold text-slate-800">{{ $petition->user->name }}</span></span>
@@ -241,6 +245,15 @@
                         <div><span class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Nature
                                 of Petition</span> <span
                                 class="font-semibold text-gray-900">{{ $petition->nature_of_petition }}</span></div>
+                        @if($petition->concernedDistrict)
+                            <div>
+                                <span class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Concerned District</span>
+                                <span class="font-semibold text-gray-900 flex items-center gap-1.5">
+                                    <i data-lucide="map-pin" class="w-4 h-4 text-rose-500 shrink-0"></i>
+                                    <span>{{ $petition->concernedDistrict->district_name }}{{ $petition->concernedDistrict->district_code ? ' (' . $petition->concernedDistrict->district_code . ')' : '' }}</span>
+                                </span>
+                            </div>
+                        @endif
                         <div>
                             <span class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Mode
                                 Received</span>
@@ -1116,7 +1129,7 @@
                                                 Final :
                                                 {{ \App\Models\Decision::getDecisionLabel($petition->originalPetition->decision->final_decision) }}
                                             @else
-                                                {{ $petition->originalPetition->status }}
+                                                {{ $petition->originalPetition->status === 'Received' ? 'Processed' : $petition->originalPetition->status }}
                                             @endif
                                         </span>
                                     </td>
@@ -1159,7 +1172,7 @@
                                                 @if($dup->decision)
                                                     Final : {{ \App\Models\Decision::getDecisionLabel($dup->decision->final_decision) }}
                                                 @else
-                                                    {{ $dup->status }}
+                                                    {{ $dup->status === 'Received' ? 'Processed' : $dup->status }}
                                                 @endif
                                             </span>
                                         </td>

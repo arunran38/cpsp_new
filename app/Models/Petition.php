@@ -12,6 +12,18 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use App\Services\HashidService;
 
+/**
+ * App\Models\Petition
+ *
+ * @property int $petition_id
+ * @property string $receipt_no
+ * @property int|null $linked_petition_id
+ * @property \App\Models\Petition|null $originalPetition
+ * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\Address> $addresses
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Petition query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Petition excludeTSectionIfNotAuthorized(?\App\Models\User $user = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Petition accessibleInwardPetitions(\App\Models\User $user, ?string $scopeFilter = null)
+ */
 class Petition extends Model
 {
     use SoftDeletes, HasFactory;
@@ -45,6 +57,7 @@ class Petition extends Model
         'seat_id',
         'created_by_seat_id',
         'unit_id',
+        'concerned_district_id',
         'date_of_petition_received_at_unit',
         'linked_petition_id',
         'is_cpsp_processed',
@@ -209,6 +222,11 @@ class Petition extends Model
         return $this->belongsTo(Unit::class, 'unit_id', 'unit_id');
     }
 
+    public function concernedDistrict(): BelongsTo
+    {
+        return $this->belongsTo(District::class, 'concerned_district_id', 'district_id');
+    }
+
     /**
      * Relationship: User who first opened this Inward petition at CPSP
      */
@@ -350,6 +368,26 @@ class Petition extends Model
     {
         $id = HashidService::decode($hashid) ?? $hashid;
         return static::findOrFail($id);
+    }
+
+    /**
+     * Get user-friendly display status label.
+     */
+    public function getStatusLabelAttribute(): string
+    {
+        if ($this->status === self::STATUS_RECEIVED) {
+            return 'Processed';
+        }
+        if ($this->status === 'Sent_to_Govt') {
+            return 'Sent to Govt';
+        }
+        if ($this->status === 'Sent_to_SPC') {
+            return 'Sent to SPC';
+        }
+        if ($this->status === 'VR_Received') {
+            return 'VR Received';
+        }
+        return (string) $this->status;
     }
 
     /**
@@ -607,7 +645,7 @@ class Petition extends Model
             return $query->whereHas('forwardings', fn($q) => $q->whereNotNull('vr_received_at_cpsp_date'));
         } 
         
-        if ($status === self::STATUS_RECEIVED && $tab === 'received') {
+        if ($status === self::STATUS_RECEIVED || $status === 'Processed') {
             return $query->where('status', self::STATUS_RECEIVED);
         }
 

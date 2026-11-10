@@ -6,6 +6,11 @@ use App\Models\Petition;
 use App\Models\Upload;
 use App\Models\Seat;
 use App\Models\User;
+use App\Models\PetitionDraft;
+use App\Models\District;
+use App\Models\DesignationList;
+use App\Models\DepartmentList;
+use App\Models\Unit;
 use App\Http\Requests\StorePetitionRequest;
 use App\Http\Requests\UpdatePetitionRequest;
 use App\Services\PetitionService;
@@ -24,6 +29,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -45,14 +51,14 @@ class PetitionController extends Controller
     {
         $this->authorize('create', Petition::class);
         $user = Auth::user();
-        $draft = \App\Models\PetitionDraft::where('user_id', $user->user_id)
+        $draft = PetitionDraft::where('user_id', $user->user_id)
             ->where('type', 'create')
             ->first();
 
-        $districts = \App\Models\District::orderBy('district_id')->get();
-        $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
-        $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
-        $units = \App\Models\Unit::orderBy('unit_name')->get();
+        $districts = District::orderBy('district_id')->get();
+        $designations = DesignationList::orderBy('designation_name')->get();
+        $departments = DepartmentList::orderBy('department_name')->get();
+        $units = Unit::orderBy('unit_name')->get();
         return view('user.petition_add', compact('districts', 'designations', 'departments', 'units', 'draft'));
     }
 
@@ -104,45 +110,19 @@ class PetitionController extends Controller
         }
 
         // Seat locking for restricted CPSP users
-        $isSeatLocked = false;
-        $defaultSeatId = null;
-        $currentSeatName = null;
+        $isSeatLocked = ($isCpspUser && !$isAdminOrSuperAdmin && !$user->canAccess('view all petitions') && $currentSeat);
+        $defaultSeatId = $isSeatLocked ? $currentSeat->seat_id : null;
+        $currentSeatName = $isSeatLocked ? $currentSeat->seat_name : null;
 
-        $canCpsp = $user->canAccessCpspSection();
-        $canT = $user->canAccessTSection();
-        $tSeatIds = Seat::getTSectionSeatIds();
-
-        if ($isCpspUser && !$isAdminOrSuperAdmin && !$user->canAccess('view all petitions') && $currentSeat) {
-            $isSeatLocked = true;
-            $defaultSeatId = $currentSeat->seat_id;
-            $currentSeatName = $currentSeat->seat_name;
-            $seats = collect([$currentSeat]);
-        } else {
-            $seatsQuery = Seat::eligibleForInward()->with(['activeAssignment.user']);
-            if ($canCpsp && !$canT) {
-                $seatsQuery->whereNotIn('seat_id', $tSeatIds);
-            } elseif (!$canCpsp && $canT) {
-                $seatsQuery->whereIn('seat_id', $tSeatIds);
-            } elseif (!$canCpsp && !$canT) {
-                $seatsQuery->whereRaw('1 = 0');
-            }
-            $seats = $seatsQuery->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
-        }
-
+        $seats = $this->getInwardEligibleSeats($user, $currentSeat, $isSeatLocked);
         $inwardSeats = Seat::where('seat_name', 'like', '%Inward%')->where('is_active', true)->get();
-        $units = \App\Models\Unit::orderBy('unit_name')->get();
-        $districts = \App\Models\District::orderBy('district_id')->get();
-        $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
-        $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
+        $units = Unit::orderBy('unit_name')->get();
+        $districts = District::orderBy('district_id')->get();
+        $designations = DesignationList::orderBy('designation_name')->get();
+        $departments = DepartmentList::orderBy('department_name')->get();
 
         $transfersQuery = $this->buildInwardTransfersQuery($request, $user, $isSeatLocked, $defaultSeatId, $filters);
-
-        $countsQuery = clone $transfersQuery;
-        $counts = [
-            'all' => $countsQuery->count(),
-            'transferred' => (clone $countsQuery)->where('is_returned_to_inward', false)->count(),
-            'returned' => (clone $countsQuery)->where('is_returned_to_inward', true)->count(),
-        ];
+        $counts = $this->calculateTransferCounts($transfersQuery);
 
         if ($filter === 'transferred') {
             $transfersQuery->where('is_returned_to_inward', false);
@@ -430,65 +410,7 @@ class PetitionController extends Controller
         $inwardSeatIds = Seat::getInwardSeatIds();
 
         // 1. Fetch only users who hold the Inward role, are assigned to an active Inward seat, or have created inward petitions
-        $creators = User::query()
-            ->with(['seatUsers.seat.roles', 'roles'])
-            ->where(function ($q) use ($inwardSeatIds) {
-                $q->whereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward']))
-                  ->orWhereHas('seatUsers', function ($su) use ($inwardSeatIds) {
-                      $su->where('is_active', true)
-                         ->where(function ($sQuery) use ($inwardSeatIds) {
-                             $sQuery->whereIn('seat_id', $inwardSeatIds)
-                                    ->orWhereHas('seat', function ($s) {
-                                        $s->where('seat_name', 'like', '%Inward%')
-                                          ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward']));
-                                    });
-                         });
-                  })
-                  ->orWhereHas('petitions', function ($pq) use ($inwardSeatIds) {
-                      $pq->whereIn('created_by_seat_id', $inwardSeatIds);
-                  });
-            })
-            ->whereDoesntHave('seatUsers', function ($su) {
-                $su->where('is_active', true)
-                   ->whereHas('seat', function ($s) {
-                       $s->where(function ($sq) {
-                           $sq->where('seat_name', 'like', '%Director%')
-                              ->orWhere('seat_name', 'like', '%T-%')
-                              ->orWhere('seat_name', 'like', 'T1%')
-                              ->orWhere('seat_name', 'like', 'T2%')
-                              ->orWhere('seat_name', 'like', 'T3%');
-                       });
-                   });
-            })
-            ->orderBy('name')
-            ->get();
-
-        // Format creator display names: "Officer Name (INWARD 1)"
-        foreach ($creators as $creator) {
-            $inwardSeat = $creator->seatUsers
-                ->where('is_active', true)
-                ->first(fn($su) => $su->seat && (
-                    str_contains(strtolower($su->seat->seat_name), 'inward') ||
-                    $su->seat->hasRole(['inward', 'Inward'])
-                ))?->seat;
-
-            if ($inwardSeat) {
-                $rawSeatName = strtoupper(trim($inwardSeat->seat_name));
-                $designation = preg_replace('/^(INWARD)\s*(\d+)$/i', '$1 $2', $rawSeatName);
-            } else {
-                $petitionSeat = Petition::where('user_id', $creator->user_id)
-                    ->whereIn('created_by_seat_id', $inwardSeatIds)
-                    ->with('createdBySeat')
-                    ->first()?->createdBySeat;
-                if ($petitionSeat) {
-                    $designation = strtoupper(trim($petitionSeat->seat_name));
-                } else {
-                    $designation = 'INWARD';
-                }
-            }
-
-            $creator->inward_display_name = "{$creator->name} ({$designation})";
-        }
+        $creators = $this->getEligibleCreators($inwardSeatIds);
 
         // 2. Resolve creator filter with strict backend security
         $canCreateInward = $user->canAccess('create inward petitions')
@@ -792,7 +714,7 @@ class PetitionController extends Controller
                 $petition->save();
 
                 // Clear creation draft on duplicate linking
-                \App\Models\PetitionDraft::where('user_id', Auth::id())
+                PetitionDraft::where('user_id', Auth::id())
                     ->where('type', 'create')
                     ->delete();
 
@@ -803,7 +725,7 @@ class PetitionController extends Controller
             $petition = $this->petitionService->store($request->validated(), $request->file('evidence_files') ?? []);
             
             // Clear creation draft on successful store
-            \App\Models\PetitionDraft::where('user_id', Auth::id())
+            PetitionDraft::where('user_id', Auth::id())
                 ->where('type', 'create')
                 ->delete();
 
@@ -921,13 +843,14 @@ class PetitionController extends Controller
             $users = $usersQuery->get();
         }
 
-        $departments = \App\Models\DepartmentList::orderBy('department_name')->pluck('department_name', 'id')->toArray();
+        $departments = DepartmentList::orderBy('department_name')->pluck('department_name', 'id')->toArray();
+        $districts = District::orderBy('district_id')->get();
 
         if ($request->ajax()) {
             return view('user.partials.reports_table', compact('petitions', 'tab'))->render();
         }
 
-        return view('user.reports', compact('petitions', 'tab', 'seats', 'users', 'departments'));
+        return view('user.reports', compact('petitions', 'tab', 'seats', 'users', 'departments', 'districts'));
     }
 
     /**
@@ -999,6 +922,8 @@ class PetitionController extends Controller
             'updatedByUser',
             'updatedBySeat',
             'unit',
+            'concernedDistrict',
+            'originalPetition.concernedDistrict',
         ])->findOrFail($realId);
         $this->authorize('view', $petition);
 
@@ -1017,7 +942,7 @@ class PetitionController extends Controller
     public function edit($id): View|RedirectResponse
     {
         $realId = HashidService::decode($id) ?? $id;
-        $petition = Petition::with(['addresses', 'uploads', 'unit'])->findOrFail($realId);
+        $petition = Petition::with(['addresses', 'uploads', 'unit', 'concernedDistrict'])->findOrFail($realId);
         $this->authorize('update', $petition);
 
         // Audit: Track when CPSP user opens/edits this petition for the first time
@@ -1030,7 +955,7 @@ class PetitionController extends Controller
             return redirect()->route('petitions.index')->with('error', 'Cannot edit a petition once a final decision has been taken.');
         }
 
-        $draft = \App\Models\PetitionDraft::where('user_id', $user?->user_id)
+        $draft = PetitionDraft::where('user_id', $user?->user_id)
             ->where('type', 'update')
             ->where('petition_id', $petition->petition_id)
             ->first();
@@ -1039,10 +964,10 @@ class PetitionController extends Controller
         $complainants = $this->formatAddressesForAlpine($petition, 'Complainant');
         $accused = $this->formatAddressesForAlpine($petition, 'Accused');
 
-        $districts = \App\Models\District::orderBy('district_id')->get();
-        $designations = \App\Models\DesignationList::orderBy('designation_name')->get();
-        $departments = \App\Models\DepartmentList::orderBy('department_name')->get();
-        $units = \App\Models\Unit::orderBy('unit_name')->get();
+        $districts = District::orderBy('district_id')->get();
+        $designations = DesignationList::orderBy('designation_name')->get();
+        $departments = DepartmentList::orderBy('department_name')->get();
+        $units = Unit::orderBy('unit_name')->get();
         return view('user.petition_edit', compact('petition', 'complainants', 'accused', 'districts', 'designations', 'departments', 'units', 'draft'));
     }
 
@@ -1064,7 +989,7 @@ class PetitionController extends Controller
             );
 
             // Clear update draft on successful update
-            \App\Models\PetitionDraft::where('user_id', Auth::id())
+            PetitionDraft::where('user_id', Auth::id())
                 ->where('type', 'update')
                 ->where('petition_id', $petition->petition_id)
                 ->delete();
@@ -1683,6 +1608,9 @@ class PetitionController extends Controller
         if ($request->filled('department_id')) {
             $query->whereHas('addresses', fn($q) => $q->where('department_id', $request->department_id));
         }
+        if ($request->filled('concerned_district_id')) {
+            $query->where('petitions.concerned_district_id', $request->concerned_district_id);
+        }
         if ($request->filled('section') && $request->section !== 'all') {
             $tSeatIds = Seat::getTSectionSeatIds();
             if ($request->section === 't_section') {
@@ -1921,5 +1849,117 @@ class PetitionController extends Controller
             $section,
             $selectedCreatorLabel
         ), $filename);
+    }
+
+    /**
+     * Get eligible seats for inward entry.
+     *
+     * @param User $user
+     * @param Seat|null $currentSeat
+     * @param bool $isSeatLocked
+     * @return \Illuminate\Support\Collection<int, Seat>
+     */
+    private function getInwardEligibleSeats(User $user, ?Seat $currentSeat, bool $isSeatLocked): \Illuminate\Support\Collection
+    {
+        if ($isSeatLocked && $currentSeat) {
+            return collect([$currentSeat]);
+        }
+
+        $canCpsp = $user->canAccessCpspSection();
+        $canT = $user->canAccessTSection();
+        $tSeatIds = Seat::getTSectionSeatIds();
+
+        $seatsQuery = Seat::eligibleForInward()->with(['activeAssignment.user']);
+        if ($canCpsp && !$canT) {
+            $seatsQuery->whereNotIn('seat_id', $tSeatIds);
+        } elseif (!$canCpsp && $canT) {
+            $seatsQuery->whereIn('seat_id', $tSeatIds);
+        } elseif (!$canCpsp && !$canT) {
+            $seatsQuery->whereRaw('1 = 0');
+        }
+
+        return $seatsQuery->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
+    }
+
+    /**
+     * Calculate transfer counts for inward petitions.
+     *
+     * @param Builder $transfersQuery
+     * @return array{all: int, transferred: int, returned: int}
+     */
+    private function calculateTransferCounts(Builder $transfersQuery): array
+    {
+        $countsQuery = clone $transfersQuery;
+        return [
+            'all' => $countsQuery->count(),
+            'transferred' => (clone $countsQuery)->where('is_returned_to_inward', false)->count(),
+            'returned' => (clone $countsQuery)->where('is_returned_to_inward', true)->count(),
+        ];
+    }
+
+    /**
+     * Get eligible inward petition creators with formatted display names.
+     *
+     * @param array<int> $inwardSeatIds
+     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     */
+    private function getEligibleCreators(array $inwardSeatIds): EloquentCollection
+    {
+        $creators = User::query()
+            ->with(['seatUsers.seat.roles', 'roles'])
+            ->where(function ($q) use ($inwardSeatIds) {
+                $q->whereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward']))
+                  ->orWhereHas('seatUsers', function ($su) use ($inwardSeatIds) {
+                      $su->where('is_active', true)
+                         ->where(function ($sQuery) use ($inwardSeatIds) {
+                             $sQuery->whereIn('seat_id', $inwardSeatIds)
+                                    ->orWhereHas('seat', function ($s) {
+                                        $s->where('seat_name', 'like', '%Inward%')
+                                          ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward']));
+                                    });
+                         });
+                  })
+                  ->orWhereHas('petitions', function ($pq) use ($inwardSeatIds) {
+                      $pq->whereIn('created_by_seat_id', $inwardSeatIds);
+                  });
+            })
+            ->whereDoesntHave('seatUsers', function ($su) {
+                $su->where('is_active', true)
+                   ->whereHas('seat', function ($s) {
+                       $s->where(function ($sq) {
+                           $sq->where('seat_name', 'like', '%Director%')
+                              ->orWhere('seat_name', 'like', '%T-%')
+                              ->orWhere('seat_name', 'like', 'T1%')
+                              ->orWhere('seat_name', 'like', 'T2%')
+                              ->orWhere('seat_name', 'like', 'T3%');
+                       });
+                   });
+            })
+            ->orderBy('name')
+            ->get();
+
+        foreach ($creators as $creator) {
+            $inwardSeat = $creator->seatUsers
+                ->where('is_active', true)
+                ->first(fn($su) => $su->seat && (
+                    str_contains(strtolower($su->seat->seat_name), 'inward') ||
+                    $su->seat->hasRole(['inward', 'Inward'])
+                ))?->seat;
+
+            if ($inwardSeat) {
+                $rawSeatName = strtoupper(trim($inwardSeat->seat_name));
+                $designation = preg_replace('/^(INWARD)\s*(\d+)$/i', '$1 $2', $rawSeatName);
+            } else {
+                $petitionSeat = Petition::where('user_id', $creator->user_id)
+                    ->whereIn('created_by_seat_id', $inwardSeatIds)
+                    ->with('createdBySeat')
+                    ->first()?->createdBySeat;
+                $designation = $petitionSeat ? strtoupper(trim($petitionSeat->seat_name)) : 'INWARD';
+            }
+
+            $creator->inward_display_name = "{$creator->name} ({$designation})";
+        }
+
+        return $creators;
     }
 }

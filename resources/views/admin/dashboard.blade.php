@@ -65,7 +65,8 @@
             ->get(['status', \Illuminate\Support\Facades\DB::raw('count(*) as count')])
             ->pluck('count', 'status');
 
-        $chartStatusLabels = json_encode($statusStats->keys()->toArray());
+        $chartStatusKeys = $statusStats->keys()->map(fn($k) => $k === 'Received' ? 'Processed' : ($k === 'Sent_to_Govt' ? 'Sent to Govt' : ($k === 'Sent_to_SPC' ? 'Sent to SPC' : ($k === 'VR_Received' ? 'VR Received' : $k))))->toArray();
+        $chartStatusLabels = json_encode($chartStatusKeys);
         $chartStatusData = json_encode($statusStats->values()->toArray());
 
         $latestUsers = \App\Models\User::orderBy('created_at', 'desc')->take(5)->get();

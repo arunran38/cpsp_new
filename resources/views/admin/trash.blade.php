@@ -151,7 +151,7 @@
                                 'file_no' => $petition->file_no,
                                 'nature' => $petition->nature_of_petition,
                                 'mode' => $petition->mode_of_petition_received,
-                                'status' => $petition->status,
+                                'status' => $petition->status === 'Received' ? 'Processed' : $petition->status,
                                 'date_received' => $petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') : 'N/A',
                                 'deleted_at' => \Carbon\Carbon::parse($petition->deleted_at)->format('d M, Y h:i A'),
                                 'deleted_at_human' => \Carbon\Carbon::parse($petition->deleted_at)->diffForHumans(),
@@ -462,7 +462,7 @@
                     </div>
                     <div>
                         <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Lifecycle Status</span>
-                        <span class="font-bold text-slate-800 text-xs" x-text="selectedItem.status || 'Received'"></span>
+                        <span class="font-bold text-slate-800 text-xs" x-text="selectedItem.status || 'Processed'"></span>
                     </div>
                     <div class="col-span-2 pt-2 border-t border-slate-200/60">
                         <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Desk / Unit</span>

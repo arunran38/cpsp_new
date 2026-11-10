@@ -156,6 +156,10 @@ class User extends Authenticatable
             'view seat diagnostics',
             'view department-wise report',
             'view pendency details',
+            'view district analysis report',
+            'view district analysis chart',
+            'export district analysis',
+            'filter district in master reports',
         ], \App\Services\TSectionPermissionRegistry::all());
 
         $isStrict = false;

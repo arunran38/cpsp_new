@@ -88,9 +88,11 @@ class PetitionControllerTest extends TestCase
     {
         Storage::fake('public');
 
+        $district = \App\Models\District::firstOrCreate(['district_name' => 'Thiruvananthapuram']);
         $data = [
             'receipt_no' => 'REC-2024-0001',
             'date_of_petition_received' => '2024-01-01',
+            'concerned_district_id' => $district->district_id,
             'nature_of_petition' => 'Bribery',
             'mode_of_petition_received' => 'Direct',
             'description' => 'Test description',
@@ -162,10 +164,12 @@ class PetitionControllerTest extends TestCase
             ->get(route('petitions.create'))
             ->assertOk();
 
+        $district = \App\Models\District::firstOrCreate(['district_name' => 'Thiruvananthapuram']);
         $this->actingAs($creator)->withSession(['current_seat_id' => $seat->seat_id])
             ->post(route('petitions.store'), [
                 'receipt_no' => 'NON-INWARD-CREATOR-1',
                 'date_of_petition_received' => now()->toDateString(),
+                'concerned_district_id' => $district->district_id,
                 'nature_of_petition' => 'Bribery',
                 'mode_of_petition_received' => 'Direct',
                 'description' => 'Created by a user without the Inward role.',
@@ -623,9 +627,11 @@ class PetitionControllerTest extends TestCase
             'date_of_petition_received' => '2024-01-15'
         ]);
         
+        $district = \App\Models\District::firstOrCreate(['district_name' => 'Thiruvananthapuram']);
         $department = \App\Models\DepartmentList::firstOrCreate(['department_name' => 'Police']);
         // Receipt Number and Date of Receipt are disabled and omitted from the update payload
         $updateData = [
+            'concerned_district_id' => $district->district_id,
             'nature_of_petition' => 'Misuse of authority',
             'mode_of_petition_received' => 'Email',
             'description' => 'Updated description content',
@@ -1140,10 +1146,13 @@ class PetitionControllerTest extends TestCase
         $this->assertStringNotContainsString('Not provided', $content);
         $this->assertStringNotContainsString('Not Provided', $content);
 
-        // 2. Suspect 1 (Both): must display department and address
+        // 2. Suspect 1 (Both): must display department and address, with address appearing before department
         $this->assertStringContainsString('Suspect With Dept And Addr', $content);
         $this->assertStringContainsString('Department: Revenue Department', $content);
         $this->assertStringContainsString('TC 10/20 Kowdiar - 695003', $content);
+        $addrPos = strpos($content, 'TC 10/20 Kowdiar - 695003');
+        $deptPos = strpos($content, 'Department: Revenue Department');
+        $this->assertLessThan($deptPos, $addrPos, 'Address, district, and PIN code must appear before Department name in Excel export.');
 
         // 3. Suspect 2 (Dept only): must display department
         $this->assertStringContainsString('Suspect With Dept Only', $content);
@@ -1169,6 +1178,9 @@ class PetitionControllerTest extends TestCase
         $this->assertStringNotContainsString('Not Provided', $customContent);
         $this->assertStringContainsString('Department: Revenue Department', $customContent);
         $this->assertStringContainsString('TC 10/20 Kowdiar - 695003', $customContent);
+        $customAddrPos = strpos($customContent, 'TC 10/20 Kowdiar - 695003');
+        $customDeptPos = strpos($customContent, 'Department: Revenue Department');
+        $this->assertLessThan($customDeptPos, $customAddrPos, 'Address, district, and PIN code must appear before Department name in custom Suspect Address export.');
         $this->assertStringContainsString('Department: Police Department', $customContent);
         $this->assertStringContainsString('MG Road Ernakulam', $customContent);
     }

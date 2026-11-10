@@ -213,9 +213,12 @@ class PetitionDraftTest extends TestCase
             'type' => 'create',
         ]);
 
+        $district = \App\Models\District::firstOrCreate(['district_name' => 'Thiruvananthapuram']);
+
         $response = $this->actingAs($this->user)->post(route('petitions.store'), [
             'receipt_no' => 'CLEAR-DRAFT-001',
             'date_of_petition_received' => now()->toDateString(),
+            'concerned_district_id' => $district->district_id,
             'nature_of_petition' => 'Bribery',
             'mode_of_petition_received' => 'Direct',
             'description' => 'Draft clear test on petition store',
@@ -258,7 +261,10 @@ class PetitionDraftTest extends TestCase
             'petition_id' => $petition->petition_id,
         ]);
 
+        $district = \App\Models\District::firstOrCreate(['district_name' => 'Thiruvananthapuram']);
+
         $updateData = [
+            'concerned_district_id' => $district->district_id,
             'nature_of_petition' => 'Misuse of authority',
             'mode_of_petition_received' => 'Email',
             'description' => 'Updated description to verify draft clear',

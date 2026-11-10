@@ -202,24 +202,33 @@
                 </div>
 
                 <div class="space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="lg:col-span-1">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
                             <x-input label="Receipt No *" name="receipt_no" x-model="petitionDetails.receipt_no" required
                                 placeholder="Ex. 12589/{{ now()->year }}" @input="count = $event.target.value.length"
                                 @blur="formatReceiptNo(); validateField($event); checkPetitionNumberUniqueness(petitionDetails.receipt_no)" />
                         </div>
-                        <div class="lg:col-span-1">
+                        <div>
                             <x-input type="date" placeholder="DD-MM-YYYY" label="Date of Receipt *"
                                 name="date_of_petition_received" x-model="petitionDetails.date" required
                                 max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}" />
                         </div>
-                        <div class="lg:col-span-1">
+                        <div>
+                            <x-select label="Concerned District *" name="concerned_district_id"
+                                x-model="petitionDetails.concerned_district_id" required
+                                :selected="old('concerned_district_id')"
+                                :options="['' => 'Select Concerned District'] + $districts->pluck('display_name', 'district_id')->toArray()" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
                             <x-select label="Nature of Petition *" name="nature_of_petition"
                                 x-model="petitionDetails.nature" required
                                 :selected="old('nature_of_petition')"
                                 :options="['' => 'Select Category', 'Amassment of Wealth' => 'Amassment of Wealth', 'Bribery' => 'Bribery', 'Misuse of authority' => 'Misuse of authority', 'Fraud / financial irregularities' => 'Fraud / financial irregularities', 'Serious negligence' => 'Serious negligence', 'others' => 'Others']" />
                         </div>
-                        <div class="lg:col-span-1">
+                        <div>
                             <x-select label="Mode of Petition *" name="mode_of_petition_received"
                                 x-model="petitionDetails.mode" required
                                 :selected="old('mode_of_petition_received')"
@@ -402,7 +411,7 @@
                                                             x-bind:name="`complainants[${index}][addresses][${addrIndex}][district_id]`"
                                                             x-model="addr.district_id" placeholder="Select District"
                                                             class="min-w-0 pr-10 text-left"
-                                                            :options="$districts->pluck('district_name', 'district_id')->toArray()" />
+                                                            :options="$districts->pluck('display_name', 'district_id')->toArray()" />
                                                 </div>
                                                 <div class="min-w-0 md:col-span-2 xl:col-span-2">
                                                         <x-input label="Pincode" name="comp_pincode"
@@ -623,7 +632,7 @@
                                                         x-bind:name="`accused[${index}][addresses][${addrIndex}][district_id]`"
                                                         x-model="addr.district_id" placeholder="Select District"
                                                         class="min-w-0 pr-10 text-left"
-                                                        :options="$districts->pluck('district_name', 'district_id')->toArray()" />
+                                                        :options="$districts->pluck('display_name', 'district_id')->toArray()" />
                                             </div>
                                             <div class="min-w-0 md:col-span-2 xl:col-span-2">
                                                     <x-input label="Pincode" name="acc_pincode"
@@ -751,7 +760,7 @@
 
                     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                         <div
-                            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+                            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
                             <div class="p-5">
                                 <p
                                     class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
@@ -766,6 +775,14 @@
                                     <i data-lucide="calendar" class="w-3.5 h-3.5"></i> Log Date
                                 </p>
                                 <p class="text-base font-semibold text-slate-900" x-text="petitionDetails.date || '-'"></p>
+                            </div>
+                            <div class="p-5">
+                                <p
+                                    class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-rose-500"></i> District
+                                </p>
+                                <p class="text-base font-semibold text-slate-900" x-text="districtNames[petitionDetails.concerned_district_id] || '-'">
+                                </p>
                             </div>
                             <div class="p-5">
                                 <p
@@ -1143,7 +1160,7 @@
                 autoSaveTimer: null,
 
                 step: {{ old('step') ? old('step') : 'initialStep' }},
-                districtNames: @json($districts->pluck('district_name', 'district_id')),
+                districtNames: @json($districts->pluck('display_name', 'district_id')),
                 unitNames: @json($unitsList->pluck('unit_name', 'unit_id')),
                 formErrors: @json((object) $errors->getMessages()),
 
@@ -1151,6 +1168,7 @@
                 petitionDetails: {
                     receipt_no: '{{ old('receipt_no') }}' || (initialDraft?.petitionDetails?.receipt_no || ''),
                     date: '{{ old('date_of_petition_received') }}' || (initialDraft?.petitionDetails?.date || ''),
+                    concerned_district_id: '{{ old('concerned_district_id') }}' || (initialDraft?.petitionDetails?.concerned_district_id || ''),
                     nature: (function() {
                         const oldNature = '{{ old('nature_of_petition') }}';
                         if (oldNature && oldNature !== 'General Inward' && validNatures.includes(oldNature)) return oldNature;
@@ -1185,6 +1203,7 @@
                 saveDraft() {
                     const pd = this.petitionDetails;
                     const hasData = (pd.receipt_no && pd.receipt_no.trim()) ||
+                                    (pd.concerned_district_id && String(pd.concerned_district_id).trim()) ||
                                     (pd.nature && pd.nature.trim()) ||
                                     (pd.description && pd.description.trim()) ||
                                     this.step > 1 ||
@@ -1297,6 +1316,7 @@
                     this.petitionDetails = {
                         receipt_no: '',
                         date: '',
+                        concerned_district_id: '',
                         nature: '',
                         mode: '',
                         mode_others: '',
@@ -1322,6 +1342,14 @@
                     this.$watch('complainants', () => this.debouncedAutoSave(), { deep: true });
                     this.$watch('accused', () => this.debouncedAutoSave(), { deep: true });
 
+                    this.$watch('petitionDetails.concerned_district_id', (newDistrict) => {
+                        if (newDistrict && String(newDistrict).trim() !== '') {
+                            delete this.formErrors['concerned_district_id'];
+                        } else {
+                            this.formErrors['concerned_district_id'] = 'Concerned district is required.';
+                        }
+                        this.formErrors = { ...this.formErrors };
+                    });
                     this.$watch('petitionDetails.mode', (newMode) => {
                         if (newMode && String(newMode).trim() !== '') {
                             delete this.formErrors['mode_of_petition_received'];
@@ -1529,6 +1557,7 @@
                         const step1Required = [
                             { key: 'receipt_no', name: 'receipt_no', message: 'This field is required.' },
                             { key: 'date', name: 'date_of_petition_received', message: 'This field is required.' },
+                            { key: 'concerned_district_id', name: 'concerned_district_id', message: 'Concerned district is required.' },
                             { key: 'nature', name: 'nature_of_petition', message: 'This field is required.' },
                             { key: 'mode', name: 'mode_of_petition_received', message: 'This field is required.' },
                             { key: 'description', name: 'description', message: 'This field is required.' }
@@ -1808,6 +1837,12 @@
                     } else if (fieldName.includes('[address]') || fieldName === 'address') {
                         if (el.hasAttribute('required') && !fieldValue) {
                             this.formErrors[fieldName] = 'Address is required.';
+                        } else {
+                            this.formErrors[fieldName] = '';
+                        }
+                    } else if (fieldName === 'concerned_district_id') {
+                        if (!fieldValue || String(fieldValue).trim() === '') {
+                            this.formErrors[fieldName] = 'Concerned district is required.';
                         } else {
                             this.formErrors[fieldName] = '';
                         }

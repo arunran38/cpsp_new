@@ -645,12 +645,12 @@
                 </a>
                 @endif
 
-                @if(Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view department-wise report') || Auth::user()->canAccess('view pendency details'))
+                @if(Auth::user()->canAccess('view seat diagnostics') || Auth::user()->canAccess('view department-wise report') || Auth::user()->canAccess('view pendency details') || Auth::user()->canAccess('view district analysis report'))
                 <!-- Statistical Reports Dropdown -->
                 <div x-data="{ 
                         hoverOpen: false,
                         hoverTimeout: null,
-                        reportsOpen: {{ request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') || request()->routeIs('admin.reports.pendency') ? 'true' : 'false' }}
+                        reportsOpen: {{ request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') || request()->routeIs('admin.reports.pendency') || request()->routeIs('admin.reports.district-analysis*') ? 'true' : 'false' }}
                     }" 
                     @mouseenter="hoverOpen = true; clearTimeout(hoverTimeout)"
                     @mouseleave="hoverTimeout = setTimeout(() => { hoverOpen = false }, 300)"
@@ -660,7 +660,7 @@
                             class="nav-item-transition flex items-center justify-between w-full px-4 py-3 text-[15px] font-medium rounded-xl group"
                             :class="(reportsOpen || hoverOpen) ? 'menu-open' : 'inactive-nav'">
                         <div class="flex items-center gap-3">
-                            <i data-lucide="pie-chart" class="w-5 h-5 icon-bounce" :class="(reportsOpen || hoverOpen) || request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') || request()->routeIs('admin.reports.pendency') ? 'text-indigo-400' : ''"></i>
+                            <i data-lucide="pie-chart" class="w-5 h-5 icon-bounce" :class="(reportsOpen || hoverOpen) || request()->routeIs('admin.seats.statistics') || request()->routeIs('admin.departments.analysis') || request()->routeIs('admin.reports.pendency') || request()->routeIs('admin.reports.district-analysis*') ? 'text-indigo-400' : ''"></i>
                             <span>Statistical Reports</span>
                         </div>
                         <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': reportsOpen || hoverOpen }"></i>
@@ -703,6 +703,16 @@
                             <span class="submenu-indicator shrink-0"></span>
                             <i data-lucide="clock" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('admin.reports.pendency') ? 'text-teal-400' : '' }}"></i>
                             <span class="whitespace-nowrap">Pendency Details</span>
+                        </a>
+                        @endif
+
+                        @if(Auth::user()->canAccess('view district analysis report'))
+                        <a href="{{ route('admin.reports.district-analysis') }}" 
+                           @click="reportsOpen = true"
+                           class="nav-item-transition flex items-center py-2.5 px-3 text-sm rounded-lg whitespace-nowrap {{ request()->routeIs('admin.reports.district-analysis*') ? 'active-submenu' : 'submenu-link' }}">
+                            <span class="submenu-indicator shrink-0"></span>
+                            <i data-lucide="map-pin" class="w-4 h-4 mr-2.5 shrink-0 {{ request()->routeIs('admin.reports.district-analysis*') ? 'text-teal-400' : '' }}"></i>
+                            <span class="whitespace-nowrap">District wise</span>
                         </a>
                         @endif
                     </div>

@@ -147,6 +147,7 @@ class StorePetitionRequest extends FormRequest
         ];
 
         if ($isInward) {
+            $rules['concerned_district_id'] = 'nullable|exists:districts,district_id';
             $rules['nature_of_petition'] = 'nullable|string';
             $rules['description'] = 'nullable|string';
             $rules['complainants'] = 'nullable|array';
@@ -163,6 +164,7 @@ class StorePetitionRequest extends FormRequest
             $rules['accused.*.pen_number'] = 'nullable|digits_between:6,7';
             $rules['accused.*.addresses'] = 'nullable|array';
         } else {
+            $rules['concerned_district_id'] = 'required|exists:districts,district_id';
             $rules['nature_of_petition'] = ['required', 'string', Rule::notIn(['General Inward'])];
             $rules['description'] = 'required|string';
             $rules['complainants'] = 'nullable|array';
@@ -189,6 +191,7 @@ class StorePetitionRequest extends FormRequest
             'receipt_no' => 'receipt number',
             'date_of_petition_received' => 'date of receipt',
             'nature_of_petition' => 'nature of petition',
+            'concerned_district_id' => 'concerned district',
             'mode_of_petition_received' => 'mode of petition',
             'description' => 'description',
             'seat_id' => 'concerned seat',
@@ -211,6 +214,8 @@ class StorePetitionRequest extends FormRequest
     {
         return [
             'date_of_petition_received.before_or_equal' => 'Date of receipt cannot be in the future.',
+            'concerned_district_id.required' => 'Concerned district is required.',
+            'concerned_district_id.exists' => 'The selected concerned district is invalid.',
             'nature_of_petition.required' => 'Nature of Petition is required.',
             'nature_of_petition.not_in' => 'Nature of Petition is required.',
             'accused.required' => 'At least one suspect department is required.',

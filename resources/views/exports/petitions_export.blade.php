@@ -63,16 +63,16 @@
                     $buildSuspectAddressDetails = function($addr) use ($cleanPart) {
                         $parts = [];
 
-                        // 1. Suspect Department (if available)
-                        $dept = $cleanPart($addr->department?->department_name);
-                        if ($dept) {
-                            $parts[] = "Department: " . $dept;
-                        }
-
-                        // 2. Suspect Physical Address (full_address, district, pincode)
+                        // 1. Suspect Physical Address (address, district, pincode)
                         $formatted = $addr->formatted_address;
                         if ($formatted && $formatted !== 'Not provided') {
                             $parts[] = e($formatted);
+                        }
+
+                        // 2. Suspect Department (after address, district, and PIN code)
+                        $dept = $cleanPart($addr->department?->department_name);
+                        if ($dept) {
+                            $parts[] = "Department: " . $dept;
                         }
 
                         return $parts;
@@ -161,7 +161,7 @@
                     $linkedOriginalNo = $petition->originalPetition?->receipt_no;
                     $statusDisplay = $isDuplicate 
                         ? 'Duplicate' . ($linkedOriginalNo ? " (Linked to {$linkedOriginalNo})" : '') 
-                        : $petition->status;
+                        : ($petition->status === 'Received' ? 'Processed' : $petition->status);
                     $fileNoDisplay = $petition->file_no ?? ($linkedOriginalNo && $petition->originalPetition?->file_no ? $petition->originalPetition->file_no . ' (Original)' : 'N/A');
                     $proposedActionDisplay = $isDuplicate && empty($petition->proposed_action)
                         ? ($linkedOriginalNo ? "Linked as Duplicate of {$linkedOriginalNo}" : 'Linked as Duplicate')
@@ -179,6 +179,7 @@
                     $rowData = [
                         '#' => '<td class="text-center">' . ($index + 1) . '</td>',
                         'Receipt No' => '<td style="mso-number-format:\'\@\';" class="bold">' . $petition->receipt_no . '</td>',
+                        'Concerned District' => '<td>' . e($petition->concernedDistrict ? ($petition->concernedDistrict->district_name . ($petition->concernedDistrict->district_code ? ' (' . $petition->concernedDistrict->district_code . ')' : '')) : 'N/A') . '</td>',
                         'Received Date' => '<td class="text-center">' . ($petition->date_of_petition_received ? date('d-m-Y', strtotime($petition->date_of_petition_received)) : 'N/A') . '</td>',
                         'Processed Date' => '<td class="text-center">' . ($petition->processed_at ? date('d-m-Y', strtotime($petition->processed_at)) : 'N/A') . '</td>',
                         'File No' => '<td class="text-center">' . $fileNoDisplay . '</td>',

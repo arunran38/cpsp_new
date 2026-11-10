@@ -227,21 +227,30 @@
                 class="p-8 sm:p-10">
 
                 <div class="space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="lg:col-span-1">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
                             <x-input label="Receipt No" :value="$petition->receipt_no" disabled readonly />
                         </div>
-                        <div class="lg:col-span-1">
+                        <div>
                             <x-input type="date" label="Date of Receipt" :value="$petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d') : ''" disabled
                                 readonly />
                         </div>
-                        <div class="lg:col-span-1">
+                        <div>
+                            <x-select label="Concerned District *" name="concerned_district_id"
+                                x-model="petitionDetails.concerned_district_id" required
+                                :selected="old('concerned_district_id', $petition->concerned_district_id)"
+                                :options="['' => 'Select Concerned District'] + $districts->pluck('display_name', 'district_id')->toArray()" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
                             <x-select label="Nature of Petition *" name="nature_of_petition"
                                 x-model="petitionDetails.nature" required
                                 :selected="old('nature_of_petition', ($petition->nature_of_petition === 'General Inward' ? '' : ($petition->nature_of_petition ?? '')))"
                                 :options="['' => 'Select Category', 'Amassment of Wealth' => 'Amassment of Wealth', 'Bribery' => 'Bribery', 'Misuse of authority' => 'Misuse of authority', 'Fraud / financial irregularities' => 'Fraud / financial irregularities', 'Serious negligence' => 'Serious negligence', 'others' => 'Others']" />
                         </div>
-                        <div class="lg:col-span-1">
+                        <div>
                             <x-select label="Mode of Petition *" name="mode_of_petition_received"
                                 x-model="petitionDetails.mode" required
                                 :selected="old('mode_of_petition_received', $petition->mode_of_petition_received ?? '')"
@@ -478,7 +487,7 @@
                                                                 x-model="addr.district_id" x-bind:required="step === 2"
                                                                 placeholder="Select District"
                                                                 class="min-w-0 pr-10 text-left"
-                                                                :options="$districts->pluck('district_name', 'district_id')->toArray()" />
+                                                                :options="$districts->pluck('display_name', 'district_id')->toArray()" />
                                                     </div>
                                                     <div class="min-w-0 md:col-span-2 xl:col-span-2">
                                                             <x-input label="Pincode" name="comp_pincode"
@@ -707,7 +716,7 @@
                                                                 x-model="addr.district_id" x-bind:required="step === 3"
                                                                 placeholder="Select District"
                                                                 class="min-w-0 pr-10 text-left"
-                                                                :options="$districts->pluck('district_name', 'district_id')->toArray()" />
+                                                                :options="$districts->pluck('display_name', 'district_id')->toArray()" />
                                                     </div>
                                                     <div class="min-w-0 md:col-span-2 xl:col-span-2">
                                                             <x-input label="Pincode"
@@ -942,6 +951,7 @@
             const originalPetitionDetails = {
                 receipt_no: {!! json_encode($petition->receipt_no) !!},
                 date: {!! json_encode($petition->date_of_petition_received) !!},
+                concerned_district_id: {!! json_encode($petition->concerned_district_id ? (string) $petition->concerned_district_id : '') !!},
                 nature: sanitizedOriginalNature,
                 mode: {!! json_encode($petition->mode_of_petition_received ?? '') !!},
                 mode_others: {!! json_encode($petition->mode_of_petition_received_others ?? '') !!},
@@ -999,6 +1009,7 @@
                 petitionDetails: {
                     receipt_no: {!! json_encode($petition->receipt_no) !!},
                     date: {!! json_encode($petition->date_of_petition_received) !!},
+                    concerned_district_id: {!! json_encode(old('concerned_district_id')) !!} || (initialDraft?.petitionDetails?.concerned_district_id ?? originalPetitionDetails.concerned_district_id ?? ''),
                     nature: (function () {
                         const oldNature = {!! json_encode(old('nature_of_petition')) !!};
                         if (oldNature && oldNature !== 'General Inward' && validNatures.includes(oldNature)) return oldNature;
@@ -1148,6 +1159,14 @@
                     this.$watch('complainants', () => this.debouncedAutoSave(), { deep: true });
                     this.$watch('accused', () => this.debouncedAutoSave(), { deep: true });
 
+                    this.$watch('petitionDetails.concerned_district_id', (newDistrict) => {
+                        if (newDistrict && String(newDistrict).trim() !== '') {
+                            delete this.formErrors['concerned_district_id'];
+                        } else {
+                            this.formErrors['concerned_district_id'] = 'Concerned district is required.';
+                        }
+                        this.formErrors = { ...this.formErrors };
+                    });
                     this.$watch('petitionDetails.mode', (newMode) => {
                         if (newMode && String(newMode).trim() !== '') {
                             delete this.formErrors['mode_of_petition_received'];
@@ -1425,6 +1444,7 @@
                     // Explicit check for step 1 required fields in Alpine model
                     if (step === 1) {
                         const step1Required = [
+                            { key: 'concerned_district_id', name: 'concerned_district_id', message: 'Concerned district is required.' },
                             { key: 'nature', name: 'nature_of_petition', message: 'This field is required.' },
                             { key: 'mode', name: 'mode_of_petition_received', message: 'This field is required.' },
                             { key: 'description', name: 'description', message: 'This field is required.' }
@@ -1549,6 +1569,15 @@
                         return;
                     }
 
+                    if (fieldName === 'concerned_district_id') {
+                        if (!fieldValue || String(fieldValue).trim() === '') {
+                            this.formErrors[fieldName] = 'Concerned district is required.';
+                        } else {
+                            delete this.formErrors[fieldName];
+                        }
+                        this.formErrors = { ...this.formErrors };
+                        return;
+                    }
                     if (fieldName === 'nature_of_petition') {
                         if (!fieldValue || fieldValue === 'General Inward' || !validNatures.includes(fieldValue)) {
                             this.formErrors[fieldName] = 'This field is required.';
@@ -1651,7 +1680,14 @@
                             }
                         }
                     } else {
-                        if (fieldName === 'nature_of_petition') {
+                        if (fieldName === 'concerned_district_id') {
+                            if (fieldValue) {
+                                delete this.formErrors[fieldName];
+                                this.formErrors = { ...this.formErrors };
+                            }
+                            return;
+                        }
+                    if (fieldName === 'nature_of_petition') {
                             if (fieldValue && fieldValue !== 'General Inward' && validNatures.includes(fieldValue)) {
                                 delete this.formErrors[fieldName];
                                 this.formErrors = { ...this.formErrors };

@@ -14,6 +14,7 @@ use App\Http\Controllers\TrashController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PermissionController;
+use App\Http\Controllers\Admin\DistrictAnalysisController;
 use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
@@ -108,6 +109,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/reports/pendency-details', [PetitionController::class, 'inwardStatistics'])->name('admin.reports.pendency');
     Route::get('/reports/pendency-details/export', [PetitionController::class, 'inwardStatisticsExport'])->name('admin.reports.pendency.export');
+
+    // District Analysis
+    Route::get('/reports/district-analysis', [DistrictAnalysisController::class, 'index'])->name('admin.reports.district-analysis');
+    Route::get('/reports/district-analysis/export', [DistrictAnalysisController::class, 'export'])->name('admin.reports.district-analysis.export');
 
 
     Route::resource("seats", SeatController::class)->names([
