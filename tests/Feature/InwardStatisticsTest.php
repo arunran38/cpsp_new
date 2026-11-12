@@ -285,4 +285,288 @@ class InwardStatisticsTest extends TestCase
         $compliancesExportResponse = $this->actingAs($compliancesUser)->get(route('admin.reports.pendency.export'));
         $compliancesExportResponse->assertOk();
     }
+
+    public function test_tabbed_layout_renders_both_seat_wise_and_creator_wise_summaries(): void
+    {
+        $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
+        $cpspRole = Role::firstOrCreate(['name' => 'CPSP', 'guard_name' => 'web']);
+        $inwardRole = Role::firstOrCreate(['name' => 'Inward', 'guard_name' => 'web']);
+
+        $superAdminRole->givePermissionTo(
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'access admin dashboard', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view inward statistics', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view pendency details', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view processed statistics', 'guard_name' => 'web'])
+        );
+
+        $adminSeat = Seat::factory()->create(['seat_name' => 'Director Office']);
+        $adminSeat->assignRole($superAdminRole);
+
+        $cpspSeat = Seat::factory()->create(['seat_name' => 'CPSP 1']);
+        $cpspSeat->assignRole($cpspRole);
+
+        $admin = User::factory()->create(['name' => 'Admin Boss']);
+        $admin->assignRole($superAdminRole);
+        SeatUser::factory()->create([
+            'user_id' => $admin->user_id,
+            'seat_id' => $adminSeat->seat_id,
+            'is_active' => true,
+        ]);
+        session(['current_seat_id' => $adminSeat->seat_id]);
+
+        $clerk = User::factory()->create(['name' => 'Inward Desk Officer', 'pen' => '998877']);
+        $clerk->assignRole($inwardRole);
+
+        // Clerk creates 2 petitions, one processed and one pending
+        Petition::factory()->create([
+            'user_id' => $clerk->user_id,
+            'seat_id' => $cpspSeat->seat_id,
+            'is_cpsp_processed' => true,
+            'status' => 'Closed',
+        ]);
+        Petition::factory()->create([
+            'user_id' => $clerk->user_id,
+            'seat_id' => $cpspSeat->seat_id,
+            'is_cpsp_processed' => false,
+            'status' => 'Received',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.reports.pendency'));
+        $response->assertOk();
+        $response->assertSee('Seat-wise Summary');
+        $response->assertSee('Creator-wise Summary');
+        $response->assertSee('Petition Created By - Staff Summary Data Sheet');
+        $response->assertSee('Inward Desk Officer');
+        $response->assertSee('PEN: 998877');
+        $response->assertViewHas('creatorStats', function ($creatorStats) use ($clerk) {
+            $clerkStat = collect($creatorStats)->firstWhere('user_id', $clerk->user_id);
+            return $clerkStat && $clerkStat['total_created'] === 2 && $clerkStat['processed'] === 1 && $clerkStat['pending'] === 1;
+        });
+        $response->assertViewHas('creatorSummaryTotals', function ($totals) {
+            return $totals['totalCreated'] === 2 && $totals['processed'] === 1 && $totals['pending'] === 1;
+        });
+    }
+
+    public function test_creator_statistics_export_works_with_tab_creators(): void
+    {
+        $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
+        $superAdminRole->givePermissionTo(
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'access admin dashboard', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view inward statistics', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view pendency details', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'export statistics', 'guard_name' => 'web'])
+        );
+
+        $adminSeat = Seat::factory()->create(['seat_name' => 'Director Office']);
+        $adminSeat->assignRole($superAdminRole);
+
+        $admin = User::factory()->create(['name' => 'Admin Exporter']);
+        $admin->assignRole($superAdminRole);
+        SeatUser::factory()->create([
+            'user_id' => $admin->user_id,
+            'seat_id' => $adminSeat->seat_id,
+            'is_active' => true,
+        ]);
+        session(['current_seat_id' => $adminSeat->seat_id]);
+
+        $response = $this->actingAs($admin)->get(route('admin.reports.pendency.export', ['tab' => 'creators']));
+        $response->assertOk();
+    }
+
+    public function test_inward_statistics_strictly_counts_inward_originated_petitions_and_matches_view_inward_petitions(): void
+    {
+        $superAdminRole = Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
+        $inwardRole = Role::firstOrCreate(['name' => 'Inward', 'guard_name' => 'web']);
+        $cpspRole = Role::firstOrCreate(['name' => 'CPSP', 'guard_name' => 'web']);
+
+        $superAdminRole->givePermissionTo(
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'access admin dashboard', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view inward statistics', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view inward registration', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'create inward petitions', 'guard_name' => 'web'])
+        );
+
+        $adminSeat = Seat::factory()->create(['seat_name' => 'Director Office']);
+        $adminSeat->assignRole($superAdminRole);
+
+        $admin = User::factory()->create(['name' => 'Admin Inspector']);
+        $admin->assignRole($superAdminRole);
+        SeatUser::factory()->create([
+            'user_id' => $admin->user_id,
+            'seat_id' => $adminSeat->seat_id,
+            'is_active' => true,
+        ]);
+        session(['current_seat_id' => $adminSeat->seat_id]);
+
+        $inwardSeat = Seat::factory()->create(['seat_name' => 'INWARD I']);
+        $inwardSeat->assignRole($inwardRole);
+
+        $cpspSeat = Seat::factory()->create(['seat_name' => 'CPSP 1']);
+        $cpspSeat->assignRole($cpspRole);
+
+        $inwardUser = User::factory()->create(['name' => 'Inward Clerk']);
+        $inwardUser->assignRole($inwardRole);
+        SeatUser::factory()->create([
+            'user_id' => $inwardUser->user_id,
+            'seat_id' => $inwardSeat->seat_id,
+            'is_active' => true,
+        ]);
+
+        $cpspUser = User::factory()->create(['name' => 'CPSP Clerk']);
+        $cpspUser->assignRole($cpspRole);
+        SeatUser::factory()->create([
+            'user_id' => $cpspUser->user_id,
+            'seat_id' => $cpspSeat->seat_id,
+            'is_active' => true,
+        ]);
+
+        // 1. Inward-registered petition (assigned to CPSP 1)
+        $inwardPetition = Petition::factory()->create([
+            'receipt_no' => 'INW-001',
+            'user_id' => $inwardUser->user_id,
+            'seat_id' => $cpspSeat->seat_id,
+            'created_by_seat_id' => $inwardSeat->seat_id,
+            'is_cpsp_processed' => true,
+            'status' => 'Closed',
+        ]);
+
+        // 2. Direct CPSP-registered petition (also assigned to CPSP 1, but NOT created by inward!)
+        $cpspPetition = Petition::factory()->create([
+            'receipt_no' => 'CPSP-002',
+            'user_id' => $cpspUser->user_id,
+            'seat_id' => $cpspSeat->seat_id,
+            'created_by_seat_id' => $cpspSeat->seat_id,
+            'is_cpsp_processed' => true,
+            'status' => 'Closed',
+        ]);
+
+        // Inward Statistics should strictly count only the 1 inward petition, excluding the direct CPSP petition
+        $statsResponse = $this->actingAs($admin)->get(route('inward.statistics'));
+        $statsResponse->assertOk();
+        $statsResponse->assertViewHas('summaryTotals', fn ($totals) => $totals['totalSent'] === 1);
+        $statsResponse->assertViewHas('seatStats', function ($seatStats) {
+            $cpspRow = collect($seatStats)->firstWhere('seat_name', 'CPSP 1');
+            return $cpspRow && $cpspRow['total_sent'] === 1;
+        });
+
+        // View Inward Petitions should also list strictly only the 1 inward petition
+        $viewInwardResponse = $this->actingAs($admin)->get(route('inward.enter_petition'));
+        $viewInwardResponse->assertOk();
+        $viewInwardResponse->assertSee('INW-001');
+        $viewInwardResponse->assertDontSee('CPSP-002');
+    }
+
+    public function test_origin_filter_allows_switching_between_inward_direct_and_all_origins(): void
+    {
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        $inwardRole = Role::firstOrCreate(['name' => 'Inward', 'guard_name' => 'web']);
+        $cpspRole = Role::firstOrCreate(['name' => 'CPSP', 'guard_name' => 'web']);
+
+        $adminRole->givePermissionTo(
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'access admin dashboard', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view inward statistics', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view all inward statistics', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'filter petition origin in statistics', 'guard_name' => 'web'])
+        );
+
+        $adminSeat = Seat::factory()->create(['seat_name' => 'Admin Desk']);
+        $adminSeat->assignRole($adminRole);
+
+        $admin = User::factory()->create(['name' => 'Admin User']);
+        $admin->assignRole($adminRole);
+        SeatUser::factory()->create([
+            'user_id' => $admin->user_id,
+            'seat_id' => $adminSeat->seat_id,
+            'is_active' => true,
+        ]);
+        session(['current_seat_id' => $adminSeat->seat_id]);
+
+        $inwardSeat = Seat::factory()->create(['seat_name' => 'INWARD I']);
+        $inwardSeat->assignRole($inwardRole);
+
+        $cpspSeat = Seat::factory()->create(['seat_name' => 'CPSP 1']);
+        $cpspSeat->assignRole($cpspRole);
+
+        $inwardUser = User::factory()->create(['name' => 'Anudev Inward']);
+        $inwardUser->assignRole($inwardRole);
+        SeatUser::factory()->create([
+            'user_id' => $inwardUser->user_id,
+            'seat_id' => $inwardSeat->seat_id,
+            'is_active' => true,
+        ]);
+
+        $cpspUser = User::factory()->create(['name' => 'Sajeena CPSP']);
+        $cpspUser->assignRole($cpspRole);
+        SeatUser::factory()->create([
+            'user_id' => $cpspUser->user_id,
+            'seat_id' => $cpspSeat->seat_id,
+            'is_active' => true,
+        ]);
+
+        // 1. Inward petition
+        Petition::factory()->create([
+            'receipt_no' => 'INW-100',
+            'user_id' => $inwardUser->user_id,
+            'seat_id' => $cpspSeat->seat_id,
+            'created_by_seat_id' => $inwardSeat->seat_id,
+            'is_cpsp_processed' => true,
+            'status' => 'Closed',
+        ]);
+
+        // 2. Direct CPSP petition
+        Petition::factory()->create([
+            'receipt_no' => 'CPSP-200',
+            'user_id' => $cpspUser->user_id,
+            'seat_id' => $cpspSeat->seat_id,
+            'created_by_seat_id' => $cpspSeat->seat_id,
+            'is_cpsp_processed' => true,
+            'status' => 'Closed',
+        ]);
+
+        // Case 1: Default (inward only)
+        $defaultResp = $this->actingAs($admin)->get(route('inward.statistics'));
+        $defaultResp->assertOk();
+        $defaultResp->assertViewHas('origin', 'inward');
+        $defaultResp->assertViewHas('summaryTotals', fn ($totals) => $totals['totalSent'] === 1);
+        $defaultResp->assertSee('Inward Only');
+        $defaultResp->assertSee('Direct');
+        $defaultResp->assertSee('All Origins');
+
+        // Case 2: Origin = direct (only direct CPSP entries)
+        $directResp = $this->actingAs($admin)->get(route('inward.statistics', ['origin' => 'direct']));
+        $directResp->assertOk();
+        $directResp->assertViewHas('origin', 'direct');
+        $directResp->assertViewHas('summaryTotals', fn ($totals) => $totals['totalSent'] === 1);
+        $directResp->assertViewHas('creatorStats', function ($cStats) use ($cpspUser) {
+            return collect($cStats)->contains('user_id', $cpspUser->user_id);
+        });
+
+        // Case 3: Origin = all (both inward and direct entries)
+        $allResp = $this->actingAs($admin)->get(route('inward.statistics', ['origin' => 'all']));
+        $allResp->assertOk();
+        $allResp->assertViewHas('origin', 'all');
+        $allResp->assertViewHas('summaryTotals', fn ($totals) => $totals['totalSent'] === 2);
+        $allResp->assertViewHas('creatorStats', function ($cStats) use ($inwardUser, $cpspUser) {
+            $ids = collect($cStats)->pluck('user_id');
+            return $ids->contains($inwardUser->user_id) && $ids->contains($cpspUser->user_id);
+        });
+
+        // Case 4: Non-privileged inward user cannot bypass to direct/all
+        $ordinaryInward = User::factory()->create(['name' => 'Ordinary Clerk']);
+        $ordinaryInward->givePermissionTo(
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view inward statistics', 'guard_name' => 'web']),
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'view own inward statistics', 'guard_name' => 'web'])
+        );
+        SeatUser::factory()->create([
+            'user_id' => $ordinaryInward->user_id,
+            'seat_id' => $inwardSeat->seat_id,
+            'is_active' => true,
+        ]);
+        session(['current_seat_id' => $inwardSeat->seat_id]);
+
+        $restrictedResp = $this->actingAs($ordinaryInward)->get(route('inward.statistics', ['origin' => 'all']));
+        $restrictedResp->assertOk();
+        $restrictedResp->assertViewHas('origin', 'inward');
+        $restrictedResp->assertViewHas('canFilterOrigin', false);
+    }
 }

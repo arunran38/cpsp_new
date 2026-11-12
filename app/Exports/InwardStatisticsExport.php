@@ -17,9 +17,20 @@ class InwardStatisticsExport implements FromArray, WithHeadings, WithStyles, Sho
     protected $canViewProcessed;
     protected $section;
     protected $creatorLabel;
+    protected $origin;
+    protected $originLabel;
 
-    public function __construct(array $seatStats, array $summaryTotals, $dateFrom, $dateTo, bool $canViewProcessed, string $section = 'all', string $creatorLabel = 'All Creators')
-    {
+    public function __construct(
+        array $seatStats, 
+        array $summaryTotals, 
+        $dateFrom, 
+        $dateTo, 
+        bool $canViewProcessed, 
+        string $section = 'all', 
+        string $creatorLabel = 'All Creators',
+        string $origin = 'inward',
+        string $originLabel = 'Inward Registered'
+    ) {
         $this->seatStats = $seatStats;
         $this->summaryTotals = $summaryTotals;
         $this->dateFrom = $dateFrom;
@@ -27,6 +38,8 @@ class InwardStatisticsExport implements FromArray, WithHeadings, WithStyles, Sho
         $this->canViewProcessed = $canViewProcessed;
         $this->section = $section;
         $this->creatorLabel = $creatorLabel;
+        $this->origin = $origin;
+        $this->originLabel = $originLabel;
     }
 
     public function array(): array
@@ -86,16 +99,21 @@ class InwardStatisticsExport implements FromArray, WithHeadings, WithStyles, Sho
         }
 
         $title = 'Inward CPSP Seats - Petition Statistics Data Sheet';
+        $totalHeader = match ($this->origin) {
+            'direct' => 'Total Direct',
+            'all' => 'Total Petitions',
+            default => 'Total Inward',
+        };
 
         $headings = [
             [$title],
-            [$period . ' | Petition Creator: ' . $this->creatorLabel],
+            [$period . ' | Petition Creator: ' . $this->creatorLabel . ' | Origin: ' . ($this->originLabel ?? 'Inward Registered')],
             [],
             [
                 '#',
                 'Concerned Seat',
                 'Seat Occupant (Officer)',
-                'Total Inward'
+                $totalHeader
             ]
         ];
 

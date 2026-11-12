@@ -32,11 +32,37 @@ class District extends Model
     }
 
     /**
+     * Check if the district represents statewide jurisdiction.
+     */
+    public function isStatewide(): bool
+    {
+        return in_array(strtolower((string)$this->district_name), ['statewide', 'state wide']) 
+            || strtoupper((string)$this->district_code) === 'STW';
+    }
+
+    /**
+     * Scope query to exclude statewide options (used for physical addresses).
+     */
+    public function scopeForAddress($query)
+    {
+        return $query->whereNotIn('district_code', ['STW', 'stw'])
+            ->whereRaw("LOWER(district_name) NOT IN ('statewide', 'state wide')");
+    }
+
+    /**
      * Get all districts formatted as an associative array [district_id => "District Name (CODE)"]
      * in the exact database order.
      */
     public static function getOptionsArray(): array
     {
         return static::get()->pluck('display_name', 'district_id')->toArray();
+    }
+
+    /**
+     * Get address district options (14 Kerala districts + Other State, excluding Statewide).
+     */
+    public static function getAddressOptionsArray(): array
+    {
+        return static::forAddress()->get()->pluck('display_name', 'district_id')->toArray();
     }
 }

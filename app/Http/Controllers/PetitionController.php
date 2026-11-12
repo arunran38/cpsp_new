@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\InwardStatisticsExport;
+use App\Exports\InwardCreatorStatisticsExport;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response as HttpResponse;
@@ -56,10 +57,11 @@ class PetitionController extends Controller
             ->first();
 
         $districts = District::orderBy('district_id')->get();
+        $addressDistricts = $districts->reject->isStatewide();
         $designations = DesignationList::orderBy('designation_name')->get();
         $departments = DepartmentList::orderBy('department_name')->get();
         $units = Unit::orderBy('unit_name')->get();
-        return view('user.petition_add', compact('districts', 'designations', 'departments', 'units', 'draft'));
+        return view('user.petition_add', compact('districts', 'addressDistricts', 'designations', 'departments', 'units', 'draft'));
     }
 
     /**
@@ -364,6 +366,7 @@ class PetitionController extends Controller
                 'view own inward statistics',
                 'view other inward statistics',
                 'view all inward statistics',
+                'filter petition origin in statistics',
             ];
             foreach ($requiredPermissions as $perm) {
                 \Spatie\Permission\Models\Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'web']);
@@ -407,10 +410,32 @@ class PetitionController extends Controller
             }
         }
 
+        $isAdminOrDev = $user->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']) ||
+            ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']));
+
+        $canFilterOrigin = $isAdminOrDev
+            || $user->canAccess('filter petition origin in statistics')
+            || $user->canAccess('view all inward statistics')
+            || $user->canAccess('view other inward statistics')
+            || $user->canAccess('view master reports')
+            || $user->canAccess('view seat diagnostics')
+            || $isPendencyRoute;
+
+        $origin = $canFilterOrigin ? $request->input('origin', 'inward') : 'inward';
+        if (!in_array($origin, ['inward', 'direct', 'all'], true)) {
+            $origin = 'inward';
+        }
+
+        $originLabel = match ($origin) {
+            'direct' => 'Direct Entries (CPSP / T-Section)',
+            'all' => 'All Origins (Inward & Direct)',
+            default => 'Inward Registered',
+        };
+
         $inwardSeatIds = Seat::getInwardSeatIds();
 
-        // 1. Fetch only users who hold the Inward role, are assigned to an active Inward seat, or have created inward petitions
-        $creators = $this->getEligibleCreators($inwardSeatIds);
+        // 1. Fetch eligible creators based on the selected origin and user access
+        $creators = $this->getEligibleCreators($inwardSeatIds, $origin, $user);
 
         // 2. Resolve creator filter with strict backend security
         $canCreateInward = $user->canAccess('create inward petitions')
@@ -564,7 +589,21 @@ class PetitionController extends Controller
         $seats = $seatsQuery->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
         $includedSeatIds = $seats->pluck('seat_id')->toArray();
 
-        $petitionsQuery = Petition::whereIn('seat_id', $includedSeatIds);
+        $petitionsQuery = Petition::whereIn('seat_id', $includedSeatIds)
+            ->excludeTSectionIfNotAuthorized($user);
+
+        // Apply Origin Filter
+        if ($origin === 'direct') {
+            $petitionsQuery->whereNot(function ($q) {
+                $q->originatedFromInward();
+            });
+        } elseif ($origin === 'all') {
+            // Include all petitions assigned to included seats
+        } else {
+            // Default: 'inward'
+            $origin = 'inward';
+            $petitionsQuery->originatedFromInward();
+        }
 
         // Apply Creator Filter
         if ($targetCreatorUser) {
@@ -611,6 +650,25 @@ class PetitionController extends Controller
 
         [$seatStats, $summaryTotals] = $this->calculateSeatStats($seats, $statsBySeat, $totalAllPetitions);
 
+        // Query statistics grouped by creator (user_id)
+        $statsByCreator = (clone $petitionsQuery)
+            ->selectRaw("
+                petitions.user_id,
+                COUNT(*) as total_count,
+                COUNT(CASE WHEN status = 'Received' AND linked_petition_id IS NULL THEN 1 END) as received,
+                COUNT(CASE WHEN status = 'Forwarded' THEN 1 END) as forwarded,
+                COUNT(CASE WHEN status = 'VR_Received' THEN 1 END) as vrs,
+                COUNT(CASE WHEN status IN ('Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Closed') THEN 1 END) as decisions,
+                COUNT(CASE WHEN is_cpsp_processed = 1 THEN 1 END) as processed,
+                COUNT(CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 AND linked_petition_id IS NULL AND status != 'Duplicate' THEN 1 END) as pending
+            ")
+            ->whereNotNull('petitions.user_id')
+            ->groupBy('petitions.user_id')
+            ->get()
+            ->keyBy('user_id');
+
+        [$creatorStats, $creatorSummaryTotals] = $this->calculateCreatorStats($creators, $statsByCreator, $targetCreatorUser, $origin);
+
         // Handle Excel Export
         if ($request->input('export') === 'csv') {
             return $this->exportInwardStatisticsExcel(
@@ -622,7 +680,12 @@ class PetitionController extends Controller
                 $dateTo, 
                 $section, 
                 $targetCreatorUser, 
-                $selectedCreatorLabel
+                $selectedCreatorLabel,
+                $creatorStats,
+                $creatorSummaryTotals,
+                $request->input('tab', 'seats'),
+                $origin,
+                $originLabel
             );
         }
 
@@ -641,7 +704,12 @@ class PetitionController extends Controller
             'canViewAllStats',
             'canViewOtherStats',
             'canViewOwnStats',
-            'canCreateInward'
+            'canCreateInward',
+            'canFilterOrigin',
+            'origin',
+            'originLabel',
+            'creatorStats',
+            'creatorSummaryTotals'
         ));
     }
 
@@ -965,10 +1033,11 @@ class PetitionController extends Controller
         $accused = $this->formatAddressesForAlpine($petition, 'Accused');
 
         $districts = District::orderBy('district_id')->get();
+        $addressDistricts = $districts->reject->isStatewide();
         $designations = DesignationList::orderBy('designation_name')->get();
         $departments = DepartmentList::orderBy('department_name')->get();
         $units = Unit::orderBy('unit_name')->get();
-        return view('user.petition_edit', compact('petition', 'complainants', 'accused', 'districts', 'designations', 'departments', 'units', 'draft'));
+        return view('user.petition_edit', compact('petition', 'complainants', 'accused', 'districts', 'addressDistricts', 'designations', 'departments', 'units', 'draft'));
     }
 
     /**
@@ -1814,7 +1883,12 @@ class PetitionController extends Controller
         ?string $dateTo,
         string $section,
         ?User $targetCreatorUser,
-        string $selectedCreatorLabel
+        string $selectedCreatorLabel,
+        array $creatorStats = [],
+        array $creatorSummaryTotals = [],
+        string $tab = 'seats',
+        string $origin = 'inward',
+        string $originLabel = 'Inward Registered'
     ): \Symfony\Component\HttpFoundation\BinaryFileResponse {
         $canExportThis = $isPendencyRoute
             ? ($user->canAccess('view pendency details') || $user->canAccess('export statistics'))
@@ -1835,10 +1909,31 @@ class PetitionController extends Controller
             't_section' => '_t_section',
             default => '',
         };
+        $originSuffix = match ($origin) {
+            'direct' => '_direct',
+            'all' => '_all_origins',
+            default => '_inward',
+        };
         $creatorSuffix = $targetCreatorUser ? "_creator_{$targetCreatorUser->user_id}" : "_all_creators";
-        $filename = "inward_seat_statistics{$sectionSuffix}{$creatorSuffix}{$periodSuffix}_" . now()->format('Ymd_His') . ".xlsx";
         
         $canViewProcessed = $user->canAccess('view processed statistics');
+
+        if ($tab === 'creators') {
+            $filename = "petition_creator_statistics{$originSuffix}{$sectionSuffix}{$creatorSuffix}{$periodSuffix}_" . now()->format('Ymd_His') . ".xlsx";
+            return Excel::download(new InwardCreatorStatisticsExport(
+                $creatorStats,
+                $creatorSummaryTotals,
+                $dateFrom,
+                $dateTo,
+                $canViewProcessed,
+                $section,
+                $selectedCreatorLabel,
+                $origin,
+                $originLabel
+            ), $filename);
+        }
+
+        $filename = "inward_seat_statistics{$originSuffix}{$sectionSuffix}{$creatorSuffix}{$periodSuffix}_" . now()->format('Ymd_His') . ".xlsx";
 
         return Excel::download(new InwardStatisticsExport(
             $seatStats, 
@@ -1847,8 +1942,136 @@ class PetitionController extends Controller
             $dateTo, 
             $canViewProcessed, 
             $section,
-            $selectedCreatorLabel
+            $selectedCreatorLabel,
+            $origin,
+            $originLabel
         ), $filename);
+    }
+
+    /**
+     * Calculate creator statistics.
+     */
+    private function calculateCreatorStats(
+        $creators,
+        $statsByCreator,
+        ?User $targetCreatorUser,
+        string $origin = 'inward'
+    ): array {
+        $creatorStats = [];
+        $totalCreatedSum = 0;
+        $totalProcessedSum = 0;
+        $totalPendingSum = 0;
+
+        if ($targetCreatorUser) {
+            $userList = collect([$targetCreatorUser]);
+        } else {
+            $additionalUserIds = $statsByCreator->keys()->diff($creators->pluck('user_id'));
+            $additionalUsers = $additionalUserIds->isNotEmpty()
+                ? User::withTrashed()->with(['seatUsers.seat.roles', 'roles'])->whereIn('user_id', $additionalUserIds)->get()
+                : collect();
+
+            $userList = $creators->concat($additionalUsers);
+        }
+
+        $processedUserIds = [];
+
+        foreach ($userList as $cUser) {
+            $userId = (int) $cUser->user_id;
+            if (isset($processedUserIds[$userId])) {
+                continue;
+            }
+            $processedUserIds[$userId] = true;
+
+            $data = $statsByCreator->get($userId);
+            $totalCreated = (int) ($data->total_count ?? 0);
+            $processed = (int) ($data->processed ?? 0);
+            $pending = (int) ($data->pending ?? 0);
+
+            $activeSeat = $cUser->seatUsers
+                ?->where('is_active', true)
+                ->first(fn($su) => $su->seat !== null)
+                ?->seat;
+
+            $seatName = $activeSeat ? $activeSeat->seat_name : null;
+
+            // When viewing all creators, omit users who have 0 created petitions in this filter scope.
+            // When a specific creator is explicitly targeted, show their row even if 0.
+            if (!$targetCreatorUser && $totalCreated === 0) {
+                continue;
+            }
+
+            $section = 'Inward Section';
+            if ($seatName) {
+                if (stripos($seatName, 'CPSP') !== false) {
+                    $section = 'CPSP';
+                } elseif (stripos($seatName, 'T-Section') !== false || stripos($seatName, 'T Section') !== false || stripos($seatName, 'T-') === 0 || stripos($seatName, 'T1') === 0 || stripos($seatName, 'T2') === 0 || stripos($seatName, 'T3') === 0) {
+                    $section = 'T-Section';
+                } elseif (stripos($seatName, 'Inward') !== false) {
+                    $section = 'Inward Section';
+                } else {
+                    $section = $seatName;
+                }
+            }
+
+            $creatorStats[] = [
+                'user_id' => $userId,
+                'name' => $cUser->name,
+                'display_name' => $cUser->inward_display_name ?? ($seatName ? "{$cUser->name} ({$seatName})" : $cUser->name),
+                'designation' => $cUser->designation ?? 'Staff',
+                'seat_name' => $seatName ?? 'Not Assigned',
+                'section' => $section,
+                'pen' => $cUser->pen,
+                'total_created' => $totalCreated,
+                'processed' => $processed,
+                'pending' => $pending,
+            ];
+
+            $totalCreatedSum += $totalCreated;
+            $totalProcessedSum += $processed;
+            $totalPendingSum += $pending;
+        }
+
+        // Catch any remaining IDs that might not have a User model
+        $missingIds = $statsByCreator->keys()->diff(array_keys($processedUserIds));
+        foreach ($missingIds as $mId) {
+            $data = $statsByCreator->get($mId);
+            $totalCreated = (int) ($data->total_count ?? 0);
+            $processed = (int) ($data->processed ?? 0);
+            $pending = (int) ($data->pending ?? 0);
+
+            $creatorStats[] = [
+                'user_id' => (int) $mId,
+                'name' => "User #{$mId}",
+                'display_name' => "User #{$mId}",
+                'designation' => 'Staff',
+                'seat_name' => 'Not Assigned',
+                'section' => 'Inward Section',
+                'pen' => null,
+                'total_created' => $totalCreated,
+                'processed' => $processed,
+                'pending' => $pending,
+            ];
+
+            $totalCreatedSum += $totalCreated;
+            $totalProcessedSum += $processed;
+            $totalPendingSum += $pending;
+        }
+
+        // Sort creators: highest total_created first, then alphabetical by name
+        usort($creatorStats, function ($a, $b) {
+            if ($b['total_created'] === $a['total_created']) {
+                return strcasecmp($a['name'], $b['name']);
+            }
+            return $b['total_created'] <=> $a['total_created'];
+        });
+
+        $creatorSummaryTotals = [
+            'totalCreated' => $totalCreatedSum,
+            'processed' => $totalProcessedSum,
+            'pending' => $totalPendingSum,
+        ];
+
+        return [$creatorStats, $creatorSummaryTotals];
     }
 
     /**
@@ -1898,63 +2121,97 @@ class PetitionController extends Controller
     }
 
     /**
-     * Get eligible inward petition creators with formatted display names.
+     * Get eligible petition creators with formatted display names based on origin and clearance.
      *
      * @param array<int> $inwardSeatIds
+     * @param string $origin
+     * @param User|null $user
      * @return \Illuminate\Database\Eloquent\Collection<int, User>
      */
-    private function getEligibleCreators(array $inwardSeatIds): EloquentCollection
+    private function getEligibleCreators(array $inwardSeatIds, string $origin = 'inward', ?User $user = null): EloquentCollection
     {
-        $creators = User::query()
-            ->with(['seatUsers.seat.roles', 'roles'])
-            ->where(function ($q) use ($inwardSeatIds) {
+        $query = User::query()->with(['seatUsers.seat.roles', 'roles']);
+
+        if ($origin === 'direct') {
+            $query->where(function ($q) use ($inwardSeatIds) {
+                $q->whereHas('petitions', function ($pq) {
+                    $pq->whereNot(fn($sub) => $sub->originatedFromInward());
+                })->orWhereHas('seatUsers', function ($su) use ($inwardSeatIds) {
+                    $su->where('is_active', true)
+                       ->whereNotIn('seat_id', $inwardSeatIds);
+                });
+            });
+        } elseif ($origin === 'all') {
+            $query->where(function ($q) use ($inwardSeatIds) {
+                $q->whereHas('petitions')
+                  ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward', 'cpsp', 'CPSP', 'T Section', 't section']))
+                  ->orWhereHas('seatUsers', fn($su) => $su->where('is_active', true));
+            });
+        } else {
+            // Default: 'inward'
+            $query->where(function ($q) use ($inwardSeatIds) {
                 $q->whereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward']))
                   ->orWhereHas('seatUsers', function ($su) use ($inwardSeatIds) {
                       $su->where('is_active', true)
                          ->where(function ($sQuery) use ($inwardSeatIds) {
                              $sQuery->whereIn('seat_id', $inwardSeatIds)
                                     ->orWhereHas('seat', function ($s) {
-                                        $s->where('seat_name', 'like', '%Inward%')
-                                          ->orWhereHas('roles', fn($r) => $r->whereIn('name', ['inward', 'Inward']));
+                                        $s->where('seat_name', 'like', '%Inward%');
                                     });
                          });
                   })
-                  ->orWhereHas('petitions', function ($pq) use ($inwardSeatIds) {
-                      $pq->whereIn('created_by_seat_id', $inwardSeatIds);
+                  ->orWhereHas('petitions', function ($pq) {
+                      $pq->originatedFromInward();
                   });
-            })
-            ->whereDoesntHave('seatUsers', function ($su) {
+            });
+        }
+
+        // Exclude seats that should never appear as operational creator entries (Director, Superintendent, SS)
+        $query->whereDoesntHave('seatUsers', function ($su) {
+            $su->where('is_active', true)
+               ->whereHas('seat', function ($s) {
+                   $s->where(function ($sq) {
+                       $sq->where('seat_name', 'like', '%Director%')
+                          ->orWhere('seat_name', 'like', 'SS %')
+                          ->orWhere('seat_name', 'like', '%SS CPSP%')
+                          ->orWhere('seat_name', 'like', '%Superintendent%');
+                   });
+               });
+        });
+
+        // If user cannot access T-Section, exclude T-Section users
+        $canAccessTSection = $user && ($user->canAccessTSection() || $user->hasRole(['Developer', 'developer', 'super admin', 'Super Admin']));
+        if (!$canAccessTSection) {
+            $query->whereDoesntHave('seatUsers', function ($su) {
                 $su->where('is_active', true)
                    ->whereHas('seat', function ($s) {
                        $s->where(function ($sq) {
-                           $sq->where('seat_name', 'like', '%Director%')
-                              ->orWhere('seat_name', 'like', '%T-%')
+                           $sq->where('seat_name', 'like', '%T-%')
                               ->orWhere('seat_name', 'like', 'T1%')
                               ->orWhere('seat_name', 'like', 'T2%')
-                              ->orWhere('seat_name', 'like', 'T3%');
+                              ->orWhere('seat_name', 'like', 'T3%')
+                              ->orWhere('seat_name', 'like', '%T Section%')
+                              ->orWhere('seat_name', 'like', '%T-Section%');
                        });
                    });
-            })
-            ->orderBy('name')
-            ->get();
+            });
+        }
+
+        $creators = $query->orderBy('name')->get();
 
         foreach ($creators as $creator) {
-            $inwardSeat = $creator->seatUsers
+            $activeSeat = $creator->seatUsers
                 ->where('is_active', true)
-                ->first(fn($su) => $su->seat && (
-                    str_contains(strtolower($su->seat->seat_name), 'inward') ||
-                    $su->seat->hasRole(['inward', 'Inward'])
-                ))?->seat;
+                ->first(fn($su) => $su->seat !== null)?->seat;
 
-            if ($inwardSeat) {
-                $rawSeatName = strtoupper(trim($inwardSeat->seat_name));
+            if ($activeSeat) {
+                $rawSeatName = strtoupper(trim($activeSeat->seat_name));
                 $designation = preg_replace('/^(INWARD)\s*(\d+)$/i', '$1 $2', $rawSeatName);
             } else {
                 $petitionSeat = Petition::where('user_id', $creator->user_id)
-                    ->whereIn('created_by_seat_id', $inwardSeatIds)
                     ->with('createdBySeat')
                     ->first()?->createdBySeat;
-                $designation = $petitionSeat ? strtoupper(trim($petitionSeat->seat_name)) : 'INWARD';
+                $designation = $petitionSeat ? strtoupper(trim($petitionSeat->seat_name)) : ($origin === 'inward' ? 'INWARD' : 'Staff');
             }
 
             $creator->inward_display_name = "{$creator->name} ({$designation})";

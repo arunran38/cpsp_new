@@ -151,6 +151,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view department-wise report',
             'export statistics',
             'view processed statistics',
+            'filter petition origin in statistics',
 
             // Visual Analytics Charts (View-only)
             'view seat distribution chart',
@@ -244,6 +245,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'export petitions',
                 'export statistics',
                 'export t-section petitions',
+                'filter petition origin in statistics',
                 'filter transfer',
                 'forward petitions',
                 'forward t-section petitions',

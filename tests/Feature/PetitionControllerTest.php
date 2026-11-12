@@ -84,6 +84,65 @@ class PetitionControllerTest extends TestCase
         $response->assertSee('"nature_of_petition":["Nature of Petition is required."]', false);
     }
 
+    public function test_statewide_district_is_excluded_from_address_dropdowns_but_available_for_concerned_district(): void
+    {
+        $this->seed(\Database\Seeders\DistrictSeeder::class);
+
+        $response = $this->actingAs($this->user)->get(route('petitions.create'));
+        $response->assertOk();
+
+        // 1. View has addressDistricts excluding Statewide
+        $response->assertViewHas('addressDistricts', function ($addressDistricts) {
+            $hasStatewide = $addressDistricts->contains(fn($d) => $d->isStatewide());
+            $hasOtherState = $addressDistricts->contains(fn($d) => $d->district_name === 'Other State');
+            $hasTvm = $addressDistricts->contains(fn($d) => $d->district_name === 'Thiruvananthapuram');
+            return !$hasStatewide && $hasOtherState && $hasTvm && $addressDistricts->count() === 15;
+        });
+
+        // 2. View has full districts collection including Statewide
+        $response->assertViewHas('districts', function ($districts) {
+            $hasStatewide = $districts->contains(fn($d) => $d->isStatewide());
+            return $hasStatewide && $districts->count() === 16;
+        });
+
+        // 3. Rendered HTML check: Concerned district select includes Statewide (STW)
+        $response->assertSee('name="concerned_district_id"', false);
+        $response->assertSee('Statewide (STW)');
+
+        // 4. Address district options do not contain Statewide (STW)
+        $addressOptions = \App\Models\District::getAddressOptionsArray();
+        $this->assertFalse(in_array('Statewide (STW)', $addressOptions));
+    }
+
+    public function test_address_cannot_use_statewide_district(): void
+    {
+        $this->seed(\Database\Seeders\DistrictSeeder::class);
+        $statewide = \App\Models\District::where('district_code', 'STW')->first();
+        $department = \App\Models\DepartmentList::firstOrCreate(['department_name' => 'Statewide Test Dept']);
+
+        $response = $this->actingAs($this->user)
+            ->post(route('petitions.store'), [
+                'receipt_no' => 'STATEWIDE-ADDR-1',
+                'date_of_petition_received' => now()->toDateString(),
+                'concerned_district_id' => $statewide->district_id,
+                'nature_of_petition' => 'Bribery',
+                'mode_of_petition_received' => 'Direct',
+                'description' => 'Testing address validation against statewide',
+                'accused' => [[
+                    'name' => 'Suspect Person',
+                    'entity_type' => 'Person',
+                    'department_id' => $department->id,
+                    'addresses' => [[
+                        'address_type' => 'Office',
+                        'address' => 'Secretariat',
+                        'district_id' => $statewide->district_id,
+                    ]],
+                ]],
+            ]);
+
+        $response->assertSessionHasErrors(['accused.0.addresses.0.district_id']);
+    }
+
     public function test_user_can_store_petition_with_complainants_and_files(): void
     {
         Storage::fake('public');

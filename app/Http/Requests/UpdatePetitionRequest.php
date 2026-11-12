@@ -147,6 +147,20 @@ class UpdatePetitionRequest extends FormRequest
             'evidence_files' => 'nullable|array',
             'evidence_files.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240'
         ];
+
+        $statewideDistrictIds = \App\Models\District::where(function($q) {
+            $q->whereIn('district_code', ['STW', 'stw'])
+              ->orWhereRaw("LOWER(district_name) IN ('statewide', 'state wide')");
+        })->pluck('district_id')->toArray();
+
+        $addressDistrictRules = ['nullable', 'exists:districts,district_id'];
+        if (!empty($statewideDistrictIds)) {
+            $addressDistrictRules[] = Rule::notIn($statewideDistrictIds);
+        }
+        $rules['complainants.*.addresses.*.district_id'] = $addressDistrictRules;
+        $rules['accused.*.addresses.*.district_id'] = $addressDistrictRules;
+
+        return $rules;
     }
 
     public function attributes(): array

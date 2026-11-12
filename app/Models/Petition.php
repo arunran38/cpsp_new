@@ -520,19 +520,18 @@ class Petition extends Model
     }
 
     /**
-     * Scope: Filter petitions for the View Inward Petitions module based on user role and permissions.
-     * Enforces strictly that only petitions created or registered by Inward seats or Inward workflow are returned.
+     * Scope: Strictly petitions registered/originated through the Inward section.
      */
-    public function scopeAccessibleInwardPetitions(Builder $query, User $user, ?string $scopeFilter = null): Builder
+    public function scopeOriginatedFromInward(Builder $query): Builder
     {
-        // Strictly exclude T-Section confidential petitions if user does not have clearance
-        $query->excludeTSectionIfNotAuthorized($user);
-
         $inwardSeatIds = Seat::getInwardSeatIds();
 
-        // MANDATORY BASE: Only petitions that originated from an Inward Seat or Inward registration
-        $query->where(function ($q) use ($inwardSeatIds) {
+        return $query->where(function ($q) use ($inwardSeatIds) {
             $q->whereIn('petitions.created_by_seat_id', $inwardSeatIds)
+              ->orWhereHas('user.roles', fn($r) => $r->whereIn('name', ['inward', 'Inward']))
+              ->orWhereHas('user.seatUsers', function ($su) use ($inwardSeatIds) {
+                  $su->where('is_active', true)->whereIn('seat_id', $inwardSeatIds);
+              })
               ->orWhere(function ($fallbackQ) use ($inwardSeatIds) {
                   $fallbackQ->whereNull('petitions.created_by_seat_id')
                             ->where(function ($sub) use ($inwardSeatIds) {
@@ -542,6 +541,19 @@ class Petition extends Model
                             });
               });
         });
+    }
+
+    /**
+     * Scope: Filter petitions for the View Inward Petitions module based on user role and permissions.
+     * Enforces strictly that only petitions created or registered by Inward seats or Inward workflow are returned.
+     */
+    public function scopeAccessibleInwardPetitions(Builder $query, User $user, ?string $scopeFilter = null): Builder
+    {
+        // Strictly exclude T-Section confidential petitions if user does not have clearance
+        $query->excludeTSectionIfNotAuthorized($user);
+
+        // MANDATORY BASE: Only petitions that originated from an Inward Seat or Inward registration
+        $query->originatedFromInward();
 
         $currentSeatUser = $user->currentSeatUser();
         $currentSeat = $currentSeatUser?->seat;

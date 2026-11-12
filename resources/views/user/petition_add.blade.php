@@ -411,7 +411,7 @@
                                                             x-bind:name="`complainants[${index}][addresses][${addrIndex}][district_id]`"
                                                             x-model="addr.district_id" placeholder="Select District"
                                                             class="min-w-0 pr-10 text-left"
-                                                            :options="$districts->pluck('display_name', 'district_id')->toArray()" />
+                                                            :options="($addressDistricts ?? $districts->reject->isStatewide())->pluck('display_name', 'district_id')->toArray()" />
                                                 </div>
                                                 <div class="min-w-0 md:col-span-2 xl:col-span-2">
                                                         <x-input label="Pincode" name="comp_pincode"
@@ -632,7 +632,7 @@
                                                         x-bind:name="`accused[${index}][addresses][${addrIndex}][district_id]`"
                                                         x-model="addr.district_id" placeholder="Select District"
                                                         class="min-w-0 pr-10 text-left"
-                                                        :options="$districts->pluck('display_name', 'district_id')->toArray()" />
+                                                        :options="($addressDistricts ?? $districts->reject->isStatewide())->pluck('display_name', 'district_id')->toArray()" />
                                             </div>
                                             <div class="min-w-0 md:col-span-2 xl:col-span-2">
                                                     <x-input label="Pincode" name="acc_pincode"

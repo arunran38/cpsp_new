@@ -182,6 +182,18 @@ class StorePetitionRequest extends FormRequest
             $rules['accused.*.addresses'] = 'nullable|array';
         }
 
+        $statewideDistrictIds = \App\Models\District::where(function($q) {
+            $q->whereIn('district_code', ['STW', 'stw'])
+              ->orWhereRaw("LOWER(district_name) IN ('statewide', 'state wide')");
+        })->pluck('district_id')->toArray();
+
+        $addressDistrictRules = ['nullable', 'exists:districts,district_id'];
+        if (!empty($statewideDistrictIds)) {
+            $addressDistrictRules[] = Rule::notIn($statewideDistrictIds);
+        }
+        $rules['complainants.*.addresses.*.district_id'] = $addressDistrictRules;
+        $rules['accused.*.addresses.*.district_id'] = $addressDistrictRules;
+
         return $rules;
     }
 
