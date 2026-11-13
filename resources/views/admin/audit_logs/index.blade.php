@@ -309,7 +309,7 @@
 
 <!-- Modal for Inspecting Audit Details (Clean Uniform Styling) -->
 <div id="auditModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
+    <div class="bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
         <!-- Modal Header -->
         <div class="relative overflow-hidden bg-gradient-to-r from-[#1e293b] to-[#0f172a] px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
             <div class="absolute top-0 right-0 -translate-y-8 translate-x-1/4 pointer-events-none">
@@ -325,7 +325,7 @@
                     Audit Log Details (<span id="modalAuditId" class="text-sky-300"></span>)
                 </h3>
                 <p class="text-sky-400 text-xs font-medium mt-0.5">
-                    Detailed metadata and submitted parameters.
+                    Detailed metadata, value changes, and submitted parameters.
                 </p>
             </div>
             <button onclick="closeAuditModal()" class="relative z-10 text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-colors">
@@ -333,7 +333,7 @@
             </button>
         </div>
 
-        <div class="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+        <div class="p-6 space-y-5 max-h-[78vh] overflow-y-auto">
             <!-- Summary Info Grid -->
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50/80 border border-slate-200/70 text-xs">
                 <div>
@@ -367,9 +367,56 @@
                 <p id="modalDescription" class="text-sm font-semibold text-slate-800 bg-sky-50/60 p-3 rounded-2xl border border-sky-100"></p>
             </div>
 
+            <!-- Detailed Value Diffs Section (Old vs New Comparison) -->
+            <div id="modalDiffsSection" class="hidden">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 font-bold text-xs border border-indigo-100">
+                            <i data-lucide="git-compare" class="w-3.5 h-3.5"></i>
+                        </span>
+                        <div>
+                            <span class="text-xs font-black text-slate-800 uppercase tracking-wider block">
+                                Value Differences / മാറ്റങ്ങൾ (Old vs New)
+                            </span>
+                            <span class="text-[11px] text-slate-400 font-medium block">
+                                മുൻപ് ഉണ്ടായിരുന്ന വിവരങ്ങളും മാറ്റിയതിന് ശേഷമുള്ള വിവരങ്ങളും
+                            </span>
+                        </div>
+                    </div>
+                    <span id="modalDiffsCountBadge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                        0 fields changed
+                    </span>
+                </div>
+
+                <div class="rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-white">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 uppercase tracking-wider text-[10px] border-b border-slate-200">
+                                <th class="px-4 py-2.5 font-black w-[28%] bg-slate-100/70 border-r border-slate-200">Field / മാറ്റിയ ഘടകം</th>
+                                <th class="px-4 py-2.5 font-bold w-[36%] text-rose-700 bg-rose-50/60 border-r border-slate-200">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-rose-500 inline-block shadow-sm"></span>
+                                        Previous Value (മുൻപ്)
+                                    </div>
+                                </th>
+                                <th class="px-4 py-2.5 font-bold w-[36%] text-emerald-700 bg-emerald-50/60">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block shadow-sm"></span>
+                                        Updated Value (മാറ്റിയത്)
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalDiffsTableBody" class="divide-y divide-slate-100">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Human-Readable Parameters Table -->
-            <div>
-                <span class="text-[11px] text-slate-500 uppercase font-bold tracking-wider block mb-2">Activity Data & Parameters</span>
+            <div id="modalPropertiesSection">
+                <span id="modalPropertiesHeading" class="text-[11px] text-slate-500 uppercase font-bold tracking-wider block mb-2">Activity Data & Parameters</span>
                 <div id="modalPropertiesContainer" class="rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-white">
                     <table class="w-full text-left text-xs">
                         <thead>
@@ -398,6 +445,16 @@
 </div>
 
 <script>
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function formatFieldKey(key) {
         return key
             .replace(/_/g, ' ')
@@ -421,12 +478,12 @@
                 return val.map((item, idx) => {
                     const entries = Object.entries(item)
                         .filter(([k, v]) => v !== null && v !== '')
-                        .map(([k, v]) => `<span class="font-semibold text-slate-700">${formatFieldKey(k)}:</span> ${v}`)
+                        .map(([k, v]) => `<span class="font-semibold text-slate-700">${formatFieldKey(k)}:</span> ${escapeHtml(String(v))}`)
                         .join(' | ');
                     return `<div class="py-1">${entries || '-'}</div>`;
                 }).join('');
             }
-            return val.join(', ');
+            return escapeHtml(val.join(', '));
         }
         if (typeof val === 'object') {
             const rows = Object.entries(val)
@@ -434,7 +491,18 @@
                 .join('');
             return rows || '<span class="text-slate-400 italic">-</span>';
         }
-        return String(val);
+        return escapeHtml(String(val));
+    }
+
+    function formatDiffValue(val, isOld = false) {
+        if (val === null || val === undefined || val === '' || val === '[Blank]' || val === '[None]' || val === 'None') {
+            return '<span class="text-slate-400 italic text-[11px] font-normal">[None / Blank]</span>';
+        }
+        const escaped = escapeHtml(String(val));
+        if (isOld) {
+            return `<div class="text-slate-700 leading-relaxed font-normal">${escaped}</div>`;
+        }
+        return `<div class="text-emerald-950 leading-relaxed font-semibold">${escaped}</div>`;
     }
 
     function showAuditDetails(log) {
@@ -446,18 +514,89 @@
         document.getElementById('modalIp').innerText = log.ip_address || '127.0.0.1';
         document.getElementById('modalDescription').innerText = log.description || 'N/A';
 
+        // 1. Process Structured Diffs
+        const diffsSection = document.getElementById('modalDiffsSection');
+        const diffsTableBody = document.getElementById('modalDiffsTableBody');
+        const diffsCountBadge = document.getElementById('modalDiffsCountBadge');
+        const propertiesHeading = document.getElementById('modalPropertiesHeading');
+        
+        const properties = log.properties;
+        const diffs = (properties && Array.isArray(properties.diffs)) ? properties.diffs : null;
+
+        if (diffs && diffs.length > 0) {
+            diffsSection.classList.remove('hidden');
+            diffsCountBadge.innerText = `${diffs.length} ${diffs.length === 1 ? 'field changed' : 'fields changed'}`;
+            diffsTableBody.innerHTML = '';
+
+            diffs.forEach(diff => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/70 transition-colors border-b border-slate-100 last:border-b-0';
+
+                // Field Column
+                const tdField = document.createElement('td');
+                tdField.className = 'px-4 py-3 bg-slate-50/70 border-r border-slate-200 align-top';
+                tdField.innerHTML = `
+                    <div class="font-bold text-slate-800 text-xs">${escapeHtml(diff.field)}</div>
+                    ${diff.field_ml ? `<div class="text-[11px] font-medium text-slate-500 mt-0.5">${escapeHtml(diff.field_ml)}</div>` : ''}
+                `;
+
+                // Old Column
+                const tdOld = document.createElement('td');
+                tdOld.className = 'px-4 py-3 bg-rose-50/30 border-r border-slate-200 align-top whitespace-pre-line';
+                tdOld.innerHTML = `
+                    <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-rose-100 text-rose-700 mb-1.5 border border-rose-200/60">
+                        Previous
+                    </div>
+                    ${formatDiffValue(diff.old, true)}
+                `;
+
+                // New Column
+                const tdNew = document.createElement('td');
+                tdNew.className = 'px-4 py-3 bg-emerald-50/30 align-top whitespace-pre-line';
+                tdNew.innerHTML = `
+                    <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 mb-1.5 border border-emerald-200/60">
+                        Updated
+                    </div>
+                    ${formatDiffValue(diff.new, false)}
+                `;
+
+                tr.appendChild(tdField);
+                tr.appendChild(tdOld);
+                tr.appendChild(tdNew);
+                diffsTableBody.appendChild(tr);
+            });
+
+            if (propertiesHeading) propertiesHeading.innerText = 'Additional Request Parameters';
+        } else {
+            diffsSection.classList.add('hidden');
+            if (propertiesHeading) propertiesHeading.innerText = 'Activity Data & Parameters';
+        }
+
+        // 2. Process General / Fallback Parameters Table
         const tableBody = document.getElementById('modalPropertiesTableBody');
         const container = document.getElementById('modalPropertiesContainer');
         const emptyState = document.getElementById('modalPropertiesEmpty');
-        
         tableBody.innerHTML = '';
 
-        const properties = log.properties;
-        if (properties && typeof properties === 'object' && Object.keys(properties).length > 0) {
+        // Extract parameters to display (exclude diffs from the raw list)
+        let displayParams = {};
+        if (properties && typeof properties === 'object') {
+            if (properties.parameters && typeof properties.parameters === 'object') {
+                displayParams = properties.parameters;
+            } else {
+                for (const [k, v] of Object.entries(properties)) {
+                    if (k !== 'diffs') {
+                        displayParams[k] = v;
+                    }
+                }
+            }
+        }
+
+        if (Object.keys(displayParams).length > 0) {
             container.classList.remove('hidden');
             emptyState.classList.add('hidden');
 
-            for (const [key, val] of Object.entries(properties)) {
+            for (const [key, val] of Object.entries(displayParams)) {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50/50 transition-colors';
                 
@@ -474,13 +613,23 @@
                 tableBody.appendChild(tr);
             }
         } else {
-            container.classList.add('hidden');
-            emptyState.classList.remove('hidden');
+            if (diffs && diffs.length > 0) {
+                container.classList.add('hidden');
+                emptyState.classList.add('hidden');
+            } else {
+                container.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            }
         }
 
         const modal = document.getElementById('auditModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+
+        // Re-initialize Lucide icons in modal
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+        }
     }
 
     function closeAuditModal() {

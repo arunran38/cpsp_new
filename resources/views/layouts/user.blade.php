@@ -709,6 +709,9 @@
                             </div>
                         @endif
 
+                        <!-- In-App Notification Bell -->
+                        @include('partials.notification_bell')
+
                         <!-- Profile Dropdown -->
                         <div x-data="{ open: false }" class="relative">
                             <button @click="open = !open" 

@@ -110,6 +110,14 @@ class PetitionService
                 $this->handleUploads($petition, $files);
             }
 
+            if ($seatId) {
+                try {
+                    \App\Services\NotificationService::notifyPetitionTransferred($petition, $seatId, $user);
+                } catch (\Throwable $e) {
+                    // Log / ignore notification error to prevent rolling back core transaction
+                }
+            }
+
             return $petition;
         });
     }
@@ -119,6 +127,16 @@ class PetitionService
      */
     public function update(Petition $petition, array $data, array $files = [], array $deletedAttachments = []): Petition
     {
+        if (request() && !request()->attributes->has('_audit_diffs')) {
+            $diffs = app(\App\Services\AuditDiffService::class)->computePetitionDiff(
+                $petition,
+                $data,
+                $files,
+                $deletedAttachments
+            );
+            request()->attributes->set('_audit_diffs', $diffs);
+        }
+
         return DB::transaction(function () use ($petition, $data, $files, $deletedAttachments) {
             $user = Auth::user();
             $currentSeat = $user?->currentSeatUser();

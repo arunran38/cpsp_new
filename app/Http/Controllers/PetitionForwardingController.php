@@ -136,6 +136,10 @@ class PetitionForwardingController extends Controller
                     $this->handleVrUpload($forwarding->petition_id, $request->file('vr_file'));
                 }
 
+                try {
+                    \App\Services\NotificationService::notifyVrReceived($forwarding->petition, Auth::user());
+                } catch (\Throwable $e) {}
+
                 return back()->with('success', 'Verification Report submitted successfully.');
             } catch (\Throwable $e) {
                 return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to submit Verification Report.'))->withInput();

@@ -282,6 +282,10 @@ class PetitionController extends Controller
             'is_cpsp_processed' => false,
         ]);
 
+        try {
+            \App\Services\NotificationService::notifyPetitionReturned($petition, $request->return_reason, $user);
+        } catch (\Throwable $e) {}
+
         return redirect()->route('petitions.index', ['tab' => 'inward'])->with('success', 'Petition returned to Inward successfully.');
     }
 
@@ -312,6 +316,10 @@ class PetitionController extends Controller
             'cpsp_opened_by_seat_id' => null,
             'is_cpsp_processed' => false,
         ]);
+
+        try {
+            \App\Services\NotificationService::notifyPetitionTransferred($petition, $newSeat->seat_id, $user);
+        } catch (\Throwable $e) {}
 
         return back()->with('success', 'Petition reassigned successfully.');
     }
@@ -1046,10 +1054,19 @@ class PetitionController extends Controller
     public function update(UpdatePetitionRequest $request, $id): RedirectResponse
     {
         $realId = HashidService::decode($id) ?? $id;
-        $petition = Petition::findOrFail($realId);
+        $petition = Petition::with(['concernedDistrict', 'unit', 'addresses.department', 'addresses.designation', 'addresses.district'])->findOrFail($realId);
         $this->authorize('update', $petition);
 
         try {
+            // Compute detailed audit diffs before updating
+            $diffs = app(\App\Services\AuditDiffService::class)->computePetitionDiff(
+                $petition,
+                $request->validated(),
+                $request->file('evidence_files') ?? [],
+                $request->deleted_attachments ?? []
+            );
+            $request->attributes->set('_audit_diffs', $diffs);
+
             $this->petitionService->update(
                 $petition, 
                 $request->validated(), 
@@ -1244,50 +1261,14 @@ class PetitionController extends Controller
     }
 
     /**
-     * Search petitions for the autocomplete link duplicate feature
+     * Search petitions for the autocomplete link duplicate feature (with Soundex and Fuzzy support)
      */
     public function searchDuplicates(Request $request)
     {
         $query = $request->input('q');
         $excludeId = $request->input('exclude');
 
-        if (!$query) {
-            return response()->json([]);
-        }
-
-        $petitions = Petition::excludeTSectionIfNotAuthorized(Auth::user())->with(['addresses', 'originalPetition.addresses'])->where(function($q) use ($query) {
-            $q->where('receipt_no', 'LIKE', "%{$query}%")
-              ->orWhere('nature_of_petition', 'LIKE', "%{$query}%")
-              ->orWhereHas('addresses', function ($q2) use ($query) {
-                  $q2->where('person_name', 'LIKE', "%{$query}%");
-              });
-        });
-
-        if ($excludeId) {
-            $realExclude = HashidService::decode($excludeId) ?? $excludeId;
-            $petitions->where('petition_id', '!=', $realExclude);
-        }
-
-        // We allow linking to duplicate petitions; the backend will automatically resolve to the root original.
-
-        $results = $petitions->take(10)->get()->map(function (Petition $petition) {
-            $addresses = $petition->displayAddresses();
-            $complainant = $addresses->firstWhere('person_type', 'Complainant');
-            $accused = $addresses->firstWhere('person_type', 'Accused');
-            
-            $complainantName = $complainant ? $complainant->person_name : 'N/A';
-            $accusedName = $accused ? $accused->person_name : 'N/A';
-            
-            return [
-                'id' => $petition->receipt_no, 
-                'text' => "{$petition->receipt_no} - {$petition->nature_of_petition} ({$complainantName})",
-                'receipt_no' => $petition->receipt_no,
-                'date' => $petition->date_of_petition_received ? date('d-m-Y', strtotime($petition->date_of_petition_received)) : 'N/A',
-                'complainant' => $complainantName,
-                'accused' => $accusedName,
-                'nature' => $petition->nature_of_petition
-            ];
-        });
+        $results = \App\Services\DuplicateDetectionService::searchDuplicates($query, $excludeId, Auth::user());
 
         return response()->json($results);
     }
@@ -1342,125 +1323,22 @@ class PetitionController extends Controller
     }
 
     /**
-     * Check for potential duplicate petitions based on names, phones, and PENs.
+     * Check for potential duplicate petitions based on names, phones, and PENs with Soundex & Fuzzy matching.
      */
     public function checkDuplicates(Request $request)
     {
         $complainants = $request->input('complainants', []);
         $accused = $request->input('accused', []);
-
-        $c_phones = collect($complainants)->pluck('phone')->filter()->toArray();
-        $c_names = collect($complainants)->pluck('name')->filter()->map(fn($n) => trim($n))->toArray();
-
-        $a_phones = collect($accused)->pluck('phone')->filter()->toArray();
-        $a_pens = collect($accused)->pluck('pen_number')->filter()->toArray();
-        $a_names = collect($accused)->pluck('name')->filter()->map(fn($n) => trim($n))->toArray();
-
-        // Need at least one identifier from both sides to find a meaningful duplicate
-        if ((empty($c_names) && empty($c_phones)) || (empty($a_names) && empty($a_phones) && empty($a_pens))) {
-            return response()->json([]);
-        }
-
-        $query = Petition::query()->excludeTSectionIfNotAuthorized(Auth::user())->with([
-            'decision',
-            'addresses.district',
-            'originalPetition.addresses.district',
-        ]);
-        
         $description = $request->input('description');
         $nature = $request->input('nature_of_petition');
-        
-        $query->where(function ($q) use ($c_phones, $c_names, $a_phones, $a_pens, $a_names, $description, $nature) {
-            
-            // Subquery for Person Matches
-            $q->orWhere(function ($subQ) use ($c_phones, $c_names, $a_phones, $a_pens, $a_names) {
-                // Must match a complainant
-                if (!empty($c_phones) || !empty($c_names)) {
-                    $subQ->whereHas('addresses', function ($q) use ($c_phones, $c_names) {
-                        $q->where('person_type', 'Complainant');
-                        $q->where(function ($sub) use ($c_phones, $c_names) {
-                            if (!empty($c_phones)) {
-                                $sub->orWhereIn('phone', $c_phones);
-                            }
-                            if (!empty($c_names)) {
-                                foreach ($c_names as $name) {
-                                    if (strlen($name) > 3) {
-                                        $sub->orWhere('person_name', 'LIKE', '%' . $name . '%');
-                                    }
-                                }
-                            }
-                        });
-                    });
-                } else {
-                    // If no complainant info provided, force fail this block to prevent matching ALL
-                    $subQ->whereRaw('1 = 0');
-                }
 
-                // Must ALSO match an accused
-                if (!empty($a_phones) || !empty($a_pens) || !empty($a_names)) {
-                    $subQ->whereHas('addresses', function ($q) use ($a_phones, $a_pens, $a_names) {
-                        $q->where('person_type', 'Accused');
-                        $q->where(function ($sub) use ($a_phones, $a_pens, $a_names) {
-                            if (!empty($a_phones)) {
-                                $sub->orWhereIn('phone', $a_phones);
-                            }
-                            if (!empty($a_pens)) {
-                                $sub->orWhereIn('pen_number', $a_pens);
-                            }
-                            if (!empty($a_names)) {
-                                foreach ($a_names as $name) {
-                                    if (strlen($name) > 3) {
-                                        $sub->orWhere('person_name', 'LIKE', '%' . $name . '%');
-                                    }
-                                }
-                            }
-                        });
-                    });
-                } else {
-                    $subQ->whereRaw('1 = 0');
-                }
-            });
-
-            // Subquery for AI/Description based Match
-            if (!empty($description) && strlen($description) > 10) {
-                $q->orWhere(function ($subQ) use ($description, $nature) {
-                    $subQ->whereRaw("MATCH(description) AGAINST(? IN NATURAL LANGUAGE MODE)", [$description]);
-                    if (!empty($nature)) {
-                        $subQ->where('nature_of_petition', $nature);
-                    }
-                });
-            }
-            
-        });
-
-        $duplicates = $query->orderBy('date_of_petition_received', 'desc')->take(5)->get()->map(function (Petition $p) {
-            $addresses = $p->displayAddresses();
-            $complainants = $addresses->where('person_type', 'Complainant');
-            $primaryComplainant = $complainants->first();
-            $complainantText = $primaryComplainant ? $primaryComplainant->person_name . ($primaryComplainant->district ? ', ' . $primaryComplainant->district->district_name : '') : 'N/A';
-            if ($complainants->count() > 1) {
-                $complainantText .= ' (+' . ($complainants->count() - 1) . ' others)';
-            }
-
-            $accused = $addresses->where('person_type', 'Accused');
-            $primaryAccused = $accused->first();
-            $accusedText = $primaryAccused ? $primaryAccused->person_name . ($primaryAccused->district ? ', ' . $primaryAccused->district->district_name : '') : 'N/A';
-            if ($accused->count() > 1) {
-                $accusedText .= ' (+' . ($accused->count() - 1) . ' others)';
-            }
-
-            return [
-                'petition_id' => $p->petition_id,
-                'receipt_no' => $p->receipt_no,
-                'file_no' => $p->file_no,
-                'date' => date('d-m-Y', strtotime($p->date_of_petition_received)),
-                'complainant' => $complainantText,
-                'accused' => $accusedText,
-                'description' => \Illuminate\Support\Str::limit(strip_tags($p->description), 100),
-                'status' => $p->status,
-                'decision' => $p->decision ? $p->decision->final_decision : null,
-            ];
-        });
+        $duplicates = \App\Services\DuplicateDetectionService::checkDuplicates(
+            $complainants,
+            $accused,
+            $description,
+            $nature,
+            Auth::user()
+        );
 
         return response()->json($duplicates);
     }

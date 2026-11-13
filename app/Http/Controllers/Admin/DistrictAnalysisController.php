@@ -201,7 +201,7 @@ class DistrictAnalysisController extends Controller
             $districtStats[] = [
                 'district_id' => 'unassigned',
                 'district_name' => 'Unassigned / Not Specified',
-                'district_code' => 'OTH',
+                'district_code' => 'N/A',
                 'petition_count' => $unassignedCount,
             ];
             $chartLabels[] = 'Unassigned';

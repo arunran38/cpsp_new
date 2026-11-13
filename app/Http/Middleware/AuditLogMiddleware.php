@@ -356,18 +356,41 @@ elseif (str_contains($routeName, '.show')) {
             $id = $route ? ($route->parameter('id') ?? $route->parameter('petition') ?? $route->parameter('user') ?? '') : '';
             $idStr = $id ? " #{$id}" : "";
 
-            if (str_contains($routeName, 'updateVr') || str_contains($routeName, 'receiveVr')) {
-                $description = "Updated Verification Report for Forwarding{$idStr} - Fields modified: {$fieldNames}";
-            } elseif (str_contains($routeName, 'updateStatus')) {
-                $status = $request->input('status');
-                $description = "Updated User account status to '{$status}'";
-            } elseif (!empty($fieldNames) && $fieldNames !== 'None') {
-                $description = "Updated {$module} record{$idStr} - Fields modified: {$fieldNames}";
-            } else {
-                $description = "Updated record in {$module}{$idStr}";
-            }
+            $diffs = $request->attributes->get('_audit_diffs');
 
-            $properties = $inputs;
+            if (!empty($diffs) && is_array($diffs)) {
+                $changedFieldsList = implode(', ', array_column($diffs, 'field'));
+
+                if ($module === 'Petitions') {
+                    $receipt = $request->input('receipt_no');
+                    if (!$receipt && $id) {
+                        $realId = \App\Services\HashidService::decode($id) ?? $id;
+                        $receipt = \App\Models\Petition::where('petition_id', $realId)->value('receipt_no');
+                    }
+                    $ident = $receipt ? " [Receipt: {$receipt}]" : ($idStr ?: "");
+                    $description = "Updated Petition{$ident} - Modified: {$changedFieldsList}";
+                } else {
+                    $description = "Updated {$module}{$idStr} - Modified: {$changedFieldsList}";
+                }
+
+                $properties = [
+                    'diffs'      => $diffs,
+                    'parameters' => $inputs,
+                ];
+            } else {
+                if (str_contains($routeName, 'updateVr') || str_contains($routeName, 'receiveVr')) {
+                    $description = "Updated Verification Report for Forwarding{$idStr} - Fields modified: {$fieldNames}";
+                } elseif (str_contains($routeName, 'updateStatus')) {
+                    $status = $request->input('status');
+                    $description = "Updated User account status to '{$status}'";
+                } elseif (!empty($fieldNames) && $fieldNames !== 'None') {
+                    $description = "Updated {$module} record{$idStr} - Fields modified: {$fieldNames}";
+                } else {
+                    $description = "Updated record in {$module}{$idStr}";
+                }
+
+                $properties = $inputs;
+            }
         } elseif ($method === 'DELETE') {
             $action = 'DELETE';
             $id = $route ? ($route->parameter('id') ?? $route->parameter('petition') ?? $route->parameter('user') ?? '') : '';

@@ -879,6 +879,13 @@
                                                     <span class="text-sm font-bold" x-text="dup.decision"></span>
                                                 </div>
                                             </template>
+                                            <template x-if="dup.match_reason_en">
+                                                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold shadow-sm"
+                                                    :class="dup.badge_color || 'bg-purple-50 text-purple-700 border-purple-200'">
+                                                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                                                    <span x-text="dup.match_reason_en"></span>
+                                                </div>
+                                            </template>
                                         </div>
 
                                         <!-- Middle Row: Complainant and Suspect Details -->

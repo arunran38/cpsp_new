@@ -167,6 +167,13 @@ Route::middleware(['auth'])->group(function () {
     // Seat Switcher
     Route::post('/switch-seat/{seatId}', [SeatController::class, 'switchSeat'])->name('seat.switch');
     Route::post('/switch-back-admin', [SeatController::class, 'switchBack'])->name('seat.switchBack');
+
+    // In-App Notifications
+    Route::get('/notifications/unread-count', [\App\Http\Controllers\NotificationController::class, 'unreadCount'])->name('notifications.unread_count');
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark_read');
+    Route::post('/notifications/mark-all-read', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark_all_read');
+    Route::delete('/notifications/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
 });
 
 require __DIR__.'/auth.php';

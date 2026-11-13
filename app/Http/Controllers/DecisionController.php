@@ -72,6 +72,10 @@ class DecisionController extends Controller
                     $this->handleFinalOrderUpload($petition->petition_id, $request->file('final_order_file'));
                 }
 
+                try {
+                    \App\Services\NotificationService::notifyDecision($petition, $request->final_decision, Auth::user());
+                } catch (\Throwable $e) {}
+
                 return back()->with('success', 'Final Decision recorded.');
             } catch (\Throwable $e) {
                 return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to record decision.'))->withInput();

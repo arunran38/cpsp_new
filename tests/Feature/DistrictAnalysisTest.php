@@ -207,6 +207,28 @@ class DistrictAnalysisTest extends TestCase
         $response->assertSee('District Trend Visualisation');
     }
 
+    public function test_dashboard_district_chart_excludes_unassigned_and_has_no_duplicate_oth(): void
+    {
+        // 1. Create a petition with null concerned_district_id
+        Petition::factory()->create([
+            'concerned_district_id' => null,
+            'status' => Petition::STATUS_RECEIVED,
+            'date_of_petition_received' => '2026-05-15',
+        ]);
+
+        $response = $this->actingAs($this->adminUser)->get(route('dashboard'));
+        $response->assertStatus(200);
+
+        $content = $response->getContent();
+        // Extract the labels array from JavaScript districtTrendChart
+        if (preg_match('/labels:\s*(\[[^\]]+\])/', $content, $matches)) {
+            $labels = json_decode($matches[1], true);
+            $othCount = count(array_keys($labels, 'OTH'));
+            $this->assertEquals(1, $othCount, '"OTH" should appear exactly once in the district chart labels.');
+            $this->assertFalse(in_array('Unassigned', $labels), '"Unassigned" should not be in the district chart labels.');
+        }
+    }
+
     public function test_master_reports_shows_district_filter_only_for_authorized_users(): void
     {
         $responseAdmin = $this->actingAs($this->adminUser)

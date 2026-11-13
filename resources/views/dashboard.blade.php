@@ -194,20 +194,10 @@
                 ->pluck('total', 'concerned_district_id')
                 ->toArray();
 
-            $unassignedDistrictCount = (clone $districtQuery)
-                ->whereNull('concerned_district_id')
-                ->count();
-
             foreach ($districts as $d) {
                 $chartDistrictLabels[] = $d->district_code ?: $d->district_name;
                 $chartDistrictFullNames[] = $d->district_name;
                 $chartDistrictData[] = (int) ($districtCounts[$d->district_id] ?? 0);
-            }
-
-            if ($unassignedDistrictCount > 0) {
-                $chartDistrictLabels[] = 'OTH';
-                $chartDistrictFullNames[] = 'Unassigned / Not Specified';
-                $chartDistrictData[] = $unassignedDistrictCount;
             }
         }
         $chartDistrictLabelsJson = json_encode($chartDistrictLabels);
