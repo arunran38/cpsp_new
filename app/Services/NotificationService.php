@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\AppNotification;
 use App\Models\Petition;
 use App\Models\Seat;
+use App\Models\SeatUser;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,9 +16,28 @@ class NotificationService
      */
     public static function create(array $attributes): AppNotification
     {
+        $userId = $attributes['user_id'] ?? null;
+        $seatId = $attributes['seat_id'] ?? null;
+
+        // Auto-resolve user_id from seat_id if user_id is not explicitly provided
+        if (!$userId && $seatId) {
+            $userId = SeatUser::where('seat_id', $seatId)
+                ->where('is_active', true)
+                ->orderBy('is_additional', 'asc')
+                ->value('user_id');
+        }
+
+        // Auto-resolve seat_id from user_id if seat_id is not explicitly provided
+        if (!$seatId && $userId) {
+            $seatId = SeatUser::where('user_id', $userId)
+                ->where('is_active', true)
+                ->orderBy('is_additional', 'asc')
+                ->value('seat_id');
+        }
+
         return AppNotification::create([
-            'user_id' => $attributes['user_id'] ?? null,
-            'seat_id' => $attributes['seat_id'] ?? null,
+            'user_id' => $userId,
+            'seat_id' => $seatId,
             'type' => $attributes['type'] ?? 'system',
             'title' => $attributes['title'] ?? 'Notification',
             'message' => $attributes['message'] ?? '',
@@ -37,16 +57,38 @@ class NotificationService
         $ids = is_array($seatIds) ? $seatIds : [$seatIds];
 
         foreach ($ids as $id) {
-            $created[] = self::create([
-                'seat_id' => $id,
-                'type' => $type,
-                'title' => $title,
-                'message' => $message,
-                'link' => $link,
-                'icon' => $icon,
-                'color' => $color,
-                'data' => $data,
-            ]);
+            $activeUserIds = SeatUser::where('seat_id', $id)
+                ->where('is_active', true)
+                ->pluck('user_id')
+                ->unique()
+                ->toArray();
+
+            if (!empty($activeUserIds)) {
+                foreach ($activeUserIds as $uid) {
+                    $created[] = self::create([
+                        'user_id' => $uid,
+                        'seat_id' => $id,
+                        'type' => $type,
+                        'title' => $title,
+                        'message' => $message,
+                        'link' => $link,
+                        'icon' => $icon,
+                        'color' => $color,
+                        'data' => $data,
+                    ]);
+                }
+            } else {
+                $created[] = self::create([
+                    'seat_id' => $id,
+                    'type' => $type,
+                    'title' => $title,
+                    'message' => $message,
+                    'link' => $link,
+                    'icon' => $icon,
+                    'color' => $color,
+                    'data' => $data,
+                ]);
+            }
         }
 
         return $created;
@@ -61,8 +103,14 @@ class NotificationService
         $ids = is_array($userIds) ? $userIds : [$userIds];
 
         foreach ($ids as $id) {
+            $seatId = SeatUser::where('user_id', $id)
+                ->where('is_active', true)
+                ->orderBy('is_additional', 'asc')
+                ->value('seat_id');
+
             $created[] = self::create([
                 'user_id' => $id,
+                'seat_id' => $seatId,
                 'type' => $type,
                 'title' => $title,
                 'message' => $message,

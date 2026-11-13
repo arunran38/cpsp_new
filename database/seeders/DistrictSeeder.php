@@ -28,7 +28,7 @@ class DistrictSeeder extends Seeder
             ['district_name' => 'Wayanad',            'district_code' => 'WYD'],
             ['district_name' => 'Kannur',             'district_code' => 'KNR'],
             ['district_name' => 'Kasaragod',          'district_code' => 'KSD'],
-            ['district_name' => 'Statewide',          'district_code' => 'STATE'],
+            ['district_name' => 'Statewide',          'district_code' => 'STW'],
             ['district_name' => 'Other State',        'district_code' => 'OTH'],
         ];
 

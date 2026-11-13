@@ -203,6 +203,16 @@ class TrashController extends Controller
         $realUploadId = HashidService::decode($id) ?? $id;
         $upload = Upload::withTrashed()->findOrFail($realUploadId);
 
+        if ($upload->petition_id) {
+            $petition = Petition::withTrashed()->find($upload->petition_id);
+            if ($petition) {
+                if ($petition->isTSection() && !Auth::user()->canAccessTSection()) {
+                    abort(403, 'Unauthorized to view T-Section confidential records.');
+                }
+                $this->authorize('view', $petition);
+            }
+        }
+
         if (!Storage::disk('public')->exists($upload->file_path)) {
             abort(404, 'File not found on storage.');
         }

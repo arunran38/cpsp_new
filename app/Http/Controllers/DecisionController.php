@@ -27,6 +27,7 @@ class DecisionController extends Controller
             try {
                 $petitionId = HashidService::decode($request->petition_id) ?? $request->petition_id;
                 $petition = Petition::findOrFail($petitionId);
+                $this->authorize('update', $petition);
 
                 $user = Auth::user();
                 if ($petition->isTSection()) {
@@ -94,6 +95,7 @@ class DecisionController extends Controller
 
         $decision = Decision::findOrFail($id);
         $petition = $decision->petition;
+        $this->authorize('update', $petition);
 
         return DB::transaction(function () use ($decision, $petition) {
             try {

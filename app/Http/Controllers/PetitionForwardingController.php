@@ -28,6 +28,7 @@ class PetitionForwardingController extends Controller
             try {
                 $petitionId = HashidService::decode($request->petition_id) ?? $request->petition_id;
                 $petition = Petition::findOrFail($petitionId);
+                $this->authorize('update', $petition);
 
                 $user = Auth::user();
                 if ($petition->isTSection()) {
@@ -176,6 +177,7 @@ class PetitionForwardingController extends Controller
         }
 
         $forwarding = PetitionForwarding::findOrFail($id);
+        $this->authorize('update', $forwarding->petition);
 
         if ($forwarding->vr_ref_no) {
             return back()->with('error', 'Cannot pull back. VR Report already submitted.');
@@ -209,6 +211,7 @@ class PetitionForwardingController extends Controller
 
         $forwarding = PetitionForwarding::findOrFail($id);
         $petition = $forwarding->petition;
+        $this->authorize('update', $petition);
 
         if (Decision::where('petition_id', $petition->petition_id)->exists()) {
             return back()->with('error', 'Cannot pull back VR. Final decision already made.');

@@ -20,6 +20,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(\App\Models\Petition::class, \App\Policies\PetitionPolicy::class);
+
         Gate::before(function ($user, $ability, $arguments = []) {
             // Never bypass authorization for T-Section confidential petitions
             $target = is_array($arguments) ? ($arguments[0] ?? null) : $arguments;

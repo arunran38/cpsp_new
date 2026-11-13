@@ -172,6 +172,13 @@ class DuplicateDetectionAndNotificationTest extends TestCase
         );
 
         $this->assertCount(1, $created);
+        $this->assertEquals($this->cpspUser->user_id, $created[0]->user_id);
+        $this->assertEquals($this->cpspSeat->seat_id, $created[0]->seat_id);
+        $this->assertDatabaseHas('app_notifications', [
+            'id' => $created[0]->id,
+            'user_id' => $this->cpspUser->user_id,
+            'seat_id' => $this->cpspSeat->seat_id,
+        ]);
         $notificationId = $created[0]->id;
 
         // 2. CPSP user checks unread count

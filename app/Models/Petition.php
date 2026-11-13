@@ -879,15 +879,7 @@ class Petition extends Model
             return $query;
         }
 
-        $tSeatIds = Seat::getTSectionSeatIds();
-        if (!empty($tSeatIds)) {
-            $query->where(function ($q) use ($tSeatIds) {
-                $q->whereNotIn('petitions.seat_id', $tSeatIds)
-                  ->orWhereNull('petitions.seat_id');
-            });
-        }
-
-        return $query;
+        return $this->scopeExcludeTSection($query);
     }
 
     protected static function booted(): void
