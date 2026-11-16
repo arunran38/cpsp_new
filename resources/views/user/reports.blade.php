@@ -411,7 +411,7 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Action Date</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Action Date <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span></label>
                             <input type="date" name="forwarded_date" x-model="forwardedDate"
                                 max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
@@ -428,7 +428,7 @@
                             <label class="block text-sm font-medium text-slate-700 mb-1">Director Remarks</label>
                             <textarea name="director_remarks" rows="3"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
-                                placeholder="Enter instructions or remarks..." required></textarea>
+                                placeholder="Enter instructions or remarks..."></textarea>
                         </div>
                         <div class="flex justify-end gap-3 pt-6">
                             <button type="button" @click="showForwardModal = false"
@@ -461,13 +461,13 @@
                     @method('PUT')
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">VR Ref No</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">VR Ref No <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span></label>
                             <input type="text" name="vr_ref_no"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
                                 required>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">VR Date</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">VR Date <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span></label>
                             <input type="date" placeholder="DD-MM-YYYY" name="vr_date"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
                                 style="color: #1e40af !important;"
@@ -475,7 +475,7 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">VR Recommendation</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">VR Recommendation <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span></label>
                         <div class="relative flex items-center">
                             <select name="vr_remarks"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm appearance-none pr-10 text-black"
@@ -563,7 +563,7 @@
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Final Decision</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Final Decision <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span></label>
                         <select name="final_decision" x-model="finalDecision"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-black"
                             required>
@@ -581,7 +581,7 @@
                         </select>
                     </div>
                     <div x-show="finalDecision === 'Sent to Govt'" x-cloak class="pt-2">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Recommendation Type <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Recommendation Type <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span></label>
                         <select name="govt_recommendation_type" x-model="recommendationType"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-black">
                             <option value="">Select Recommendation Type...</option>
@@ -592,16 +592,22 @@
                         <p x-show="recommendationTypeError" x-text="recommendationTypeError" x-cloak class="mt-1 text-xs font-semibold text-rose-600"></p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Decision Date</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Decision Date <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span></label>
                         <input type="date" name="decision_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-slate-800 font-semibold"
                             style="color: #1e40af !important;" required>
+                    </div>
+                    <div x-show="['VC','VE','SC','CV','PE'].includes(finalDecision)" x-cloak>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Directorate Order Number</label>
+                        <input type="text" name="directorate_order_number"
+                            class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-slate-800"
+                            placeholder="Order Number">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Final Remarks</label>
                         <textarea name="final_remarks" rows="3"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-black"
-                            placeholder="Director's final remarks..." required></textarea>
+                            placeholder="Director's final remarks..."></textarea>
                     </div>
                     <div class="flex justify-end gap-3 pt-6">
                         <button type="button" @click="showDecisionModal = false"

@@ -240,67 +240,67 @@
                 </div>
 
                 <form action="{{ route('forwardings.store') }}" method="POST" enctype="multipart/form-data" x-data="{ 
-                            action: '', 
-                            recommendationType: '',
-                            recommendationTypeError: '',
-                            fileNo: '', 
-                            fileNoError: '',
-                            fileCreatedDate: '',
-                            forwardedDate: '',
-                            checkEmpty() {
-                                if (!this.fileNo.trim()) {
-                                    this.fileNoError = 'this field is required';
-                                } else {
-                                    this.fileNoError = '';
-                                }
-                            },
-                            async checkFileNoUniqueness() {
-                                if (!this.fileNo.trim()) {
-                                    this.fileNoError = 'this field is required';
-                                    return;
-                                }
-                                try {
-                                    const response = await fetch('/petitions/check-file-no', {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
-                                        },
-                                        body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
-                                    });
-                                    const data = await response.json();
-                                    if (data.exists) {
-                                        this.fileNoError = 'File number already exists';
+                                action: '', 
+                                recommendationType: '',
+                                recommendationTypeError: '',
+                                fileNo: '', 
+                                fileNoError: '',
+                                fileCreatedDate: '',
+                                forwardedDate: '',
+                                checkEmpty() {
+                                    if (!this.fileNo.trim()) {
+                                        this.fileNoError = 'this field is required';
                                     } else {
                                         this.fileNoError = '';
                                     }
-                                } catch (error) {
-                                    console.error(error);
-                                }
-                            },
-                            validateForm(e) {
-                                this.recommendationTypeError = '';
-                                if (this.action === 'Sent_to_Govt' && !this.recommendationType) {
-                                    this.recommendationTypeError = 'Recommendation Type is required.';
-                                    if (e) {
-                                        e.preventDefault();
-                                        e.stopPropagation();
+                                },
+                                async checkFileNoUniqueness() {
+                                    if (!this.fileNo.trim()) {
+                                        this.fileNoError = 'this field is required';
+                                        return;
                                     }
-                                    return false;
-                                }
-                                if (this.fileNoError) {
-                                    if (e) {
-                                        e.preventDefault();
-                                        e.stopPropagation();
+                                    try {
+                                        const response = await fetch('/petitions/check-file-no', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
+                                            },
+                                            body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
+                                        });
+                                        const data = await response.json();
+                                        if (data.exists) {
+                                            this.fileNoError = 'File number already exists';
+                                        } else {
+                                            this.fileNoError = '';
+                                        }
+                                    } catch (error) {
+                                        console.error(error);
                                     }
-                                    return false;
+                                },
+                                validateForm(e) {
+                                    this.recommendationTypeError = '';
+                                    if (this.action === 'Sent_to_Govt' && !this.recommendationType) {
+                                        this.recommendationTypeError = 'Recommendation Type is required.';
+                                        if (e) {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                        }
+                                        return false;
+                                    }
+                                    if (this.fileNoError) {
+                                        if (e) {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                        }
+                                        return false;
+                                    }
+                                    return true;
                                 }
-                                return true;
-                            }
-                        }" x-init="
-                            $watch('action', val => { if (val !== 'Sent_to_Govt') { recommendationType = ''; recommendationTypeError = ''; } });
-                            $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
-                        " @submit="if (!validateForm($event)) return false;">
+                            }" x-init="
+                                $watch('action', val => { if (val !== 'Sent_to_Govt') { recommendationType = ''; recommendationTypeError = ''; } });
+                                $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
+                            " @submit="if (!validateForm($event)) return false;">
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 
@@ -329,7 +329,7 @@
                                 'Forward_To_Unit' => 'Forward to Unit',
                                 'Sent_to_Govt' => 'Send to Govt (Decision)',
                                 'Sent_to_SPC' => 'Send to SPC (Decision)',
-                                'Internal_Vigilance' => 'Send to Internal Vigilance',
+                                'Internal_Vigilance' => 'Send to Internal Vigilance (Decision)',
                                 'Close' => 'Close Petition (Decision)',
                             ];
                         @endphp
@@ -359,9 +359,10 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Action Date</label>
-                            <input type="date" name="forwarded_date" x-model="forwardedDate"
-                                max="{{ date('Y-m-d') }}"
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Action Date <span
+                                    class="required-mark text-red-600 font-bold ml-1"
+                                    style="color: #dc2626 !important;">*</span></label>
+                            <input type="date" name="forwarded_date" x-model="forwardedDate" max="{{ date('Y-m-d') }}"
                                 placeholder="DD-MM-YYYY"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                                 style="color: #1e40af !important;" required>
@@ -369,12 +370,6 @@
 
                         <div x-show="action === 'Close' || action === 'Sent_to_Govt' || action === 'Sent_to_SPC' || action === 'Internal_Vigilance'"
                             x-cloak class="pt-2">
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Directorate Order Number</label>
-                            <input type="text" name="directorate_order_number"
-                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 mb-3"
-                                placeholder="Order Number"
-                                x-bind:required="action === 'Close' || action === 'Sent_to_Govt' || action === 'Sent_to_SPC' || action === 'Internal_Vigilance'">
-
                             <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order</label>
                             <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
                                 class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
@@ -384,7 +379,7 @@
                             <label class="block text-sm font-medium text-slate-700 mb-1">Director Remarks</label>
                             <textarea name="director_remarks" rows="3"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
-                                placeholder="Enter instructions or remarks..." required></textarea>
+                                placeholder="Enter instructions or remarks..."></textarea>
                         </div>
 
                         <div class="flex justify-end gap-3 pt-6">
@@ -422,13 +417,17 @@
 
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">VR Ref No</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">VR Ref No <span
+                                    class="required-mark text-red-600 font-bold ml-1"
+                                    style="color: #dc2626 !important;">*</span></label>
                             <input type="text" name="vr_ref_no"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
                                 required>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">VR Date</label>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">VR Date <span
+                                    class="required-mark text-red-600 font-bold ml-1"
+                                    style="color: #dc2626 !important;">*</span></label>
                             <input type="date" placeholder="DD-MM-YYYY" name="vr_date"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
                                 style="color: #1e40af !important;" required
@@ -498,25 +497,25 @@
 
                 <form action="{{ route('decisions.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4"
                     x-data="{ 
-                            finalDecision: '', 
-                            recommendationType: '',
-                            recommendationTypeError: '',
-                            validateDecision(e) {
-                                this.recommendationTypeError = '';
-                                if (this.finalDecision === 'Sent to Govt' && !this.recommendationType) {
-                                    this.recommendationTypeError = 'Recommendation Type is required.';
-                                    if (e) {
-                                        e.preventDefault();
-                                        e.stopPropagation();
+                                finalDecision: '', 
+                                recommendationType: '',
+                                recommendationTypeError: '',
+                                validateDecision(e) {
+                                    this.recommendationTypeError = '';
+                                    if (this.finalDecision === 'Sent to Govt' && !this.recommendationType) {
+                                        this.recommendationTypeError = 'Recommendation Type is required.';
+                                        if (e) {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                        }
+                                        return false;
                                     }
-                                    return false;
+                                    return true;
                                 }
-                                return true;
-                            }
-                        }" x-init="
-                            $watch('finalDecision', val => { if (val !== 'Sent to Govt') { recommendationType = ''; recommendationTypeError = ''; } });
-                            $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
-                        " @submit="if (!validateDecision($event)) return false;">
+                            }" x-init="
+                                $watch('finalDecision', val => { if (val !== 'Sent to Govt') { recommendationType = ''; recommendationTypeError = ''; } });
+                                $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
+                            " @submit="if (!validateDecision($event)) return false;">
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 
@@ -553,26 +552,27 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-1">Decision Date</label>
-                            <input type="date" name="decision_date"
-                                max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Decision Date <span
+                                    class="required-mark text-red-600 font-bold ml-1"
+                                    style="color: #dc2626 !important;">*</span></label>
+                            <input type="date" name="decision_date" max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-slate-800 font-semibold"
                                 style="color: #1e40af !important;" required>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 gap-4 mb-4">
-                        <div>
+                        <div x-show="['VC','VE','SC','CV','PE'].includes(finalDecision)" x-cloak>
                             <label class="block text-sm font-medium text-slate-700 mb-1">Directorate Order Number</label>
                             <input type="text" name="directorate_order_number"
                                 class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-slate-800"
-                                placeholder="Order Number" required>
+                                placeholder="Order Number">
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Final Remarks</label>
                         <textarea name="final_remarks" rows="3"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-black"
-                            placeholder="Director's final remarks..." required></textarea>
+                            placeholder="Director's final remarks..."></textarea>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Upload Final Order Document</label>

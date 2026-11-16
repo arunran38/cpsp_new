@@ -149,7 +149,7 @@
                     <label class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                         <i data-lucide="briefcase" class="w-3.5 h-3.5 text-indigo-600"></i>
                         <span>Target Seat</span>
-                        <span class="text-rose-500">*</span>
+                        <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                     </label>
 
                     <!-- Hidden Input for Form Submission -->
@@ -332,7 +332,7 @@
                     <label class="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                         <i data-lucide="user" class="w-3.5 h-3.5 text-teal-600"></i>
                         <span>Officer / User</span>
-                        <span class="text-rose-500">*</span>
+                        <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                     </label>
 
                     <!-- Hidden Input for Form Submission -->

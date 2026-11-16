@@ -258,7 +258,7 @@
                             <label for="unit_id"
                                 class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
                                 <i data-lucide="building-2" class="w-4 h-4 text-indigo-600"></i>
-                                Concerned Unit Name <span class="text-rose-500">*</span>
+                                Concerned Unit Name <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                             </label>
                             <select name="unit_id" id="unit_id" x-model="petitionDetails.unit_id"
                                 x-bind:required="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
@@ -285,7 +285,7 @@
                             <label for="date_of_petition_received_at_unit"
                                 class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
                                 <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
-                                Date of Petition Received at Unit <span class="text-rose-500">*</span>
+                                Date of Petition Received at Unit <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                             </label>
                             <input type="date" name="date_of_petition_received_at_unit"
                                 id="date_of_petition_received_at_unit" x-model="petitionDetails.date_of_petition_received_at_unit"
@@ -578,7 +578,7 @@
                                 </div>
                                 <div>
                                     <x-searchable-select 
-                                        label="Department <span class='text-rose-500'>*</span>" 
+                                        label="Department <span class='required-mark text-red-600 font-bold ml-1' style='color: #dc2626 !important;'>*</span>" 
                                         x-bind:name="`accused[${index}][department_id]`"
                                         x-model="acc.department_id" 
                                         :options="$departments->pluck('department_name', 'id')->toArray()" 

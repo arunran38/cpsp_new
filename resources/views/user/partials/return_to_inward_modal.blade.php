@@ -63,7 +63,7 @@
 
                     <div class="space-y-2.5">
                         <label for="return_reason" class="block text-[15px] font-bold text-indigo-900">
-                            Reason for Return <span class="text-rose-500">*</span>
+                            Reason for Return <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                         </label>
                         <div class="relative">
                             <textarea name="return_reason" id="return_reason" rows="3" required

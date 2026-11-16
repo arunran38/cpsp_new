@@ -4,13 +4,21 @@
     'value' => '',
     'placeholder' => '',
     'rows' => 4,
-    'max' => 5000
+    'max' => 5000,
+    'required' => false
 ])
+@php
+    $isRequired = $required || $attributes->has('required') || (is_string($label) && str_contains($label, '*'));
+    $displayLabel = $label;
+    if (is_string($displayLabel)) {
+        $displayLabel = trim(str_replace('*', '', strip_tags($displayLabel)));
+    }
+@endphp
 
 <div class="space-y-1.5" x-data="{ count: 0, max: {{ $max }} }" x-init="count = $refs.textarea.value ? $refs.textarea.value.length : 0">
     @if($label)
         <label @if($name) for="{{ $name }}" @endif class="flex items-center justify-between text-sm font-bold text-slate-800">
-            {{ $label }}
+            <span>{!! $displayLabel !!}@if($isRequired)<span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>@endif</span>
             <span class="text-xs bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 font-bold" x-text="count + '/' + max"></span>
         </label>
     @endif

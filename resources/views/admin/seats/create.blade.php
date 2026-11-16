@@ -43,7 +43,7 @@
                 <!-- Seat Name -->
                 <div class="space-y-2">
                     <label for="seat_name" class="block text-xs font-black text-slate-700 uppercase tracking-wider">
-                        Seat Name <span class="text-rose-500">*</span>
+                        Seat Name <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                     </label>
                     <div class="relative group">
                         <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-indigo-500 transition-colors">
@@ -61,7 +61,7 @@
                 <!-- Active Status -->
                 <div class="space-y-2">
                     <label for="is_active" class="block text-xs font-black text-slate-700 uppercase tracking-wider">
-                        Status <span class="text-rose-500">*</span>
+                        Status <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                     </label>
                     <div class="relative group">
                         <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-emerald-500 transition-colors z-10 pointer-events-none">
@@ -82,7 +82,7 @@
                 <div class="space-y-3 md:col-span-2">
                     <div class="flex items-center justify-between">
                         <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">
-                            Assign Roles (Multiple Selection) <span class="text-rose-500">*</span>
+                            Assign Roles (Multiple Selection) <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                         </label>
                         <span class="text-xs text-slate-400">Select one or more roles to define capabilities for this seat</span>
                     </div>

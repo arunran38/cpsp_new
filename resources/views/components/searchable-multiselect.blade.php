@@ -1,4 +1,11 @@
-@props(['name', 'label' => null, 'options' => [], 'selected' => [], 'placeholder' => 'Select / Search'])
+@props(['name', 'label' => null, 'options' => [], 'selected' => [], 'placeholder' => 'Select / Search', 'required' => false])
+@php
+    $isRequired = $required || $attributes->has('required') || (is_string($label) && str_contains($label, '*'));
+    $displayLabel = $label;
+    if (is_string($displayLabel)) {
+        $displayLabel = trim(str_replace('*', '', strip_tags($displayLabel)));
+    }
+@endphp
 
 <div x-data="{ 
         open: false, 
@@ -38,7 +45,7 @@
     @if($label)
         <label class="block text-sm font-bold text-slate-700 mb-2 transition-colors duration-300"
                :class="open ? 'text-primary' : 'text-slate-700'">
-            {{ $label }}
+            {!! $displayLabel !!}@if($isRequired)<span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>@endif
         </label>
     @endif
 

@@ -3,17 +3,23 @@
     'name' => null,
     'options' => [],
     'selected' => '',
-    'placeholder' => null
+    'placeholder' => null,
+    'required' => false
 ])
 @php
     $fieldName = $attributes->get('name') ?? $name;
     $bindName = $attributes->get('x-bind:name') ?? $attributes->get(':name');
     $nameExpr = $bindName ? $bindName : ($fieldName ? "'{$fieldName}'" : "''");
+    $isRequired = $required || $attributes->has('required') || (is_string($label) && str_contains($label, '*'));
+    $displayLabel = $label;
+    if (is_string($displayLabel)) {
+        $displayLabel = trim(str_replace('*', '', strip_tags($displayLabel)));
+    }
 @endphp
 <div class="space-y-1.5">
     @if($label)
         <label @if($name) for="{{ $name }}" @endif class="block text-sm font-bold text-slate-800">
-            {!! $label !!}
+            {!! $displayLabel !!}@if($isRequired)<span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>@endif
         </label>
     @endif
     <div class="relative flex items-center group">

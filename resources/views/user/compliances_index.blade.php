@@ -452,7 +452,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">
-                            <span x-text="selectedDecision?.type + ' Number'"></span> <span class="text-rose-500">*</span>
+                            <span x-text="selectedDecision?.type + ' Number'"></span> <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                         </label>
                         <input type="text" name="action_number"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm text-slate-800"
@@ -461,7 +461,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Action Date <span
-                                class="text-rose-500">*</span></label>
+                                class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span></label>
                         <input type="date" name="action_date" max="{{ date('Y-m-d') }}"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm text-slate-800"
                             required>
@@ -469,7 +469,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Action Taking Unit <span
-                                class="text-rose-500">*</span></label>
+                                class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span></label>
                         <select name="unit_id"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm text-slate-800"
                             required>

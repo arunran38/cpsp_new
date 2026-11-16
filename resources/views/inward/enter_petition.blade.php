@@ -124,7 +124,7 @@
                                 <!-- Receipt Number -->
                                 <div class="space-y-1.5">
                                     <label for="receipt_no" class="block text-sm font-semibold text-slate-700">
-                                        Receipt No <span class="text-rose-500">*</span>
+                                        Receipt No <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                                     </label>
                                     <div class="relative">
                                         <input type="text" name="receipt_no" id="receipt_no" x-model="receiptNo"
@@ -155,7 +155,7 @@
                                 <div class="space-y-1.5">
                                     <label for="date_of_petition_received"
                                         class="block text-sm font-semibold text-slate-700 flex items-center justify-between">
-                                        <span>Date of Receipt <span class="text-rose-500">*</span></span>
+                                        <span>Date of Receipt <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span></span>
                                     </label>
                                     <div class="relative cursor-not-allowed">
                                         <input type="date" name="date_of_petition_received" id="date_of_petition_received"
@@ -195,7 +195,7 @@
                                         <label for="unit_id"
                                             class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
                                             <i data-lucide="building-2" class="w-4 h-4 text-indigo-600"></i>
-                                            Concerned Unit Name <span class="text-rose-500">*</span>
+                                            Concerned Unit Name <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                                         </label>
                                         <select name="unit_id" id="unit_id" x-model="selectedUnitId"
                                             x-bind:required="modeOfPetition && modeOfPetition.toLowerCase() === 'unit'"
@@ -217,7 +217,7 @@
                                         <label for="date_of_petition_received_at_unit"
                                             class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
                                             <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
-                                            Date of Petition Received at Unit <span class="text-rose-500">*</span>
+                                            Date of Petition Received at Unit <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                                         </label>
                                         <input type="date" name="date_of_petition_received_at_unit"
                                             id="date_of_petition_received_at_unit" x-model="dateOfPetitionReceivedAtUnit"
@@ -244,7 +244,7 @@
                                 <!-- Complainant Name -->
                                 <div class="space-y-1.5">
                                     <label for="complainant_name" class="block text-sm font-semibold text-slate-700">
-                                        Complainant Name <span class="text-rose-500">*</span>
+                                        Complainant Name <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                                     </label>
                                     <input type="text" name="complainants[0][name]" id="complainant_name"
                                         x-model="complainantName" value="{{ old('complainants.0.name') }}" required
@@ -257,7 +257,7 @@
                                 <div class="space-y-1.5"
                                     :class="(modeOfPetition && (modeOfPetition.toLowerCase() === 'unit' || modeOfPetition === 'others')) ? 'col-span-1' : 'col-span-1'">
                                     <label for="seat_id" class="block text-sm font-semibold text-slate-700">
-                                        Concerned Seat <span class="text-rose-500">*</span>
+                                        Concerned Seat <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                                     </label>
                                     <select name="seat_id" id="seat_id" x-model="selectedSeatId" required
                                         class="block w-full px-4 py-2.5 text-sm font-medium bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
@@ -1106,7 +1106,7 @@
 
                             <div class="space-y-2.5">
                                 <label class="block text-[15px] font-bold text-indigo-900 mb-1">
-                                    Select Seat <span class="text-rose-500">*</span>
+                                    Select Seat <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                                 </label>
                                 <div class="relative">
                                     <select name="seat_id" required

@@ -54,7 +54,7 @@
                 <div class="space-y-3 md:col-span-2">
                     <div class="flex items-center justify-between">
                         <label class="block text-sm font-bold text-slate-700">
-                            Assign Roles (Multiple Selection) <span class="text-rose-500">*</span>
+                            Assign Roles (Multiple Selection) <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                         </label>
                         <span class="text-xs text-slate-400">Select one or more roles to define capabilities for this seat</span>
                     </div>

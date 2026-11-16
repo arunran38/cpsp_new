@@ -1,8 +1,15 @@
 @props(['name' => 'files[]', 'label' => 'Upload Files', 'multiple' => false, 'required' => false])
+@php
+    $isRequired = $required || $attributes->has('required') || (is_string($label) && str_contains($label, '*'));
+    $displayLabel = $label;
+    if (is_string($displayLabel)) {
+        $displayLabel = trim(str_replace('*', '', strip_tags($displayLabel)));
+    }
+@endphp
 
 <div class="pt-2" x-data="fileUploadComponent('{{ $name }}', {{ $multiple ? 'true' : 'false' }})">
     @if($label)
-        <label class="block text-sm font-bold text-slate-800 mb-2">{{ $label }} @if($required)<span class="text-rose-500">*</span>@endif</label>
+        <label class="block text-sm font-bold text-slate-800 mb-2">{!! $displayLabel !!}@if($isRequired)<span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>@endif</label>
     @endif
     
     <label for="{{ $name }}" class="flex flex-col items-center justify-center w-full py-8 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 hover:border-slate-400 transition-all group relative"

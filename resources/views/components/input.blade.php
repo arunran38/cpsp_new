@@ -4,13 +4,21 @@
     'type' => 'text',
     'value' => '',
     'placeholder' => '',
-    'icon' => null
+    'icon' => null,
+    'required' => false
 ])
+@php
+    $isRequired = $required || $attributes->has('required') || (is_string($label) && str_contains($label, '*'));
+    $displayLabel = $label;
+    if (is_string($displayLabel)) {
+        $displayLabel = trim(str_replace('*', '', strip_tags($displayLabel)));
+    }
+@endphp
 
 <div class="space-y-1.5" x-data="{ count: 0 }" x-init="count = $refs.input.value.length">
     @if($label)
         <label @if($name) for="{{ $name }}" @endif class="block text-sm font-bold text-slate-800">
-            {{ $label }}
+            {!! $displayLabel !!}@if($isRequired)<span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>@endif
         </label>
     @endif
     <div class="relative flex items-center group">

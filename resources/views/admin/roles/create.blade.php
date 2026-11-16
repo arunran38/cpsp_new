@@ -253,7 +253,7 @@
             <div class="p-6 sm:p-7">
                 <div class="max-w-2xl">
                     <label for="name" class="block text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider mb-2">
-                        Role Name <span class="text-rose-600">*</span>
+                        Role Name <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                     </label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-indigo-600">

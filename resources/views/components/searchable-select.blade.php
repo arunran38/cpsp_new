@@ -1,6 +1,18 @@
-@props(['name' => null, 'label' => null, 'options' => [], 'selected' => null, 'placeholder' => 'Select an option...'])
+@props([
+    'name' => null, 
+    'label' => null, 
+    'options' => [], 
+    'selected' => null, 
+    'placeholder' => 'Select an option...',
+    'required' => false
+])
 @php
     $disabledExpr = $attributes->get('x-bind:disabled');
+    $isRequired = $required || $attributes->has('required') || (is_string($label) && str_contains($label, '*'));
+    $displayLabel = $label;
+    if (is_string($displayLabel)) {
+        $displayLabel = trim(str_replace('*', '', strip_tags($displayLabel)));
+    }
 @endphp
 
 <div class="w-full space-y-1.5" x-modelable="selected" {{ $attributes->whereStartsWith('x-model') }} x-data="{ 
@@ -65,7 +77,7 @@
     @if($label)
         <label class="block text-sm font-bold text-slate-800 transition-colors duration-200"
             :class="open ? 'text-primary' : ''">
-            {!! $label !!}
+            {!! $displayLabel !!}@if($isRequired)<span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>@endif
         </label>
     @endif
 
