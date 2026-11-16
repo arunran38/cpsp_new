@@ -411,4 +411,42 @@ class User extends Authenticatable
             || $this->canAccessTSection()
             || $this->canAccessTSectionPending();
     }
+
+    /**
+     * Check if user has clearance to view CPSP petitions in read-only mode for duplicate identification.
+     */
+    public function canViewCpspPetitionsReadOnly(): bool
+    {
+        return $this->canAccess(\App\Services\TSectionPermissionRegistry::VIEW_CPSP_READONLY)
+            || $this->canAccess('access admin dashboard');
+    }
+
+    /**
+     * Check if user has clearance to view assigned inward petitions for their section/seat.
+     */
+    public function canViewAssignedInwardPetitions(): bool
+    {
+        return $this->canAccess(\App\Services\TSectionPermissionRegistry::VIEW_ASSIGNED_INWARD)
+            || $this->canAccess('access admin dashboard');
+    }
+
+    /**
+     * Check if user can link related petitions across sections.
+     */
+    public function canLinkRelatedPetitions(): bool
+    {
+        return $this->canAccess(\App\Services\TSectionPermissionRegistry::LINK_RELATED)
+            || $this->canAccess('link petitions')
+            || $this->canAccess('access admin dashboard');
+    }
+
+    /**
+     * Check if user can view linked petition references.
+     */
+    public function canViewLinkedPetitionReferences(): bool
+    {
+        return $this->canAccess(\App\Services\TSectionPermissionRegistry::VIEW_LINKED_REFERENCES)
+            || $this->canAccess('access admin dashboard')
+            || $this->canAccess('view all petitions');
+    }
 }

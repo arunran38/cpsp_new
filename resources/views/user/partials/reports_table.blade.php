@@ -32,13 +32,24 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex flex-col">
-                                <span class="font-bold text-blue-800 block">{{ $petition->receipt_no }}</span>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-bold text-blue-800">{{ $petition->receipt_no }}</span>
+                                    @if($petition->isTSection())
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 border border-indigo-200" title="T-Section Confidential Petition">
+                                            <i class="fa-solid fa-shield-halved text-[9px]"></i> T-Section
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200" title="CPSP Reference Petition">
+                                            <i class="fa-solid fa-clipboard-list text-[9px]"></i> CPSP
+                                        </span>
+                                    @endif
+                                </div>
                                 @if($petition->file_no)
                                     <span class="block text-[11px] font-bold text-amber-600 mt-0.5" title="File No">
                                         <i class="fa-regular fa-folder-open text-[10px]"></i> {{ $petition->file_no }}
                                     </span>
                                 @endif
-                                @if($petition->originalPetition)
+                                @if($petition->originalPetition && (!$petition->originalPetition->isTSection() || auth()->user()->canAccessTSection() || auth()->user()->canAccess('access admin dashboard')))
                                     <span class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-orange-100 text-orange-700 border border-orange-200" title="Linked to {{ $petition->originalPetition->receipt_no }}">
                                         <i data-lucide="link" class="w-3 h-3"></i> Linked to {{ $petition->originalPetition->receipt_no }}
                                     </span>
@@ -46,6 +57,9 @@
                                 @if($petition->duplicates && $petition->duplicates->count() > 0)
                                     <div class="mt-1 flex flex-wrap gap-1">
                                         @foreach($petition->duplicates as $dup)
+                                            @if($dup->isTSection() && !auth()->user()->canAccessTSection() && !auth()->user()->canAccess('access admin dashboard'))
+                                                @continue
+                                            @endif
                                             <a href="{{ route('petitions.show', $dup->hashid) }}" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors" title="Linked Duplicate Petition">
                                                 <i data-lucide="copy" class="w-2.5 h-2.5"></i> {{ $dup->receipt_no }}
                                             </a>
@@ -128,8 +142,7 @@
                         <td class="px-6 py-4 text-center">
                             <div class="flex items-center justify-center gap-3">
                                 @php
-                                    $canModifyPetition = Auth::user()->canAccess('update petitions') && 
-                                        (Auth::user()->canAccess('access admin dashboard') || !$petition->seat_id || $petition->seat_id === Auth::user()->currentSeatUser()?->seat_id);
+                                    $canModifyPetition = Auth::user()->can('update', $petition);
                                 @endphp
 
                                 @if($canModifyPetition && !$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
@@ -157,7 +170,7 @@
                                     </button>
                                 @endif
 
-                                @if(Auth::user()->canAccess('delete petitions'))
+                                @if(Auth::user()->can('delete', $petition))
                                     @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance']) && (!$petition->isFromInward() || Auth::user()->canAccess('access admin dashboard')))
                                         <form action="{{ route('petitions.destroy', $petition->hashid) }}" method="POST"
                                             class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
@@ -217,13 +230,24 @@
                             {{ ($petitions->currentPage() - 1) * $petitions->perPage() + $loop->iteration }}
                         </td>
                         <td class="px-6 py-4">
-                            <span class="font-bold text-slate-800">{{ $petition->receipt_no }}</span>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="font-bold text-slate-800">{{ $petition->receipt_no }}</span>
+                                @if($petition->isTSection())
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 border border-indigo-200" title="T-Section Confidential Petition">
+                                        <i class="fa-solid fa-shield-halved text-[9px]"></i> T-Section
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200" title="CPSP Reference Petition">
+                                        <i class="fa-solid fa-clipboard-list text-[9px]"></i> CPSP
+                                    </span>
+                                @endif
+                            </div>
                             @if($petition->file_no)
                                 <span class="block text-[11px] font-bold text-amber-600 mt-0.5" title="File No">
                                     <i class="fa-regular fa-folder-open text-[10px]"></i> {{ $petition->file_no }}
                                 </span>
                             @endif
-                            @if($petition->originalPetition)
+                            @if($petition->originalPetition && (!$petition->originalPetition->isTSection() || auth()->user()->canAccessTSection() || auth()->user()->canAccess('access admin dashboard')))
                                 <span class="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-orange-100 text-orange-700 border border-orange-200" title="Linked to {{ $petition->originalPetition->receipt_no }}">
                                     <i data-lucide="link" class="w-3 h-3"></i> Linked to {{ $petition->originalPetition->receipt_no }}
                                 </span>
@@ -231,6 +255,9 @@
                             @if($petition->duplicates && $petition->duplicates->count() > 0)
                                 <div class="mt-1 flex flex-wrap gap-1">
                                     @foreach($petition->duplicates as $dup)
+                                        @if($dup->isTSection() && !auth()->user()->canAccessTSection() && !auth()->user()->canAccess('access admin dashboard'))
+                                            @continue
+                                        @endif
                                         <a href="{{ route('petitions.show', $dup->hashid) }}" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors" title="Linked Duplicate Petition">
                                             <i data-lucide="copy" class="w-2.5 h-2.5"></i> {{ $dup->receipt_no }}
                                         </a>
@@ -302,77 +329,90 @@
                             @php
                                 $wf = $petition->workflow_status;
                                 $isDuplicatePetition = (bool) $petition->linked_petition_id || $petition->status === \App\Models\Petition::STATUS_DUPLICATE;
+                                $canViewWf = $petition->canViewWorkflowDetails();
                             @endphp
-                            <span
-                                class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest {{ $wf['pill_class'] }}"
-                                title="{{ $wf['description'] ?? $wf['label'] }}">
-                                @if($isDuplicatePetition)
-                                    Duplicate
-                                @elseif($petition->decision)
-                                    Final: {{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}
-                                @else
-                                    {{ $wf['label'] }}
-                                @endif
-                            </span>
+                            @if(!$canViewWf)
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-slate-100 text-slate-700 border border-slate-200" title="CPSP Registered / Processed">
+                                    CPSP Processed
+                                </span>
+                            @else
+                                <span
+                                    class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest {{ $wf['pill_class'] }}"
+                                    title="{{ $wf['description'] ?? $wf['label'] }}">
+                                    @if($isDuplicatePetition)
+                                        Duplicate
+                                    @elseif($petition->decision)
+                                        Final: {{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}
+                                    @else
+                                        {{ $wf['label'] }}
+                                    @endif
+                                </span>
+                            @endif
                         </td>
                         <td class="px-6 py-4 text-center">
                             <div class="flex flex-col items-center justify-center gap-2">
-                                @php $role = auth()->user()->getRoleNames()->first(); @endphp
-                                
-                                @if(Auth::user()->canAccess('update petitions'))
-                                    @if(!$petition->linked_petition_id)
-                                        @if($petition->status === 'Received' && $petition->is_cpsp_processed)
-                                            <button @click="showForwardModal = true; activePetitionId = {{ $petition->petition_id }}; activePetitionDate = '{{ $regDate }}'"
-                                                class="px-3 py-1 text-xs font-bold text-white bg-amber-500 rounded hover:bg-amber-600 transition-colors shadow-sm">
-                                                Forward
-                                            </button>
-                                        @elseif($petition->status === 'Received' && !$petition->is_cpsp_processed)
-                                            <span class="text-[11px] font-semibold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
-                                                Awaiting CPSP Details
+                                @if(!$canViewWf)
+                                    <span class="text-[11px] text-slate-400 font-semibold italic flex items-center gap-1">
+                                        <i class="fa-solid fa-lock text-[10px] text-slate-300"></i> Reference Only
+                                    </span>
+                                @else
+                                    @php $role = auth()->user()->getRoleNames()->first(); @endphp
+                                    
+                                    @if(Auth::user()->can('update', $petition))
+                                        @if(!$petition->linked_petition_id)
+                                            @if($petition->status === 'Received' && $petition->is_cpsp_processed)
+                                                <button @click="showForwardModal = true; activePetitionId = {{ $petition->petition_id }}; activePetitionDate = '{{ $regDate }}'"
+                                                    class="px-3 py-1 text-xs font-bold text-white bg-amber-500 rounded hover:bg-amber-600 transition-colors shadow-sm">
+                                                    Forward
+                                                </button>
+                                            @elseif($petition->status === 'Received' && !$petition->is_cpsp_processed)
+                                                <span class="text-[11px] font-semibold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                                                    Awaiting CPSP Details
+                                                </span>
+                                            @endif
+                                            
+                                            @if($petition->status === 'Forwarded' && $petition->latestForwarding)
+                                                <button
+                                                    @click="showVrModal = true; activeForwardingId = {{ $petition->latestForwarding->petition_forwarding_id }}"
+                                                    class="px-3 py-1 text-xs font-bold text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors shadow-sm">
+                                                    Update VR
+                                                </button>
+                                            @endif
+                                            
+                                            @if($petition->status === 'VR_Received')
+                                                <button @click="showDecisionModal = true; activePetitionId = {{ $petition->petition_id }}; activePetitionDate = '{{ $regDate }}'"
+                                                    class="px-3 py-1 text-xs font-bold text-white bg-rose-500 rounded hover:bg-rose-600 transition-colors shadow-sm">
+                                                    Decision
+                                                </button>
+                                            @endif
+                                            
+                                            @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Sent_to_SPC' || $petition->status === 'Internal_Vigilance')
+                                                <a href="{{ route('petitions.show', $petition->hashid) }}#decision"
+                                                    class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline flex items-center gap-1">
+                                                    <i class="fa-solid fa-circle-check"></i> Finalized
+                                                </a>
+                                            @endif
+                                        @else
+                                            <span class="text-[10px] font-bold text-slate-400 italic flex items-center gap-1">
+                                                <i class="fa-solid fa-link"></i> Linked
                                             </span>
                                         @endif
-                                        
-                                        @if($petition->status === 'Forwarded' && $petition->latestForwarding)
-                                            <button
-                                                @click="showVrModal = true; activeForwardingId = {{ $petition->latestForwarding->petition_forwarding_id }}"
-                                                class="px-3 py-1 text-xs font-bold text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors shadow-sm">
-                                                Update VR
-                                            </button>
-                                        @endif
-                                        
-                                        @if($petition->status === 'VR_Received')
-                                            <button @click="showDecisionModal = true; activePetitionId = {{ $petition->petition_id }}; activePetitionDate = '{{ $regDate }}'"
-                                                class="px-3 py-1 text-xs font-bold text-white bg-rose-500 rounded hover:bg-rose-600 transition-colors shadow-sm">
-                                                Decision
-                                            </button>
-                                        @endif
-                                        
-                                        @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Sent_to_SPC' || $petition->status === 'Internal_Vigilance')
-                                            <a href="{{ route('petitions.show', $petition->hashid) }}#decision"
-                                                class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline flex items-center gap-1">
-                                                <i class="fa-solid fa-circle-check"></i> Finalized
-                                            </a>
-                                        @endif
                                     @else
-                                        <span class="text-[10px] font-bold text-slate-400 italic flex items-center gap-1">
-                                            <i class="fa-solid fa-link"></i> Linked
-                                        </span>
+                                        <span class="text-xs text-slate-400 font-medium italic">-</span>
                                     @endif
-                                @else
-                                    <span class="text-xs text-slate-400 font-medium italic">-</span>
-                                @endif
 
-                                @if($role === 'admin')
-                                    @php 
-                                        $procBy = null;
-                                        if($petition->status === 'Forwarded' || $petition->status === 'VR_Received') {
-                                            $procBy = $petition->latestForwarding?->processedBy?->name;
-                                        } elseif($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Sent_to_SPC' || $petition->status === 'Internal_Vigilance') {
-                                            $procBy = $petition->decision?->processedBy?->name;
-                                        }
-                                    @endphp
-                                    @if($procBy)
-                                        <span class="text-[9px] text-slate-400 italic">By: {{ $procBy }}</span>
+                                    @if($role === 'admin')
+                                        @php 
+                                            $procBy = null;
+                                            if($petition->status === 'Forwarded' || $petition->status === 'VR_Received') {
+                                                $procBy = $petition->latestForwarding?->processedBy?->name;
+                                            } elseif($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Sent_to_SPC' || $petition->status === 'Internal_Vigilance') {
+                                                $procBy = $petition->decision?->processedBy?->name;
+                                            }
+                                        @endphp
+                                        @if($procBy)
+                                            <span class="text-[9px] text-slate-400 italic">By: {{ $procBy }}</span>
+                                        @endif
                                     @endif
                                 @endif
                             </div>
@@ -390,55 +430,62 @@
                         @endif
                         <td class="px-6 py-4 text-center">
                             <div class="flex items-center justify-center gap-3">
-                                @php
-                                    $canModifyPetition = Auth::user()->canAccess('update petitions') && 
-                                        (Auth::user()->canAccess('access admin dashboard') || !$petition->seat_id || $petition->seat_id === Auth::user()->currentSeatUser()?->seat_id);
-                                @endphp
-
-                                @if($canModifyPetition && !$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
-                                    <a href="{{ route('petitions.edit', $petition->hashid) }}"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold text-xs shadow-md shadow-teal-500/20 transition-all hover:scale-105 whitespace-nowrap"
-                                        title="Open Petition to Add Further Details">
-                                        <i class="fa-solid fa-file-pen text-xs"></i>
-                                        <span>Add Details</span>
+                                @if(!$canViewWf)
+                                    <a href="{{ route('petitions.show', $petition->hashid) }}"
+                                        class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                        title="View Details">
+                                        <i class="fa-solid fa-eye text-indigo-500"></i>
                                     </a>
-                                @endif
+                                @else
+                                    @php
+                                        $canModifyPetition = Auth::user()->can('update', $petition);
+                                    @endphp
 
-                                <a href="{{ route('petitions.show', $petition->hashid) }}"
-                                    class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                    title="View Details">
-                                    <i class="fa-solid fa-eye text-indigo-500"></i>
-                                </a>
-                                @if($canModifyPetition)
-                                    @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance']) && ($petition->is_cpsp_processed || $petition->is_returned_to_inward))
+                                    @if($canModifyPetition && !$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
                                         <a href="{{ route('petitions.edit', $petition->hashid) }}"
-                                            class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                                            title="Edit Record">
-                                            <i class="fa-solid fa-pen-to-square text-emerald-500"></i>
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold text-xs shadow-md shadow-teal-500/20 transition-all hover:scale-105 whitespace-nowrap"
+                                            title="Open Petition to Add Further Details">
+                                            <i class="fa-solid fa-file-pen text-xs"></i>
+                                            <span>Add Details</span>
                                         </a>
                                     @endif
-                                @endif
-                                @if($canModifyPetition && !$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
-                                    <button type="button"
-                                        onclick="window.openReturnModal('{{ $petition->hashid }}', '{{ addslashes($petition->receipt_no) }}')"
-                                        @click="showReturnModal = true; returnPetitionId = '{{ $petition->hashid }}'; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: '{{ $petition->hashid }}', receipt: '{{ addslashes($petition->receipt_no) }}' })"
-                                        class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                        title="Return to Inward">
-                                        <i class="fa-solid fa-arrow-rotate-left text-rose-500"></i>
-                                    </button>
-                                @endif
-                                @if(Auth::user()->canAccess('delete petitions'))
-                                    @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance']) && (!$petition->isFromInward() || Auth::user()->canAccess('access admin dashboard')))
-                                        <form action="{{ route('petitions.destroy', $petition->hashid) }}" method="POST"
-                                            class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                                title="Delete Record">
-                                                <i class="fa-solid fa-trash-can text-rose-500"></i>
-                                            </button>
-                                        </form>
+
+                                    <a href="{{ route('petitions.show', $petition->hashid) }}"
+                                        class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                        title="View Details">
+                                        <i class="fa-solid fa-eye text-indigo-500"></i>
+                                    </a>
+                                    @if($canModifyPetition)
+                                        @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance']) && ($petition->is_cpsp_processed || $petition->is_returned_to_inward))
+                                            <a href="{{ route('petitions.edit', $petition->hashid) }}"
+                                                class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                title="Edit Record">
+                                                <i class="fa-solid fa-pen-to-square text-emerald-500"></i>
+                                            </a>
+                                        @endif
+                                    @endif
+                                    @if($canModifyPetition && !$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
+                                        <button type="button"
+                                            onclick="window.openReturnModal('{{ $petition->hashid }}', '{{ addslashes($petition->receipt_no) }}')"
+                                            @click="showReturnModal = true; returnPetitionId = '{{ $petition->hashid }}'; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: '{{ $petition->hashid }}', receipt: '{{ addslashes($petition->receipt_no) }}' })"
+                                            class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                            title="Return to Inward">
+                                            <i class="fa-solid fa-arrow-rotate-left text-rose-500"></i>
+                                        </button>
+                                    @endif
+                                    @if(Auth::user()->can('delete', $petition))
+                                        @if(!in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance']) && (!$petition->isFromInward() || Auth::user()->canAccess('access admin dashboard')))
+                                            <form action="{{ route('petitions.destroy', $petition->hashid) }}" method="POST"
+                                                class="inline" onsubmit="return confirm('Are you sure you want to delete this petition?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                    class="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                                    title="Delete Record">
+                                                    <i class="fa-solid fa-trash-can text-rose-500"></i>
+                                                </button>
+                                            </form>
+                                        @endif
                                     @endif
                                 @endif
                             </div>

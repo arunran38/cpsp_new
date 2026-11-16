@@ -110,7 +110,6 @@ class Seat extends Model
 
             'petitionsReceived as petitions_processed_count' => fn($q) => 
                 $this->filterDates($q, $from, $to, 'date_of_petition_received')
-                    ->where('status', Petition::STATUS_RECEIVED)
                     ->where('is_cpsp_processed', true),
 
             'petitionsReceived as petitions_received_count' => fn($q) => 

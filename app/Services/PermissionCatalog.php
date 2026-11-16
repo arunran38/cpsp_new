@@ -102,6 +102,10 @@ class PermissionCatalog
         'view t-section diagnostics' => 'View T-Section Diagnostics',
         'view t-section pending details' => 'View T-Section Pending Petition Details',
         'view t-section in reports' => 'View T-Section in Reports & Filters',
+        'view cpsp petitions read only' => 'View CPSP Petitions (Read Only)',
+        'view assigned inward petitions' => 'View Assigned Inward Petitions',
+        'link related petitions' => 'Link Related Petitions',
+        'view linked petition references' => 'View Linked Petition References',
     ];
 
     private const DESCRIPTIONS = [
@@ -149,6 +153,10 @@ class PermissionCatalog
         'view t-section diagnostics' => 'View T-Section workload and performance statistics.',
         'view t-section pending details' => 'View pending petition counts and details for T-Section.',
         'view t-section in reports' => 'View both CPSP and T-Section users and seats in report search and filters.',
+        'view cpsp petitions read only' => 'Allows T-Section users to view basic details of CPSP petitions for duplicate identification.',
+        'view assigned inward petitions' => 'Allows T-Section users to view only Inward petitions assigned specifically to their section/seat.',
+        'link related petitions' => 'Allows authorised T-Section users to link potentially duplicate or related petitions across sections without altering workflows.',
+        'view linked petition references' => 'Allows authorised users to view cross-section linked petition references and tracking information.',
     ];
 
     private const CRUD_RESOURCES = [

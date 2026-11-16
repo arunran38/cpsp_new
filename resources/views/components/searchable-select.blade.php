@@ -1,10 +1,11 @@
 @props([
-    'name' => null, 
-    'label' => null, 
-    'options' => [], 
-    'selected' => null, 
+    'name' => null,
+    'label' => null,
+    'options' => [],
+    'selected' => null,
     'placeholder' => 'Select an option...',
-    'required' => false
+    'required' => false,
+    'triggerClass' => null
 ])
 @php
     $disabledExpr = $attributes->get('x-bind:disabled');
@@ -53,14 +54,14 @@
                 });
             });
             @if($disabledExpr)
-            this.$watch('isDisabled', (disabled) => {
-                if (disabled) {
-                    this.open = false;
-                    if (this.selected) {
-                        this.select('', '');
+                this.$watch('isDisabled', (disabled) => {
+                    if (disabled) {
+                        this.open = false;
+                        if (this.selected) {
+                            this.select('', '');
+                        }
                     }
-                }
-            });
+                });
             @endif
         },
         select(val, label) {
@@ -77,18 +78,18 @@
     @if($label)
         <label class="block text-sm font-bold text-slate-800 transition-colors duration-200"
             :class="open ? 'text-primary' : ''">
-            {!! $displayLabel !!}@if($isRequired)<span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>@endif
+            {!! $displayLabel !!}@if($isRequired)<span class="required-mark text-red-600 font-bold ml-1"
+            style="color: #dc2626 !important;">*</span>@endif
         </label>
     @endif
 
     <div class="relative group">
         <div @click="if (isDisabled) return; open = !open; if(open) $nextTick(() => $refs.searchInput.focus())"
-            tabindex="0"
-            :tabindex="isDisabled ? -1 : 0"
+            tabindex="0" :tabindex="isDisabled ? -1 : 0"
             @keydown.enter.prevent="if(!isDisabled) { open = !open; if(open) $nextTick(() => $refs.searchInput.focus()); }"
             @keydown.space.prevent="if(!isDisabled) { open = !open; if(open) $nextTick(() => $refs.searchInput.focus()); }"
             @keydown.escape="open = false"
-            class="flex items-center justify-between w-full px-4 py-2.5 text-sm rounded-xl border transition-all duration-200 outline-none shadow-sm focus:outline-none"
+            class="flex items-center justify-between w-full px-4 {{ $triggerClass ?? 'py-2.5' }} text-sm rounded-xl border transition-all duration-200 outline-none shadow-sm focus:outline-none"
             :class="[
                 isDisabled
                     ? 'bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed select-none font-medium'
@@ -100,12 +101,12 @@
             ]">
 
             <div class="flex items-center gap-2 truncate">
-                <span x-text="selectedLabel || (isDisabled ? 'Enter suspect name first' : '{{ $placeholder }}')" class="font-medium truncate transition-colors"
+                <span x-text="selectedLabel || (isDisabled ? 'Enter suspect name first' : '{{ $placeholder }}')"
+                    class="font-medium truncate transition-colors"
                     :class="(!selectedLabel || isDisabled) ? 'text-slate-500 font-medium' : 'text-slate-900 font-semibold'"></span>
             </div>
 
-            <input type="hidden" x-ref="hiddenInput" @if($name) name="{{ $name }}" @endif {{ $attributes->whereStartsWith('x-bind:name') }}
-                :value="selected">
+            <input type="hidden" x-ref="hiddenInput" @if($name) name="{{ $name }}" @endif {{ $attributes->whereStartsWith('x-bind:name') }} :value="selected">
 
             <div class="flex items-center gap-1.5 flex-shrink-0 ml-2">
                 <button type="button" x-show="selected && !isDisabled" @click.stop="select('', '')"
@@ -117,7 +118,8 @@
                     :class="open && !isDisabled ? 'rotate-180 text-primary' : ''"></i>
             </div>
         </div>
-        <template x-if="typeof formErrors !== 'undefined' && formErrors && $refs.hiddenInput && formErrors[$refs.hiddenInput.name]">
+        <template
+            x-if="typeof formErrors !== 'undefined' && formErrors && $refs.hiddenInput && formErrors[$refs.hiddenInput.name]">
             <p class="text-xs font-semibold text-rose-600 mt-1" x-text="formErrors[$refs.hiddenInput.name]"></p>
         </template>
 

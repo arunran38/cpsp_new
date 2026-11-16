@@ -2,6 +2,15 @@
 @section('container_width', 'max-w-full')
 
 @section('content')
+    @php
+        $authUser = Auth::user();
+        $activeSeat = $authUser?->currentSeatUser()?->seat;
+        $isTSectionSeat = $activeSeat && $activeSeat->isTSection();
+        $isTSectionUser = $isTSectionSeat || $authUser->isTSectionRole();
+        $isCpspReadOnlyForTSection = !$petition->isTSection() && $isTSectionUser && !$authUser->canAccessCpspSection() && !$authUser->canAccess('access admin dashboard');
+        $canViewWorkflow = $petition->canViewWorkflowDetails($authUser);
+        $isInwardUser = $authUser && ($authUser->hasRole(['inward', 'Inward']) || ($activeSeat && ($activeSeat->hasRole(['inward', 'Inward']) || stripos($activeSeat->seat_name, 'Inward') !== false)));
+    @endphp
     <div class="space-y-6"
         x-data="{ showLinkModal: false, showReturnModal: false, returnPetitionId: {{ $petition->petition_id }}, returnReceiptNo: '{{ $petition->receipt_no }}' }">
         <!-- Page Header -->
@@ -18,6 +27,12 @@
                     <h1 class="text-2xl font-bold tracking-tight text-gray-900">Petition Details:
                         {{ $petition->receipt_no }}
                     </h1>
+                    @if($isCpspReadOnlyForTSection)
+                        <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-xs font-semibold">
+                            <i data-lucide="eye" class="w-4 h-4 text-amber-600"></i>
+                            <span>CPSP Reference (Read-Only Mode)</span>
+                        </div>
+                    @endif
                     <p class="text-sm font-medium text-gray-600 mt-0.5 flex flex-wrap items-center gap-2">
                         <span>Submitted on
                             {{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}</span>
@@ -132,7 +147,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                @if(Auth::user()->canAccess('update petitions') && (Auth::user()->canAccess('access admin dashboard') || !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance'])))
+                @if(Auth::user()->can('update', $petition) && (Auth::user()->canAccess('access admin dashboard') || !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance'])))
                     @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
                         <a href="{{ route('petitions.edit', $petition->hashid) }}"
                             class="px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 rounded-lg transition-all shadow-md shadow-teal-500/20 flex items-center gap-2">
@@ -144,7 +159,7 @@
                             <i data-lucide="edit" class="w-4 h-4"></i> Edit Details
                         </a>
                     @endif
-                    @if(Auth::user()->canAccess('link petitions') && !$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Duplicate']))
+                    @if((Auth::user()->canAccess('link petitions') || Auth::user()->canLinkRelatedPetitions()) && !$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Duplicate']))
                         <button type="button" @click="showLinkModal = true"
                             class="px-4 py-2.5 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-all shadow-sm flex items-center gap-2">
                             <i data-lucide="link" class="w-4 h-4"></i> Link Petition
@@ -158,7 +173,7 @@
                             <i data-lucide="corner-up-left" class="w-4 h-4 text-rose-600"></i> Return to Inward
                         </button>
                     @endif
-                    @if($petition->linked_petition_id && Auth::user()->canAccess('link petitions'))
+                    @if($petition->linked_petition_id && (Auth::user()->canAccess('link petitions') || Auth::user()->canLinkRelatedPetitions()))
                         <form action="{{ route('petitions.unlinkDuplicate', $petition->hashid) }}" method="POST"
                             class="inline unlink-form" data-message="Are you sure you want to unlink this petition?">
                             @csrf
@@ -169,11 +184,6 @@
                         </form>
                     @endif
                 @endif
-                @php
-                    $authUser = Auth::user();
-                    $activeSeat = $authUser?->currentSeatUser()?->seat;
-                    $isInwardUser = $authUser && ($authUser->hasRole(['inward', 'Inward']) || ($activeSeat && ($activeSeat->hasRole(['inward', 'Inward']) || stripos($activeSeat->seat_name, 'Inward') !== false)));
-                @endphp
                 @if($petition->is_returned_to_inward && $isInwardUser)
                     <a href="{{ route('inward.enter_petition', ['filter' => 'returned', 'hide_form' => 1]) . '#view-inward-petitions' }}"
                         class="px-4 py-2.5 text-sm font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-all shadow-sm flex items-center gap-2">
@@ -236,7 +246,7 @@
                             @endphp
                             <span
                                 class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ $wf['pill_class'] }}">
-                                @if($petition->decision)
+                                @if($petition->decision && $canViewWorkflow)
                                     Final : {{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}
                                 @else
                                     {{ $wf['label'] }}
@@ -493,6 +503,7 @@
                     </div>
                 </div>
 
+                @if($canViewWorkflow)
                 <!-- Section 4: Petition Workflow Actions -->
                 <div class="mt-8 border-t border-slate-200 pt-8">
                     <h3 class="text-base font-bold text-gray-900 pb-2 mb-4 flex items-center gap-2 w-max">
@@ -1078,11 +1089,30 @@
                         @endif
                     </div> <!-- End of workflow details grid -->
                 </div>
+                @else
+                <!-- Section 4: Workflow Details Restricted for Read-Only / Cross-Section Access -->
+                <div class="mt-8 border-t border-slate-200 pt-8">
+                    <div class="p-6 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3 text-slate-600">
+                        <i data-lucide="shield-alert" class="w-6 h-6 text-slate-400 shrink-0"></i>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">Workflow Details Restricted</h4>
+                            <p class="text-xs text-slate-500 mt-0.5">Internal workflow processing, forwarding history, Verification Reports (VR), and decision records are confidential to the concerned processing section.</p>
+                        </div>
+                    </div>
+                </div>
+                @endif
 
             </div>
         </div>
 
-        @if($petition->originalPetition || ($petition->duplicates && $petition->duplicates->count() > 0))
+        @php
+            $hasVisibleOriginal = $petition->originalPetition && (!$petition->originalPetition->isTSection() || Auth::user()->canAccessTSection() || Auth::user()->canAccess('access admin dashboard'));
+            $visibleDuplicates = $petition->duplicates ? $petition->duplicates->filter(function ($d) {
+                return !$d->isTSection() || Auth::user()->canAccessTSection() || Auth::user()->canAccess('access admin dashboard');
+            }) : collect();
+        @endphp
+
+        @if($hasVisibleOriginal || $visibleDuplicates->count() > 0)
             <!-- Linked Records Section -->
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-6">
                 <div class="px-8 py-6 border-b border-slate-200 bg-slate-50 flex items-center gap-3">
@@ -1107,14 +1137,19 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-sm">
-                            @if($petition->originalPetition)
+                            @if($hasVisibleOriginal)
                                 <tr class="hover:bg-slate-50/50 transition-colors">
                                     <td class="px-6 py-4 font-bold">
-                                        <a href="{{ route('petitions.show', $petition->originalPetition->hashid) }}"
-                                            class="text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1">
-                                            {{ $petition->originalPetition->receipt_no }}
-                                            <i data-lucide="external-link" class="w-3 h-3"></i>
-                                        </a>
+                                        <div class="flex items-center gap-2">
+                                            <a href="{{ route('petitions.show', $petition->originalPetition->hashid) }}"
+                                                class="text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1">
+                                                {{ $petition->originalPetition->receipt_no }}
+                                                <i data-lucide="external-link" class="w-3 h-3"></i>
+                                            </a>
+                                            @if($petition->isCrossSectionLinked())
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Cross-Section Ref</span>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 text-slate-600">
                                         {{ \Carbon\Carbon::parse($petition->originalPetition->date_of_petition_received)->format('d M, Y') }}
@@ -1129,7 +1164,7 @@
                                     <td class="px-6 py-4">
                                         <span
                                             class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($petition->originalPetition->status === 'Closed' || $petition->originalPetition->status === 'Sent_to_Govt' || $petition->originalPetition->status === 'Sent_to_SPC' || $petition->originalPetition->status === 'Internal_Vigilance') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
-                                            @if($petition->originalPetition->decision)
+                                            @if($petition->originalPetition->decision && $petition->originalPetition->canViewWorkflowDetails(Auth::user()))
                                                 Final :
                                                 {{ \App\Models\Decision::getDecisionLabel($petition->originalPetition->decision->final_decision) }}
                                             @else
@@ -1138,49 +1173,56 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 text-right">
-                                        <form action="{{ route('petitions.unlinkDuplicate', $petition->hashid) }}" method="POST"
-                                            class="inline-block unlink-form"
-                                            data-message="Are you sure you want to unlink this petition?">
-                                            @csrf
-                                            <button type="submit"
-                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 font-medium text-xs rounded-md transition-colors border border-rose-100">
-                                                <i data-lucide="unlink" class="w-3.5 h-3.5"></i> Unlink
-                                            </button>
-                                        </form>
+                                        @if(Auth::user()->can('update', $petition) && (Auth::user()->canAccess('link petitions') || Auth::user()->canLinkRelatedPetitions()))
+                                            <form action="{{ route('petitions.unlinkDuplicate', $petition->hashid) }}" method="POST"
+                                                class="inline-block unlink-form"
+                                                data-message="Are you sure you want to unlink this petition?">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 font-medium text-xs rounded-md transition-colors border border-rose-100">
+                                                    <i data-lucide="unlink" class="w-3.5 h-3.5"></i> Unlink
+                                                </button>
+                                            </form>
+                                        @endif
                                     </td>
                                 </tr>
                             @endif
 
-                            @if($petition->duplicates)
-                                @foreach($petition->duplicates as $dup)
-                                    <tr class="hover:bg-slate-50/50 transition-colors">
-                                        <td class="px-6 py-4 font-bold">
+                            @foreach($visibleDuplicates as $dup)
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="px-6 py-4 font-bold">
+                                        <div class="flex items-center gap-2">
                                             <a href="{{ route('petitions.show', $dup->hashid) }}"
                                                 class="text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1">
                                                 {{ $dup->receipt_no }}
                                                 <i data-lucide="external-link" class="w-3 h-3"></i>
                                             </a>
-                                        </td>
-                                        <td class="px-6 py-4 text-slate-600">
-                                            {{ \Carbon\Carbon::parse($dup->date_of_petition_received)->format('d M, Y') }}
-                                        </td>
-                                        <td class="px-6 py-4 text-slate-600">
-                                            {{ $dup->mode_of_petition_received === 'others' ? $dup->mode_of_petition_received_others : $dup->mode_of_petition_received }}
-                                            @if(strtolower($dup->mode_of_petition_received) === 'unit' && $dup->unit)
-                                                <span class="block text-xs text-indigo-600 font-medium">({{ $dup->unit->unit_name }})</span>
+                                            @if($dup->isCrossSectionLinked())
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Cross-Section Ref</span>
                                             @endif
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span
-                                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($dup->status === 'Closed' || $dup->status === 'Sent_to_Govt' || $dup->status === 'Sent_to_SPC' || $dup->status === 'Internal_Vigilance') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
-                                                @if($dup->decision)
-                                                    Final : {{ \App\Models\Decision::getDecisionLabel($dup->decision->final_decision) }}
-                                                @else
-                                                    {{ $dup->status === 'Received' ? 'Processed' : $dup->status }}
-                                                @endif
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 text-right">
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-slate-600">
+                                        {{ \Carbon\Carbon::parse($dup->date_of_petition_received)->format('d M, Y') }}
+                                    </td>
+                                    <td class="px-6 py-4 text-slate-600">
+                                        {{ $dup->mode_of_petition_received === 'others' ? $dup->mode_of_petition_received_others : $dup->mode_of_petition_received }}
+                                        @if(strtolower($dup->mode_of_petition_received) === 'unit' && $dup->unit)
+                                            <span class="block text-xs text-indigo-600 font-medium">({{ $dup->unit->unit_name }})</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span
+                                            class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ ($dup->status === 'Closed' || $dup->status === 'Sent_to_Govt' || $dup->status === 'Sent_to_SPC' || $dup->status === 'Internal_Vigilance') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                            @if($dup->decision && $dup->canViewWorkflowDetails(Auth::user()))
+                                                Final : {{ \App\Models\Decision::getDecisionLabel($dup->decision->final_decision) }}
+                                            @else
+                                                {{ $dup->status === 'Received' ? 'Processed' : $dup->status }}
+                                            @endif
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        @if((Auth::user()->can('update', $dup) || Auth::user()->can('update', $petition)) && (Auth::user()->canAccess('link petitions') || Auth::user()->canLinkRelatedPetitions()))
                                             <form action="{{ route('petitions.unlinkDuplicate', $dup->hashid) }}" method="POST"
                                                 class="inline-block unlink-form"
                                                 data-message="Are you sure you want to unlink this duplicate petition?">
@@ -1190,10 +1232,10 @@
                                                     <i data-lucide="unlink" class="w-3.5 h-3.5"></i> Unlink
                                                 </button>
                                             </form>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            @endif
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -1412,7 +1454,9 @@
                 </div>
             </div>
         </div>
-        @include('user.partials.return_to_inward_modal')
+        @can('update', $petition)
+            @include('user.partials.return_to_inward_modal')
+        @endcan
     </div>
 @endsection
 

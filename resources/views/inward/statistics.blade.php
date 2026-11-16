@@ -382,13 +382,13 @@
                                 </td>
                                 @if(auth()->user()->canAccess('view processed statistics'))
                                     <td class="px-4 py-4 text-center">
-                                        <a href="{{ route('petitions.index', array_filter(array_merge(['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'All_Final_Decisions'], $creatorParam))) }}"
+                                        <a href="{{ route('petitions.reports', array_filter(array_merge(['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Processed'], $creatorParam))) }}"
                                             class="font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 hover:text-teal-900 px-2.5 py-0.5 rounded border border-teal-200 transition-colors block cursor-pointer text-center">
                                             {{ $stat['processed'] }}
                                         </a>
                                     </td>
                                     <td class="px-4 py-4 text-center">
-                                        <a href="{{ route('petitions.index', array_filter(array_merge(['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending'], $creatorParam))) }}"
+                                        <a href="{{ route('petitions.reports', array_filter(array_merge(['seat_id' => $stat['seat_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending'], $creatorParam))) }}"
                                             class="font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-900 px-2.5 py-0.5 rounded border border-rose-200 transition-colors block cursor-pointer text-center">
                                             {{ $stat['pending'] }}
                                         </a>
@@ -437,14 +437,14 @@
                             @if(auth()->user()->canAccess('view processed statistics'))
                                 <td
                                     class="px-4 py-5 text-center font-black text-lg text-emerald-400 hover:text-emerald-300 transition-colors">
-                                    <a href="{{ route('petitions.index', array_filter(array_merge(['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'All_Final_Decisions'], $creatorParam))) }}"
+                                    <a href="{{ route('petitions.reports', array_filter(array_merge(['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Processed'], $creatorParam))) }}"
                                         class="block">
                                         {{ $summaryTotals['processed'] }}
                                     </a>
                                 </td>
                                 <td
                                     class="px-4 py-5 text-center font-black text-lg text-rose-400 hover:text-rose-300 transition-colors">
-                                    <a href="{{ route('petitions.index', array_filter(array_merge(['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending'], $creatorParam))) }}"
+                                    <a href="{{ route('petitions.reports', array_filter(array_merge(['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending'], $creatorParam))) }}"
                                         class="block">
                                         {{ $summaryTotals['pending'] }}
                                     </a>
@@ -529,13 +529,13 @@
                                 </td>
                                 @if(auth()->user()->canAccess('view processed statistics'))
                                     <td class="px-4 py-4 text-center">
-                                        <a href="{{ route('petitions.index', array_filter(['creator_id' => $cStat['user_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'All_Final_Decisions'])) }}"
+                                        <a href="{{ route('petitions.reports', array_filter(['creator_id' => $cStat['user_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Processed'])) }}"
                                             class="font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 hover:text-teal-900 px-2.5 py-0.5 rounded border border-teal-200 transition-colors block cursor-pointer text-center">
                                             {{ $cStat['processed'] }}
                                         </a>
                                     </td>
                                     <td class="px-4 py-4 text-center">
-                                        <a href="{{ route('petitions.index', array_filter(['creator_id' => $cStat['user_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending'])) }}"
+                                        <a href="{{ route('petitions.reports', array_filter(['creator_id' => $cStat['user_id'], 'date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending'])) }}"
                                             class="font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-900 px-2.5 py-0.5 rounded border border-rose-200 transition-colors block cursor-pointer text-center">
                                             {{ $cStat['pending'] }}
                                         </a>
@@ -583,14 +583,14 @@
                             @if(auth()->user()->canAccess('view processed statistics'))
                                 <td
                                     class="px-4 py-5 text-center font-black text-lg text-emerald-400 hover:text-emerald-300 transition-colors">
-                                    <a href="{{ route('petitions.index', array_filter(['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'All_Final_Decisions'])) }}"
+                                    <a href="{{ route('petitions.reports', array_filter(['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Processed'])) }}"
                                         class="block">
                                         {{ $creatorSummaryTotals['processed'] }}
                                     </a>
                                 </td>
                                 <td
                                     class="px-4 py-5 text-center font-black text-lg text-rose-400 hover:text-rose-300 transition-colors">
-                                    <a href="{{ route('petitions.index', array_filter(['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending'])) }}"
+                                    <a href="{{ route('petitions.reports', array_filter(['date_from' => request('date_from'), 'date_to' => request('date_to'), 'status' => 'Pending'])) }}"
                                         class="block">
                                         {{ $creatorSummaryTotals['pending'] }}
                                     </a>

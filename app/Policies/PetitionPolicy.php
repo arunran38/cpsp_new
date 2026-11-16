@@ -92,12 +92,23 @@ class PetitionPolicy
     }
 
     /**
+     * Determine whether the user can view sensitive workflow details (VR, forwardings, decisions).
+     */
+    public function viewWorkflow(User $user, Petition $petition): bool
+    {
+        return $petition->canViewWorkflowDetails($user);
+    }
+
+    /**
      * Internal authorization logic for viewing a petition.
      */
     private function authorizeView(User $user, Petition $petition): bool
     {
         $currentSeatUser = $user->currentSeatUser();
         $currentSeat = $currentSeatUser?->seat;
+        $isTSectionSeat = $currentSeat && $currentSeat->isTSection();
+        $isTSectionUser = $isTSectionSeat || $user->isTSectionRole();
+        $userId = $user->user_id ?? $user->id;
 
         // 1. T-Section Confidential / Secret Section Enforcement
         if ($petition->isTSection()) {
@@ -107,22 +118,32 @@ class PetitionPolicy
             if ($user->canAccess('access admin dashboard')) {
                 return true;
             }
-            if ($currentSeat && $currentSeat->isTSection()) {
-                return $petition->seat_id === $currentSeat->seat_id;
+            if ($isTSectionSeat) {
+                return $petition->seat_id === $currentSeat->seat_id || $petition->user_id === $userId;
             }
             return true;
         }
 
-        // 2. CPSP Section: T-Section users without CPSP clearance cannot view general petitions
-        if (!$user->canAccessCpspSection() && !$user->canAccess('access admin dashboard')) {
-            if ($petition->user_id === ($user->user_id ?? $user->id)) {
+        // 2. CPSP Section: T-Section users viewing CPSP petitions
+        if ($isTSectionUser && !$user->canAccessCpspSection() && !$user->canAccess('access admin dashboard')) {
+            // Creator can view
+            if ($petition->user_id === $userId) {
+                return true;
+            }
+            // T-Section user with read-only clearance can view registered/processed CPSP petitions
+            if ($user->canViewCpspPetitionsReadOnly()) {
+                // Inward petitions: T-Section users can ONLY view inward petitions assigned to their specific T-Section seat
+                if ($petition->isFromInward() && !$petition->is_cpsp_processed && !$petition->is_returned_to_inward) {
+                    return $currentSeat && $petition->seat_id === $currentSeat->seat_id;
+                }
                 return true;
             }
             return false;
         }
 
-        if ($currentSeat && $currentSeat->isTSection()) {
-            return $petition->seat_id === $currentSeat->seat_id;
+        // 3. Inward Petitions: When assigned to T-Section, only assigned T-Section seat occupant can view
+        if ($petition->isFromInward() && $isTSectionUser && !$user->canAccess('access admin dashboard')) {
+            return $currentSeat && $petition->seat_id === $currentSeat->seat_id;
         }
 
         // Admin / Super Admin / Developer / Dashboard access
@@ -131,8 +152,6 @@ class PetitionPolicy
             ($currentSeat && $currentSeat->hasRole(['super admin', 'Super Admin', 'developer', 'Developer', 'admin', 'Admin']))) {
             return true;
         }
-
-        $userId = $user->user_id ?? $user->id;
 
         // Check if user is the creator
         if ($petition->user_id === $userId) {
@@ -149,7 +168,7 @@ class PetitionPolicy
             return true;
         }
 
-        // Users with inward/transfer viewing permission can view inward origin petitions
+        // Users with inward/transfer viewing permission can view inward origin petitions (within CPSP scope)
         if ($petition->isFromInward() && ($user->canAccess('view file transfer') || $user->canAccess('create inward petitions'))) {
             return true;
         }
@@ -187,12 +206,23 @@ class PetitionPolicy
      */
     private function authorizeModification(User $user, Petition $petition): bool
     {
+        $currentSeat = $user->currentSeatUser()?->seat;
+        $isTSectionUser = ($currentSeat && $currentSeat->isTSection()) || $user->isTSectionRole();
+
+        // 1. T-Section petition modification
         if ($petition->isTSection()) {
-            if (!$user->canAccessTSection()) {
+            if (!$user->canAccessTSection() && !$user->canAccess('access admin dashboard')) {
                 return false;
             }
-            $currentSeat = $user->currentSeatUser()?->seat;
+            if ($user->canAccess('access admin dashboard')) {
+                return true;
+            }
             return $currentSeat && $petition->seat_id === $currentSeat->seat_id;
+        }
+
+        // 2. CPSP petition modification: T-Section users can NEVER modify CPSP petitions
+        if ($isTSectionUser && !$user->canAccessCpspSection() && !$user->canAccess('access admin dashboard')) {
+            return false;
         }
 
         // Creator can modify

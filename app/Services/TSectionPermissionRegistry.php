@@ -16,12 +16,16 @@ class TSectionPermissionRegistry
     public const MODULE_ICON = 'shield-alert';
 
     // Granular T-Section Permission Constants
-    public const ACCESS_DASHBOARD      = 'access t-section dashboard';
-    public const FORWARD_PETITIONS     = 'forward t-section petitions';
-    public const EXPORT_PETITIONS      = 'export t-section petitions';
-    public const VIEW_DIAGNOSTICS     = 'view t-section diagnostics';
-    public const VIEW_PENDING_DETAILS = 'view t-section pending details';
-    public const VIEW_IN_REPORTS      = 'view t-section in reports';
+    public const ACCESS_DASHBOARD          = 'access t-section dashboard';
+    public const FORWARD_PETITIONS         = 'forward t-section petitions';
+    public const EXPORT_PETITIONS          = 'export t-section petitions';
+    public const VIEW_DIAGNOSTICS         = 'view t-section diagnostics';
+    public const VIEW_PENDING_DETAILS     = 'view t-section pending details';
+    public const VIEW_IN_REPORTS          = 'view t-section in reports';
+    public const VIEW_CPSP_READONLY       = 'view cpsp petitions read only';
+    public const VIEW_ASSIGNED_INWARD     = 'view assigned inward petitions';
+    public const LINK_RELATED             = 'link related petitions';
+    public const VIEW_LINKED_REFERENCES   = 'view linked petition references';
 
     /**
      * Get all T-Section permission keys.
@@ -37,6 +41,10 @@ class TSectionPermissionRegistry
             self::VIEW_DIAGNOSTICS,
             self::VIEW_PENDING_DETAILS,
             self::VIEW_IN_REPORTS,
+            self::VIEW_CPSP_READONLY,
+            self::VIEW_ASSIGNED_INWARD,
+            self::LINK_RELATED,
+            self::VIEW_LINKED_REFERENCES,
         ];
     }
 
@@ -103,6 +111,34 @@ class TSectionPermissionRegistry
                 'desc' => 'Access and view both CPSP and T-Section users and seats in report search and filters',
                 'badge' => 'Reports',
                 'badge_color' => 'teal',
+            ],
+            self::VIEW_CPSP_READONLY => [
+                'name' => self::VIEW_CPSP_READONLY,
+                'label' => 'View CPSP Petitions (Read Only)',
+                'desc' => 'Allows T-Section users to view basic CPSP petition details for cross-section duplicate identification',
+                'badge' => 'Read Only',
+                'badge_color' => 'blue',
+            ],
+            self::VIEW_ASSIGNED_INWARD => [
+                'name' => self::VIEW_ASSIGNED_INWARD,
+                'label' => 'View Assigned Inward Petitions',
+                'desc' => 'Allows T-Section users to view only Inward petitions assigned specifically to their section/seat',
+                'badge' => 'Inward Scope',
+                'badge_color' => 'emerald',
+            ],
+            self::LINK_RELATED => [
+                'name' => self::LINK_RELATED,
+                'label' => 'Link Related Petitions',
+                'desc' => 'Allows authorised T-Section users to link potentially duplicate or related petitions across sections',
+                'badge' => 'Link Reference',
+                'badge_color' => 'indigo',
+            ],
+            self::VIEW_LINKED_REFERENCES => [
+                'name' => self::VIEW_LINKED_REFERENCES,
+                'label' => 'View Linked Petition References',
+                'desc' => 'Allows authorised users to view cross-section linked petition references and tracking information',
+                'badge' => 'References',
+                'badge_color' => 'purple',
             ],
         ];
     }

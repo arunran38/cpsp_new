@@ -44,9 +44,17 @@ class LinkedPetitionCountsTest extends TestCase
             'is_active' => true,
         ]);
 
+        $inwardRole = Role::findByName('Inward', 'web');
+        $inwardSeat = Seat::factory()->create([
+            'seat_name' => 'Inward 1',
+            'is_active' => true,
+        ]);
+        $inwardSeat->assignRole($inwardRole);
+
         $this->originalPetition = Petition::factory()->create([
             'receipt_no' => 'ORIG-2026/001',
             'seat_id' => $this->cpspSeat->seat_id,
+            'created_by_seat_id' => $inwardSeat->seat_id,
             'status' => Petition::STATUS_RECEIVED,
             'is_cpsp_processed' => true,
         ]);
@@ -54,6 +62,7 @@ class LinkedPetitionCountsTest extends TestCase
         $this->duplicatePetition = Petition::factory()->create([
             'receipt_no' => 'DUP-2026/002',
             'seat_id' => $this->cpspSeat->seat_id,
+            'created_by_seat_id' => $inwardSeat->seat_id,
             'status' => Petition::STATUS_RECEIVED,
             'is_cpsp_processed' => false,
             'is_returned_to_inward' => false,
@@ -155,12 +164,18 @@ class LinkedPetitionCountsTest extends TestCase
 
         $this->duplicatePetition->refresh();
 
-        // 2. Admin user with export permissions exports
+        // 2. Admin user with export permissions exports without include_duplicates: duplicate is excluded to match table/dashboard
         $adminUser = User::factory()->create();
         $adminRole = Role::findByName('admin', 'web');
         $adminUser->assignRole($adminRole);
 
-        $response = $this->actingAs($adminUser)->get(route('petitions.export', ['tab' => 'all']));
+        $responseWithoutDuplicates = $this->actingAs($adminUser)->get(route('petitions.export', ['tab' => 'all']));
+        $responseWithoutDuplicates->assertOk();
+        $this->assertStringContainsString($this->originalPetition->receipt_no, $responseWithoutDuplicates->getContent());
+        $this->assertStringNotContainsString($this->duplicatePetition->receipt_no, $responseWithoutDuplicates->getContent());
+
+        // 3. Admin user exports with include_duplicates=1: both original and linked duplicate are present
+        $response = $this->actingAs($adminUser)->get(route('petitions.export', ['tab' => 'all', 'include_duplicates' => 1]));
         $response->assertOk();
 
         $content = $response->getContent();

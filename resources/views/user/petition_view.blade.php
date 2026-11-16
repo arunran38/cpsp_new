@@ -207,6 +207,22 @@
                             style="color: #1e40af !important;">
                         <p id="dateRangeError" class="mt-1 text-xs text-rose-600 hidden" aria-live="polite"></p>
                     </div>
+                    @if($tab === 'all' && (auth()->user()->canViewCpspPetitionsReadOnly() || auth()->user()->canAccess('access admin dashboard')))
+                        <div class="flex-1 min-w-[170px]">
+                            <label class="block text-xs font-medium text-slate-700 mb-1">Section</label>
+                            @php
+                                $isTOnlyUser = (auth()->user()->isTSectionRole() || auth()->user()->canAccessTSection()) && !auth()->user()->canAccessCpspSection() && !auth()->user()->canAccess('access admin dashboard');
+                                $selectedSection = request('section', $isTOnlyUser ? 't_section' : 'all');
+                            @endphp
+                            <select name="section"
+                                class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold">
+                                <option value="all" {{ $selectedSection === 'all' ? 'selected' : '' }}>All Sections</option>
+                                <option value="t_section" {{ $selectedSection === 't_section' ? 'selected' : '' }}>T-Section
+                                    Petitions</option>
+                                <option value="cpsp" {{ $selectedSection === 'cpsp' ? 'selected' : '' }}>CPSP Petitions</option>
+                            </select>
+                        </div>
+                    @endif
                     <div class="flex-none">
                         <label class="block text-xs font-medium text-transparent mb-1">&nbsp;</label>
                         <a href="{{ route('petitions.index', array_filter(['tab' => $tab, 'status' => request('status'), 'recommendation_type' => request('recommendation_type')])) }}"
@@ -240,67 +256,67 @@
                 </div>
 
                 <form action="{{ route('forwardings.store') }}" method="POST" enctype="multipart/form-data" x-data="{ 
-                                action: '', 
-                                recommendationType: '',
-                                recommendationTypeError: '',
-                                fileNo: '', 
-                                fileNoError: '',
-                                fileCreatedDate: '',
-                                forwardedDate: '',
-                                checkEmpty() {
-                                    if (!this.fileNo.trim()) {
-                                        this.fileNoError = 'this field is required';
-                                    } else {
-                                        this.fileNoError = '';
-                                    }
-                                },
-                                async checkFileNoUniqueness() {
-                                    if (!this.fileNo.trim()) {
-                                        this.fileNoError = 'this field is required';
-                                        return;
-                                    }
-                                    try {
-                                        const response = await fetch('/petitions/check-file-no', {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
-                                            },
-                                            body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
-                                        });
-                                        const data = await response.json();
-                                        if (data.exists) {
-                                            this.fileNoError = 'File number already exists';
+                                    action: '', 
+                                    recommendationType: '',
+                                    recommendationTypeError: '',
+                                    fileNo: '', 
+                                    fileNoError: '',
+                                    fileCreatedDate: '',
+                                    forwardedDate: '',
+                                    checkEmpty() {
+                                        if (!this.fileNo.trim()) {
+                                            this.fileNoError = 'this field is required';
                                         } else {
                                             this.fileNoError = '';
                                         }
-                                    } catch (error) {
-                                        console.error(error);
-                                    }
-                                },
-                                validateForm(e) {
-                                    this.recommendationTypeError = '';
-                                    if (this.action === 'Sent_to_Govt' && !this.recommendationType) {
-                                        this.recommendationTypeError = 'Recommendation Type is required.';
-                                        if (e) {
-                                            e.preventDefault();
-                                            e.stopPropagation();
+                                    },
+                                    async checkFileNoUniqueness() {
+                                        if (!this.fileNo.trim()) {
+                                            this.fileNoError = 'this field is required';
+                                            return;
                                         }
-                                        return false;
-                                    }
-                                    if (this.fileNoError) {
-                                        if (e) {
-                                            e.preventDefault();
-                                            e.stopPropagation();
+                                        try {
+                                            const response = await fetch('/petitions/check-file-no', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content')
+                                                },
+                                                body: JSON.stringify({ file_no: this.fileNo, petition_id: activePetitionId })
+                                            });
+                                            const data = await response.json();
+                                            if (data.exists) {
+                                                this.fileNoError = 'File number already exists';
+                                            } else {
+                                                this.fileNoError = '';
+                                            }
+                                        } catch (error) {
+                                            console.error(error);
                                         }
-                                        return false;
+                                    },
+                                    validateForm(e) {
+                                        this.recommendationTypeError = '';
+                                        if (this.action === 'Sent_to_Govt' && !this.recommendationType) {
+                                            this.recommendationTypeError = 'Recommendation Type is required.';
+                                            if (e) {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                            }
+                                            return false;
+                                        }
+                                        if (this.fileNoError) {
+                                            if (e) {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                            }
+                                            return false;
+                                        }
+                                        return true;
                                     }
-                                    return true;
-                                }
-                            }" x-init="
-                                $watch('action', val => { if (val !== 'Sent_to_Govt') { recommendationType = ''; recommendationTypeError = ''; } });
-                                $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
-                            " @submit="if (!validateForm($event)) return false;">
+                                }" x-init="
+                                    $watch('action', val => { if (val !== 'Sent_to_Govt') { recommendationType = ''; recommendationTypeError = ''; } });
+                                    $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
+                                " @submit="if (!validateForm($event)) return false;">
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 
@@ -497,25 +513,25 @@
 
                 <form action="{{ route('decisions.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4"
                     x-data="{ 
-                                finalDecision: '', 
-                                recommendationType: '',
-                                recommendationTypeError: '',
-                                validateDecision(e) {
-                                    this.recommendationTypeError = '';
-                                    if (this.finalDecision === 'Sent to Govt' && !this.recommendationType) {
-                                        this.recommendationTypeError = 'Recommendation Type is required.';
-                                        if (e) {
-                                            e.preventDefault();
-                                            e.stopPropagation();
+                                    finalDecision: '', 
+                                    recommendationType: '',
+                                    recommendationTypeError: '',
+                                    validateDecision(e) {
+                                        this.recommendationTypeError = '';
+                                        if (this.finalDecision === 'Sent to Govt' && !this.recommendationType) {
+                                            this.recommendationTypeError = 'Recommendation Type is required.';
+                                            if (e) {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                            }
+                                            return false;
                                         }
-                                        return false;
+                                        return true;
                                     }
-                                    return true;
-                                }
-                            }" x-init="
-                                $watch('finalDecision', val => { if (val !== 'Sent to Govt') { recommendationType = ''; recommendationTypeError = ''; } });
-                                $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
-                            " @submit="if (!validateDecision($event)) return false;">
+                                }" x-init="
+                                    $watch('finalDecision', val => { if (val !== 'Sent to Govt') { recommendationType = ''; recommendationTypeError = ''; } });
+                                    $watch('recommendationType', val => { if (val) recommendationTypeError = ''; });
+                                " @submit="if (!validateDecision($event)) return false;">
                     @csrf
                     <input type="hidden" name="petition_id" :value="activePetitionId">
 

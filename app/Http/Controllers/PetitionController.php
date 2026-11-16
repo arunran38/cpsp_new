@@ -193,26 +193,6 @@ class PetitionController extends Controller
             $transfersQuery->where('is_returned_to_inward', true);
         }
 
-        if (!empty($filters['date_from'])) {
-            $transfersQuery->where(function($q) use ($filters) {
-                $q->whereDate('date_of_petition_received', '>=', $filters['date_from'])
-                  ->orWhere(function($sub) use ($filters) {
-                      $sub->whereNull('date_of_petition_received')
-                          ->whereDate('created_at', '>=', $filters['date_from']);
-                  });
-            });
-        }
-
-        if (!empty($filters['date_to'])) {
-            $transfersQuery->where(function($q) use ($filters) {
-                $q->whereDate('date_of_petition_received', '<=', $filters['date_to'])
-                  ->orWhere(function($sub) use ($filters) {
-                      $sub->whereNull('date_of_petition_received')
-                          ->whereDate('created_at', '<=', $filters['date_to']);
-                  });
-            });
-        }
-
         $transfers = $transfersQuery->latest('created_at')->get();
 
         $filename = 'Inward_Petitions_' . date('Ymd_His') . '.xls';
@@ -624,6 +604,9 @@ class PetitionController extends Controller
                   ->orWhere(function($sub) use ($dateFrom) {
                       $sub->whereNull('date_of_petition_received')
                           ->whereDate('created_at', '>=', $dateFrom);
+                  })
+                  ->orWhere(function($sub) use ($dateFrom) {
+                      $sub->whereDate('processed_at', '>=', $dateFrom);
                   });
             });
         }
@@ -633,6 +616,9 @@ class PetitionController extends Controller
                   ->orWhere(function($sub) use ($dateTo) {
                       $sub->whereNull('date_of_petition_received')
                           ->whereDate('created_at', '<=', $dateTo);
+                  })
+                  ->orWhere(function($sub) use ($dateTo) {
+                      $sub->whereDate('processed_at', '<=', $dateTo);
                   });
             });
         }
@@ -854,7 +840,7 @@ class PetitionController extends Controller
     {
         abort_unless(Auth::user()->canAccess('view master reports'), 403, 'Unauthorized access to Master Reports.');
 
-        $petitions = $this->getPetitionsQuery($request)->paginate(10)->appends($request->query());
+        $petitions = $this->getPetitionsQuery($request, isReports: true)->paginate(10)->appends($request->query());
         $tab = $request->input('tab', 'all');
 
         $seats = [];
@@ -943,7 +929,7 @@ class PetitionController extends Controller
         }
 
         $tab = $request->input('tab', 'all');
-        $query = $this->getPetitionsQuery($request, includeDuplicates: true);
+        $query = $this->getPetitionsQuery($request, isReports: true, includeDuplicates: $request->boolean('include_duplicates'));
 
         $petitions = $query->get();
 
@@ -1094,15 +1080,11 @@ class PetitionController extends Controller
         $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::findOrFail($realId);
 
-        if ($petition->isTSection() && (!Auth::user()->canAccess('delete petitions') || !Auth::user()->canAccessTSection())) {
-            return redirect()->route('petitions.index', ['tab' => 'all'])->with('error', 'T-Section confidential petitions cannot be deleted.');
-        }
+        $this->authorize('delete', $petition);
 
         if ($petition->isFromInward() ) {
             return redirect()->route('petitions.index', ['tab' => 'all'])->with('error', 'CPSP seats are not permitted to delete petitions received from Inward.');
         }
-
-        $this->authorize('delete', $petition);
 
         if (in_array($petition->status, [Petition::STATUS_CLOSED, Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC]) ) {
             return redirect()->route('petitions.index', ['tab' => 'all'])->with('error', 'Cannot delete a petition after a final decision has been issued.');
@@ -1125,24 +1107,24 @@ class PetitionController extends Controller
         $petition = Petition::findOrFail($realId);
         $this->authorize('update', $petition);
 
-        if (!Auth::user()->canAccess('link petitions')) {
-            abort(403, 'Unauthorized to link duplicate petitions.');
+        if (!Auth::user()->canAccess('link petitions') && !Auth::user()->canLinkRelatedPetitions()) {
+            abort(403, 'Unauthorized to link duplicate or related petitions.');
         }
 
         if ($petition->linked_petition_id) {
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'This petition is already linked as a duplicate.'], 422);
+                return response()->json(['message' => 'This petition is already linked.'], 422);
             }
-            return back()->with('error', 'This petition is already linked as a duplicate.');
+            return back()->with('error', 'This petition is already linked.');
         }
 
         $originalPetition = Petition::where('receipt_no', $request->original_receipt_no)->first();
 
         if (!$originalPetition) {
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Original petition not found. Please check the receipt number.'], 422);
+                return response()->json(['message' => 'Target petition not found. Please check the receipt number.'], 422);
             }
-            return back()->with('error', 'Original petition not found. Please check the receipt number.');
+            return back()->with('error', 'Target petition not found. Please check the receipt number.');
         }
 
         $this->authorize('view', $originalPetition);
@@ -1154,24 +1136,29 @@ class PetitionController extends Controller
             return back()->with('error', 'Cannot link a petition to itself.');
         }
 
-        // If the target petition is already a duplicate, resolve to its root original petition
-        $visitedPetitionIds = [];
-        while ($originalPetition->linked_petition_id) {
-            if (in_array($originalPetition->petition_id, $visitedPetitionIds, true)) {
-                if ($request->expectsJson()) {
-                    return response()->json(['message' => 'Could not resolve the root original petition.'], 422);
+        // Check if this is a cross-section link (T-Section <-> CPSP)
+        $isCrossSection = ($petition->isTSection() !== $originalPetition->isTSection());
+
+        if (!$isCrossSection) {
+            // If the target petition is already a duplicate, resolve to its root original petition
+            $visitedPetitionIds = [];
+            while ($originalPetition->linked_petition_id && !$originalPetition->isCrossSectionLinked()) {
+                if (in_array($originalPetition->petition_id, $visitedPetitionIds, true)) {
+                    if ($request->expectsJson()) {
+                        return response()->json(['message' => 'Could not resolve the root original petition.'], 422);
+                    }
+                    return back()->with('error', 'Could not resolve the root original petition.');
                 }
-                return back()->with('error', 'Could not resolve the root original petition.');
-            }
-            $visitedPetitionIds[] = $originalPetition->petition_id;
-            $originalPetition = Petition::find($originalPetition->linked_petition_id);
-            if (!$originalPetition) {
-                if ($request->expectsJson()) {
-                    return response()->json(['message' => 'Could not resolve the root original petition.'], 422);
+                $visitedPetitionIds[] = $originalPetition->petition_id;
+                $originalPetition = Petition::find($originalPetition->linked_petition_id);
+                if (!$originalPetition) {
+                    if ($request->expectsJson()) {
+                        return response()->json(['message' => 'Could not resolve the root original petition.'], 422);
+                    }
+                    return back()->with('error', 'Could not resolve the root original petition.');
                 }
-                return back()->with('error', 'Could not resolve the root original petition.');
+                $this->authorize('view', $originalPetition);
             }
-            $this->authorize('view', $originalPetition);
         }
 
         if ($originalPetition->petition_id === $petition->petition_id) {
@@ -1181,31 +1168,45 @@ class PetitionController extends Controller
             return back()->with('error', 'Cannot link a petition to itself or create a duplicate cycle.');
         }
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($petition, $originalPetition) {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($petition, $originalPetition, $isCrossSection) {
             $user = Auth::user();
             $currentSeat = $user?->currentSeatUser();
             $currentSeatId = $currentSeat?->seat_id;
 
-            $petition->update([
-                'linked_petition_id' => $originalPetition->petition_id,
-                'previous_status' => $petition->status,
-                'status' => Petition::STATUS_DUPLICATE,
-                'is_cpsp_processed' => true,
-                'processed_at' => now(),
-                'processed_by_user_id' => $user->user_id ?? $user->id,
-                'processed_by_seat_id' => $currentSeatId,
-                'updated_by_user_id' => $user->user_id ?? $user->id,
-                'updated_by_seat_id' => $currentSeatId,
-            ]);
+            if ($isCrossSection) {
+                // OPTION B: Cross-Section Linking between CPSP and T-Section
+                // Link the reference WITHOUT marking as Duplicate, WITHOUT replicating files,
+                // and WITHOUT altering independent workflow!
+                $petition->update([
+                    'linked_petition_id' => $originalPetition->petition_id,
+                    'updated_by_user_id' => $user->user_id ?? $user->id,
+                    'updated_by_seat_id' => $currentSeatId,
+                ]);
+            } else {
+                // Intra-section standard duplicate
+                $petition->update([
+                    'linked_petition_id' => $originalPetition->petition_id,
+                    'previous_status' => $petition->status,
+                    'status' => Petition::STATUS_DUPLICATE,
+                    'is_cpsp_processed' => true,
+                    'processed_at' => now(),
+                    'processed_by_user_id' => $user->user_id ?? $user->id,
+                    'processed_by_seat_id' => $currentSeatId,
+                    'updated_by_user_id' => $user->user_id ?? $user->id,
+                    'updated_by_seat_id' => $currentSeatId,
+                ]);
 
-            foreach ($petition->uploads as $upload) {
-                $newUpload = $upload->replicate();
-                $newUpload->petition_id = $originalPetition->petition_id;
-                $newUpload->save();
+                foreach ($petition->uploads as $upload) {
+                    $newUpload = $upload->replicate();
+                    $newUpload->petition_id = $originalPetition->petition_id;
+                    $newUpload->save();
+                }
             }
         });
 
-        $message = 'Petition successfully linked as a duplicate of ' . $originalPetition->receipt_no . '.';
+        $message = $isCrossSection
+            ? 'Petition successfully linked as a related reference to ' . $originalPetition->receipt_no . '.'
+            : 'Petition successfully linked as a duplicate of ' . $originalPetition->receipt_no . '.';
         $redirectUrl = route('petitions.show', $petition->hashid);
 
         if ($request->expectsJson()) {
@@ -1227,8 +1228,8 @@ class PetitionController extends Controller
         $petition = Petition::findOrFail($realId);
         $this->authorize('update', $petition);
 
-        if (!Auth::user()->canAccess('link petitions')) {
-            abort(403, 'Unauthorized to unlink duplicate petitions.');
+        if (!Auth::user()->canAccess('link petitions') && !Auth::user()->canLinkRelatedPetitions()) {
+            abort(403, 'Unauthorized to unlink duplicate or related petitions.');
         }
 
         if (!$petition->linked_petition_id) {
@@ -1236,28 +1237,43 @@ class PetitionController extends Controller
         }
 
         $originalPetition = $petition->originalPetition;
+        $isCrossSection = $originalPetition && ($petition->isTSection() !== $originalPetition->isTSection());
 
         $user = Auth::user();
         $currentSeat = $user?->currentSeatUser();
-        $wasProcessedBeforeLinking = $petition->previous_status && $petition->previous_status !== Petition::STATUS_RECEIVED;
 
-        $petition->update([
-            'linked_petition_id' => null,
-            'status' => $petition->previous_status ?: Petition::STATUS_RECEIVED,
-            'previous_status' => null,
-            'is_cpsp_processed' => (bool)$wasProcessedBeforeLinking,
-            'processed_at' => $wasProcessedBeforeLinking ? $petition->processed_at : null,
-            'processed_by_user_id' => $wasProcessedBeforeLinking ? $petition->processed_by_user_id : null,
-            'processed_by_seat_id' => $wasProcessedBeforeLinking ? $petition->processed_by_seat_id : null,
-            'updated_by_user_id' => $user->user_id ?? $user->id,
-            'updated_by_seat_id' => $currentSeat?->seat_id,
-        ]);
+        if ($isCrossSection) {
+            // Cross-section unlink: Clear link without altering status or processing
+            $petition->update([
+                'linked_petition_id' => null,
+                'updated_by_user_id' => $user->user_id ?? $user->id,
+                'updated_by_seat_id' => $currentSeat?->seat_id,
+            ]);
+        } else {
+            $wasProcessedBeforeLinking = $petition->previous_status && $petition->previous_status !== Petition::STATUS_RECEIVED;
 
-        if ($originalPetition) {
-            return redirect()->route('petitions.show', $originalPetition->hashid)->with('success', 'Petition has been unlinked successfully and its previous status restored.');
+            $petition->update([
+                'linked_petition_id' => null,
+                'status' => $petition->previous_status ?: Petition::STATUS_RECEIVED,
+                'previous_status' => null,
+                'is_cpsp_processed' => (bool)$wasProcessedBeforeLinking,
+                'processed_at' => $wasProcessedBeforeLinking ? $petition->processed_at : null,
+                'processed_by_user_id' => $wasProcessedBeforeLinking ? $petition->processed_by_user_id : null,
+                'processed_by_seat_id' => $wasProcessedBeforeLinking ? $petition->processed_by_seat_id : null,
+                'updated_by_user_id' => $user->user_id ?? $user->id,
+                'updated_by_seat_id' => $currentSeat?->seat_id,
+            ]);
         }
 
-        return redirect()->route('petitions.index', ['tab' => 'all'])->with('success', 'Petition has been unlinked successfully and its previous status restored.');
+        if ($isCrossSection) {
+            return redirect()->route('petitions.show', $petition->hashid)->with('success', 'Cross-section petition reference unlinked successfully.');
+        }
+
+        if ($originalPetition && Auth::user()->can('view', $originalPetition)) {
+            return redirect()->route('petitions.show', $originalPetition->hashid)->with('success', 'Petition has been unlinked successfully.');
+        }
+
+        return redirect()->route('petitions.show', $petition->hashid)->with('success', 'Petition has been unlinked successfully.');
     }
 
     /**
@@ -1358,7 +1374,26 @@ class PetitionController extends Controller
                   ->orWhereNull('petitions.seat_id');
             });
         } elseif (!$canCpsp && $canT) {
-            $query->whereIn('petitions.seat_id', $tSeatIds);
+            if ($user->canViewCpspPetitionsReadOnly()) {
+                // T-Section user with cross-section read-only clearance can view:
+                // 1. T-Section petitions
+                // 2. Registered/processed CPSP petitions (excluding unprocessed inward petitions assigned to CPSP seats)
+                $query->where(function ($q) use ($tSeatIds) {
+                    $q->whereIn('petitions.seat_id', $tSeatIds)
+                      ->orWhere(function ($cpspQ) use ($tSeatIds) {
+                          $cpspQ->where(function ($notTQ) use ($tSeatIds) {
+                              $notTQ->whereNotIn('petitions.seat_id', $tSeatIds)
+                                    ->orWhereNull('petitions.seat_id');
+                          })->where(function ($cpspActiveQ) {
+                              $cpspActiveQ->where('is_cpsp_processed', true)
+                                          ->orWhere('is_returned_to_inward', true)
+                                          ->orWhereNull('created_by_seat_id');
+                          });
+                      });
+                });
+            } else {
+                $query->whereIn('petitions.seat_id', $tSeatIds);
+            }
         } elseif (!$canCpsp && !$canT) {
             $query->where('petitions.user_id', $user->user_id ?? $user->id);
         } else {
@@ -1380,8 +1415,26 @@ class PetitionController extends Controller
                         $scopedQuery->orWhere('petitions.seat_id', $currentSeatUser->seat_id);
                     }
                 });
-            } elseif ($currentSeatUser) {
-                $query->where('petitions.seat_id', $currentSeatUser->seat_id);
+            } elseif ($currentSeat) {
+                if (!$canCpsp && $canT && $user->canViewCpspPetitionsReadOnly()) {
+                    // For T-Section user with read-only CPSP clearance:
+                    // Restrict to their assigned T-Seat for T-Section petitions, but allow CPSP read-only viewing
+                    $query->where(function ($q) use ($currentSeat, $tSeatIds) {
+                        $q->where('petitions.seat_id', $currentSeat->seat_id)
+                          ->orWhere(function ($cpspQ) use ($tSeatIds) {
+                              $cpspQ->where(function ($notTQ) use ($tSeatIds) {
+                                  $notTQ->whereNotIn('petitions.seat_id', $tSeatIds)
+                                        ->orWhereNull('petitions.seat_id');
+                              })->where(function ($cpspActiveQ) {
+                                  $cpspActiveQ->where('is_cpsp_processed', true)
+                                             ->orWhere('is_returned_to_inward', true)
+                                             ->orWhereNull('created_by_seat_id');
+                              });
+                          });
+                    });
+                } else {
+                    $query->where('petitions.seat_id', $currentSeatUser->seat_id);
+                }
             } else {
                 $query->where('petitions.user_id', $user->user_id ?? $user->id);
             }
@@ -1396,23 +1449,46 @@ class PetitionController extends Controller
         $query = $this->applyPetitionAccessScope(Petition::query(), $user)
             ->whereNull('linked_petition_id');
 
+        $isTSectionOnly = $user && !$user->canAccessCpspSection() && $user->canAccessTSection() && !$user->canAccess('access admin dashboard');
+        $tSeatIds = Seat::getTSectionSeatIds();
+
         // Optimize: Perform single SQL aggregation instead of loading all models into PHP memory
-        $stats = $query->selectRaw("
-            COUNT(DISTINCT CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 THEN petitions.petition_id END) as inward,
-            COUNT(DISTINCT CASE WHEN is_cpsp_processed = 1 THEN petitions.petition_id END) as all_count,
-            COUNT(DISTINCT CASE WHEN status = ? AND is_cpsp_processed = 1 THEN petitions.petition_id END) as received,
-            COUNT(DISTINCT CASE WHEN status = ? THEN petitions.petition_id END) as forwarded,
-            COUNT(DISTINCT CASE WHEN status = ? THEN petitions.petition_id END) as vrs,
-            COUNT(DISTINCT CASE WHEN status IN (?, ?, ?, ?) THEN petitions.petition_id END) as decisions
-        ", [
-            Petition::STATUS_RECEIVED,
-            Petition::STATUS_FORWARDED,
-            Petition::STATUS_VR_RECEIVED,
-            Petition::STATUS_SENT_TO_GOVT,
-            Petition::STATUS_SENT_TO_SPC,
-            Petition::STATUS_INTERNAL_VIGILANCE,
-            Petition::STATUS_CLOSED
-        ])->first();
+        if ($isTSectionOnly && !empty($tSeatIds)) {
+            $tSeatsList = implode(',', array_map('intval', $tSeatIds));
+            $stats = $query->selectRaw("
+                COUNT(DISTINCT CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 AND petitions.seat_id IN ($tSeatsList) THEN petitions.petition_id END) as inward,
+                COUNT(DISTINCT CASE WHEN is_cpsp_processed = 1 AND petitions.seat_id IN ($tSeatsList) THEN petitions.petition_id END) as all_count,
+                COUNT(DISTINCT CASE WHEN status = ? AND is_cpsp_processed = 1 AND petitions.seat_id IN ($tSeatsList) THEN petitions.petition_id END) as received,
+                COUNT(DISTINCT CASE WHEN status = ? AND petitions.seat_id IN ($tSeatsList) THEN petitions.petition_id END) as forwarded,
+                COUNT(DISTINCT CASE WHEN status = ? AND petitions.seat_id IN ($tSeatsList) THEN petitions.petition_id END) as vrs,
+                COUNT(DISTINCT CASE WHEN status IN (?, ?, ?, ?) AND petitions.seat_id IN ($tSeatsList) THEN petitions.petition_id END) as decisions
+            ", [
+                Petition::STATUS_RECEIVED,
+                Petition::STATUS_FORWARDED,
+                Petition::STATUS_VR_RECEIVED,
+                Petition::STATUS_SENT_TO_GOVT,
+                Petition::STATUS_SENT_TO_SPC,
+                Petition::STATUS_INTERNAL_VIGILANCE,
+                Petition::STATUS_CLOSED
+            ])->first();
+        } else {
+            $stats = $query->selectRaw("
+                COUNT(DISTINCT CASE WHEN is_cpsp_processed = 0 AND is_returned_to_inward = 0 THEN petitions.petition_id END) as inward,
+                COUNT(DISTINCT CASE WHEN is_cpsp_processed = 1 THEN petitions.petition_id END) as all_count,
+                COUNT(DISTINCT CASE WHEN status = ? AND is_cpsp_processed = 1 THEN petitions.petition_id END) as received,
+                COUNT(DISTINCT CASE WHEN status = ? THEN petitions.petition_id END) as forwarded,
+                COUNT(DISTINCT CASE WHEN status = ? THEN petitions.petition_id END) as vrs,
+                COUNT(DISTINCT CASE WHEN status IN (?, ?, ?, ?) THEN petitions.petition_id END) as decisions
+            ", [
+                Petition::STATUS_RECEIVED,
+                Petition::STATUS_FORWARDED,
+                Petition::STATUS_VR_RECEIVED,
+                Petition::STATUS_SENT_TO_GOVT,
+                Petition::STATUS_SENT_TO_SPC,
+                Petition::STATUS_INTERNAL_VIGILANCE,
+                Petition::STATUS_CLOSED
+            ])->first();
+        }
 
         return [
             'inward' => (int) ($stats->inward ?? 0),
@@ -1433,6 +1509,12 @@ class PetitionController extends Controller
         $query = $this->applyPetitionAccessScope(Petition::query(), $user)
             ->whereIn('petitions.status', [Petition::STATUS_SENT_TO_GOVT, Petition::STATUS_SENT_TO_SPC, Petition::STATUS_INTERNAL_VIGILANCE, Petition::STATUS_CLOSED])
             ->whereNull('petitions.linked_petition_id');
+
+        $isTSectionOnly = $user && !$user->canAccessCpspSection() && $user->canAccessTSection() && !$user->canAccess('access admin dashboard');
+        if ($isTSectionOnly) {
+            $tSeatIds = Seat::getTSectionSeatIds();
+            $query->whereIn('petitions.seat_id', $tSeatIds);
+        }
 
         // Optimize: Join only the latest active (non-deleted) decision per petition to prevent duplicates
         $stats = $query->leftJoin('decisions', function ($join) {
@@ -1489,7 +1571,7 @@ class PetitionController extends Controller
     /**
      * Helper to build the filtered petitions query.
      */
-    private function getPetitionsQuery(Request $request, bool $includeDuplicates = false)
+    private function getPetitionsQuery(Request $request, bool $isReports = false, bool $includeDuplicates = false)
     {
         $request->validate([
             'date_from' => 'nullable|date|before_or_equal:today',
@@ -1503,8 +1585,15 @@ class PetitionController extends Controller
         $defaultTab = $isInwardOnly ? 'inward' : 'all';
         $tab = $request->input('tab', $defaultTab);
 
+        $shouldIncludeDuplicates = $request->boolean('include_duplicates') || $includeDuplicates;
+
         // Apply filters using scopes
-        if ($includeDuplicates && $tab === 'received') {
+        if ($isReports) {
+            // Master Reports: "all" means all petitions without restriction to is_cpsp_processed = true.
+            if ($tab !== 'all' && $tab !== '') {
+                $query->filterByTab($tab);
+            }
+        } elseif ($shouldIncludeDuplicates && $tab === 'received') {
             // When exporting processed petitions, include duplicate petitions that were processed/linked
             $query->where(function ($q) {
                 $q->where('status', Petition::STATUS_RECEIVED)
@@ -1519,8 +1608,8 @@ class PetitionController extends Controller
               ->search($request->search, $request->search_type)
               ->filterDates($request->date_from, $request->date_to, $request->status, $tab);
 
-        // Hide duplicate (linked) petitions from general list, unless explicitly searched or explicitly included (e.g. for Excel export)
-        if (!$includeDuplicates && !$request->filled('receipt_no') && !$request->filled('search')) {
+        // Hide duplicate (linked) petitions unless explicitly requested via include_duplicates, or explicitly searched
+        if (!$shouldIncludeDuplicates && !$request->filled('receipt_no') && !$request->filled('search')) {
             $query->whereNull('linked_petition_id');
         }
 
@@ -1558,11 +1647,21 @@ class PetitionController extends Controller
         if ($request->filled('concerned_district_id')) {
             $query->where('petitions.concerned_district_id', $request->concerned_district_id);
         }
-        if ($request->filled('section') && $request->section !== 'all') {
-            $tSeatIds = Seat::getTSectionSeatIds();
-            if ($request->section === 't_section') {
+        $isTSectionOnly = $user && !$user->canAccessCpspSection() && $user->canAccessTSection() && !$user->canAccess('access admin dashboard');
+        $tSeatIds = Seat::getTSectionSeatIds();
+
+        if ($isTSectionOnly && in_array($tab, ['forwarded', 'vrs', 'decisions', 'inward', 'received'])) {
+            // T-Section operational workflow tabs must strictly show T-Section petitions only
+            $query->whereIn('petitions.seat_id', $tSeatIds);
+        } else {
+            // Section filtering for 'all' tab, reports, or when explicitly requested.
+            // For T-Section users, default section is strictly 't_section'.
+            $defaultSection = $isTSectionOnly ? 't_section' : 'all';
+            $section = $request->input('section', $defaultSection);
+
+            if ($section === 't_section') {
                 $query->whereIn('petitions.seat_id', $tSeatIds);
-            } elseif ($request->section === 'cpsp') {
+            } elseif ($section === 'cpsp') {
                 $query->where(function ($q) use ($tSeatIds) {
                     $q->whereNotIn('petitions.seat_id', $tSeatIds)
                       ->orWhereNull('petitions.seat_id');
@@ -1669,6 +1768,9 @@ class PetitionController extends Controller
                   ->orWhere(function($sub) use ($filters) {
                       $sub->whereNull('date_of_petition_received')
                           ->whereDate('created_at', '>=', $filters['date_from']);
+                  })
+                  ->orWhere(function($sub) use ($filters) {
+                      $sub->whereDate('processed_at', '>=', $filters['date_from']);
                   });
             });
         }
@@ -1679,6 +1781,9 @@ class PetitionController extends Controller
                   ->orWhere(function($sub) use ($filters) {
                       $sub->whereNull('date_of_petition_received')
                           ->whereDate('created_at', '<=', $filters['date_to']);
+                  })
+                  ->orWhere(function($sub) use ($filters) {
+                      $sub->whereDate('processed_at', '<=', $filters['date_to']);
                   });
             });
         }

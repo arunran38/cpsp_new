@@ -159,22 +159,39 @@
 
                     $isDuplicate = (bool) $petition->linked_petition_id || $petition->status === \App\Models\Petition::STATUS_DUPLICATE;
                     $linkedOriginalNo = $petition->originalPetition?->receipt_no;
-                    $statusDisplay = $isDuplicate 
-                        ? 'Duplicate' . ($linkedOriginalNo ? " (Linked to {$linkedOriginalNo})" : '') 
-                        : ($petition->status === 'Received' ? 'Processed' : $petition->status);
+                    $canViewWf = $petition->canViewWorkflowDetails();
+
+                    $statusDisplay = !$canViewWf
+                        ? ($isDuplicate ? 'Duplicate' . ($linkedOriginalNo ? " (Linked to {$linkedOriginalNo})" : '') : 'CPSP Processed')
+                        : ($isDuplicate 
+                            ? 'Duplicate' . ($linkedOriginalNo ? " (Linked to {$linkedOriginalNo})" : '') 
+                            : ($petition->status === 'Received' ? 'Processed' : $petition->status));
+
                     $fileNoDisplay = $petition->file_no ?? ($linkedOriginalNo && $petition->originalPetition?->file_no ? $petition->originalPetition->file_no . ' (Original)' : 'N/A');
-                    $proposedActionDisplay = $isDuplicate && empty($petition->proposed_action)
-                        ? ($linkedOriginalNo ? "Linked as Duplicate of {$linkedOriginalNo}" : 'Linked as Duplicate')
-                        : ($petition->proposed_action ?? '-');
-                    $decisionDisplay = $petition->decision 
-                        ? \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) 
-                        : ($isDuplicate ? 'Linked as Duplicate' : 'N/A');
-                    $finalRecDisplay = $petition->decision 
-                        ? $petition->decision->final_decision 
-                        : ($isDuplicate ? 'Linked as Duplicate' : 'N/A');
-                    $recTypeDisplay = ($petition->decision && $petition->decision->govt_recommendation_type) 
-                        ? $petition->decision->govt_recommendation_type 
-                        : ($isDuplicate ? ($linkedOriginalNo ? "Linked to {$linkedOriginalNo}" : 'Duplicate') : 'N/A');
+                    
+                    $proposedActionDisplay = !$canViewWf
+                        ? 'Reference Only'
+                        : ($isDuplicate && empty($petition->proposed_action)
+                            ? ($linkedOriginalNo ? "Linked as Duplicate of {$linkedOriginalNo}" : 'Linked as Duplicate')
+                            : ($petition->proposed_action ?? '-'));
+
+                    $decisionDisplay = !$canViewWf
+                        ? 'Restricted'
+                        : ($petition->decision 
+                            ? \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) 
+                            : ($isDuplicate ? 'Linked as Duplicate' : 'N/A'));
+
+                    $finalRecDisplay = !$canViewWf
+                        ? 'Restricted'
+                        : ($petition->decision 
+                            ? $petition->decision->final_decision 
+                            : ($isDuplicate ? 'Linked as Duplicate' : 'N/A'));
+
+                    $recTypeDisplay = !$canViewWf
+                        ? 'Restricted'
+                        : (($petition->decision && $petition->decision->govt_recommendation_type) 
+                            ? $petition->decision->govt_recommendation_type 
+                            : ($isDuplicate ? ($linkedOriginalNo ? "Linked to {$linkedOriginalNo}" : 'Duplicate') : 'N/A'));
 
                     $rowData = [
                         '#' => '<td class="text-center">' . ($index + 1) . '</td>',
@@ -200,17 +217,17 @@
                         'Proposed Action' => '<td>' . $proposedActionDisplay . '</td>',
                         'Present Status' => '<td class="text-center"><span class="bold">' . $statusDisplay . '</span></td>',
                         'Seat' => '<td>' . ($petition->seat->seat_name ?? 'N/A') . '</td>',
-                        'Unit' => '<td>' . ($petition->latestForwarding->toUnit->unit_name ?? 'N/A') . '</td>',
-                        'Forwarded Date' => '<td class="text-center">' . ($petition->latestForwarding?->forwarded_date ? date('d-m-Y', strtotime($petition->latestForwarding->forwarded_date)) : 'N/A') . '</td>',
-                        'VR Ref No' => '<td>' . ($petition->latestForwarding->vr_ref_no ?? 'N/A') . '</td>',
-                        'VR Date' => '<td class="text-center">' . ($petition->latestForwarding?->vr_date ? date('d-m-Y', strtotime($petition->latestForwarding->vr_date)) : 'N/A') . '</td>',
-                        'VR Received At CPSP' => '<td class="text-center">' . ($petition->latestForwarding?->vr_received_at_cpsp_date ? date('d-m-Y', strtotime($petition->latestForwarding->vr_received_at_cpsp_date)) : 'N/A') . '</td>',
-                        'VR Remarks' => '<td>' . ($petition->latestForwarding->vr_remarks ?? 'N/A') . '</td>',
+                        'Unit' => '<td>' . ($canViewWf ? ($petition->latestForwarding->toUnit->unit_name ?? 'N/A') : 'N/A') . '</td>',
+                        'Forwarded Date' => '<td class="text-center">' . ($canViewWf && $petition->latestForwarding?->forwarded_date ? date('d-m-Y', strtotime($petition->latestForwarding->forwarded_date)) : 'N/A') . '</td>',
+                        'VR Ref No' => '<td>' . ($canViewWf ? ($petition->latestForwarding->vr_ref_no ?? 'N/A') : 'Restricted') . '</td>',
+                        'VR Date' => '<td class="text-center">' . ($canViewWf && $petition->latestForwarding?->vr_date ? date('d-m-Y', strtotime($petition->latestForwarding->vr_date)) : 'N/A') . '</td>',
+                        'VR Received At CPSP' => '<td class="text-center">' . ($canViewWf && $petition->latestForwarding?->vr_received_at_cpsp_date ? date('d-m-Y', strtotime($petition->latestForwarding->vr_received_at_cpsp_date)) : 'N/A') . '</td>',
+                        'VR Remarks' => '<td>' . ($canViewWf ? ($petition->latestForwarding->vr_remarks ?? 'N/A') : 'Restricted') . '</td>',
                         'Decision' => '<td>' . $decisionDisplay . '</td>',
-                        'Final Decision Date' => '<td class="text-center">' . ($petition->decision?->decision_date ? date('d-m-Y', strtotime($petition->decision->decision_date)) : 'N/A') . '</td>',
+                        'Final Decision Date' => '<td class="text-center">' . ($canViewWf && $petition->decision?->decision_date ? date('d-m-Y', strtotime($petition->decision->decision_date)) : 'N/A') . '</td>',
                         'Final Recommendation' => '<td>' . $finalRecDisplay . '</td>',
                         'Recommendation Type' => '<td class="text-center">' . $recTypeDisplay . '</td>',
-                        'Directorate Order No' => '<td>' . ($petition->decision->directorate_order_number ?? 'N/A') . '</td>',
+                        'Directorate Order No' => '<td>' . ($canViewWf ? ($petition->decision->directorate_order_number ?? 'N/A') : 'Restricted') . '</td>',
                     ];
                 @endphp
                 <tr>

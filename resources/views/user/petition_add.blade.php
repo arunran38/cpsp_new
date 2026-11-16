@@ -1065,6 +1065,13 @@
                                             <span class="text-sm font-bold" x-text="dup.decision"></span>
                                         </div>
                                     </template>
+                                    <template x-if="dup.seat_name">
+                                        <div class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm" title="Assigned / Processed Seat">
+                                            <i data-lucide="building-2" class="w-4 h-4 text-slate-500"></i>
+                                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Seat</span>
+                                            <span class="text-sm font-bold" x-text="dup.seat_name"></span>
+                                        </div>
+                                    </template>
                                     <template x-if="dup.match_reason_en">
                                         <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold shadow-sm"
                                             :class="dup.badge_color || 'bg-purple-50 text-purple-700 border-purple-200'">
@@ -1074,8 +1081,8 @@
                                     </template>
                                 </div>
 
-                                <!-- Middle Row: Complainant and Suspect Details -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Middle Row: Complainant, Suspect, Seat & User Details -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div class="flex items-start gap-3">
                                         <div class="mt-1 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 border border-blue-200">
                                             <i data-lucide="user" class="w-4 h-4"></i>
@@ -1094,6 +1101,22 @@
                                             <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.accused"></p>
                                         </div>
                                     </div>
+                                    <template x-if="dup.seat_name || dup.user_name">
+                                        <div class="flex items-start gap-3">
+                                            <div class="mt-1 w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 border border-indigo-200">
+                                                <i data-lucide="shield-check" class="w-4 h-4"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-[11px] font-bold text-indigo-500 uppercase tracking-widest">Seat & User</p>
+                                                <p class="text-sm font-bold text-slate-800 mt-0.5">
+                                                    <span x-text="dup.seat_name || 'N/A'"></span>
+                                                    <template x-if="dup.user_name">
+                                                        <span class="text-xs font-semibold text-slate-500 block sm:inline sm:ml-1" x-text="'(' + dup.user_name + ')'"></span>
+                                                    </template>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
 
                                 <!-- Bottom Row: Description Preview -->

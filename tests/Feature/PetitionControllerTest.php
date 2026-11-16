@@ -1312,4 +1312,89 @@ class PetitionControllerTest extends TestCase
         $resIaps->assertSee('RCPT-IAPS-MODE-001');
         $resIaps->assertDontSee('RCPT-UNIT-MODE-001');
     }
+
+    public function test_reports_table_and_excel_export_are_synchronized_with_date_and_statuses(): void
+    {
+        $today = now()->format('Y-m-d');
+        $yesterday = now()->subDays(2)->format('Y-m-d');
+
+        // 1. Inward pending petition (unprocessed by CPSP)
+        $inwardPending = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-INWARD-PENDING-99',
+            'date_of_petition_received' => $today,
+            'is_cpsp_processed' => false,
+            'status' => Petition::STATUS_RECEIVED,
+        ]);
+
+        // 2. Processed petition (received earlier, processed today)
+        $processedToday = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-PROCESSED-TODAY-99',
+            'date_of_petition_received' => $yesterday,
+            'is_cpsp_processed' => true,
+            'processed_at' => now(),
+            'status' => Petition::STATUS_FORWARDED,
+        ]);
+
+        // 3. Duplicate linked petition processed today
+        $duplicate = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-DUPLICATE-LINKED-99',
+            'linked_petition_id' => $processedToday->petition_id,
+            'date_of_petition_received' => $today,
+            'is_cpsp_processed' => true,
+            'processed_at' => now(),
+            'status' => Petition::STATUS_DUPLICATE,
+        ]);
+
+        // Case A: Default request without include_duplicates (matches Dashboard unique count)
+        $tableResponse = $this->actingAs($this->user)->get(route('petitions.reports', [
+            'date_from' => $today,
+            'date_to' => $today,
+        ]));
+        $tableResponse->assertStatus(200);
+        $tableContent = $tableResponse->getContent();
+
+        $exportResponse = $this->actingAs($this->user)->get(route('petitions.export', [
+            'date_from' => $today,
+            'date_to' => $today,
+        ]));
+        $exportResponse->assertStatus(200);
+        $exportContent = $exportResponse->getContent();
+
+        // Primary petitions are in both table and export
+        $this->assertStringContainsString('RCPT-INWARD-PENDING-99', $tableContent);
+        $this->assertStringContainsString('RCPT-PROCESSED-TODAY-99', $tableContent);
+        $this->assertStringContainsString('RCPT-INWARD-PENDING-99', $exportContent);
+        $this->assertStringContainsString('RCPT-PROCESSED-TODAY-99', $exportContent);
+
+        // Duplicate row is excluded from standalone rows (displayed as badge on original)
+        $this->assertStringNotContainsString('<td>RCPT-DUPLICATE-LINKED-99</td>', $tableContent);
+        $this->assertStringNotContainsString('RCPT-DUPLICATE-LINKED-99', $exportContent);
+
+        // Case B: With include_duplicates=1 (both table and export include duplicate row)
+        $tableDupResponse = $this->actingAs($this->user)->get(route('petitions.reports', [
+            'date_from' => $today,
+            'date_to' => $today,
+            'include_duplicates' => 1,
+        ]));
+        $tableDupResponse->assertStatus(200);
+        $tableDupContent = $tableDupResponse->getContent();
+
+        $exportDupResponse = $this->actingAs($this->user)->get(route('petitions.export', [
+            'date_from' => $today,
+            'date_to' => $today,
+            'include_duplicates' => 1,
+        ]));
+        $exportDupResponse->assertStatus(200);
+        $exportDupContent = $exportDupResponse->getContent();
+
+        // All petitions including duplicate row are in both
+        $this->assertStringContainsString('RCPT-DUPLICATE-LINKED-99', $tableDupContent);
+        $this->assertStringContainsString('RCPT-DUPLICATE-LINKED-99', $exportDupContent);
+    }
 }

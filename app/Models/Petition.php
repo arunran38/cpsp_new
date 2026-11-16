@@ -608,7 +608,20 @@ class Petition extends Model
             });
         }
 
-        // 4. Other Authorized Roles
+        // 4. T-Section Role / Seat: View inward petitions assigned strictly to their section/seat
+        $isTSectionUser = $user->isTSectionRole() || ($currentSeat && $currentSeat->isTSection());
+        if ($isTSectionUser) {
+            return $query->where(function ($q) use ($user, $currentSeat) {
+                if ($currentSeat) {
+                    $q->where('petitions.seat_id', $currentSeat->seat_id)
+                      ->orWhere('petitions.user_id', $user->user_id);
+                } else {
+                    $q->where('petitions.user_id', $user->user_id);
+                }
+            });
+        }
+
+        // 5. Other Authorized Roles
         if ($user->canAccess('view all petitions') && !session('is_impersonating_seat')) {
             return $query;
         }
@@ -658,7 +671,10 @@ class Petition extends Model
         } 
         
         if ($status === self::STATUS_RECEIVED || $status === 'Processed') {
-            return $query->where('status', self::STATUS_RECEIVED);
+            return $query->where(function ($q) {
+                $q->where('is_cpsp_processed', true)
+                  ->orWhere('status', self::STATUS_RECEIVED);
+            });
         }
 
         if ($status === 'All_Final_Decisions') {
@@ -783,11 +799,15 @@ class Petition extends Model
             });
         }
 
-        // Combined OR filter: include petitions received within the date range OR processed within the date range
+        // Combined OR filter: include petitions received within the date range (or created within range if received date is null) OR processed within the date range
         return $query->where(function ($q) use ($parsedFrom, $parsedTo) {
             $q->where(function ($sub) use ($parsedFrom, $parsedTo) {
                 if ($parsedFrom) $sub->whereDate('date_of_petition_received', '>=', $parsedFrom);
                 if ($parsedTo) $sub->whereDate('date_of_petition_received', '<=', $parsedTo);
+            })->orWhere(function ($sub) use ($parsedFrom, $parsedTo) {
+                $sub->whereNull('date_of_petition_received');
+                if ($parsedFrom) $sub->whereDate('created_at', '>=', $parsedFrom);
+                if ($parsedTo) $sub->whereDate('created_at', '<=', $parsedTo);
             })->orWhere(function ($sub) use ($parsedFrom, $parsedTo) {
                 if ($parsedFrom) $sub->whereDate('processed_at', '>=', $parsedFrom);
                 if ($parsedTo) $sub->whereDate('processed_at', '<=', $parsedTo);
@@ -838,6 +858,51 @@ class Petition extends Model
         }
         $tSeatIds = Seat::getTSectionSeatIds();
         return in_array($this->seat_id, $tSeatIds);
+    }
+
+    /**
+     * Check if this petition is linked across sections (CPSP <-> T-Section).
+     */
+    public function isCrossSectionLinked(): bool
+    {
+        if (!$this->linked_petition_id) {
+            return false;
+        }
+        $original = $this->originalPetition;
+        if (!$original) {
+            return false;
+        }
+        return $this->isTSection() !== $original->isTSection();
+    }
+
+    /**
+     * Check whether a user is allowed to view sensitive internal workflow details
+     * (VR reports, forwarding history, final decisions, remarks) of this petition.
+     */
+    public function canViewWorkflowDetails(?User $user = null): bool
+    {
+        $user = $user ?? auth()->user();
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->canAccess('access admin dashboard')) {
+            return true;
+        }
+
+        if ($this->isTSection()) {
+            return $user->canAccessTSection() || $user->canAccessTSectionPending();
+        }
+
+        $currentSeat = $user->currentSeatUser()?->seat;
+        $isTSectionUser = ($currentSeat && $currentSeat->isTSection()) || $user->isTSectionRole() || $user->canAccessTSection();
+
+        // T-Section user viewing CPSP petition in read-only mode cannot view sensitive workflow details
+        if ($isTSectionUser && !$user->canAccessCpspSection()) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

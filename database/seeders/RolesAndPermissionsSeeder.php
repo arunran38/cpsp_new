@@ -383,6 +383,10 @@ class RolesAndPermissionsSeeder extends Seeder
                 'view t-section diagnostics',
                 'view t-section in reports',
                 'view t-section pending details',
+                'view cpsp petitions read only',
+                'view assigned inward petitions',
+                'link related petitions',
+                'view linked petition references',
             ],
 
             'CPSP Admin' => [

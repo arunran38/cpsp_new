@@ -80,6 +80,10 @@ class DuplicateDetectionService
                 'decision',
                 'addresses.district',
                 'originalPetition.addresses.district',
+                'seat.activeAssignment.user',
+                'user',
+                'processedBySeat',
+                'processedByUser',
             ]);
 
         $query->where(function ($q) use ($c_phones, $c_names, $a_phones, $a_pens, $a_names, $description, $nature) {
@@ -168,7 +172,7 @@ class DuplicateDetectionService
 
         $candidates = $query->orderBy('date_of_petition_received', 'desc')->take(15)->get();
 
-        $scored = $candidates->map(function (Petition $p) use ($c_phones, $c_names, $a_phones, $a_pens, $a_names) {
+        $scored = $candidates->map(function (Petition $p) use ($c_phones, $c_names, $a_phones, $a_pens, $a_names, $user) {
             $addresses = $p->displayAddresses();
             $dbComplainants = $addresses->where('person_type', 'Complainant');
             $dbAccused = $addresses->where('person_type', 'Accused');
@@ -254,6 +258,10 @@ class DuplicateDetectionService
                 $badgeColor = 'bg-amber-100 text-amber-800 border-amber-300';
             }
 
+            $seatName = $p->processedBySeat?->seat_name ?? $p->seat?->seat_name ?? null;
+            $userName = $p->processedByUser?->name ?? $p->seat?->activeAssignment?->user?->name ?? $p->user?->name ?? null;
+            $canViewWf = $p->canViewWorkflowDetails($user);
+
             return [
                 'petition_id' => $p->petition_id,
                 'receipt_no' => $p->receipt_no,
@@ -262,8 +270,11 @@ class DuplicateDetectionService
                 'complainant' => $complainantText,
                 'accused' => $accusedText,
                 'description' => \Illuminate\Support\Str::limit(strip_tags($p->description), 100),
-                'status' => $p->status,
-                'decision' => $p->decision ? $p->decision->final_decision : null,
+                'status' => !$canViewWf ? 'CPSP Processed' : $p->status,
+                'decision' => !$canViewWf ? null : ($p->decision ? $p->decision->final_decision : null),
+                'seat_name' => $seatName,
+                'user_name' => $userName,
+                'is_t_section' => $p->isTSection(),
                 'match_type' => $matchType,
                 'match_confidence' => $matchConfidence,
                 'match_reason_en' => $matchReasonEn,
@@ -287,7 +298,7 @@ class DuplicateDetectionService
         }
 
         $petitions = Petition::excludeTSectionIfNotAuthorized($user)
-            ->with(['addresses', 'originalPetition.addresses'])
+            ->with(['addresses', 'originalPetition.addresses', 'seat.activeAssignment.user', 'user', 'processedBySeat', 'processedByUser'])
             ->where(function ($q) use ($query) {
                 $q->where('receipt_no', 'LIKE', "%{$query}%")
                   ->orWhere('nature_of_petition', 'LIKE', "%{$query}%")
@@ -319,16 +330,21 @@ class DuplicateDetectionService
             }
 
             $tag = $isSoundex ? ' [Soundex Match]' : '';
+            $seatName = $petition->processedBySeat?->seat_name ?? $petition->seat?->seat_name ?? null;
+            $userName = $petition->processedByUser?->name ?? $petition->seat?->activeAssignment?->user?->name ?? $petition->user?->name ?? null;
+            $seatUserLabel = $seatName ? " [{$seatName}" . ($userName ? " - {$userName}" : "") . "]" : "";
 
             return [
                 'id' => $petition->receipt_no,
-                'text' => "{$petition->receipt_no} - {$petition->nature_of_petition} ({$complainantName}){$tag}",
+                'text' => "{$petition->receipt_no} - {$petition->nature_of_petition} ({$complainantName}){$seatUserLabel}{$tag}",
                 'receipt_no' => $petition->receipt_no,
                 'date' => $petition->date_of_petition_received ? date('d-m-Y', strtotime($petition->date_of_petition_received)) : 'N/A',
                 'complainant' => $complainantName,
                 'accused' => $accusedName,
                 'nature' => $petition->nature_of_petition,
                 'is_soundex' => $isSoundex,
+                'seat_name' => $seatName,
+                'user_name' => $userName,
             ];
         })->toArray();
     }
