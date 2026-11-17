@@ -143,4 +143,92 @@ class DashboardTest extends TestCase
         // User dashboard counts total petitions from the collection, so we can check if it's there
         $response->assertSee('1');
     }
+
+    public function test_seat_distribution_chart_sorts_temporary_seats_immediately_after_parent(): void
+    {
+        $this->admin->givePermissionTo('view seat distribution chart');
+
+        // Create seats in random order: CPSP 5, CPSP 2, CPSP 2 B, CPSP 1, CPSP 2 A, CPSP 6, CPSP 5 A
+        $seatNames = ['CPSP 5', 'CPSP 2', 'CPSP 2 B', 'CPSP 1', 'CPSP 2 A', 'CPSP 6', 'CPSP 5 A'];
+        foreach ($seatNames as $name) {
+            $s = Seat::factory()->create(['seat_name' => $name, 'is_active' => true]);
+            $s->assignRole('CPSP');
+            $u = User::factory()->create();
+            SeatUser::factory()->create([
+                'user_id' => $u->user_id,
+                'seat_id' => $s->seat_id,
+                'is_active' => true,
+            ]);
+        }
+
+        $response = $this->actingAs($this->admin)->get(route('dashboard'));
+        $response->assertStatus(200);
+
+        $content = $response->getContent();
+        preg_match('/labels:\s*(\[[^\]]+\])/', $content, $matches);
+        $this->assertNotEmpty($matches, 'Seat chart labels array must be present');
+        $labels = json_decode($matches[1], true);
+
+        // Find positions of our seats
+        $pos1 = array_search('CPSP 1', $labels);
+        $pos2 = array_search('CPSP 2', $labels);
+        $pos2A = array_search('CPSP 2 A', $labels);
+        $pos2B = array_search('CPSP 2 B', $labels);
+        $pos5 = array_search('CPSP 5', $labels);
+        $pos5A = array_search('CPSP 5 A', $labels);
+        $pos6 = array_search('CPSP 6', $labels);
+
+        $this->assertTrue($pos1 < $pos2, 'CPSP 1 must appear before CPSP 2');
+        $this->assertEquals($pos2 + 1, $pos2A, 'CPSP 2 A must appear immediately after CPSP 2');
+        $this->assertEquals($pos2A + 1, $pos2B, 'CPSP 2 B must appear immediately after CPSP 2 A');
+        $this->assertTrue($pos2B < $pos5, 'CPSP 2 B must appear before CPSP 5');
+        $this->assertEquals($pos5 + 1, $pos5A, 'CPSP 5 A must appear immediately after CPSP 5');
+        $this->assertTrue($pos5A < $pos6, 'CPSP 5 A must appear before CPSP 6');
+    }
+
+    public function test_seat_distribution_chart_excludes_vacant_seats(): void
+    {
+        $this->admin->givePermissionTo('view seat distribution chart');
+
+        // Create an occupied seat
+        $occupied = Seat::factory()->create(['seat_name' => 'CPSP 3', 'is_active' => true]);
+        $occupied->assignRole('CPSP');
+        $u = User::factory()->create();
+        SeatUser::factory()->create([
+            'user_id' => $u->user_id,
+            'seat_id' => $occupied->seat_id,
+            'is_active' => true,
+        ]);
+
+        // Create a vacant temporary seat (no active seatUser)
+        $vacant = Seat::factory()->create(['seat_name' => 'CPSP 3 A', 'is_active' => true]);
+        $vacant->assignRole('CPSP');
+
+        $response = $this->actingAs($this->admin)->get(route('dashboard'));
+        $response->assertStatus(200);
+
+        $content = $response->getContent();
+        preg_match('/labels:\s*(\[[^\]]+\])/', $content, $matches);
+        $this->assertNotEmpty($matches);
+        $labels = json_decode($matches[1], true);
+
+        $this->assertContains('CPSP 3', $labels);
+        $this->assertNotContains('CPSP 3 A', $labels, 'Vacant temporary seat must be excluded');
+
+        // Now assign a user to CPSP 3 A and verify it appears immediately after CPSP 3
+        SeatUser::factory()->create([
+            'user_id' => User::factory()->create()->user_id,
+            'seat_id' => $vacant->seat_id,
+            'is_active' => true,
+        ]);
+
+        $responseAfter = $this->actingAs($this->admin)->get(route('dashboard'));
+        preg_match('/labels:\s*(\[[^\]]+\])/', $responseAfter->getContent(), $matchesAfter);
+        $labelsAfter = json_decode($matchesAfter[1], true);
+
+        $this->assertContains('CPSP 3 A', $labelsAfter, 'Seat with assigned user must now appear');
+        $p3 = array_search('CPSP 3', $labelsAfter);
+        $p3A = array_search('CPSP 3 A', $labelsAfter);
+        $this->assertEquals($p3 + 1, $p3A, 'CPSP 3 A must appear immediately after CPSP 3');
+    }
 }

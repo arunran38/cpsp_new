@@ -726,13 +726,65 @@ class PetitionControllerTest extends TestCase
 
     public function test_check_petition_no_endpoint(): void
     {
-        Petition::factory()->create(['receipt_no' => 'EXIST-123']);
+        $targetUser = User::factory()->create(['name' => 'Anudev S']);
+        $targetSeat = Seat::factory()->create(['seat_name' => 'CPSP 2']);
+        SeatUser::factory()->create([
+            'user_id' => $targetUser->user_id,
+            'seat_id' => $targetSeat->seat_id,
+            'is_active' => true,
+            'is_additional' => false,
+        ]);
+
+        Petition::factory()->create([
+            'receipt_no' => 'EXIST-123',
+            'seat_id' => $targetSeat->seat_id,
+        ]);
 
         $response = $this->actingAs($this->user)->post(route('petitions.checkPetitionNo'), ['receipt_no' => 'EXIST-123']);
-        $response->assertJson(['exists' => true]);
+        $response->assertJson([
+            'exists' => true,
+            'seat_name' => 'CPSP 2',
+            'user_name' => 'Anudev S',
+            'message' => '⚠️ This Receipt Number already exists and is currently assigned to CPSP 2 (User: Anudev S).',
+        ]);
 
         $response = $this->actingAs($this->user)->post(route('petitions.checkPetitionNo'), ['receipt_no' => 'NEW-999']);
-        $response->assertJson(['exists' => false]);
+        $response->assertJson(['exists' => false, 'message' => null]);
+    }
+
+    public function test_duplicate_receipt_validation_error_contains_assigned_seat_and_user(): void
+    {
+        $officer = User::factory()->create(['name' => 'Sajeena S']);
+        $cpsp5Seat = Seat::factory()->create(['seat_name' => 'CPSP 5']);
+        SeatUser::factory()->create([
+            'user_id' => $officer->user_id,
+            'seat_id' => $cpsp5Seat->seat_id,
+            'is_active' => true,
+            'is_additional' => false,
+        ]);
+
+        $existing = Petition::factory()->create([
+            'receipt_no' => 'REC-555/2026',
+            'seat_id' => $cpsp5Seat->seat_id,
+        ]);
+
+        // Attempt to create petition with duplicate receipt_no
+        $response = $this->actingAs($this->user)->post(route('petitions.store'), [
+            'receipt_no' => 'REC-555/2026',
+            'date_of_petition_received' => now()->toDateString(),
+            'nature_of_petition' => 'Bribery',
+            'mode_of_petition_received' => 'Direct',
+            'description' => 'Duplicate attempt test',
+            'concerned_district_id' => \App\Models\District::first()?->district_id ?? 1,
+            'accused' => [
+                ['name' => 'John Doe', 'department_id' => 1]
+            ],
+        ]);
+
+        $response->assertSessionHasErrors(['receipt_no']);
+        $errorMessage = session('errors')->first('receipt_no');
+        $this->assertStringContainsString('CPSP 5', $errorMessage);
+        $this->assertStringContainsString('Sajeena S', $errorMessage);
     }
 
     public function test_user_can_filter_petitions_by_nature_and_mode(): void

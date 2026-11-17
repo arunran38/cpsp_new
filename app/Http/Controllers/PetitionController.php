@@ -574,7 +574,7 @@ class PetitionController extends Controller
             $seatsQuery->where('seat_id', $currentSeat->seat_id);
         }
 
-        $seats = $seatsQuery->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+        $seats = Seat::sortCollection($seatsQuery->get());
         $includedSeatIds = $seats->pluck('seat_id')->toArray();
 
         $petitionsQuery = Petition::whereIn('seat_id', $includedSeatIds)
@@ -875,7 +875,7 @@ class PetitionController extends Controller
                 });
             }
 
-            $seats = $seatsQuery->get()->sortBy('seat_name', SORT_NATURAL | SORT_FLAG_CASE);
+            $seats = Seat::sortCollection($seatsQuery->get());
 
             $usersQuery = User::whereHas('seatUsers', function ($query) use ($canViewTSection) {
                 $query->where('is_active', true)
@@ -1312,17 +1312,43 @@ class PetitionController extends Controller
     }
 
     /**
-     * Check if a petition number exists.
+     * Check if a petition number exists and return assigned seat and user if duplicate.
      */
     public function checkPetitionNo(Request $request)
     {
         $request->validate(['receipt_no' => 'required|string|max:255']);
-        $exists = Petition::where('receipt_no', $request->receipt_no);
+        $query = Petition::with([
+            'seat.activeAssignment.user',
+            'seat.activeAssignments.user',
+            'processedBySeat',
+            'processedByUser',
+            'createdBySeat',
+            'user',
+        ])->where('receipt_no', trim($request->receipt_no));
+
         if ($request->filled('petition_id')) {
             $realPid = HashidService::decode($request->petition_id) ?? $request->petition_id;
-            $exists->where('petition_id', '!=', $realPid);
+            $query->where('petition_id', '!=', $realPid);
         }
-        return response()->json(['exists' => $exists->exists()]);
+
+        $existing = $query->first();
+
+        if ($existing) {
+            $info = $existing->getCurrentSeatAndUser();
+            return response()->json([
+                'exists' => true,
+                'seat_name' => $info['seat_name'],
+                'user_name' => $info['user_name'],
+                'message' => Petition::formatDuplicateReceiptMessage($existing),
+            ]);
+        }
+
+        return response()->json([
+            'exists' => false,
+            'seat_name' => null,
+            'user_name' => null,
+            'message' => null,
+        ]);
     }
 
     /**
@@ -1645,7 +1671,11 @@ class PetitionController extends Controller
             $query->whereHas('addresses', fn($q) => $q->where('department_id', $request->department_id));
         }
         if ($request->filled('concerned_district_id')) {
-            $query->where('petitions.concerned_district_id', $request->concerned_district_id);
+            if ($request->concerned_district_id === 'unassigned' || $request->concerned_district_id === 'null') {
+                $query->whereNull('petitions.concerned_district_id');
+            } else {
+                $query->where('petitions.concerned_district_id', $request->concerned_district_id);
+            }
         }
         $isTSectionOnly = $user && !$user->canAccessCpspSection() && $user->canAccessTSection() && !$user->canAccess('access admin dashboard');
         $tSeatIds = Seat::getTSectionSeatIds();

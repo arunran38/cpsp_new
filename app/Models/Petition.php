@@ -947,6 +947,90 @@ class Petition extends Model
         return $this->scopeExcludeTSection($query);
     }
 
+    /**
+     * Resolve the current assigned seat and the assigned user handling this petition.
+     *
+     * @return array{seat_name: string|null, user_name: string|null}
+     */
+    public function getCurrentSeatAndUser(): array
+    {
+        $seat = null;
+        if ($this->is_returned_to_inward) {
+            $seat = $this->createdBySeat ?? $this->seat;
+        } else {
+            $seat = $this->seat ?? $this->processedBySeat ?? $this->createdBySeat;
+        }
+
+        $seatName = $seat?->seat_name ?? ($this->is_returned_to_inward ? 'Inward' : null);
+
+        // 1. Try active assignment on the current assigned seat
+        $userName = $seat?->activeAssignment?->user?->name
+            ?? $seat?->activeAssignments()->first()?->user?->name;
+
+        // 2. Fallbacks if seat has no active occupant assigned
+        if (!$userName) {
+            $userName = $this->processedByUser?->name 
+                ?? $this->updatedByUser?->name 
+                ?? $this->cpspOpenedByUser?->name 
+                ?? $this->user?->name;
+        }
+
+        return [
+            'seat_name' => $seatName,
+            'user_name' => $userName,
+        ];
+    }
+
+    /**
+     * Format an informative error message when a duplicate Receipt Number is detected.
+     */
+    public static function formatDuplicateReceiptMessage(self $existing): string
+    {
+        $info = $existing->getCurrentSeatAndUser();
+        $seatName = $info['seat_name'] ?? 'Unknown Seat';
+        $userName = $info['user_name'];
+
+        if ($userName && $seatName) {
+            return "⚠️ This Receipt Number already exists and is currently assigned to {$seatName} (User: {$userName}).";
+        }
+
+        if ($seatName && $seatName !== 'Unknown Seat') {
+            return "⚠️ This Receipt Number already exists and is currently assigned to {$seatName}.";
+        }
+
+        return "⚠️ This Receipt Number already exists in the system.";
+    }
+
+    /**
+     * Reusable validation rule closure for receipt number uniqueness with informative seat/user message.
+     */
+    public static function receiptUniquenessRule(?int $ignorePetitionId = null): \Closure
+    {
+        return function ($attribute, $value, $fail) use ($ignorePetitionId) {
+            if (!$value || !trim((string)$value)) {
+                return;
+            }
+
+            $query = self::with([
+                'seat.activeAssignment.user',
+                'seat.activeAssignments.user',
+                'processedBySeat',
+                'processedByUser',
+                'createdBySeat',
+                'user',
+            ])->where('receipt_no', trim((string)$value));
+
+            if ($ignorePetitionId) {
+                $query->where('petition_id', '!=', $ignorePetitionId);
+            }
+
+            $existing = $query->first();
+            if ($existing) {
+                $fail(self::formatDuplicateReceiptMessage($existing));
+            }
+        };
+    }
+
     protected static function booted(): void
     {
         static::deleting(function ($petition) {

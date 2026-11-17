@@ -128,7 +128,8 @@ class DistrictAnalysisController extends Controller
         $query = Petition::query()
             ->whereNull('deleted_at')
             ->whereNull('linked_petition_id')
-            ->where('is_returned_to_inward', false);
+            ->where('is_returned_to_inward', false)
+            ->where('is_cpsp_processed', true);
 
         if (!empty($filters['date_from'])) {
             $query->whereDate('date_of_petition_received', '>=', $filters['date_from']);

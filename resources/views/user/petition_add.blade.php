@@ -1602,6 +1602,9 @@
                                 delete this.formErrors[f.name];
                             }
                         });
+                        if (this.formErrors['receipt_no']) {
+                            isValid = false;
+                        }
                         if (this.petitionDetails.mode === 'others') {
                             if (!this.petitionDetails.mode_others || this.petitionDetails.mode_others.trim() === '') {
                                 this.formErrors['mode_others'] = 'This field is required.';
@@ -1926,7 +1929,7 @@
                         const data = await response.json();
 
                         if (data.exists) {
-                            this.formErrors['receipt_no'] = 'Receipt number already exists';
+                            this.formErrors['receipt_no'] = data.message || 'Receipt number already exists';
                         } else {
                             this.formErrors['receipt_no'] = '';
                         }

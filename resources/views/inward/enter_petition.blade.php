@@ -139,7 +139,7 @@
                                     </div>
                                     <template x-if="receiptError">
                                         <p class="text-xs font-medium text-rose-500 flex items-center gap-1 mt-1">
-                                            <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+                                            <i data-lucide="x-circle" class="w-3.5 h-3.5 shrink-0" x-show="!receiptError.startsWith('⚠️')"></i>
                                             <span x-text="receiptError"></span>
                                         </p>
                                     </template>
@@ -826,7 +826,7 @@
                         .then(data => {
                             this.receiptChecking = false;
                             if (data.exists) {
-                                this.receiptError = 'Receipt number already exists in database!';
+                                this.receiptError = data.message || 'Receipt number already exists in database!';
                                 this.receiptAvailable = false;
                             } else {
                                 this.receiptError = null;

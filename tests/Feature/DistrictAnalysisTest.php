@@ -111,6 +111,31 @@ class DistrictAnalysisTest extends TestCase
         $response->assertSee('There are no petitions found for the selected filter criteria.');
     }
 
+    public function test_district_analysis_only_includes_processed_petitions(): void
+    {
+        // 1. Processed petition in TVM
+        Petition::factory()->create([
+            'concerned_district_id' => $this->tvm->district_id,
+            'is_cpsp_processed' => true,
+            'status' => Petition::STATUS_RECEIVED,
+            'date_of_petition_received' => now()->format('Y-m-d'),
+        ]);
+
+        // 2. Unprocessed Inward petition with null district
+        Petition::factory()->create([
+            'concerned_district_id' => null,
+            'is_cpsp_processed' => false,
+            'status' => Petition::STATUS_RECEIVED,
+            'date_of_petition_received' => now()->format('Y-m-d'),
+        ]);
+
+        $response = $this->actingAs($this->adminUser)
+            ->get(route('admin.reports.district-analysis'));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('Unassigned / Not Specified');
+    }
+
     public function test_cpsp_officer_without_report_permission_receives_403(): void
     {
         $response = $this->actingAs($this->cpspUser)

@@ -32,7 +32,7 @@
                 @php
                     $isNumericDistrict = is_numeric($stat['district_id']);
                     $drillDownParams = array_filter([
-                        'concerned_district_id' => $isNumericDistrict ? $stat['district_id'] : null,
+                        'concerned_district_id' => $isNumericDistrict ? $stat['district_id'] : 'unassigned',
                         'date_from' => $filters['date_from'] ?? null,
                         'date_to' => $filters['date_to'] ?? null,
                         'status' => $filters['status'] ?? null,
@@ -58,17 +58,11 @@
                         </div>
                     </td>
                     <td class="py-4 px-6 text-center">
-                        @if($isNumericDistrict)
-                            <a href="{{ $drillDownUrl }}"
-                                class="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-1 text-xs font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 hover:text-indigo-800 transition-colors rounded-full cursor-pointer"
-                                title="View Petitions for {{ $stat['district_name'] }}">
-                                {{ number_format($stat['petition_count']) }}
-                            </a>
-                        @else
-                            <span class="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-1 text-xs font-bold bg-slate-100 text-slate-600 rounded-full">
-                                {{ number_format($stat['petition_count']) }}
-                            </span>
-                        @endif
+                        <a href="{{ $drillDownUrl }}"
+                            class="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-1 text-xs font-bold {{ $isNumericDistrict ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 hover:text-indigo-800' : 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300' }} transition-colors rounded-full cursor-pointer"
+                            title="View Petitions for {{ $stat['district_name'] }}">
+                            {{ number_format($stat['petition_count']) }}
+                        </a>
                     </td>
                 </tr>
             @empty

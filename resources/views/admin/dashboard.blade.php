@@ -41,18 +41,28 @@
             $q->where('is_active', true);
         })->get();
 
-        // Chart Data: Seat vs Petitions (Bar Chart) - only seats with role CPSP and only processed petitions
-        $seatStats = \App\Models\Seat::where('is_active', true)
-            ->whereHas('roles', function ($q) {
-                $q->whereRaw('LOWER(name) = ?', ['cpsp']);
+        // Chart Data: Seat vs Petitions (Bar Chart) - only seats with assigned users and proper order
+        $seatQuery = \App\Models\Seat::where('is_active', true)
+            ->where(function ($q) {
+                $q->whereHas('roles', fn($rq) => $rq->whereIn('name', ['CPSP', 'cpsp']))
+                  ->orWhere('seat_name', 'like', 'CPSP%');
             })
+            ->whereHas('seatUsers', function ($q) {
+                $q->where('is_active', true)
+                  ->whereHas('user', fn($uq) => $uq->whereNull('deleted_at'));
+            });
+
+        $seatStats = $seatQuery
             ->withCount([
                 'petitionsReceived' => function ($q) use ($fromDate, $toDate) {
                     $q->where('is_cpsp_processed', true)
+                      ->where('is_returned_to_inward', false)
                       ->whereBetween('date_of_petition_received', [$fromDate, $toDate]);
                 }
             ])
             ->get();
+
+        $seatStats = \App\Models\Seat::sortCollection($seatStats);
 
         $chartSeatLabels = json_encode($seatStats->pluck('seat_name')->toArray());
         $chartSeatData = json_encode($seatStats->pluck('petitions_received_count')->toArray());

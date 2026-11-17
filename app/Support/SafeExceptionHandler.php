@@ -4,6 +4,7 @@ namespace App\Support;
 
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
+use App\Models\Petition;
 use PDOException;
 use Throwable;
 
@@ -55,6 +56,25 @@ class SafeExceptionHandler
             // Friendly handling for common unique constraint / duplicate violations
             if (str_contains($rawMessage, '1062 Duplicate entry') || str_contains($rawMessage, 'Integrity constraint violation: 1062')) {
                 if (str_contains($rawMessage, 'receipt_no') || str_contains($rawMessage, 'petition_no')) {
+                    $receiptNo = request()?->input('receipt_no');
+                    if ($receiptNo && is_string($receiptNo)) {
+                        try {
+                            $existing = Petition::with([
+                                'seat.activeAssignment.user',
+                                'seat.activeAssignments.user',
+                                'processedBySeat',
+                                'processedByUser',
+                                'createdBySeat',
+                                'user',
+                            ])->where('receipt_no', trim($receiptNo))->first();
+
+                            if ($existing) {
+                                return Petition::formatDuplicateReceiptMessage($existing);
+                            }
+                        } catch (\Throwable $lookupEx) {
+                            // Suppress lookup errors and proceed to friendly fallback
+                        }
+                    }
                     return 'A petition with this receipt number already exists in the system.';
                 }
                 if (str_contains($rawMessage, 'file_no')) {

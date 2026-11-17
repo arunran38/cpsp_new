@@ -109,7 +109,7 @@ class UpdatePetitionRequest extends FormRequest
             'receipt_no' => [
                 'sometimes',
                 'nullable',
-                Rule::unique('petitions', 'receipt_no')->ignore($petitionId, 'petition_id'),
+                Petition::receiptUniquenessRule($petitionId),
             ],
             'date_of_petition_received' => 'sometimes|nullable|date|before_or_equal:today',
             'concerned_district_id' => 'required|exists:districts,district_id',

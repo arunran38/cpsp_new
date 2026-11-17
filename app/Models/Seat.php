@@ -265,5 +265,51 @@ class Seat extends Model
         return str_contains(strtolower($this->seat_name), 'inward') ||
             $this->hasRole(['inward', 'Inward', 'INWARD']);
     }
+
+    /**
+     * Parse seat name into sortable components for hierarchical ordering.
+     * Groups temporary seats (e.g., 'CPSP 2 A', 'CPSP 2 B') immediately after their parent ('CPSP 2').
+     * e.g., "CPSP 2 A" -> ["CPSP", 2, "A"]
+     *
+     * @return array{0: string, 1: int, 2: string}
+     */
+    public static function getSeatSortKey(string $seatName): array
+    {
+        if (preg_match('/^([^\d]+)\s*(\d+)(.*)$/i', trim($seatName), $matches)) {
+            $prefix = strtoupper(trim($matches[1]));
+            $mainNum = (int) $matches[2];
+            $suffix = strtoupper(trim(preg_replace('/[\s\-\_\/]+/', ' ', $matches[3])));
+            return [$prefix, $mainNum, $suffix];
+        }
+
+        return [strtoupper(trim($seatName)), 0, ''];
+    }
+
+    /**
+     * Sort any collection or array of seats into natural hierarchical order:
+     * CPSP 1, CPSP 2, CPSP 2 A, CPSP 2 B, CPSP 3...
+     */
+    public static function sortCollection($seats)
+    {
+        $collection = $seats instanceof \Illuminate\Support\Collection ? $seats : collect($seats);
+
+        return $collection->sort(function ($a, $b) {
+            $nameA = is_string($a) ? $a : ($a->seat_name ?? '');
+            $nameB = is_string($b) ? $b : ($b->seat_name ?? '');
+
+            $keyA = static::getSeatSortKey($nameA);
+            $keyB = static::getSeatSortKey($nameB);
+
+            if ($keyA[0] !== $keyB[0]) {
+                return strcmp($keyA[0], $keyB[0]);
+            }
+
+            if ($keyA[1] !== $keyB[1]) {
+                return $keyA[1] <=> $keyB[1];
+            }
+
+            return strcmp($keyA[2], $keyB[2]);
+        })->values();
+    }
 }
 

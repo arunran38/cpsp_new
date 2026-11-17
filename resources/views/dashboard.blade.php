@@ -80,17 +80,36 @@
         // Chart Data: Seat vs Petitions (Bar Chart)
         $seatStats = collect([]);
         if ($canSeeSeatChart) {
-            $seatStats = \App\Models\Seat::where('is_active', true)
-                ->whereHas('roles', function ($q) {
-                    $q->whereRaw('LOWER(name) = ?', ['cpsp']);
-                })
+            $seatQuery = \App\Models\Seat::where('is_active', true);
+
+            // Scope by section: T-Section users see T-Section seats; CPSP/Executive see CPSP seats
+            if ($isTSectionDesk && !$user->canAccessCpspSection()) {
+                $seatQuery->whereIn('seat_id', \App\Models\Seat::getTSectionSeatIds());
+            } else {
+                $seatQuery->where(function ($q) {
+                    $q->whereHas('roles', fn($rq) => $rq->whereIn('name', ['CPSP', 'cpsp']))
+                      ->orWhere('seat_name', 'like', 'CPSP%');
+                });
+            }
+
+            // Exclude vacant seats: Display only seats that currently have active assigned users
+            $seatQuery->whereHas('seatUsers', function ($q) {
+                $q->where('is_active', true)
+                  ->whereHas('user', fn($uq) => $uq->whereNull('deleted_at'));
+            });
+
+            $seatStats = $seatQuery
                 ->withCount([
                     'petitionsReceived' => function ($q) use ($fromDate, $toDate) {
                         $q->where('is_cpsp_processed', true)
+                            ->where('is_returned_to_inward', false)
                             ->whereBetween('date_of_petition_received', [$fromDate, $toDate]);
                     }
                 ])
                 ->get();
+
+            // Hierarchical natural sort: CPSP 1, CPSP 2, CPSP 2 A, CPSP 2 B, CPSP 3...
+            $seatStats = \App\Models\Seat::sortCollection($seatStats);
         }
         $chartSeatLabels = json_encode($seatStats->pluck('seat_name')->toArray());
         $chartSeatData = json_encode($seatStats->pluck('petitions_received_count')->toArray());
@@ -178,7 +197,8 @@
         if ($canSeeDistrictChart) {
             $districts = \App\Models\District::orderBy('district_id')->get();
             $districtQuery = (clone $basePetitionsQuery)
-                ->where('is_returned_to_inward', false);
+                ->where('is_returned_to_inward', false)
+                ->where('is_cpsp_processed', true);
 
             if (!empty($districtFromDate)) {
                 $districtQuery->whereDate('date_of_petition_received', '>=', $districtFromDate);

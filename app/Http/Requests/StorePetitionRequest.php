@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Models\Petition;
 
 class StorePetitionRequest extends FormRequest
 {
@@ -111,7 +112,7 @@ class StorePetitionRequest extends FormRequest
     {
         if ($this->filled('duplicate_link_number')) {
             return [
-                'receipt_no' => 'required|unique:petitions,receipt_no',
+                'receipt_no' => ['required', 'string', 'max:255', Petition::receiptUniquenessRule()],
                 'date_of_petition_received' => 'required|date|before_or_equal:today',
                 'duplicate_link_number' => 'required|string|exists:petitions,receipt_no',
             ];
@@ -120,7 +121,7 @@ class StorePetitionRequest extends FormRequest
         $isInward = $this->boolean('is_inward_entry');
 
         $rules = [
-            'receipt_no' => 'required|unique:petitions,receipt_no',
+            'receipt_no' => ['required', 'string', 'max:255', Petition::receiptUniquenessRule()],
             'date_of_petition_received' => 'required|date|before_or_equal:today',
             'mode_of_petition_received' => 'required_without:duplicate_link_number',
             'proposed_action' => 'nullable|string',
