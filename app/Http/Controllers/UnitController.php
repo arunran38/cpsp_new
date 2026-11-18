@@ -17,11 +17,35 @@ class UnitController extends Controller
     /**
      * Display a listing of units.
      */
-    public function index(): View
+    public function index(Request $request)
     {
         abort_unless(auth()->user()->canAccess('view units'), 403, 'Unauthorized. Permission view units required.');
-        $units = Unit::paginate(10);
-        return view('admin.units.index', compact('units'));
+
+        $search = trim($request->input('search', ''));
+
+        $query = Unit::query();
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('unit_name', 'like', "%{$search}%")
+                  ->orWhere('unit_code', 'like', "%{$search}%");
+            });
+        }
+
+        $units = $query->orderBy('unit_name', 'asc')->paginate(10)->withQueryString();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $html = view('admin.units.partials.list-table', compact('units', 'search'))->render();
+            if ($request->wantsJson() || $request->acceptsJson()) {
+                return response()->json([
+                    'html' => $html,
+                    'total' => $units->total(),
+                    'search' => $search,
+                ]);
+            }
+            return response($html);
+        }
+
+        return view('admin.units.index', compact('units', 'search'));
     }
 
     /**

@@ -2,188 +2,163 @@
 @section('container_width', 'max-w-full')
 
 @section('content')
-
-    <div class="space-y-8">
-        <!-- Premium Header Section -->
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
-            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+    <div class="space-y-8" x-data="userManagement({
+        initialTotal: {{ $users->total() }},
+        initialSearch: '{{ addslashes($search ?? '') }}',
+        searchUrl: '{{ route('users.index') }}'
+    })">
+        <!-- Premium Header Section with Integrated Live Search -->
+        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] via-[#1e293b] to-[#0f172a] border border-slate-700/60 shadow-lg mb-6">
+            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3 pointer-events-none">
                 <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
             </div>
-            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 pointer-events-none">
                 <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
             </div>
             
-            <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="text-center sm:text-left">
-                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
-                        Users Directory
-                    </h1>
-                    <p class="text-slate-300 font-medium max-w-2xl text-sm">
+            <div class="relative px-6 py-5 sm:px-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 z-10">
+                <!-- Left: Title, Subtitle & Total Pill -->
+                <div class="shrink-0">
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-0.5">
+                            Users Directory
+                        </h1>
+                        <div class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-800/90 border border-slate-700/80 text-xs font-bold text-slate-300">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span x-text="`${totalCount} ${searchQuery ? 'Matches' : 'Users'}`">
+                                {{ $users->total() }} Users
+                            </span>
+                        </div>
+                    </div>
+                    <p class="text-sky-400 font-medium max-w-2xl text-xs sm:text-sm mt-0.5">
                         Manage all system users, their roles, and access permissions.
                     </p>
                 </div>
-                @if(Auth::user()->canAccess('create users'))
-                <div class="shrink-0">
-                    <a href="{{ route('users.create') }}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all text-sm">
-                        <i data-lucide="user-plus" class="w-4 h-4"></i>
-                        <span>Add New User</span>
-                    </a>
+
+                <!-- Right: Search Input + Add User Action -->
+                <div class="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div class="relative w-full sm:w-80 md:w-96">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-sky-400">
+                            <i data-lucide="search" class="w-4 h-4"></i>
+                        </div>
+                        <input 
+                            type="text" 
+                            x-model="searchQuery" 
+                            @input.debounce.300ms="performSearch()"
+                            placeholder="Search users by name, PEN, email..." 
+                            style="color: #ffffff !important;"
+                            class="block w-full pl-10 pr-9 py-2 bg-slate-900/90 border border-slate-600/80 rounded-xl text-sm font-semibold !text-white placeholder:text-slate-400 focus:outline-none focus:border-sky-400 focus:bg-slate-950 focus:ring-2 focus:ring-sky-400/20 transition-all shadow-inner"
+                        />
+                        <!-- Clear search button -->
+                        <button 
+                            type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="clearSearch()" 
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors"
+                            title="Clear search"
+                            style="display: none;">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                        <!-- Loading spinner -->
+                        <div x-show="isLoading" class="absolute inset-y-0 right-8 flex items-center pr-2" style="display: none;">
+                            <svg class="animate-spin h-4 w-4 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Reset Button when filtered -->
+                    <button 
+                        type="button" 
+                        x-show="searchQuery && searchQuery.length > 0" 
+                        @click="clearSearch()" 
+                        class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 hover:text-white border border-slate-700 transition-all text-center shrink-0"
+                        style="display: none;">
+                        Reset
+                    </button>
+
+                    @if(Auth::user()->canAccess('create users'))
+                    <div class="shrink-0">
+                        <a href="{{ route('users.create') }}" class="inline-flex items-center justify-center gap-2 px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all text-sm whitespace-nowrap">
+                            <i data-lucide="user-plus" class="w-4 h-4"></i>
+                            <span>Add New User</span>
+                        </a>
+                    </div>
+                    @endif
                 </div>
-                @endif
             </div>
         </div>
 
-        <!-- Stats Summary (Small) -->
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div class="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-4">
-                <div class="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <i data-lucide="users" class="w-5 h-5 text-primary"></i>
-                </div>
-                <div>
-                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total</p>
-                    <p class="text-lg font-bold text-slate-900">{{ $users->total() }} Users registered</p>
-                </div>
-
-            </div>
-            <!-- More stats if needed -->
-        </div>
-
-        <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
-
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
-                            <th class="px-6 py-4 font-bold text-center">#</th>
-                            <th class="px-6 py-4 font-bold">Name</th>
-                            <th class="px-6 py-4 font-bold">Designation</th>
-                            <th class="px-6 py-4 font-bold">PEN No</th>
-                            <th class="px-6 py-4 font-bold">Email</th>
-                            <th class="px-6 py-4 font-bold text-center">Mobile No</th>
-                            <th class="px-6 py-4 font-bold">Status</th>
-                            <th class="px-6 py-4 font-bold text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 text-sm">
-                        @forelse($users as $user)
-                            <tr class="hover:bg-slate-50/50 transition-colors">
-                                <td class="px-6 py-4 font-medium text-slate-500 text-center">
-                                    {{ $users->firstItem() + $loop->index }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-4">
-                                        <div class="relative flex-shrink-0 group">
-                                            @php
-                                                $hasPhoto = $user->profilePhoto && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->profilePhoto->file_path);
-                                            @endphp
-                                            @if($hasPhoto)
-                                                <img class="w-12 h-12 rounded-2xl object-cover border-2 border-white shadow-md transition-transform group-hover:scale-105"
-                                                    src="{{ asset('storage/' . $user->profilePhoto->file_path) }}"
-                                                    alt="{{ $user->name }}">
-                                            @else
-
-                                                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-black text-lg shadow-md border-2 border-white">
-                                                    {{ strtoupper(substr($user->name, 0, 1)) }}
-                                                </div>
-                                            @endif
-                                            @if($user->status === 'Active')
-                                                <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></div>
-                                            @endif
-                                        </div>
-                                        <div class="flex flex-col">
-                                            <span class="font-black text-slate-900 text-sm leading-tight group-hover:text-primary transition-colors">{{ $user->name }}</span>
-                                            @php
-                                                $activeSeatRoles = $user->seatUsers->where('is_active', true)->map(function($su) {
-                                                    return $su->seat?->getRoleNames()->first();
-                                                })->filter()->unique()->implode(', ');
-                                            @endphp
-                                            <span class="text-[11px] font-medium text-slate-400 mt-0.5 tracking-tight uppercase">{{ $activeSeatRoles ?: 'Unassigned' }}</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-slate-700">
-                                    {{ $user->designation === 'Others' ? $user->other_designation : $user->designation }}
-                                </td>
-                                <td class="px-6 py-4 font-medium text-slate-600">
-                                    {{ $user->pen }}
-                                </td>
-                                <td class="px-6 py-4 text-slate-600">
-                                    {{ $user->email }}
-                                </td>
-                                <td class="px-6 py-4 text-center text-slate-600">
-                                    {{ $user->mobile_number }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    @if(Auth::user()->canAccess('update users'))
-                                    <form method="POST" action="{{ route('users.updateStatus', encrypt($user->user_id)) }}">
-                                        @csrf
-                                        @method('PATCH')
-                                        <div class="relative flex items-center group/status">
-                                            <select name="status" onchange="this.form.submit()"
-                                                class="pr-7 pl-3 py-1 text-xs font-semibold rounded-lg border-slate-200 outline-none transition-all cursor-pointer appearance-none shadow-sm group-hover/status:border-slate-300
-                                                                        {{ $user->status === 'Active' ? 'bg-emerald-50 text-emerald-800 focus:ring-emerald-200' : 'bg-amber-50 text-amber-800 focus:ring-amber-200' }}"
-                                                style="background-image: none !important;">
-                                                <option value="Active" {{ $user->status === 'Active' ? 'selected' : '' }}
-                                                    class="bg-white text-slate-900">Active</option>
-                                                <option value="Transferred" {{ $user->status === 'Transferred' ? 'selected' : '' }}
-                                                    class="bg-white text-slate-900">Transferred</option>
-                                            </select>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3 text-slate-400 absolute right-2 pointer-events-none group-hover/status:text-slate-600 transition-colors"><path d="m6 9 6 6 6-6"/></svg>
-                                        </div>
-                                    </form>
-                                    @else
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-lg {{ $user->status === 'Active' ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800' }}">
-                                            {{ $user->status }}
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        @if(Auth::user()->canAccess('update users'))
-                                        <a href="{{ route('users.edit', encrypt($user->user_id)) }}"
-                                            class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                            title="Edit Profile">
-                                            <i class="fa-solid fa-pen-to-square"></i>
-                                        </a>
-                                        @endif
-                                        @if(Auth::user()->canAccess('delete users'))
-                                        <form method="POST" action="{{ route('users.destroy', encrypt($user->user_id)) }}"
-                                            class="inline-block">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                class="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                                onclick="return confirm('Are you sure you want to remove this user?')"
-                                                title="Remove User">
-                                                <i class="fa-solid fa-trash-can"></i>
-                                            </button>
-                                        </form>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8" class="px-6 py-12 text-center text-slate-500">
-                                    <div class="flex flex-col items-center">
-
-                                        <i data-lucide="users-2" class="w-12 h-12 text-slate-200 mb-4"></i>
-                                        <p class="text-base font-semibold text-slate-900">No users found</p>
-                                        <p class="text-sm mt-1">There are currently no officer accounts registered in the
-                                            system.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            @if($users->hasPages())
-                <div class="px-6 py-4 border-t border-slate-200">
-                    {{ $users->links() }}
-                </div>
-            @endif
+        <div id="users-table-container" class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden transition-opacity duration-200" :class="{ 'opacity-60': isLoading }">
+            @include('admin.users.partials.list-table', ['users' => $users, 'search' => $search ?? ''])
         </div>
     </div>
+
+@section('scripts')
+    <script>
+        function userManagement(config) {
+            return {
+                searchQuery: config.initialSearch || '',
+                totalCount: config.initialTotal || 0,
+                isLoading: false,
+                searchUrl: config.searchUrl,
+
+                init() {
+                    document.addEventListener('click', (e) => {
+                        const link = e.target.closest('#users-table-container .pagination a, #users-table-container nav a');
+                        if (link && link.href) {
+                            e.preventDefault();
+                            this.performSearch(link.href);
+                        }
+                    });
+                },
+
+                async performSearch(url = null) {
+                    this.isLoading = true;
+                    try {
+                        let fetchUrl = url;
+                        if (!fetchUrl) {
+                            const u = new URL(this.searchUrl, window.location.origin);
+                            if (this.searchQuery.trim() !== '') {
+                                u.searchParams.set('search', this.searchQuery.trim());
+                            }
+                            fetchUrl = u.toString();
+                        }
+
+                        const response = await fetch(fetchUrl, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.totalCount = data.total;
+                            const container = document.getElementById('users-table-container');
+                            if (container) {
+                                container.innerHTML = data.html;
+                                if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                                    lucide.createIcons();
+                                }
+                            }
+                            const stateUrl = new URL(fetchUrl);
+                            window.history.replaceState({}, '', stateUrl.toString());
+                        }
+                    } catch (error) {
+                        console.error('Failed to perform live search for users:', error);
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                clearSearch() {
+                    this.searchQuery = '';
+                    this.performSearch();
+                }
+            };
+        }
+    </script>
+@endsection
 @endsection

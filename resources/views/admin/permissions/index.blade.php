@@ -63,31 +63,74 @@
             <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
         </div>
         
-        <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
+        <div class="relative px-6 py-5 sm:px-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 z-10">
             <div class="flex items-center gap-4 text-center sm:text-left z-10">
                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 text-white flex items-center justify-center shadow-md shadow-amber-500/25 shrink-0">
                     <i data-lucide="key" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
-                        Permissions Directory
-                    </h1>
-                    <p class="text-slate-300 font-medium max-w-2xl text-sm mt-1">
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-0.5">
+                            Permissions Directory
+                        </h1>
+                        <div class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-800/90 border border-slate-700/80 text-xs font-bold text-slate-300">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span x-text="`${visibleCount} ${search || activeModule !== 'all' ? 'Matches' : 'Permissions'}`">{{ $totalPermissionsCount }} Permissions</span>
+                        </div>
+                    </div>
+                    <p class="text-sky-400 font-medium max-w-2xl text-xs sm:text-sm mt-0.5">
                         Manage system permissions and access levels across {{ count($modules) }} functional modules.
                     </p>
                 </div>
             </div>
-            <div class="flex items-center gap-2.5 shrink-0 z-10">
-                <a href="{{ route('admin.roles.index') }}" 
-                   class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-200 hover:text-white bg-slate-800/90 hover:bg-slate-800 border border-slate-700 transition-all shadow-sm flex items-center gap-2">
-                    <i data-lucide="shield" class="w-4 h-4 text-indigo-400"></i>
-                    <span>Roles List</span>
-                </a>
-                <a href="{{ route('admin.permissions.create') }}" 
-                   class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md shadow-emerald-600/25 hover:-translate-y-0.5 transition-all flex items-center gap-2">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                    <span>Add New Permission</span>
-                </a>
+
+            <!-- Right: Search Input + Actions -->
+            <div class="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div class="relative w-full sm:w-80 md:w-96">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-sky-400">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        x-model="search" 
+                        placeholder="Search by permission, module, or role..." 
+                        style="color: #ffffff !important;"
+                        class="block w-full pl-10 pr-9 py-2 bg-slate-900/90 border border-slate-600/80 rounded-xl text-sm font-semibold !text-white placeholder:text-slate-400 focus:outline-none focus:border-sky-400 focus:bg-slate-950 focus:ring-2 focus:ring-sky-400/20 transition-all shadow-inner"
+                    />
+                    <!-- Clear search button -->
+                    <button 
+                        type="button" 
+                        x-show="search && search.length > 0" 
+                        @click="search = ''; recalculateCount()" 
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors"
+                        title="Clear search"
+                        style="display: none;">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Reset Button when filtered -->
+                <button 
+                    type="button" 
+                    x-show="search && search.length > 0" 
+                    @click="search = ''; recalculateCount()" 
+                    class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 hover:text-white border border-slate-700 transition-all text-center shrink-0"
+                    style="display: none;">
+                    Reset
+                </button>
+
+                <div class="flex items-center gap-2.5 shrink-0">
+                    <a href="{{ route('admin.roles.index') }}" 
+                       class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-200 hover:text-white bg-slate-800/90 hover:bg-slate-800 border border-slate-700 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap">
+                        <i data-lucide="shield" class="w-4 h-4 text-indigo-400"></i>
+                        <span>Roles List</span>
+                    </a>
+                    <a href="{{ route('admin.permissions.create') }}" 
+                       class="px-5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md shadow-emerald-600/25 hover:-translate-y-0.5 transition-all flex items-center gap-2 whitespace-nowrap">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Add New Permission</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -98,23 +141,14 @@
         <!-- Rainbow Accent Bar -->
         <div class="h-1.5 w-full bg-gradient-to-r from-blue-500 via-indigo-500 via-purple-500 via-pink-500 via-rose-500 via-amber-500 to-emerald-500"></div>
 
-        <!-- Toolbar Section: Search & Quick KPI Badges -->
-        <div class="px-6 py-4 bg-slate-50/80 border-b border-slate-200 flex flex-col lg:flex-row items-center justify-between gap-4">
-            <!-- Search Form / Live Search -->
-            <form method="GET" action="{{ route('admin.permissions.index') }}" class="relative w-full lg:w-96" @submit.prevent>
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <i data-lucide="search" class="w-4 h-4"></i>
-                </div>
-                <input type="text" x-model="search" 
-                       placeholder="Filter by permission, module, or role..."
-                       class="w-full pl-10 pr-9 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all shadow-2xs">
-                <button type="button" x-show="search.length > 0" @click="search = ''; recalculateCount()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-            </form>
+        <!-- Toolbar Section: Filter info & Quick KPI Badges -->
+        <div class="px-6 py-4 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
+            <span class="text-xs font-semibold text-slate-500" x-show="search && search.length > 0">
+                Filtered by: "<strong class="text-slate-800" x-text="search"></strong>"
+            </span>
 
             <!-- Quick Metrics & View Controls -->
-            <div class="flex items-center gap-2.5 flex-wrap text-xs font-bold w-full lg:w-auto justify-start lg:justify-end">
+            <div class="flex items-center gap-2.5 flex-wrap text-xs font-bold ml-auto">
                 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 shadow-2xs">
                     <i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i>
                     <span>{{ $totalPermissionsCount }} System Permissions</span>

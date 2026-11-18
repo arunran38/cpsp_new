@@ -2,7 +2,11 @@
 @section('container_width', 'max-w-full')
 
 @section('content')
-    <div class="space-y-10">
+    <div class="space-y-8" x-data="designationManagement({
+        initialTotal: {{ $designations->total() }},
+        initialSearch: '{{ addslashes($search ?? '') }}',
+        searchUrl: '{{ route('admin.designations.index') }}'
+    })">
         <!-- Premium Header Section -->
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
             <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
@@ -26,111 +30,173 @@
 
         @if(Auth::user()->canAccess('create designations'))
         <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-visible text-slate-900" x-data="adminFormValidation()">
-            <form method="POST" action="{{ route('admin.designations.store') }}" class="p-8" @submit.prevent="submitForm($event)">
+            <form method="POST" action="{{ route('admin.designations.store') }}" class="p-6 sm:p-8" @submit.prevent="submitForm($event)">
                 @csrf
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="md:col-span-2">
-                        <x-input label="Designation Name" name="designation_name" placeholder="Name of Designation" required />
-                    </div>
-
-                    <div class="flex flex-col justify-end md:col-span-1">
-                        <label class="block text-sm font-bold text-transparent mb-1.5 select-none" aria-hidden="true">&nbsp;</label>
-                        <x-button icon="save" class="w-full">
-                            Save Designation
-                        </x-button>
+                <div class="space-y-2">
+                    <label for="designation_name" class="block text-sm font-bold text-slate-800">
+                        Designation Name <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
+                    </label>
+                    <div class="flex flex-col sm:flex-row items-start gap-4">
+                        <div class="relative flex-1 w-full">
+                            <x-input name="designation_name" placeholder="Name of Designation (e.g. Deputy Superintendent of Police)" required />
+                        </div>
+                        <button type="submit" class="w-full sm:w-auto sm:min-w-[190px] shrink-0 inline-flex items-center justify-center gap-2 px-6 py-2.5 h-[44px] text-sm font-bold rounded-xl transition-all duration-200 bg-primary hover:bg-primary-hover text-black shadow-lg shadow-primary/20">
+                            <i data-lucide="save" class="w-4 h-4"></i>
+                            <span>Save Designation</span>
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
         @endif
 
-        <div class="space-y-6 pt-6">
-            <!-- Designation Details Header Section -->
-            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-md">
+        <div class="space-y-4 pt-2">
+            <!-- Designation Details & Live Search (Integrated Premium Header) -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] via-[#1e293b] to-[#0f172a] border border-slate-700/60 shadow-md">
                 <div class="absolute top-0 right-0 -translate-y-8 translate-x-1/4 pointer-events-none">
-                    <div class="w-48 h-48 bg-indigo-500/15 rounded-full blur-[40px]"></div>
+                    <div class="w-56 h-56 bg-indigo-500/15 rounded-full blur-[50px]"></div>
                 </div>
                 <div class="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 pointer-events-none">
-                    <div class="w-48 h-48 bg-teal-500/15 rounded-full blur-[40px]"></div>
+                    <div class="w-56 h-56 bg-teal-500/15 rounded-full blur-[50px]"></div>
                 </div>
                 
-                <div class="relative px-6 py-3.5 sm:px-8 flex items-center justify-between z-10">
-                    <div>
-                        <h2 class="text-lg sm:text-xl font-black text-white tracking-tight drop-shadow-sm mb-0.5">
-                            Designation Details
-                        </h2>
-                        <p class="text-sky-400 font-medium text-xs">
-                            Add and manage organizational designations.
+                <div class="relative px-6 py-4 sm:px-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 z-10">
+                    <!-- Left: Title, Subtitle & Count Badge -->
+                    <div class="shrink-0">
+                        <div class="flex items-center gap-3">
+                            <h2 class="text-lg sm:text-xl font-black text-white tracking-tight drop-shadow-sm">
+                                Designation Details
+                            </h2>
+                            <div class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-800/90 border border-slate-700/80 text-xs font-bold text-slate-300">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span x-text="`${totalCount} ${searchQuery ? 'Matches' : 'Total'}`">
+                                    {{ $designations->total() }} Total
+                                </span>
+                            </div>
+                        </div>
+                        <p class="text-sky-400 font-medium text-xs mt-0.5">
+                            Browse, search, and manage registered designations.
                         </p>
                     </div>
-                    @if(isset($designations) && $designations->total() > 0)
-                        <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs font-bold text-slate-300">
-                            <i data-lucide="briefcase" class="w-3.5 h-3.5 text-sky-400"></i>
-                            <span>{{ $designations->total() }} Total</span>
+
+                    <!-- Right: Integrated Live Search Bar -->
+                    <div class="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                        <div class="relative w-full sm:w-80 md:w-96">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-sky-400">
+                                <i data-lucide="search" class="w-4 h-4"></i>
+                            </div>
+                            <input 
+                                type="text" 
+                                x-model="searchQuery" 
+                                @input.debounce.300ms="performSearch()"
+                                placeholder="Search designations by name..." 
+                                style="color: #ffffff !important;"
+                                class="block w-full pl-10 pr-9 py-2 bg-slate-900/90 border border-slate-600/80 rounded-xl text-sm font-semibold !text-white placeholder:text-slate-400 focus:outline-none focus:border-sky-400 focus:bg-slate-950 focus:ring-2 focus:ring-sky-400/20 transition-all shadow-inner"
+                            />
+                            <!-- Clear search button -->
+                            <button 
+                                type="button" 
+                                x-show="searchQuery && searchQuery.length > 0" 
+                                @click="clearSearch()" 
+                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors"
+                                title="Clear search"
+                                style="display: none;">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                            <!-- Loading spinner -->
+                            <div x-show="isLoading" class="absolute inset-y-0 right-8 flex items-center pr-2" style="display: none;">
+                                <svg class="animate-spin h-4 w-4 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                </svg>
+                            </div>
                         </div>
-                    @endif
+
+                        <!-- Reset Button when filtered -->
+                        <button 
+                            type="button" 
+                            x-show="searchQuery && searchQuery.length > 0" 
+                            @click="clearSearch()" 
+                            class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 hover:text-white border border-slate-700 transition-all text-center shrink-0"
+                            style="display: none;">
+                            Reset
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-50/50">
-                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest w-12 text-center">#</th>
-                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest">Designation Name</th>
-                                <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            @forelse($designations as $designation)
-                                <tr class="hover:bg-slate-50/30 transition-colors group">
-                                    <td class="px-6 py-4 text-center">
-                                        <span class="text-sm font-bold text-slate-400 group-hover:text-primary transition-colors">{{ $designations->firstItem() + $loop->index }}</span>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex flex-col">
-                                            <span class="text-sm font-bold text-slate-900">{{ $designation->designation_name }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <div class="flex items-center justify-end gap-1">
-                                            @if(Auth::user()->canAccess('update designations'))
-                                                <a href="{{ route('admin.designations.edit', $designation->id) }}" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Edit Designation">
-                                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
-                                                </a>
-                                            @endif
-                                            @if(Auth::user()->canAccess('delete designations'))
-                                                <form method="POST" action="{{ route('admin.designations.destroy', $designation->id) }}" class="inline-block">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all" onclick="return confirm('Are you sure you want to delete this designation?')" title="Delete Designation">
-                                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="3" class="px-6 py-16 text-center text-slate-500">
-                                        <p class="text-base font-bold text-slate-900">No designations found</p>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                @if($designations->hasPages())
-                    <div class="px-6 py-4 border-t border-slate-200 bg-slate-50/30">
-                        {{ $designations->links() }}
-                    </div>
-                @endif
+            <!-- Table Container -->
+            <div id="designations-table-container" class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden transition-opacity duration-200" :class="{ 'opacity-60': isLoading }">
+                @include('admin.designations.partials.list-table', ['designations' => $designations, 'search' => $search ?? ''])
             </div>
         </div>
     </div>
+
 @section('scripts')
     @include('components.admin-form-validation-script')
+    <script>
+        function designationManagement(config) {
+            return {
+                searchQuery: config.initialSearch || '',
+                totalCount: config.initialTotal || 0,
+                isLoading: false,
+                searchUrl: config.searchUrl,
+
+                init() {
+                    document.addEventListener('click', (e) => {
+                        const link = e.target.closest('#designations-table-container .pagination a, #designations-table-container nav a');
+                        if (link && link.href) {
+                            e.preventDefault();
+                            this.performSearch(link.href);
+                        }
+                    });
+                },
+
+                async performSearch(url = null) {
+                    this.isLoading = true;
+                    try {
+                        let fetchUrl = url;
+                        if (!fetchUrl) {
+                            const u = new URL(this.searchUrl, window.location.origin);
+                            if (this.searchQuery.trim() !== '') {
+                                u.searchParams.set('search', this.searchQuery.trim());
+                            }
+                            fetchUrl = u.toString();
+                        }
+
+                        const response = await fetch(fetchUrl, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.totalCount = data.total;
+                            const container = document.getElementById('designations-table-container');
+                            if (container) {
+                                container.innerHTML = data.html;
+                                if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                                    lucide.createIcons();
+                                }
+                            }
+                            const stateUrl = new URL(fetchUrl);
+                            window.history.replaceState({}, '', stateUrl.toString());
+                        }
+                    } catch (error) {
+                        console.error('Failed to perform live search for designations:', error);
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                clearSearch() {
+                    this.searchQuery = '';
+                    this.performSearch();
+                }
+            };
+        }
+    </script>
 @endsection
 @endsection

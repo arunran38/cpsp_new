@@ -11,11 +11,32 @@ use RealRashid\SweetAlert\Facades\Alert;
 
 class DesignationController extends Controller
 {
-    public function index(): View
+    public function index(Request $request)
     {
         abort_unless(auth()->user()->canAccess('view designations'), 403, 'Unauthorized. Permission view designations required.');
-        $designations = Designation::paginate(10);
-        return view('admin.designations.index', compact('designations'));
+
+        $search = trim($request->input('search', ''));
+
+        $query = Designation::query();
+        if ($search !== '') {
+            $query->where('designation_name', 'like', "%{$search}%");
+        }
+
+        $designations = $query->orderBy('designation_name', 'asc')->paginate(10)->withQueryString();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $html = view('admin.designations.partials.list-table', compact('designations', 'search'))->render();
+            if ($request->wantsJson() || $request->acceptsJson()) {
+                return response()->json([
+                    'html' => $html,
+                    'total' => $designations->total(),
+                    'search' => $search,
+                ]);
+            }
+            return response($html);
+        }
+
+        return view('admin.designations.index', compact('designations', 'search'));
     }
 
     public function create(): View

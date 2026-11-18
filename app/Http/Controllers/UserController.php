@@ -22,16 +22,43 @@ class UserController extends Controller
     /**
      * Display a listing of users.
      */
-    public function index(): View
+    public function index(Request $request)
     {
         abort_unless(auth()->user()->canAccess('view users'), 403, 'Unauthorized access to users.');
 
-        $users = User::with('profilePhoto')
-            ->orderBy('status', 'asc')
+        $search = trim($request->input('search', ''));
+
+        $query = User::with(['profilePhoto', 'seatUsers.seat.roles']);
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('pen', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('mobile_number', 'like', "%{$search}%")
+                  ->orWhere('designation', 'like', "%{$search}%")
+                  ->orWhere('other_designation', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->orderBy('status', 'asc')
             ->orderBy('name', 'asc')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $html = view('admin.users.partials.list-table', compact('users', 'search'))->render();
+            if ($request->wantsJson() || $request->acceptsJson()) {
+                return response()->json([
+                    'html' => $html,
+                    'total' => $users->total(),
+                    'search' => $search,
+                ]);
+            }
+            return response($html);
+        }
             
-        return view("admin.users.index", compact("users"));
+        return view("admin.users.index", compact("users", "search"));
     }
 
     /**

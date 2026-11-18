@@ -2,288 +2,169 @@
 @section('container_width', 'max-w-full')
 
 @section('content')
-<div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <!-- Premium Header Section -->
-    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6">
-        <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
+<div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500"
+    x-data="seatManagement({
+        initialTotal: {{ $seats->total() }},
+        initialSearch: '{{ addslashes($search ?? '') }}',
+        searchUrl: '{{ route('admin.seats.index') }}'
+    })">
+    <!-- Premium Header Section with Integrated Live Search -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] via-[#1e293b] to-[#0f172a] border border-slate-700/60 shadow-lg mb-6">
+        <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3 pointer-events-none">
             <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
         </div>
-        <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
+        <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 pointer-events-none">
             <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
         </div>
         
-        <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div class="text-center sm:text-left z-10">
-                <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-1">
-                    Seats Management
-                </h1>
-                <p class="text-slate-300 font-medium max-w-2xl text-sm">
+        <div class="relative px-6 py-5 sm:px-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 z-10">
+            <!-- Left: Title, Subtitle & Total Pill -->
+            <div class="shrink-0">
+                <div class="flex items-center gap-3">
+                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-0.5">
+                        Seats Management
+                    </h1>
+                    <div class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-800/90 border border-slate-700/80 text-xs font-bold text-slate-300">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span x-text="`${totalCount} ${searchQuery ? 'Matches' : 'Total'}`">
+                            {{ $seats->total() }} Total
+                        </span>
+                    </div>
+                </div>
+                <p class="text-sky-400 font-medium max-w-2xl text-xs sm:text-sm mt-0.5">
                     Manage primary occupants and additional charges across units.
                 </p>
             </div>
-            
-            @if(Auth::user()->canAccess('create seats'))
-            <div class="shrink-0 z-10">
-                <a href="{{ route('admin.seats.create') }}" 
-                   class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all text-sm">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                    <span>Add New Seat</span>
-                </a>
+
+            <!-- Right: Search Input + Add Seat Action -->
+            <div class="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div class="relative w-full sm:w-80 md:w-96">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-sky-400">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        x-model="searchQuery" 
+                        @input.debounce.300ms="performSearch()"
+                        placeholder="Search seats by name, occupant, unit..." 
+                        style="color: #ffffff !important;"
+                        class="block w-full pl-10 pr-9 py-2 bg-slate-900/90 border border-slate-600/80 rounded-xl text-sm font-semibold !text-white placeholder:text-slate-400 focus:outline-none focus:border-sky-400 focus:bg-slate-950 focus:ring-2 focus:ring-sky-400/20 transition-all shadow-inner"
+                    />
+                    <!-- Clear search button -->
+                    <button 
+                        type="button" 
+                        x-show="searchQuery && searchQuery.length > 0" 
+                        @click="clearSearch()" 
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors"
+                        title="Clear search"
+                        style="display: none;">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                    <!-- Loading spinner -->
+                    <div x-show="isLoading" class="absolute inset-y-0 right-8 flex items-center pr-2" style="display: none;">
+                        <svg class="animate-spin h-4 w-4 text-sky-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Reset Button when filtered -->
+                <button 
+                    type="button" 
+                    x-show="searchQuery && searchQuery.length > 0" 
+                    @click="clearSearch()" 
+                    class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 hover:text-white border border-slate-700 transition-all text-center shrink-0"
+                    style="display: none;">
+                    Reset
+                </button>
+
+                @if(Auth::user()->canAccess('create seats'))
+                <div class="shrink-0">
+                    <a href="{{ route('admin.seats.create') }}" 
+                       class="inline-flex items-center justify-center gap-2 px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5 transition-all text-sm whitespace-nowrap">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Add New Seat</span>
+                    </a>
+                </div>
+                @endif
             </div>
-            @endif
         </div>
     </div>
 
     <!-- Stunning Table Container -->
-    <div class="bg-white border border-slate-200 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden relative">
+    <div id="seats-table-container" class="bg-white border border-slate-200 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden relative transition-opacity duration-200" :class="{ 'opacity-60': isLoading }">
         <!-- Subtle background glow -->
         <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-50/50 rounded-full blur-[100px] pointer-events-none -z-10"></div>
         
-        <div class="overflow-x-auto custom-scrollbar">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-slate-50 border-b border-slate-200">
-                        <th class="px-6 py-5 text-[11px] font-black text-slate-700 uppercase tracking-widest w-16 text-center">#</th>
-                        <th class="px-6 py-5 text-[11px] font-black text-slate-700 uppercase tracking-widest text-center">Seat Details</th>
-                        <th class="px-6 py-5 text-[11px] font-black text-slate-700 uppercase tracking-widest">Jurisdiction</th>
-                        <th class="px-6 py-5 text-[11px] font-black text-slate-700 uppercase tracking-widest">Primary Occupant</th>
-                        <th class="px-6 py-5 text-[11px] font-black text-slate-700 uppercase tracking-widest">Additional Charges</th>
-                        <th class="px-6 py-5 text-[11px] font-black text-slate-700 uppercase tracking-widest text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    @forelse($seats as $seat)
-                        <tr class="group hover:bg-slate-50 transition-colors duration-200">
-                            <td class="px-6 py-5 text-center">
-                                <span class="text-sm font-black text-slate-400 group-hover:text-indigo-600 transition-colors duration-300">
-                                    {{ $seats->firstItem() + $loop->index }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-5">
-                                <div class="flex flex-col items-center justify-center gap-1.5 text-center">
-                                    <span class="text-base font-black text-slate-800 group-hover:text-sky-700 transition-colors">{{ $seat->seat_name }}</span>
-                                    
-                                    <div class="flex w-full max-w-[18rem] flex-col items-center justify-center gap-1.5 mt-0.5"
-                                         @if($seat->roles->count() > 1) x-data="{ open: false }" @click.outside="open = false" @endif>
-                                        @if(!$seat->is_active)
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold bg-rose-100 text-rose-700 uppercase tracking-widest">Disabled</span>
-                                        @endif
-                                        
-                                        @if($seat->roles->isNotEmpty())
-                                            @php
-                                                $additionalRoles = $seat->roles->slice(1);
-                                            @endphp
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase tracking-widest max-w-full break-words">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" aria-hidden="true"></span>
-                                                {{ $seat->roles->first()->name }}
-                                            </span>
-
-                                            @if($additionalRoles->isNotEmpty())
-                                                <button type="button"
-                                                        @click="open = !open"
-                                                        @keydown.escape="open = false"
-                                                        :aria-expanded="open.toString()"
-                                                        aria-controls="seat-roles-{{ $seat->seat_id }}"
-                                                        aria-label="Show {{ $additionalRoles->count() }} additional {{ $additionalRoles->count() === 1 ? 'role' : 'roles' }}"
-                                                        class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-50 text-slate-600 border border-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1 transition-colors">
-                                                    +{{ $additionalRoles->count() }} {{ $additionalRoles->count() === 1 ? 'role' : 'roles' }}
-                                                </button>
-                                                <div id="seat-roles-{{ $seat->seat_id }}"
-                                                     x-show="open"
-                                                     x-cloak
-                                                     x-transition
-                                                     class="w-full max-w-xs rounded-lg border border-slate-200 bg-white p-2 text-left shadow-lg">
-                                                    <ul class="flex flex-col gap-1" aria-label="Additional roles">
-                                                        @foreach($additionalRoles as $role)
-                                                            <li class="rounded-md bg-indigo-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 break-words">
-                                                                {{ $role->name }}
-                                                            </li>
-                                                        @endforeach
-                                                    </ul>
-                                                </div>
-                                            @endif
-                                        @else
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100 uppercase tracking-widest">
-                                                <div class="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
-                                                NO ROLE
-                                            </span>
-                                        @endif
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-5">
-                                <div class="flex flex-wrap gap-2">
-                                    @foreach($seat->units as $unit)
-                                        @php
-                                            $colors = [
-                                                'bg-indigo-50 text-slate-800 border-indigo-300',
-                                                'bg-emerald-50 text-slate-800 border-emerald-300',
-                                                'bg-amber-50 text-slate-800 border-amber-300',
-                                                'bg-rose-50 text-slate-800 border-rose-300',
-                                                'bg-violet-50 text-slate-800 border-violet-300',
-                                                'bg-sky-50 text-slate-800 border-sky-300',
-                                                'bg-fuchsia-50 text-slate-800 border-fuchsia-300',
-                                            ];
-                                            $style = $colors[$unit->unit_id % count($colors)];
-                                        @endphp
-                                        <span class="inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-black {{ $style }} border uppercase tracking-widest shadow-sm transition-transform hover:scale-105" title="{{ $unit->unit_name }}">
-                                            {{ $unit->unit_code }}
-                                        </span>
-                                    @endforeach
-                                </div>
-                            </td>
-                            <td class="px-6 py-5">
-                                @php
-                                    $primary = $seat->activeAssignments->where('is_additional', false)->first();
-                                @endphp
-                                @if($primary)
-                                    <div class="flex items-center gap-3 p-2 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors group/occupant shadow-sm">
-                                        <div class="relative">
-                                            @if($primary->user && $primary->user->profilePhoto)
-                                                <img class="w-10 h-10 rounded-xl object-cover ring-2 ring-white shadow-sm" 
-                                                     src="{{ asset('storage/' . $primary->user->profilePhoto->file_path) }}" alt="">
-                                            @else
-                                                <img class="w-10 h-10 rounded-xl ring-2 ring-white shadow-sm" 
-                                                     src="https://ui-avatars.com/api/?name={{ urlencode($primary->user->name ?? 'Deleted') }}&background=e2e8f0&color=334155&bold=true" alt="">
-                                            @endif
-                                            <div class="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></div>
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <p class="text-[13px] font-black text-slate-800 truncate">{{ $primary->user->name ?? 'Deleted User' }}</p>
-                                            <p class="text-[10px] text-slate-600 uppercase font-bold tracking-widest mt-0.5">{{ $primary->user->pen ?? 'NO PEN' }}</p>
-                                        </div>
-                                        @if(Auth::user()->canAccess('update seats'))
-                                        <form method="POST" action="{{ route('admin.seatuser.destroy', $primary->seat_user_id) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" 
-                                                    class="p-2 text-rose-500 hover:text-white hover:bg-rose-500 rounded-lg transition-colors"
-                                                    onclick="return confirm('Revoke primary assignment for {{ $primary->user->name ?? 'this user' }}?')"
-                                                    title="Revoke Assignment">
-                                                <i class="fa-solid fa-xmark text-sm"></i>
-                                            </button>
-                                        </form>
-                                        @endif
-                                    </div>
-                                @else
-                                    @if(Auth::user()->canAccess('update seats'))
-                                    <a href="{{ route('admin.seatuser.create', ['seat_id' => $seat->seat_id]) }}" 
-                                       class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition-colors shadow-sm">
-                                        <i data-lucide="user-plus" class="w-4 h-4"></i>
-                                        Assign User
-                                    </a>
-                                    @else
-                                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 shadow-sm">
-                                        <div class="w-2 h-2 rounded-full bg-slate-400"></div>
-                                        VACANT
-                                    </span>
-                                    @endif
-                                @endif
-                            </td>
-                            <td class="px-6 py-5">
-                                @php
-                                    $additionals = $seat->activeAssignments->where('is_additional', true);
-                                @endphp
-                                @if($additionals->isNotEmpty())
-                                    <div class="flex flex-col items-start gap-2">
-                                        @foreach($additionals as $additional)
-                                            <div class="inline-flex items-center gap-2 p-1.5 pr-1.5 bg-gradient-to-r from-amber-50 to-orange-50/50 border border-amber-200/50 rounded-full shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
-                                                @if($additional->user && $additional->user->profilePhoto)
-                                                    <img class="w-7 h-7 rounded-full object-cover shadow-sm ring-2 ring-white" 
-                                                         src="{{ asset('storage/' . $additional->user->profilePhoto->file_path) }}" alt="">
-                                                @else
-                                                    <img class="w-7 h-7 rounded-full shadow-sm ring-2 ring-white" 
-                                                         src="https://ui-avatars.com/api/?name={{ urlencode($additional->user->name ?? 'X') }}&background=fef3c7&color=b45309&bold=true" alt="">
-                                                @endif
-                                                <div class="flex items-center gap-2">
-                                                    <p class="text-[11px] font-black text-amber-900 ml-0.5">
-                                                        {{ $additional->user->name ?? 'Deleted' }}
-                                                        <span class="text-[9px] font-bold text-amber-700/80 ml-0.5 tracking-wide">({{ $additional->user->pen ?? 'N/A' }})</span>
-                                                    </p>
-                                                    @if(Auth::user()->canAccess('update seats'))
-                                                    <form method="POST" action="{{ route('admin.seatuser.destroy', $additional->seat_user_id) }}" class="flex shrink-0">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" 
-                                                                class="flex items-center justify-center w-6 h-6 rounded-full text-amber-500 hover:text-white hover:bg-rose-500 transition-colors shadow-sm"
-                                                                onclick="return confirm('Revoke additional charge?')"
-                                                                title="Revoke Charge">
-                                                            <i class="fa-solid fa-xmark text-xs"></i>
-                                                        </button>
-                                                    </form>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    <span class="text-xs text-slate-500 font-bold italic">No additional charges</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-5">
-                                <div class="flex items-center justify-end gap-1.5">
-                                    <a href="{{ route('admin.seats.history', $seat->seat_id) }}" 
-                                       class="flex items-center justify-center w-9 h-9 rounded-xl text-slate-700 bg-sky-50 hover:text-sky-900 hover:bg-sky-100 hover:shadow-md transition-all hover:-translate-y-0.5 shadow-sm border border-sky-200"
-                                       title="Assignment History">
-                                        <i data-lucide="history" class="w-4 h-4"></i>
-                                    </a>
-
-                                    @if(Auth::user()->canAccess('update seats') && $seat->activeAssignments->isNotEmpty())
-                                        <a href="{{ route('admin.seatuser.create', ['seat_id' => $seat->seat_id, 'is_additional' => 1]) }}" 
-                                           class="flex items-center justify-center w-9 h-9 rounded-xl text-slate-700 bg-emerald-50 hover:text-emerald-900 hover:bg-emerald-100 hover:shadow-md transition-all hover:-translate-y-0.5 shadow-sm border border-emerald-200"
-                                           title="Add Additional Charge">
-                                            <i data-lucide="plus" class="w-4 h-4"></i>
-                                        </a>
-                                    @endif
-
-                                    @if(Auth::user()->canAccess('update seats'))
-                                    <a href="{{ route('admin.seats.edit', $seat->seat_id) }}" 
-                                       class="flex items-center justify-center w-9 h-9 rounded-xl text-slate-700 bg-violet-50 hover:text-violet-900 hover:bg-violet-100 hover:shadow-md transition-all hover:-translate-y-0.5 shadow-sm border border-violet-200"
-                                       title="Edit Seat Details">
-                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
-                                    </a>
-                                    @endif
-                                    
-                                    @if(Auth::user()->canAccess('delete seats'))
-                                    <form method="POST" action="{{ route('admin.seats.destroy', $seat->seat_id) }}" class="inline-block">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" 
-                                                class="flex items-center justify-center w-9 h-9 rounded-xl text-rose-600 bg-rose-50 border border-rose-100 hover:text-rose-700 hover:bg-rose-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
-                                                onclick="return confirm('Delete this seat?')" title="Delete Seat">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                        </button>
-                                    </form>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="px-6 py-16 text-center">
-                                <div class="flex flex-col items-center justify-center max-w-sm mx-auto">
-                                    <div class="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mb-5 rotate-3 hover:rotate-6 transition-transform">
-                                        <i data-lucide="armchair" class="w-10 h-10 text-indigo-500"></i>
-                                    </div>
-                                    <h3 class="text-lg font-black text-slate-800 mb-1">No Seats Configured</h3>
-                                    <p class="text-sm text-slate-500 mb-6">Create seats to start assigning users and building your organizational structure.</p>
-                                    @if(Auth::user()->canAccess('create seats'))
-                                    <a href="{{ route('admin.seats.create') }}" class="px-5 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20">
-                                        Add First Seat
-                                    </a>
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        @if($seats->hasPages())
-            <div class="px-6 py-5 border-t border-slate-200/80 bg-slate-50/30">
-                {{ $seats->links() }}
-            </div>
-        @endif
+        @include('admin.seats.partials.list-table', ['seats' => $seats, 'search' => $search ?? ''])
     </div>
 </div>
+
+@section('scripts')
+<script>
+    function seatManagement(config) {
+        return {
+            searchQuery: config.initialSearch || '',
+            totalCount: config.initialTotal || 0,
+            isLoading: false,
+            searchUrl: config.searchUrl,
+
+            init() {
+                document.addEventListener('click', (e) => {
+                    const link = e.target.closest('#seats-table-container .pagination a, #seats-table-container nav a');
+                    if (link && link.href) {
+                        e.preventDefault();
+                        this.performSearch(link.href);
+                    }
+                });
+            },
+
+            async performSearch(url = null) {
+                this.isLoading = true;
+                try {
+                    let fetchUrl = url;
+                    if (!fetchUrl) {
+                        const u = new URL(this.searchUrl, window.location.origin);
+                        if (this.searchQuery.trim() !== '') {
+                            u.searchParams.set('search', this.searchQuery.trim());
+                        }
+                        fetchUrl = u.toString();
+                    }
+
+                    const response = await fetch(fetchUrl, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.totalCount = data.total;
+                        const container = document.getElementById('seats-table-container');
+                        if (container) {
+                            container.innerHTML = data.html;
+                            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                                lucide.createIcons();
+                            }
+                        }
+                        const stateUrl = new URL(fetchUrl);
+                        window.history.replaceState({}, '', stateUrl.toString());
+                    }
+                } catch (error) {
+                    console.error('Failed to perform live search for seats:', error);
+                } finally {
+                    this.isLoading = false;
+                }
+            },
+
+            clearSearch() {
+                this.searchQuery = '';
+                this.performSearch();
+            }
+        };
+    }
+</script>
+@endsection
 @endsection

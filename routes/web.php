@@ -93,6 +93,7 @@ Route::middleware(['auth'])->group(function () {
         'update' => 'admin.departments.update',
         'destroy' => 'admin.departments.destroy',
     ]);
+    Route::post('/admin/departments/check-name', [DepartmentController::class, 'checkDepartmentName'])->name('admin.departments.checkName');
     Route::resource("designations", DesignationController::class)->names([
         'index' => 'admin.designations.index',
         'create' => 'admin.designations.create',

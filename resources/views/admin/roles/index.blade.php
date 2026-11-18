@@ -64,6 +64,7 @@
     selectedRole: '',
     selectedRoleId: null,
     selectedModules: {},
+    visibleCount: {{ $roles->total() }},
     openInspect(roleName, roleId, moduleData) {
         this.selectedRole = roleName;
         this.selectedRoleId = roleId;
@@ -74,6 +75,20 @@
         if (!this.search || this.search.trim() === '') return true;
         const q = this.search.toLowerCase().trim();
         return name.toLowerCase().includes(q) || permsString.toLowerCase().includes(q);
+    },
+    recalculateCount() {
+        this.$nextTick(() => {
+            const rows = document.querySelectorAll('tr[data-role-row]');
+            let visible = 0;
+            rows.forEach(r => {
+                if (r.offsetParent !== null) visible++;
+            });
+            this.visibleCount = visible;
+        });
+    },
+    init() {
+        this.recalculateCount();
+        this.$watch('search', () => this.recalculateCount());
     }
 }">
     <!-- Premium Header Section matching unit_add design -->
@@ -85,25 +100,69 @@
             <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
         </div>
         
-        <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
+        <div class="relative px-6 py-5 sm:px-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 z-10">
             <div class="flex items-center gap-4 text-center sm:text-left z-10">
                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/25 shrink-0">
                     <i data-lucide="shield" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm">
-                        System Roles
-                    </h1>
-                    <p class="text-slate-300 font-medium max-w-2xl text-sm mt-1">
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-sm mb-0.5">
+                            System Roles
+                        </h1>
+                        <div class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-800/90 border border-slate-700/80 text-xs font-bold text-slate-300">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span x-text="`${visibleCount} ${search ? 'Matches' : 'Roles'}`">{{ $roles->total() }} Roles</span>
+                        </div>
+                    </div>
+                    <p class="text-sky-400 font-medium max-w-2xl text-xs sm:text-sm mt-0.5">
                         Manage user roles and assigned capabilities organized module-by-module.
                     </p>
                 </div>
             </div>
-            <div class="shrink-0 z-10">
-                <a href="{{ route('admin.roles.create') }}" 
-                   class="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md shadow-emerald-600/25 hover:-translate-y-0.5 transition-all flex items-center gap-2">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Add New Role
-                </a>
+
+            <!-- Right: Search Input + Add Role Action -->
+            <div class="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div class="relative w-full sm:w-80 md:w-96">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-sky-400">
+                        <i data-lucide="search" class="w-4 h-4"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        x-model="search" 
+                        placeholder="Search roles or capabilities..." 
+                        style="color: #ffffff !important;"
+                        class="block w-full pl-10 pr-9 py-2 bg-slate-900/90 border border-slate-600/80 rounded-xl text-sm font-semibold !text-white placeholder:text-slate-400 focus:outline-none focus:border-sky-400 focus:bg-slate-950 focus:ring-2 focus:ring-sky-400/20 transition-all shadow-inner"
+                    />
+                    <!-- Clear search button -->
+                    <button 
+                        type="button" 
+                        x-show="search && search.length > 0" 
+                        @click="search = ''" 
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white transition-colors"
+                        title="Clear search"
+                        style="display: none;">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Reset Button when filtered -->
+                <button 
+                    type="button" 
+                    x-show="search && search.length > 0" 
+                    @click="search = ''" 
+                    class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 hover:text-white border border-slate-700 transition-all text-center shrink-0"
+                    style="display: none;">
+                    Reset
+                </button>
+
+                <div class="shrink-0">
+                    <a href="{{ route('admin.roles.create') }}" 
+                       class="px-5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md shadow-emerald-600/25 hover:-translate-y-0.5 transition-all flex items-center gap-2 whitespace-nowrap">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        <span>Add New Role</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -114,23 +173,12 @@
         <!-- Rainbow Accent Bar -->
         <div class="h-1.5 w-full bg-gradient-to-r from-blue-500 via-indigo-500 via-purple-500 via-pink-500 via-rose-500 via-amber-500 to-emerald-500"></div>
 
-        <!-- Search & Quick Stats Toolbar -->
-        <div class="px-6 py-4 bg-slate-50/80 border-b border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
-            <!-- Search Input -->
-            <div class="relative w-full md:w-88">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <i data-lucide="search" class="w-4 h-4"></i>
-                </div>
-                <input type="text" x-model="search" 
-                       placeholder="Filter roles or capabilities..."
-                       class="w-full pl-10 pr-9 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all shadow-2xs">
-                <button type="button" x-show="search.length > 0" @click="search = ''" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-700">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-            </div>
-
-            <!-- Stats Pills -->
-            <div class="flex items-center gap-2.5 shrink-0 flex-wrap text-xs font-bold">
+        <!-- Quick Stats Toolbar -->
+        <div class="px-6 py-4 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
+            <span class="text-xs font-semibold text-slate-500" x-show="search && search.length > 0">
+                Filtered by: "<strong class="text-slate-800" x-text="search"></strong>"
+            </span>
+            <div class="flex items-center gap-2.5 shrink-0 flex-wrap text-xs font-bold ml-auto">
                 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 shadow-2xs">
                     <i data-lucide="shield" class="w-3.5 h-3.5 text-indigo-500"></i>
                     <span>{{ $roles->total() }} Roles</span>
@@ -189,6 +237,7 @@
                         @endphp
 
                         <tr class="hover:bg-indigo-50/20 transition-colors"
+                            data-role-row
                             x-show="matchesSearch('{{ addslashes($role->name) }}', '{{ addslashes($searchHaystack) }}')">
                             <!-- Index -->
                             <td class="px-6 py-5 text-center align-top">
@@ -298,6 +347,22 @@
                             </td>
                         </tr>
                     @endforelse
+
+                    <!-- Search Empty State -->
+                    <tr x-show="search && search.trim() !== '' && visibleCount === 0" style="display: none;">
+                        <td colspan="4" class="px-6 py-12 text-center text-slate-500">
+                            <div class="flex flex-col items-center max-w-sm mx-auto">
+                                <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3">
+                                    <i data-lucide="search-x" class="w-7 h-7"></i>
+                                </div>
+                                <p class="text-base font-bold text-slate-800">No matching roles found</p>
+                                <p class="text-xs text-slate-500 mt-1">No roles or capabilities match &ldquo;<span class="font-semibold text-slate-700" x-text="search"></span>&rdquo;.</p>
+                                <button type="button" @click="search = ''" class="mt-4 px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition-colors shadow">
+                                    Clear Search Filter
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>

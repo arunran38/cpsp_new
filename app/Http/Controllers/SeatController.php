@@ -21,12 +21,41 @@ class SeatController extends Controller
     /**
      * Display a listing of seats.
      */
-    public function index(): View
+    public function index(Request $request)
     {
         abort_unless(auth()->user()->canAccess('view seats'), 403, 'Unauthorized access to seats.');
 
-        $seats = Seat::with(['units', 'roles', 'activeAssignments.user.profilePhoto'])->paginate(10);
-        return view('admin.seats.index', compact('seats'));
+        $search = trim($request->input('search', ''));
+
+        $query = Seat::with(['units', 'roles', 'activeAssignments.user.profilePhoto']);
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('seat_name', 'like', "%{$search}%")
+                  ->orWhereHas('activeAssignments.user', function ($uq) use ($search) {
+                      $uq->where('name', 'like', "%{$search}%")
+                         ->orWhere('pen', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('units', fn($uq) => $uq->where('unit_name', 'like', "%{$search}%")->orWhere('unit_code', 'like', "%{$search}%"))
+                  ->orWhereHas('roles', fn($rq) => $rq->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        $seats = $query->orderBy('seat_name', 'asc')->paginate(10)->withQueryString();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $html = view('admin.seats.partials.list-table', compact('seats', 'search'))->render();
+            if ($request->wantsJson() || $request->acceptsJson()) {
+                return response()->json([
+                    'html' => $html,
+                    'total' => $seats->total(),
+                    'search' => $search,
+                ]);
+            }
+            return response($html);
+        }
+
+        return view('admin.seats.index', compact('seats', 'search'));
     }
 
     /**

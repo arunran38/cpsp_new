@@ -9,12 +9,21 @@ use Spatie\Permission\Models\Permission;
 
 class RoleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         abort_unless(auth()->user()->canAccess('view roles'), 403, 'Unauthorized. You do not have permission to view roles.');
 
-        $roles = Role::with('permissions')
-            ->orderByRaw("
+        $search = trim($request->input('search', ''));
+
+        $query = Role::with('permissions');
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhereHas('permissions', fn($pq) => $pq->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        $roles = $query->orderByRaw("
                 CASE 
                     WHEN LOWER(name) = 'developer' THEN 1
                     WHEN LOWER(name) = 'super admin' THEN 2
@@ -22,8 +31,22 @@ class RoleController extends Controller
                     ELSE 4
                 END ASC, name ASC
             ")
-            ->paginate(15);
-        return view('admin.roles.index', compact('roles'));
+            ->paginate(15)
+            ->withQueryString();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $html = view('admin.roles.partials.list-table', compact('roles', 'search'))->render();
+            if ($request->wantsJson() || $request->acceptsJson()) {
+                return response()->json([
+                    'html' => $html,
+                    'total' => $roles->total(),
+                    'search' => $search,
+                ]);
+            }
+            return response($html);
+        }
+
+        return view('admin.roles.index', compact('roles', 'search'));
     }
 
     public function create()

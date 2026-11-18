@@ -7,16 +7,38 @@ use App\Models\Seat;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use App\Support\SafeExceptionHandler;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class DepartmentController extends Controller
 {
-    public function index(): View
+    public function index(Request $request)
     {
         abort_unless(auth()->user()->canAccess('view departments'), 403, 'Unauthorized. Permission view departments required.');
-        $departments = Department::paginate(10);
-        return view('admin.departments.index', compact('departments'));
+
+        $search = trim($request->input('search', ''));
+
+        $query = Department::query();
+        if ($search !== '') {
+            $query->where('department_name', 'like', "%{$search}%");
+        }
+
+        $departments = $query->orderBy('department_name', 'asc')->paginate(10)->withQueryString();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $html = view('admin.departments.partials.list-table', compact('departments', 'search'))->render();
+            if ($request->wantsJson() || $request->acceptsJson()) {
+                return response()->json([
+                    'html' => $html,
+                    'total' => $departments->total(),
+                    'search' => $search,
+                ]);
+            }
+            return response($html);
+        }
+
+        return view('admin.departments.index', compact('departments', 'search'));
     }
 
     public function create(): View
@@ -374,16 +396,65 @@ class DepartmentController extends Controller
     }
 
 
+    /**
+     * AJAX endpoint to check if department name already exists.
+     */
+    public function checkDepartmentName(Request $request): JsonResponse
+    {
+        abort_unless(
+            auth()->user()->canAccess('create departments') || auth()->user()->canAccess('update departments'),
+            403,
+            'Unauthorized.'
+        );
+
+        $request->validate([
+            'department_name' => 'required|string|max:255',
+            'ignore_id' => 'nullable|integer',
+        ]);
+
+        $name = trim($request->department_name);
+        $ignoreId = $request->input('ignore_id');
+
+        $exists = Department::whereRaw('LOWER(TRIM(department_name)) = ?', [strtolower($name)])
+            ->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))
+            ->whereNull('deleted_at')
+            ->exists();
+
+        return response()->json([
+            'exists' => $exists,
+            'message' => $exists ? 'A department with this name already exists.' : null,
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         abort_unless(auth()->user()->canAccess('create departments'), 403, 'Unauthorized. Permission create departments required.');
-        $request->validate(['department_name' => 'required|string|max:255']);
+
+        $name = trim($request->department_name ?? '');
+        $request->merge(['department_name' => $name]);
+
+        $request->validate([
+            'department_name' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    $trimmed = trim($value);
+                    if (Department::whereRaw('LOWER(TRIM(department_name)) = ?', [strtolower($trimmed)])->whereNull('deleted_at')->exists()) {
+                        $fail('A department with this name already exists.');
+                    }
+                },
+            ],
+        ], [
+            'department_name.required' => 'The department name is required.',
+        ]);
+
         try {
-            Department::create($request->all());
-            Alert::success('Success', 'Department created successfully.');
-            return redirect()->route('admin.departments.index');
+            Department::create([
+                'department_name' => $name,
+            ]);
+            return redirect()->route('admin.departments.index')->with('success', 'Department added successfully.');
         } catch (\Throwable $e) {
-            Alert::error('Error', 'Failed to create department.');
             return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to create department.'))->withInput();
         }
     }
@@ -398,10 +469,31 @@ class DepartmentController extends Controller
     public function update(Request $request, int $id): RedirectResponse
     {
         abort_unless(auth()->user()->canAccess('update departments'), 403, 'Unauthorized. Permission update departments required.');
-        $request->validate(['department_name' => 'required|string|max:255']);
+
+        $name = trim($request->department_name ?? '');
+        $request->merge(['department_name' => $name]);
+
+        $request->validate([
+            'department_name' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) use ($id) {
+                    $trimmed = trim($value);
+                    if (Department::whereRaw('LOWER(TRIM(department_name)) = ?', [strtolower($trimmed)])->where('id', '!=', $id)->whereNull('deleted_at')->exists()) {
+                        $fail('A department with this name already exists.');
+                    }
+                },
+            ],
+        ], [
+            'department_name.required' => 'The department name is required.',
+        ]);
+
         try {
             $department = Department::findOrFail($id);
-            $department->update($request->all());
+            $department->update([
+                'department_name' => $name,
+            ]);
             return redirect()->route('admin.departments.index')->with('success', 'Department updated successfully.');
         } catch (\Throwable $e) {
             return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to update department.'))->withInput();

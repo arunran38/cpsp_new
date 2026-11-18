@@ -216,7 +216,7 @@ class TSectionConfidentialityExclusionTest extends TestCase
         });
         $response->assertViewHas('summaryTotals', fn ($totals) => $totals['total'] === 1);
 
-        $responseAll = $this->actingAs($this->multiRoleUser)->get(route('inward.statistics', ['section' => 'all']));
+        $responseAll = $this->actingAs($this->multiRoleUser)->get(route('inward.statistics', ['section' => 'all', 'origin' => 'all']));
 
         $responseAll->assertOk();
         $responseAll->assertSee('T Section');

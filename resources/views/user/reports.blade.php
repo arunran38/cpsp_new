@@ -291,8 +291,8 @@
                                 <select name="section"
                                     class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white appearance-none pr-10">
                                     <option value="all" {{ $selectedSection == 'all' ? 'selected' : '' }}>All Sections</option>
-                                    <option value="t_section" {{ $selectedSection == 't_section' ? 'selected' : '' }}>T-Section Petitions</option>
-                                    <option value="cpsp" {{ $selectedSection == 'cpsp' ? 'selected' : '' }}>CPSP Petitions</option>
+                                    <option value="t_section" {{ $selectedSection == 't_section' ? 'selected' : '' }}>T-Section</option>
+                                    <option value="cpsp" {{ $selectedSection == 'cpsp' ? 'selected' : '' }}>CPSP</option>
                                 </select>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none"><path d="m6 9 6 6 6-6"/></svg>
                             </div>

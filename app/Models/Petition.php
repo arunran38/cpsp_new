@@ -991,14 +991,14 @@ class Petition extends Model
         $userName = $info['user_name'];
 
         if ($userName && $seatName) {
-            return "⚠️ This Receipt Number already exists and is currently assigned to {$seatName} (User: {$userName}).";
+            return "This Receipt Number already exists in {$seatName} ({$userName}).";
         }
 
         if ($seatName && $seatName !== 'Unknown Seat') {
-            return "⚠️ This Receipt Number already exists and is currently assigned to {$seatName}.";
+            return "This Receipt Number already exists in {$seatName}.";
         }
 
-        return "⚠️ This Receipt Number already exists in the system.";
+        return "This Receipt Number already exists.";
     }
 
     /**

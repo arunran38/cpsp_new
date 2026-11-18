@@ -4,6 +4,38 @@
             formErrors: @json(array_map(fn($msgs) => $msgs[0] ?? '', $errors->getMessages())),
             designation: (config && config.designation !== undefined) ? config.designation : @json(old('designation', '')),
             userId: (config && config.userId) ? config.userId : null,
+            departmentId: (config && config.departmentId) ? config.departmentId : null,
+            deptDebounceTimer: null,
+
+            checkDepartmentLive(event) {
+                const target = event.target || event;
+                const value = String(target.value || '').trim();
+                clearTimeout(this.deptDebounceTimer);
+
+                if (value === '') {
+                    if (this.formErrors['department_name']) {
+                        delete this.formErrors['department_name'];
+                        this.formErrors = { ...this.formErrors };
+                    }
+                    return;
+                }
+
+                this.deptDebounceTimer = setTimeout(async () => {
+                    const exists = await this.remoteCheck('{{ route('admin.departments.checkName') }}', {
+                        department_name: value,
+                        ignore_id: this.departmentId || undefined
+                    });
+                    if (exists) {
+                        this.formErrors['department_name'] = 'A department with this name already exists.';
+                    } else if (this.formErrors['department_name'] === 'A department with this name already exists.') {
+                        delete this.formErrors['department_name'];
+                    }
+                    this.formErrors = { ...this.formErrors };
+                    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                        setTimeout(() => lucide.createIcons(), 50);
+                    }
+                }, 300);
+            },
 
             clearError(event) {
                 const target = event.target || event;
@@ -15,6 +47,7 @@
                 if (this.formErrors[name]) {
                     this.formErrors[name] = null;
                     delete this.formErrors[name];
+                    this.formErrors = { ...this.formErrors };
                 }
             },
 
@@ -91,6 +124,16 @@
                     }
                 }
 
+                if (!error && name === 'department_name' && value !== '') {
+                    const exists = await this.remoteCheck('{{ route('admin.departments.checkName') }}', {
+                        department_name: value,
+                        ignore_id: this.departmentId || undefined
+                    });
+                    if (exists) {
+                        error = 'A department with this name already exists.';
+                    }
+                }
+
                 if (error) {
                     this.formErrors[name] = error;
                     return false;
@@ -99,6 +142,7 @@
                 if (this.formErrors[name]) {
                     this.formErrors[name] = null;
                     delete this.formErrors[name];
+                    this.formErrors = { ...this.formErrors };
                 }
 
                 return true;
