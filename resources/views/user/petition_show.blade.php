@@ -1255,62 +1255,79 @@
                 x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="ease-in duration-200"
                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                 x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-                class="bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-lg rounded-3xl overflow-visible flex flex-col relative">
+                class="bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-xl rounded-3xl overflow-visible flex flex-col relative">
 
                 <div x-data="{
-                                                        searchQuery: '',
-                                                        results: [],
-                                                        isOpen: false,
-                                                        selectedPetition: '',
-                                                        isLoading: false,
-                                                        errorMessage: '',
-                                                        fetchResults() {
-                                                            if (this.searchQuery.length < 2) {
-                                                                this.results = [];
-                                                                this.isOpen = false;
-                                                                return;
-                                                            }
+                        searchQuery: '',
+                        results: [],
+                        isOpen: false,
+                        selectedPetition: '',
+                        selectedRecord: null,
+                        isLoading: false,
+                        errorMessage: '',
+                        fetchResults() {
+                            const q = (this.searchQuery || '').trim();
+                            if (q.length < 1) {
+                                this.results = [];
+                                this.isOpen = false;
+                                return;
+                            }
 
-                                                            this.isLoading = true;
-                                                            this.errorMessage = '';
+                            this.isLoading = true;
+                            this.errorMessage = '';
 
-                                                            fetch(`{{ route('petitions.searchDuplicates') }}?q=${encodeURIComponent(this.searchQuery)}&exclude={{ $petition->hashid }}`)
-                                                                .then(response => {
-                                                                    if (!response.ok) throw new Error('Network error');
-                                                                    return response.json();
-                                                                })
-                                                                .then(data => {
-                                                                    this.results = data || [];
-                                                                    this.isOpen = true;
-                                                                })
-                                                                .catch(error => {
-                                                                    console.error('Error fetching duplicates:', error);
-                                                                    this.errorMessage = 'An error occurred while searching.';
-                                                                    this.results = [];
-                                                                    this.isOpen = true;
-                                                                })
-                                                                .finally(() => {
-                                                                    this.isLoading = false;
-                                                                });
-                                                        },
-                                                        selectResult(result) {
-                                                            this.selectedPetition = result.id;
-                                                            this.searchQuery = result.text;
-                                                            this.isOpen = false;
-                                                        },
-                                                        resetSearch() {
-                                                            this.selectedPetition = '';
-                                                            this.searchQuery = '';
-                                                            this.results = [];
-                                                            this.isOpen = false;
-                                                        }
-                                                    }" @click.away="isOpen = false" class="relative w-full text-left">
+                            fetch(`{{ route('petitions.searchDuplicates') }}?q=${encodeURIComponent(q)}&exclude={{ $petition->hashid }}`)
+                                .then(response => {
+                                    if (!response.ok) throw new Error('Network error');
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    this.results = data || [];
+                                    this.isOpen = true;
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching duplicates:', error);
+                                    this.errorMessage = 'An error occurred while searching.';
+                                    this.results = [];
+                                    this.isOpen = true;
+                                })
+                                .finally(() => {
+                                    this.isLoading = false;
+                                });
+                        },
+                        selectResult(result) {
+                            this.selectedPetition = result.receipt_no;
+                            this.selectedRecord = result;
+                            this.searchQuery = result.receipt_no;
+                            this.isOpen = false;
+                        },
+                        selectFirstExactOrTop() {
+                            if (!this.results || this.results.length === 0) return;
+                            const q = (this.searchQuery || '').trim().toLowerCase();
+                            const exact = this.results.find(r => 
+                                (r.receipt_no && r.receipt_no.toLowerCase() === q) || 
+                                (r.file_no && r.file_no.toLowerCase() === q)
+                            );
+                            if (exact) {
+                                this.selectResult(exact);
+                            } else if (this.results.length === 1) {
+                                this.selectResult(this.results[0]);
+                            }
+                        },
+                        resetSearch() {
+                            this.selectedPetition = '';
+                            this.selectedRecord = null;
+                            this.searchQuery = '';
+                            this.results = [];
+                            this.isOpen = false;
+                        }
+                    }" @click.away="isOpen = false" class="relative w-full text-left">
                     <form action="{{ route('petitions.linkDuplicate', $petition->hashid) }}" method="POST">
                         @csrf
 
                         <!-- Premium Header -->
                         <div
-                            class="relative overflow-hidden bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 px-8 py-8 rounded-t-3xl text-center">
+                            class="relative overflow-hidden bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-600 px-8 py-7 rounded-t-3xl text-center">
                             <div
                                 class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 blur-2xl rounded-full pointer-events-none">
                             </div>
@@ -1319,15 +1336,14 @@
                             </div>
 
                             <div
-                                class="relative z-10 mx-auto flex items-center justify-center h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-md shadow-inner border border-white/20 mb-4">
-                                <i data-lucide="link" class="h-8 w-8 text-white"></i>
+                                class="relative z-10 mx-auto flex items-center justify-center h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md shadow-inner border border-white/20 mb-3">
+                                <i data-lucide="link" class="h-7 w-7 text-white"></i>
                             </div>
 
                             <h3 class="relative z-10 text-2xl font-black text-white tracking-tight" id="modal-title">
                                 Link to Existing Petition
                             </h3>
-                            <p class="relative z-10 text-teal-100 text-sm mt-1 font-medium">Search and select the original
-                                petition to merge.</p>
+                            <p class="relative z-10 text-teal-100 text-xs sm:text-sm mt-1 font-medium">Search and select the original petition to merge.</p>
 
                             <!-- Close Button -->
                             <button type="button" @click="showLinkModal = false; resetSearch()"
@@ -1336,16 +1352,18 @@
                             </button>
                         </div>
 
-                        <div class="bg-white px-8 py-8 text-center">
+                        <div class="bg-white px-6 sm:px-8 py-6 text-center">
                             <style>
                                 .petition-input::placeholder {
                                     color: #94a3b8 !important;
                                     font-weight: 500;
                                 }
                             </style>
-                            <div class="max-w-sm mx-auto relative group">
+                            <div class="w-full relative group">
                                 <label for="original_receipt_no"
-                                    class="block text-sm font-bold text-slate-700 mb-3 text-left">Search Petition</label>
+                                    class="block text-sm font-bold text-slate-800 mb-2 text-left">
+                                    Search Petition
+                                </label>
                                 <input type="hidden" name="original_receipt_no" x-model="selectedPetition">
 
                                 <div class="relative">
@@ -1354,14 +1372,16 @@
                                             class="w-5 h-5 text-slate-400 group-focus-within:text-teal-500 transition-colors"></i>
                                     </div>
                                     <input type="text" x-model="searchQuery"
-                                        @input.debounce.300ms="selectedPetition = ''; fetchResults()"
-                                        @focus="if(searchQuery.length >= 2 && !selectedPetition) fetchResults()" required
+                                        @input.debounce.250ms="selectedPetition = ''; selectedRecord = null; fetchResults()"
+                                        @focus="if(searchQuery.trim().length >= 1 && !selectedPetition) fetchResults()"
+                                        @keydown.enter.prevent="selectFirstExactOrTop()"
+                                        required
                                         autocomplete="off"
-                                        class="pl-11 focus:ring-4 focus:ring-teal-500/20 focus:border-teal-500 block w-full sm:text-base border-slate-300 rounded-xl p-3.5 transition-all text-slate-900 font-semibold petition-input bg-slate-50 hover:bg-white focus:bg-white shadow-sm"
-                                        placeholder="Enter Petition No or Name...">
+                                        class="pl-11 pr-10 focus:ring-4 focus:ring-teal-500/20 focus:border-teal-500 block w-full sm:text-base border-slate-300 rounded-xl p-3.5 transition-all text-slate-900 font-semibold petition-input bg-slate-50 hover:bg-white focus:bg-white shadow-sm"
+                                        placeholder="Enter Petition No, File No, or Name...">
 
                                     <!-- Loading Spinner -->
-                                    <div x-show="isLoading" class="absolute right-4 top-3.5">
+                                    <div x-show="isLoading" class="absolute right-4 top-3.5" style="display: none;">
                                         <svg class="animate-spin h-5 w-5 text-teal-500" xmlns="http://www.w3.org/2000/svg"
                                             fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
@@ -1373,10 +1393,45 @@
                                     </div>
 
                                     <!-- Clear Button -->
-                                    <button type="button" x-show="selectedPetition" @click="resetSearch()"
-                                        class="absolute right-4 top-3.5 text-slate-400 hover:text-rose-500 transition-colors bg-white rounded-full">
+                                    <button type="button" x-show="searchQuery || selectedPetition" @click="resetSearch()"
+                                        class="absolute right-4 top-3.5 text-slate-400 hover:text-rose-500 transition-colors bg-white rounded-full" style="display: none;">
                                         <i data-lucide="x-circle" class="w-5 h-5"></i>
                                     </button>
+                                </div>
+
+                                <!-- Selected Target Petition Confirmation Card -->
+                                <div x-show="selectedRecord" class="mt-3 p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-left shadow-sm" style="display: none;">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="space-y-1">
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                                                    <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                                    Target Selected
+                                                </span>
+                                                <span class="text-sm font-black text-slate-900" x-text="'Receipt: ' + (selectedRecord ? selectedRecord.receipt_no : '')"></span>
+                                                <template x-if="selectedRecord && selectedRecord.file_no">
+                                                    <span class="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md" x-text="'File: ' + selectedRecord.file_no"></span>
+                                                </template>
+                                            </div>
+                                            <div class="text-xs text-slate-600 space-y-0.5 pt-0.5">
+                                                <p><strong class="text-slate-800">Complainant:</strong> <span x-text="selectedRecord ? selectedRecord.complainant : ''"></span></p>
+                                                <template x-if="selectedRecord && selectedRecord.accused && selectedRecord.accused !== 'N/A'">
+                                                    <p><strong class="text-slate-800">Accused:</strong> <span x-text="selectedRecord.accused"></span></p>
+                                                </template>
+                                                <div class="flex items-center gap-3 text-[11px] text-slate-500 pt-0.5 flex-wrap">
+                                                    <template x-if="selectedRecord && selectedRecord.district">
+                                                        <span><strong>District:</strong> <span x-text="selectedRecord.district"></span></span>
+                                                    </template>
+                                                    <template x-if="selectedRecord && selectedRecord.seat_name">
+                                                        <span><strong>Seat:</strong> <span x-text="selectedRecord.seat_name"></span></span>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="button" @click="resetSearch()" class="px-2 py-1 text-xs font-bold text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition-colors shrink-0">
+                                            Change
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <!-- Dropdown Results -->
@@ -1398,26 +1453,47 @@
                                                     <i data-lucide="file-text" class="w-4 h-4"></i>
                                                 </div>
                                                 <div class="flex-1 min-w-0">
-                                                    <div class="flex justify-between items-center mb-1">
+                                                    <div class="flex flex-wrap items-center justify-between gap-1 mb-1">
+                                                        <div class="flex items-center gap-2 flex-wrap">
+                                                            <span
+                                                                class="text-sm font-black text-slate-900 group-hover/item:text-teal-900"
+                                                                x-text="result.receipt_no"></span>
+                                                            <template x-if="result.file_no">
+                                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                                                    x-text="'File: ' + result.file_no"></span>
+                                                            </template>
+                                                            <template x-if="result.is_duplicate">
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                                    Duplicate
+                                                                </span>
+                                                            </template>
+                                                        </div>
                                                         <span
-                                                            class="text-sm font-bold text-slate-800 group-hover/item:text-teal-900"
-                                                            x-text="result.receipt_no"></span>
-                                                        <span
-                                                            class="text-xs font-medium text-slate-500 bg-slate-100 group-hover/item:bg-teal-100/50 px-2 py-0.5 rounded border border-slate-200/60 group-hover/item:border-teal-200/60"
+                                                            class="text-xs font-medium text-slate-500 bg-slate-100 group-hover/item:bg-teal-100/50 px-2 py-0.5 rounded border border-slate-200/60"
                                                             x-text="result.date"></span>
                                                     </div>
-                                                    <div class="text-[13px] text-slate-600 flex flex-col gap-1 mt-1.5">
+                                                    <div class="text-[12px] text-slate-600 flex flex-col gap-0.5 mt-1">
                                                         <div class="flex items-start gap-2 truncate">
                                                             <span
-                                                                class="font-bold text-indigo-700/70 text-[11px] uppercase tracking-wider w-24 shrink-0 mt-0.5">Complainant</span>
+                                                                class="font-bold text-indigo-700/80 text-[11px] uppercase tracking-wider w-24 shrink-0">Complainant</span>
                                                             <span class="font-medium text-slate-700 truncate"
                                                                 x-text="result.complainant"></span>
                                                         </div>
-                                                        <div class="flex items-start gap-2 truncate">
-                                                            <span
-                                                                class="font-bold text-rose-700/70 text-[11px] uppercase tracking-wider w-24 shrink-0 mt-0.5">Accused</span>
-                                                            <span class="font-medium text-slate-700 truncate"
-                                                                x-text="result.accused"></span>
+                                                        <template x-if="result.accused && result.accused !== 'N/A'">
+                                                            <div class="flex items-start gap-2 truncate">
+                                                                <span
+                                                                    class="font-bold text-rose-700/80 text-[11px] uppercase tracking-wider w-24 shrink-0">Accused</span>
+                                                                <span class="font-medium text-slate-700 truncate"
+                                                                    x-text="result.accused"></span>
+                                                            </div>
+                                                        </template>
+                                                        <div class="flex items-center gap-3 text-[11px] text-slate-500 mt-0.5 flex-wrap">
+                                                            <template x-if="result.district">
+                                                                <span><strong>District:</strong> <span x-text="result.district"></span></span>
+                                                            </template>
+                                                            <template x-if="result.seat_name">
+                                                                <span><strong>Seat:</strong> <span x-text="result.seat_name"></span></span>
+                                                            </template>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1428,7 +1504,7 @@
                                     <div x-show="results.length === 0 && !errorMessage"
                                         class="p-6 text-sm text-slate-500 text-center flex flex-col items-center gap-2">
                                         <i data-lucide="search-x" class="w-6 h-6 text-slate-300"></i>
-                                        No petitions found matching your search.
+                                        No petitions found matching your search. Try Receipt No, File No, or Petitioner Name.
                                     </div>
 
                                     <div x-show="errorMessage"

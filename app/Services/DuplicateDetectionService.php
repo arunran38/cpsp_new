@@ -287,25 +287,44 @@ class DuplicateDetectionService
     }
 
     /**
-     * Search petitions for autocomplete duplicate linking with Soundex support.
+     * Search petitions for autocomplete duplicate linking with Soundex support,
+     * prioritizing Receipt Number, File Number, Complainant, Accused, Phone, and District.
      */
     public static function searchDuplicates(string $query, $excludeId = null, ?User $user = null): array
     {
         $user = $user ?? Auth::user();
+        $rawQuery = trim($query);
 
-        if (!$query) {
+        if ($rawQuery === '') {
             return [];
         }
 
         $petitions = Petition::excludeTSectionIfNotAuthorized($user)
-            ->with(['addresses', 'originalPetition.addresses', 'seat.activeAssignment.user', 'user', 'processedBySeat', 'processedByUser'])
-            ->where(function ($q) use ($query) {
-                $q->where('receipt_no', 'LIKE', "%{$query}%")
-                  ->orWhere('nature_of_petition', 'LIKE', "%{$query}%")
-                  ->orWhereHas('addresses', function ($q2) use ($query) {
-                      $q2->where('person_name', 'LIKE', "%{$query}%")
-                         ->orWhereRaw("SOUNDEX(person_name) = SOUNDEX(?)", [$query])
-                         ->orWhereRaw("SOUNDEX(SUBSTRING_INDEX(person_name, ' ', 1)) = SOUNDEX(?)", [$query]);
+            ->with([
+                'addresses.district',
+                'originalPetition.addresses',
+                'seat.activeAssignment.user',
+                'user',
+                'processedBySeat',
+                'processedByUser',
+                'concernedDistrict',
+            ])
+            ->where(function ($q) use ($rawQuery) {
+                $q->where('receipt_no', 'LIKE', "%{$rawQuery}%")
+                  ->orWhere('file_no', 'LIKE', "%{$rawQuery}%")
+                  ->orWhere('nature_of_petition', 'LIKE', "%{$rawQuery}%")
+                  ->orWhere('description', 'LIKE', "%{$rawQuery}%")
+                  ->orWhereHas('addresses', function ($q2) use ($rawQuery) {
+                      $q2->where('person_name', 'LIKE', "%{$rawQuery}%")
+                         ->orWhere('phone', 'LIKE', "%{$rawQuery}%")
+                         ->orWhere('pen_number', 'LIKE', "%{$rawQuery}%")
+                         ->orWhere('email', 'LIKE', "%{$rawQuery}%")
+                         ->orWhere('full_address', 'LIKE', "%{$rawQuery}%")
+                         ->orWhereRaw("SOUNDEX(person_name) = SOUNDEX(?)", [$rawQuery])
+                         ->orWhereRaw("SOUNDEX(SUBSTRING_INDEX(person_name, ' ', 1)) = SOUNDEX(?)", [$rawQuery]);
+                  })
+                  ->orWhereHas('concernedDistrict', function ($dq) use ($rawQuery) {
+                      $dq->where('district_name', 'LIKE', "%{$rawQuery}%");
                   });
             });
 
@@ -314,7 +333,34 @@ class DuplicateDetectionService
             $petitions->where('petition_id', '!=', $realExclude);
         }
 
-        return $petitions->take(12)->get()->map(function (Petition $petition) use ($query) {
+        // Prioritize relevance:
+        // 1. Exact receipt_no match
+        // 2. Exact file_no match
+        // 3. Receipt_no starts with query
+        // 4. File_no starts with query
+        // 5. Receipt_no contains query
+        // 6. File_no contains query
+        // 7. Recent petitions first
+        $petitions->orderByRaw("
+            CASE 
+                WHEN receipt_no = ? THEN 1
+                WHEN COALESCE(file_no, '') = ? THEN 2
+                WHEN receipt_no LIKE ? THEN 3
+                WHEN COALESCE(file_no, '') LIKE ? THEN 4
+                WHEN receipt_no LIKE ? THEN 5
+                WHEN COALESCE(file_no, '') LIKE ? THEN 6
+                ELSE 7
+            END, date_of_petition_received DESC, petition_id DESC
+        ", [
+            $rawQuery,
+            $rawQuery,
+            $rawQuery . '%',
+            $rawQuery . '%',
+            '%' . $rawQuery . '%',
+            '%' . $rawQuery . '%',
+        ]);
+
+        return $petitions->take(15)->get()->map(function (Petition $petition) use ($rawQuery) {
             $addresses = $petition->displayAddresses();
             $complainant = $addresses->firstWhere('person_type', 'Complainant');
             $accused = $addresses->firstWhere('person_type', 'Accused');
@@ -323,9 +369,9 @@ class DuplicateDetectionService
             $accusedName = $accused ? $accused->person_name : 'N/A';
 
             $isSoundex = false;
-            if ($complainant && soundex($complainantName) === soundex($query)) {
+            if ($complainant && soundex($complainantName) === soundex($rawQuery)) {
                 $isSoundex = true;
-            } elseif ($accused && soundex($accusedName) === soundex($query)) {
+            } elseif ($accused && soundex($accusedName) === soundex($rawQuery)) {
                 $isSoundex = true;
             }
 
@@ -334,17 +380,25 @@ class DuplicateDetectionService
             $userName = $petition->processedByUser?->name ?? $petition->seat?->activeAssignment?->user?->name ?? $petition->user?->name ?? null;
             $seatUserLabel = $seatName ? " [{$seatName}" . ($userName ? " - {$userName}" : "") . "]" : "";
 
+            $fileNo = $petition->file_no ?: null;
+            $fileLabel = $fileNo ? " [File: {$fileNo}]" : "";
+            $districtName = $petition->concernedDistrict?->district_name ?? ($complainant?->district?->district_name ?? null);
+
             return [
                 'id' => $petition->receipt_no,
-                'text' => "{$petition->receipt_no} - {$petition->nature_of_petition} ({$complainantName}){$seatUserLabel}{$tag}",
+                'text' => "{$petition->receipt_no}{$fileLabel} - {$petition->nature_of_petition} ({$complainantName}){$seatUserLabel}{$tag}",
                 'receipt_no' => $petition->receipt_no,
+                'file_no' => $fileNo,
                 'date' => $petition->date_of_petition_received ? date('d-m-Y', strtotime($petition->date_of_petition_received)) : 'N/A',
                 'complainant' => $complainantName,
                 'accused' => $accusedName,
                 'nature' => $petition->nature_of_petition,
+                'district' => $districtName,
                 'is_soundex' => $isSoundex,
                 'seat_name' => $seatName,
                 'user_name' => $userName,
+                'status' => $petition->status,
+                'is_duplicate' => (bool)$petition->linked_petition_id,
             ];
         })->toArray();
     }
