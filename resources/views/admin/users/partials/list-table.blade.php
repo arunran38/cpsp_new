@@ -62,12 +62,12 @@
                     </td>
                     <td class="px-6 py-4">
                         @if(Auth::user()->canAccess('update users'))
-                        <form method="POST" action="{{ route('users.updateStatus', encrypt($user->user_id)) }}">
+                        <form method="POST" action="{{ route('users.updateStatus', encrypt($user->user_id)) }}" class="inline-flex">
                             @csrf
                             @method('PATCH')
-                            <div class="relative flex items-center group/status">
+                            <div class="relative inline-flex items-center group/status">
                                 <select name="status" onchange="this.form.submit()"
-                                    class="pr-7 pl-3 py-1 text-xs font-semibold rounded-lg border-slate-200 outline-none transition-all cursor-pointer appearance-none shadow-sm group-hover/status:border-slate-300
+                                    class="pr-7 pl-3 py-1 text-xs font-semibold rounded-lg border border-slate-200 outline-none transition-all cursor-pointer appearance-none shadow-sm group-hover/status:border-slate-300
                                                             {{ $user->status === 'Active' ? 'bg-emerald-50 text-emerald-800 focus:ring-emerald-200' : 'bg-amber-50 text-amber-800 focus:ring-amber-200' }}"
                                     style="background-image: none !important;">
                                     <option value="Active" {{ $user->status === 'Active' ? 'selected' : '' }}
@@ -75,11 +75,13 @@
                                     <option value="Transferred" {{ $user->status === 'Transferred' ? 'selected' : '' }}
                                         class="bg-white text-slate-900">Transferred</option>
                                 </select>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3 text-slate-400 absolute right-2 pointer-events-none group-hover/status:text-slate-600 transition-colors"><path d="m6 9 6 6 6-6"/></svg>
+                                <div class="absolute inset-y-0 right-2 flex items-center pointer-events-none text-slate-400 group-hover/status:text-slate-600 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path d="m6 9 6 6 6-6"/></svg>
+                                </div>
                             </div>
                         </form>
                         @else
-                            <span class="px-2 py-1 text-xs font-semibold rounded-lg {{ $user->status === 'Active' ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800' }}">
+                            <span class="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-200 shadow-sm {{ $user->status === 'Active' ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800' }}">
                                 {{ $user->status }}
                             </span>
                         @endif

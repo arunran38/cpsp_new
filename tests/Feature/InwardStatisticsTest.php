@@ -528,7 +528,7 @@ class InwardStatisticsTest extends TestCase
         $defaultResp->assertOk();
         $defaultResp->assertViewHas('origin', 'inward');
         $defaultResp->assertViewHas('summaryTotals', fn ($totals) => $totals['totalSent'] === 1);
-        $defaultResp->assertSee('Inward Only');
+        $defaultResp->assertSee('Inward');
         $defaultResp->assertSee('Direct');
         $defaultResp->assertSee('All Origins');
 

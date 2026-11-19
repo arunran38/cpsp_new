@@ -1615,7 +1615,8 @@ class PetitionController extends Controller
 
         // Apply filters using scopes
         if ($isReports) {
-            // Master Reports: "all" means all petitions without restriction to is_cpsp_processed = true.
+            // Master Reports: only processed petitions (is_cpsp_processed = true) are to be viewed.
+            $query->where('is_cpsp_processed', true);
             if ($tab !== 'all' && $tab !== '') {
                 $query->filterByTab($tab);
             }

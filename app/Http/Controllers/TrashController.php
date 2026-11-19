@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Petition;
 use App\Models\Upload;
 use App\Services\HashidService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +17,8 @@ use Carbon\Carbon;
 
 class TrashController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
      * Display a listing of trashed petitions.
      */

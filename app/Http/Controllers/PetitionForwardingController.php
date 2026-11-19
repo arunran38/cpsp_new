@@ -28,7 +28,7 @@ class PetitionForwardingController extends Controller
             try {
                 $petitionId = HashidService::decode($request->petition_id) ?? $request->petition_id;
                 $petition = Petition::findOrFail($petitionId);
-                $this->authorize('update', $petition);
+                $this->authorize('view', $petition);
 
                 $user = Auth::user();
                 if ($petition->isTSection()) {
@@ -160,7 +160,10 @@ class PetitionForwardingController extends Controller
         ]);
 
         $forwarding = PetitionForwarding::findOrFail($id);
-        $this->authorize('update', $forwarding->petition);
+
+        if ($forwarding->petition->isTSection() && !Auth::user()->canAccessTSection()) {
+            abort(403, 'Unauthorized. T-Section clearance required.');
+        }
 
         $forwarding->update(['vr_received_at_cpsp_date' => $request->vr_received_at_cpsp_date]);
 
@@ -177,7 +180,10 @@ class PetitionForwardingController extends Controller
         }
 
         $forwarding = PetitionForwarding::findOrFail($id);
-        $this->authorize('update', $forwarding->petition);
+
+        if ($forwarding->petition->isTSection() && !Auth::user()->canAccessTSection()) {
+            abort(403, 'Unauthorized. T-Section clearance required.');
+        }
 
         if ($forwarding->vr_ref_no) {
             return back()->with('error', 'Cannot pull back. VR Report already submitted.');
@@ -211,7 +217,10 @@ class PetitionForwardingController extends Controller
 
         $forwarding = PetitionForwarding::findOrFail($id);
         $petition = $forwarding->petition;
-        $this->authorize('update', $petition);
+
+        if ($petition->isTSection() && !Auth::user()->canAccessTSection()) {
+            abort(403, 'Unauthorized. T-Section clearance required.');
+        }
 
         if (Decision::where('petition_id', $petition->petition_id)->exists()) {
             return back()->with('error', 'Cannot pull back VR. Final decision already made.');

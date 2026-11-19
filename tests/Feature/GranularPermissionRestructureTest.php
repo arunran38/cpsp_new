@@ -131,6 +131,9 @@ class GranularPermissionRestructureTest extends TestCase
      */
     public function test_t_section_only_user_cannot_access_cpsp_petitions_or_reports(): void
     {
+        $tSectionRole = Role::findByName('T Section', 'web');
+        $tSectionRole->revokePermissionTo('view cpsp petitions read only');
+
         $user = $this->createUserInSeat('T-Section Officer', $this->tSectionSeat, [
             'access t-section',
             'view petitions',

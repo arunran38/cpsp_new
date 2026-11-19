@@ -28,7 +28,8 @@
                         {{ $petition->receipt_no }}
                     </h1>
                     @if($isCpspReadOnlyForTSection)
-                        <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-xs font-semibold">
+                        <div
+                            class="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-xs font-semibold">
                             <i data-lucide="eye" class="w-4 h-4 text-amber-600"></i>
                             <span>CPSP Reference (Read-Only Mode)</span>
                         </div>
@@ -330,7 +331,7 @@
 
                             @forelse($complainants as $groupKey => $addresses)
                                 @php 
-                                                                                                                                                                                                                                                                                                    $first = $addresses->first();
+                                                                                                                                                                                                                                                                                                                                                                    $first = $addresses->first();
                                     $rawName = $first->person_name;
                                     $displayName = in_array($rawName, ['Unknown', 'Anonymous / Unknown']) ? 'Anonymous / Unknown' : $rawName;
                                 @endphp
@@ -382,7 +383,7 @@
 
                             @forelse($accused as $groupKey => $addresses)
                                 @php 
-                                                                                                                                                                                                                                                                                                    $first = $addresses->first();
+                                                                                                                                                                                                                                                                                                                                                                    $first = $addresses->first();
                                     $rawName = $first->person_name;
                                     $displayName = in_array($rawName, ['Unknown', 'Unknown Suspect', 'Anonymous / Unknown']) ? 'Unknown Suspect' : $rawName;
                                 @endphp
@@ -504,410 +505,59 @@
                 </div>
 
                 @if($canViewWorkflow)
-                <!-- Section 4: Petition Workflow Actions -->
-                <div class="mt-8 border-t border-slate-200 pt-8">
-                    <h3 class="text-base font-bold text-gray-900 pb-2 mb-4 flex items-center gap-2 w-max">
-                        <i data-lucide="git-merge" class="w-5 h-5 text-indigo-600"></i> Petition Workflow Actions
-                    </h3>
+                    <!-- Section 4: Petition Workflow Actions -->
+                    <div class="mt-8 border-t border-slate-200 pt-8">
+                        <h3 class="text-base font-bold text-gray-900 pb-2 mb-4 flex items-center gap-2 w-max">
+                            <i data-lucide="git-merge" class="w-5 h-5 text-indigo-600"></i> Petition Workflow Actions
+                        </h3>
 
-                    @if($petition->status === 'Received' && Auth::user()->canAccess('update petitions'))
-                        <!-- Director Forwarding Form -->
-                        <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-6">
-                            <h4 class="font-bold text-indigo-900 mb-4">Initial Decision / Forwarding</h4>
-                            <form action="{{ route('forwardings.store') }}" method="POST" enctype="multipart/form-data"
-                                class="space-y-4"
-                                onsubmit="if(document.getElementById('fwd_action_select').value === 'Sent_to_Govt' && !document.getElementById('fwd_govt_rec_type').value) { document.getElementById('fwd-govt-rec-error').style.display = 'block'; return false; }">
-                                @csrf
-                                <input type="hidden" name="petition_id" value="{{ $petition->petition_id }}">
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">File Number <span
-                                                class="text-red-500">*</span></label>
-                                        <input type="text" name="file_no" required
-                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900"
-                                            placeholder="Enter File Number">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">File Date</label>
-                                        <input type="date" name="file_created_date" id="fwd_file_created_date"
-                                            max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
-                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
-                                            style="color: #1e40af !important;">
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
-                                    <div class="relative flex items-center">
-                                        <select name="action" id="fwd_action_select"
-                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
-                                            style="background-image: none !important;" required onchange="
-                                                                                                document.getElementById('unit-select-div').style.display = this.value === 'Forward_To_Unit' ? 'block' : 'none';
-                                                                                                document.getElementById('final-doc-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Sent_to_SPC' || this.value === 'Internal_Vigilance') ? 'block' : 'none';
-                                                                                                document.getElementById('govt-rec-div-fwd').style.display = this.value === 'Sent_to_Govt' ? 'block' : 'none';
-                                                                                                if (this.value !== 'Sent_to_Govt') {
-                                                                                                    document.getElementById('fwd_govt_rec_type').value = '';
-                                                                                                    document.getElementById('fwd-govt-rec-error').style.display = 'none';
-                                                                                                }
-                                                                                            ">
-                                            <option value="">Select Action...</option>
-                                            <option value="Forward_To_Unit">Forward to Unit</option>
-                                            <option value="Sent_to_Govt">Send to Govt (Decision)</option>
-                                            <option value="Sent_to_SPC">Send to SPC (Decision)</option>
-                                            <option value="Internal_Vigilance">Send to Internal Vigilance (Decision)</option>
-                                            <option value="Close">Close Petition (Decision)</option>
-                                        </select>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none">
-                                            <path d="m6 9 6 6 6-6" />
-                                        </svg>
-                                    </div>
-                                </div>
-
-                                <div id="govt-rec-div-fwd" style="display: none;">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Recommendation Type <span
-                                            class="text-red-500">*</span></label>
-                                    <div class="relative flex items-center">
-                                        <select name="govt_recommendation_type" id="fwd_govt_rec_type"
-                                            onchange="if(this.value) document.getElementById('fwd-govt-rec-error').style.display = 'none';"
-                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
-                                            style="background-image: none !important;">
-                                            <option value="">Select Recommendation Type...</option>
-                                            <option value="17 A Sanction">17 A Sanction</option>
-                                            <option value="Report with Recommendations">Report with Recommendations</option>
-                                            <option value="No Recommendations">No Recommendations</option>
-                                        </select>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none">
-                                            <path d="m6 9 6 6 6-6" />
-                                        </svg>
-                                    </div>
-                                    <p id="fwd-govt-rec-error" class="text-xs font-semibold text-rose-600 mt-1"
-                                        style="display: none;">Recommendation Type is required.</p>
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Action Date <span
-                                            class="required-mark text-red-600 font-bold ml-1"
-                                            style="color: #dc2626 !important;">*</span></label>
-                                    <input type="date" name="forwarded_date" id="fwd_action_date" max="{{ date('Y-m-d') }}"
-                                        placeholder="DD-MM-YYYY"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
-                                        style="color: #1e40af !important;" required>
-                                </div>
-
-                                <div id="unit-select-div" style="display: none;">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Select Unit</label>
-                                    <div class="relative flex items-center">
-                                        <select name="to_unit_id"
-                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
-                                            style="background-image: none !important;">
-                                            <option value="">Select Unit...</option>
-                                            @foreach(\App\Models\Unit::all() as $unit)
-                                                <option value="{{ $unit->unit_id }}">{{ $unit->unit_name }}</option>
-                                            @endforeach
-                                        </select>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none">
-                                            <path d="m6 9 6 6 6-6" />
-                                        </svg>
-                                    </div>
-                                </div>
-
-                                <div id="final-doc-div-fwd" style="display: none;">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Upload Final Order
-                                        Document</label>
-                                    <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
-                                        class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
-                                    <textarea name="director_remarks" rows="3"
-                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900"
-                                        placeholder="Enter instructions or remarks..."></textarea>
-                                </div>
-                                <button type="submit"
-                                    class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold shadow-sm">Submit
-                                    Decision</button>
-                            </form>
-                        </div>
-                    @endif
-
-                    <!-- Show Previous Workflow Details in a Grid -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 items-start">
-                        <!-- Show Previous Forwarding Details if exists -->
-                        @if($petition->latestForwarding)
-                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-6">
-                                <h4 class="font-bold text-gray-800 mb-4 border-b border-slate-200 pb-2">Forwarding History</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <span class="text-gray-600 font-semibold">Forwarded To:</span>
-                                        <span
-                                            class="text-gray-900 block mt-1">{{ $petition->latestForwarding->toUnit->unit_name ?? 'N/A' }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600 font-semibold">Date:</span>
-                                        <span
-                                            class="text-gray-900 block mt-1">{{ \Carbon\Carbon::parse($petition->latestForwarding->forwarded_date)->format('d M, Y') }}</span>
-                                    </div>
-                                    @if($petition->latestForwarding->processedBy)
-                                        <div>
-                                            <span class="text-gray-600 font-semibold">Forwarded By:</span>
-                                            <span
-                                                class="text-indigo-700 font-bold uppercase text-[11px] block mt-1">{{ $petition->latestForwarding->processedBy->name }}</span>
-                                        </div>
-                                    @endif
-                                    <div class="md:col-span-2">
-                                        <span class="text-gray-600 font-semibold">Remarks:</span>
-                                        <span
-                                            class="text-gray-800 block mt-1">{{ $petition->latestForwarding->director_remarks }}</span>
-                                    </div>
-                                    @if(!$petition->latestForwarding->vr_ref_no && (auth()->user()->canAccess('access admin dashboard') || !$petition->decision))
-                                        <div class="md:col-span-2 pt-2">
-                                            <form
-                                                action="{{ route('forwardings.pullback', $petition->latestForwarding->petition_forwarding_id) }}"
-                                                method="POST" class="inline pullback-form"
-                                                data-message="Are you sure you want to pull back this forwarding?">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit"
-                                                    class="px-3 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-100 rounded-lg hover:bg-rose-100 transition-all flex items-center gap-1.5 shadow-sm">
-                                                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Pull Back Forwarding
-                                                </button>
-                                            </form>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        @endif
-
-                        <!-- Verification Report Details (Added) -->
-                        @if($petition->latestForwarding && $petition->latestForwarding->vr_ref_no)
-                            <div class="bg-amber-50 border border-amber-200 rounded-xl p-6">
-                                <h4
-                                    class="font-bold text-amber-900 mb-4 border-b border-amber-200 pb-2 flex items-center gap-2">
-                                    <i data-lucide="file-check" class="w-5 h-5 text-amber-600"></i> Verification Report Details
-                                </h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <span class="text-gray-600 font-semibold">VR Reference No:</span>
-                                        <span
-                                            class="text-gray-900 block mt-1">{{ $petition->latestForwarding->vr_ref_no }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600 font-semibold">VR Date:</span>
-                                        <span
-                                            class="text-gray-900 block mt-1">{{ \Carbon\Carbon::parse($petition->latestForwarding->vr_date)->format('d M, Y') }}</span>
-                                    </div>
-                                    @if($petition->latestForwarding->vr_received_at_cpsp_date)
-                                        <div>
-                                            <span class="text-gray-600 font-semibold">Received at CPSP:</span>
-                                            <span
-                                                class="font-bold text-blue-700 block mt-1">{{ \Carbon\Carbon::parse($petition->latestForwarding->vr_received_at_cpsp_date)->format('d M, Y') }}</span>
-                                        </div>
-                                    @endif
-                                    @if($petition->latestForwarding->processedBy)
-                                        <div>
-                                            <span class="text-gray-600 font-semibold">VR Updated By:</span>
-                                            <span
-                                                class="text-amber-700 font-bold uppercase text-[11px] block mt-1">{{ $petition->latestForwarding->processedBy->name }}</span>
-                                        </div>
-                                    @endif
-                                    <div class="md:col-span-2">
-                                        <span class="text-gray-600 font-semibold">VR Recommendation:</span>
-                                        <span
-                                            class="text-gray-800 block mt-1">{{ \App\Models\Decision::getDecisionLabel($petition->latestForwarding->vr_remarks) ?? $petition->latestForwarding->vr_remarks }}</span>
-                                    </div>
-
-                                    @php
-                                        $vrFile = $petition->uploads->where('category', 'Verification Report')->last();
-                                    @endphp
-                                    @if($vrFile)
-                                        <div class="md:col-span-2 pt-2">
-                                            <span class="text-gray-600 font-semibold block mb-2">Attached VR Document:</span>
-                                            <a href="{{ route('petitions.download', $vrFile->hashid) }}" target="_blank"
-                                                class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-amber-200 rounded-lg text-amber-800 hover:bg-amber-100 transition-colors shadow-sm">
-                                                <i data-lucide="file-text" class="w-4 h-4"></i>
-                                                <span class="font-medium italic text-xs">{{ $vrFile->original_filename }}</span>
-                                            </a>
-                                        </div>
-                                    @endif
-
-                                    @if(!$petition->decision || auth()->user()->canAccess('access admin dashboard'))
-                                        <div class="md:col-span-2 pt-4 border-t border-amber-200/50">
-                                            <form
-                                                action="{{ route('forwardings.pullbackVr', $petition->latestForwarding->petition_forwarding_id) }}"
-                                                method="POST" class="inline pullback-form"
-                                                data-message="Are you sure you want to pull back this VR Report?">
-                                                @csrf
-                                                @method('PATCH')
-                                                <button type="submit"
-                                                    class="px-3 py-1.5 text-xs font-bold text-rose-600 bg-white border border-rose-100 rounded-lg hover:bg-rose-50 transition-all flex items-center gap-1.5 shadow-sm">
-                                                    <i data-lucide="undo-2" class="w-3.5 h-3.5"></i> Pull Back VR Report
-                                                </button>
-                                            </form>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        @endif
-
-                        <!-- Unit VR Submission (Only if Forwarded) -->
-                        @if($petition->status === 'Forwarded' && Auth::user()->canAccess('update petitions'))
-                            <div class="bg-amber-50 border border-amber-100 rounded-xl p-6 mb-6">
-                                <h4 class="font-bold text-amber-900 mb-4">Submit Verification Report (Unit Action)</h4>
-                                <form
-                                    action="{{ route('forwardings.updateVr', $petition->latestForwarding->petition_forwarding_id) }}"
-                                    method="POST" enctype="multipart/form-data" class="space-y-4">
-                                    @csrf
-                                    @method('PUT')
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">VR Reference No</label>
-                                            <input type="text" name="vr_ref_no"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900"
-                                                required>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">VR Date</label>
-                                            <input type="date" placeholder="DD-MM-YYYY" name="vr_date"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
-                                                style="color: #1e40af !important;" required
-                                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">VR Recommendation</label>
-                                        <div class="relative flex items-center">
-                                            <select name="vr_remarks"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
-                                                style="background-image: none !important;" required>
-                                                <option value="">Select Recommendation...</option>
-                                                <option value="VC">Vigilance Case (VC)</option>
-                                                <option value="VE">Vigilance Enquiry (VE)</option>
-                                                <option value="PE">Preliminary Enquiry (PE)</option>
-                                                <option value="SC">Surprise Check (SC)</option>
-                                                <option value="CV">Confidential Verification (CV)</option>
-                                                <option value="IV">Internal Vigilance (IV)</option>
-                                                <option value="ICell">Intelligence Cell (I Cell)</option>
-                                                <option value="Closed">Closed</option>
-                                                <option value="Sent to Govt">Sent to Govt</option>
-                                                <option value="Sent to SPC">Sent to SPC</option>
-                                            </select>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none">
-                                                <path d="m6 9 6 6 6-6" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="space-y-5">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">Upload verification
-                                                report</label>
-                                            <input type="file" name="vr_file" accept=".pdf,.jpg,.jpeg,.png"
-                                                class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 transition-all">
-                                        </div>
-                                        <div>
-                                            <label
-                                                class="block text-sm font-medium text-gray-700 mb-1 mt-2 text-blue-700 font-bold tracking-wider text-[11px]">VR
-                                                received in CPSP</label>
-                                            <input type="date" placeholder="DD-MM-YYYY" name="vr_received_at_cpsp_date"
-                                                class="w-full rounded-lg border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-slate-800 font-semibold bg-blue-50/20"
-                                                style="color: #1e40af !important;"
-                                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
-                                        </div>
-                                    </div>
-                                    <button type="submit"
-                                        class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-semibold shadow-sm">Submit
-                                        VR</button>
-                                </form>
-                            </div>
-                        @endif
-
-                        <!-- CPSP Receive VR -->
-                        @if($petition->status === 'VR_Received' && $petition->latestForwarding && !$petition->latestForwarding->vr_received_at_cpsp_date && Auth::user()->canAccess('update petitions'))
-                            <div class="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
-                                <h4 class="font-bold text-blue-900 mb-4">Acknowledge VR Receipt (CPSP Action)</h4>
-                                <div class="mb-4 text-sm grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <span class="text-gray-600 font-semibold">VR Ref:</span>
-                                        <span
-                                            class="text-gray-900 block mt-1">{{ $petition->latestForwarding->vr_ref_no }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600 font-semibold">VR Date:</span>
-                                        <span class="text-gray-900 block mt-1">{{ $petition->latestForwarding->vr_date }}</span>
-                                    </div>
-                                </div>
-                                <form
-                                    action="{{ $petition->latestForwarding ? route('forwardings.receiveVr', $petition->latestForwarding->petition_forwarding_id) : '#' }}"
-                                    method="POST" class="space-y-4">
-                                    @csrf
-                                    @method('PATCH')
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Verification report received
-                                            in
-                                            CPSP date</label>
-                                        <input type="date" placeholder="DD-MM-YYYY" name="vr_received_at_cpsp_date"
-                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-slate-800 font-semibold"
-                                            style="color: #1e40af !important;" value="{{ old('vr_received_at_cpsp_date') }}"
-                                            required
-                                            max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
-                                    </div>
-                                    <button type="submit"
-                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm w-full sm:w-auto">Acknowledge
-                                        & Mark as Received</button>
-                                </form>
-                            </div>
-                        @endif
-
-                        <!-- Final Decision -->
-                        @if($petition->status === 'VR_Received' && $petition->latestForwarding && $petition->latestForwarding->vr_received_at_cpsp_date && Auth::user()->canAccess('update petitions'))
-                            <div class="bg-rose-50 border border-rose-100 rounded-xl p-6 mb-6">
-                                <h4 class="font-bold text-rose-900 mb-4">Final Decision</h4>
-                                <form action="{{ route('decisions.store') }}" method="POST" enctype="multipart/form-data"
+                        @if($petition->status === 'Received' && Auth::user()->canAccess('update petitions'))
+                            <!-- Director Forwarding Form -->
+                            <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 mb-6">
+                                <h4 class="font-bold text-indigo-900 mb-4">Initial Decision / Forwarding</h4>
+                                <form action="{{ route('forwardings.store') }}" method="POST" enctype="multipart/form-data"
                                     class="space-y-4"
-                                    onsubmit="if(document.getElementById('final_decision_select').value === 'Sent to Govt' && !document.getElementById('final_govt_rec_type').value) { document.getElementById('final-govt-rec-error').style.display = 'block'; return false; }">
+                                    onsubmit="if(document.getElementById('fwd_action_select').value === 'Sent_to_Govt' && !document.getElementById('fwd_govt_rec_type').value) { document.getElementById('fwd-govt-rec-error').style.display = 'block'; return false; }">
                                     @csrf
                                     <input type="hidden" name="petition_id" value="{{ $petition->petition_id }}">
 
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">File Number <span
+                                                    class="text-red-500">*</span></label>
+                                            <input type="text" name="file_no" required
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900"
+                                                placeholder="Enter File Number">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">File Date</label>
+                                            <input type="date" name="file_created_date" id="fwd_file_created_date"
+                                                max="{{ date('Y-m-d') }}" placeholder="DD-MM-YYYY"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
+                                                style="color: #1e40af !important;">
+                                        </div>
+                                    </div>
+
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Final Decision <span
-                                                class="required-mark text-red-600 font-bold ml-1"
-                                                style="color: #dc2626 !important;">*</span></label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
                                         <div class="relative flex items-center">
-                                            <select name="final_decision" id="final_decision_select"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 appearance-none pr-10 py-2 text-sm text-gray-900"
+                                            <select name="action" id="fwd_action_select"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
                                                 style="background-image: none !important;" required onchange="
-                                                                                                    document.getElementById('final-govt-rec-div').style.display = this.value === 'Sent to Govt' ? 'block' : 'none';
-                                                                                                    if (this.value !== 'Sent to Govt') {
-                                                                                                        document.getElementById('final_govt_rec_type').value = '';
-                                                                                                        document.getElementById('final-govt-rec-error').style.display = 'none';
-                                                                                                    }
-                                                                                                    var showOrder = ['VC','VE','SC','CV','PE'].includes(this.value);
-                                                                                                    document.getElementById('final-order-number-div').style.display = showOrder ? 'block' : 'none';
-                                                                                                ">
-                                                <option value="">Select...</option>
-                                                <option value="VC">Vigilance Case (VC)</option>
-                                                <option value="VE">Vigilance Enquiry (VE)</option>
-                                                <option value="PE">Preliminary Enquiry (PE)</option>
-                                                <option value="SC">Surprise Check (SC)</option>
-                                                <option value="CV">Confidential Verification (CV)</option>
-                                                <option value="IV">Internal Vigilance (IV)</option>
-                                                <option value="ICell">Intelligence Cell (I Cell)</option>
-                                                <option value="Closed">Closed</option>
-                                                <option value="Sent to Govt">Sent to Govt</option>
-                                                <option value="Sent to SPC">Sent to SPC</option>
+                                                                                                                        document.getElementById('unit-select-div').style.display = this.value === 'Forward_To_Unit' ? 'block' : 'none';
+                                                                                                                        document.getElementById('final-doc-div-fwd').style.display = (this.value === 'Close' || this.value === 'Sent_to_Govt' || this.value === 'Sent_to_SPC' || this.value === 'Internal_Vigilance') ? 'block' : 'none';
+                                                                                                                        document.getElementById('govt-rec-div-fwd').style.display = this.value === 'Sent_to_Govt' ? 'block' : 'none';
+                                                                                                                        if (this.value !== 'Sent_to_Govt') {
+                                                                                                                            document.getElementById('fwd_govt_rec_type').value = '';
+                                                                                                                            document.getElementById('fwd-govt-rec-error').style.display = 'none';
+                                                                                                                        }
+                                                                                                                    ">
+                                                <option value="">Select Action...</option>
+                                                <option value="Forward_To_Unit">Forward to Unit</option>
+                                                <option value="Sent_to_Govt">Send to Govt (Decision)</option>
+                                                <option value="Sent_to_SPC">Send to SPC (Decision)</option>
+                                                <option value="Internal_Vigilance">Send to Internal Vigilance (Decision)</option>
+                                                <option value="Close">Close Petition (Decision)</option>
                                             </select>
                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                                 fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -918,13 +568,13 @@
                                         </div>
                                     </div>
 
-                                    <div id="final-govt-rec-div" style="display: none;">
+                                    <div id="govt-rec-div-fwd" style="display: none;">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Recommendation Type <span
-                                                class="text-red-600">*</span></label>
+                                                class="text-red-500">*</span></label>
                                         <div class="relative flex items-center">
-                                            <select name="govt_recommendation_type" id="final_govt_rec_type"
-                                                onchange="if(this.value) document.getElementById('final-govt-rec-error').style.display = 'none';"
-                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 appearance-none pr-10 py-2 text-sm text-gray-900"
+                                            <select name="govt_recommendation_type" id="fwd_govt_rec_type"
+                                                onchange="if(this.value) document.getElementById('fwd-govt-rec-error').style.display = 'none';"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
                                                 style="background-image: none !important;">
                                                 <option value="">Select Recommendation Type...</option>
                                                 <option value="17 A Sanction">17 A Sanction</option>
@@ -938,168 +588,521 @@
                                                 <path d="m6 9 6 6 6-6" />
                                             </svg>
                                         </div>
-                                        <p id="final-govt-rec-error" class="text-xs font-semibold text-rose-600 mt-1"
+                                        <p id="fwd-govt-rec-error" class="text-xs font-semibold text-rose-600 mt-1"
                                             style="display: none;">Recommendation Type is required.</p>
                                     </div>
+
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Decision Date <span
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Action Date <span
                                                 class="required-mark text-red-600 font-bold ml-1"
                                                 style="color: #dc2626 !important;">*</span></label>
-                                        <input type="date" name="decision_date" max="{{ date('Y-m-d') }}"
+                                        <input type="date" name="forwarded_date" id="fwd_action_date" max="{{ date('Y-m-d') }}"
                                             placeholder="DD-MM-YYYY"
-                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm py-[9px] text-slate-800 font-semibold"
+                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                                             style="color: #1e40af !important;" required>
                                     </div>
 
-                                    <div id="final-order-number-div" style="display: none;">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Directorate Order
-                                            Number</label>
-                                        <input type="text" name="directorate_order_number" placeholder="Enter Order Number"
-                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm py-[9px] text-slate-800">
+                                    <div id="unit-select-div" style="display: none;">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Unit</label>
+                                        <div class="relative flex items-center">
+                                            <select name="to_unit_id"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
+                                                style="background-image: none !important;">
+                                                <option value="">Select Unit...</option>
+                                                @foreach(\App\Models\Unit::all() as $unit)
+                                                    <option value="{{ $unit->unit_id }}">{{ $unit->unit_name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none">
+                                                <path d="m6 9 6 6 6-6" />
+                                            </svg>
+                                        </div>
                                     </div>
 
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Final Remarks</label>
-                                        <textarea name="final_remarks" rows="3"
-                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-gray-900"></textarea>
-                                    </div>
-
-                                    <div>
+                                    <div id="final-doc-div-fwd" style="display: none;">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Upload Final Order
                                             Document</label>
                                         <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
-                                            class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100">
+                                            class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                                     </div>
 
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+                                        <textarea name="director_remarks" rows="3"
+                                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900"
+                                            placeholder="Enter instructions or remarks..."></textarea>
+                                    </div>
                                     <button type="submit"
-                                        class="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 font-semibold shadow-sm">Submit
-                                        Final Decision</button>
+                                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold shadow-sm">Submit
+                                        Decision</button>
                                 </form>
                             </div>
                         @endif
 
-                        @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Sent_to_SPC' || $petition->status === 'Internal_Vigilance')
-                            @if($petition->decision)
-                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 lg:col-span-2">
-                                    <h4 class="font-bold text-gray-800 mb-4 border-b border-slate-200 pb-2">Decision Details</h4>
+                        <!-- Show Previous Workflow Details in a Grid -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 items-start">
+                            <!-- Show Previous Forwarding Details if exists -->
+                            @if($petition->latestForwarding)
+                                <div class="bg-slate-50 border border-slate-200 rounded-xl p-6">
+                                    <h4 class="font-bold text-gray-800 mb-4 border-b border-slate-200 pb-2">Forwarding History</h4>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                         <div>
-                                            <span class="text-gray-600 font-semibold">Final Decision:</span>
+                                            <span class="text-gray-600 font-semibold">Forwarded To:</span>
                                             <span
-                                                class="text-gray-900 block mt-1">{{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}</span>
-                                        </div>
-                                        @if($petition->decision->govt_recommendation_type)
-                                            <div>
-                                                <span class="text-gray-600 font-semibold">Recommendation :</span>
-                                                <span
-                                                    class="text-rose-900 font-bold block mt-1">{{ $petition->decision->govt_recommendation_type }}</span>
-                                            </div>
-                                        @endif
-                                        <div>
-                                            <span class="text-gray-600 font-semibold">Decided On:</span>
-                                            <span
-                                                class="text-gray-900 block mt-1">{{ \Carbon\Carbon::parse($petition->decision->decision_date)->format('d M, Y') }}</span>
+                                                class="text-gray-900 block mt-1">{{ $petition->latestForwarding->toUnit->unit_name ?? 'N/A' }}</span>
                                         </div>
                                         <div>
-                                            <span class="text-gray-600 font-semibold">Directorate Order Number:</span>
+                                            <span class="text-gray-600 font-semibold">Date:</span>
                                             <span
-                                                class="text-gray-900 block mt-1 font-mono text-xs">{{ $petition->decision->directorate_order_number ?? 'N/A' }}</span>
+                                                class="text-gray-900 block mt-1">{{ \Carbon\Carbon::parse($petition->latestForwarding->forwarded_date)->format('d M, Y') }}</span>
                                         </div>
-                                        @if($petition->decision->processedBy)
+                                        @if($petition->latestForwarding->processedBy)
                                             <div>
-                                                <span class="text-gray-600 font-semibold">Processed By:</span>
+                                                <span class="text-gray-600 font-semibold">Forwarded By:</span>
                                                 <span
-                                                    class="text-rose-700 font-bold uppercase text-[11px] block mt-1">{{ $petition->decision->processedBy->name }}</span>
+                                                    class="text-indigo-700 font-bold uppercase text-[11px] block mt-1">{{ $petition->latestForwarding->processedBy->name }}</span>
                                             </div>
                                         @endif
                                         <div class="md:col-span-2">
-                                            <span class="text-gray-600 font-semibold">Final Remarks:</span>
+                                            <span class="text-gray-600 font-semibold">Remarks:</span>
                                             <span
-                                                class="text-gray-800 block mt-1">{{ $petition->decision->final_remarks ?? 'N/A' }}</span>
+                                                class="text-gray-800 block mt-1">{{ $petition->latestForwarding->director_remarks }}</span>
                                         </div>
-
-                                        @php
-                                            $finalOrderFile = $petition->uploads->where('category', \App\Models\Upload::CATEGORY_FINAL_ORDER)->last();
-                                        @endphp
-                                        @if($finalOrderFile)
+                                        @if(!$petition->latestForwarding->vr_ref_no && (auth()->user()->canAccess('access admin dashboard') || !$petition->decision))
                                             <div class="md:col-span-2 pt-2">
-                                                <span class="text-gray-600 font-semibold block mb-2">Attached Final Order:</span>
-                                                <a href="{{ route('petitions.download', $finalOrderFile->hashid) }}" target="_blank"
-                                                    class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-gray-800 hover:bg-slate-50 transition-colors shadow-sm">
-                                                    <i data-lucide="file-check" class="w-4 h-4 text-emerald-600"></i>
-                                                    <span
-                                                        class="font-medium italic text-xs">{{ $finalOrderFile->original_filename }}</span>
-                                                </a>
-                                            </div>
-                                        @endif
-
-                                        @if(auth()->user()->canAccess('access admin dashboard'))
-                                            <div class="md:col-span-2 pt-4 border-t border-slate-200/50">
-                                                <form action="{{ route('decisions.pullback', $petition->decision->decision_id) }}"
+                                                <form
+                                                    action="{{ route('forwardings.pullback', $petition->latestForwarding->petition_forwarding_id) }}"
                                                     method="POST" class="inline pullback-form"
-                                                    data-message="Are you sure you want to pull back this Final Decision?">
+                                                    data-message="Are you sure you want to pull back this forwarding?">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit"
-                                                        class="px-3 py-1.5 text-xs font-bold text-rose-600 bg-white border border-rose-100 rounded-lg hover:bg-rose-50 transition-all flex items-center gap-1.5 shadow-sm">
-                                                        <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Pull Back Final Decision
+                                                        class="px-3 py-1.5 text-xs font-bold text-rose-600 bg-rose-50 border border-rose-100 rounded-lg hover:bg-rose-100 transition-all flex items-center gap-1.5 shadow-sm">
+                                                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Pull Back Forwarding
                                                     </button>
                                                 </form>
                                             </div>
                                         @endif
                                     </div>
                                 </div>
+                            @endif
 
-                                @if($petition->compliance)
-                                    <div class="mt-4 bg-emerald-50/50 border border-emerald-100 rounded-xl p-5 lg:col-span-2">
-                                        <h4 class="font-bold text-emerald-900 mb-3 flex items-center gap-2">
-                                            <i data-lucide="check-square" class="w-4 h-4 text-emerald-600"></i> Compliance Details
-                                        </h4>
-                                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                            <!-- Verification Report Details (Added) -->
+                            @if($petition->latestForwarding && $petition->latestForwarding->vr_ref_no)
+                                <div class="bg-amber-50 border border-amber-200 rounded-xl p-6">
+                                    <h4
+                                        class="font-bold text-amber-900 mb-4 border-b border-amber-200 pb-2 flex items-center gap-2">
+                                        <i data-lucide="file-check" class="w-5 h-5 text-amber-600"></i> Verification Report Details
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <span class="text-gray-600 font-semibold">VR Reference No:</span>
+                                            <span
+                                                class="text-gray-900 block mt-1">{{ $petition->latestForwarding->vr_ref_no }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600 font-semibold">VR Date:</span>
+                                            <span
+                                                class="text-gray-900 block mt-1">{{ \Carbon\Carbon::parse($petition->latestForwarding->vr_date)->format('d M, Y') }}</span>
+                                        </div>
+                                        @if($petition->latestForwarding->vr_received_at_cpsp_date)
                                             <div>
+                                                <span class="text-gray-600 font-semibold">Received at CPSP:</span>
                                                 <span
-                                                    class="text-emerald-700/80 font-semibold block text-xs uppercase tracking-wider">Action
-                                                    Taken</span>
+                                                    class="font-bold text-blue-700 block mt-1">{{ \Carbon\Carbon::parse($petition->latestForwarding->vr_received_at_cpsp_date)->format('d M, Y') }}</span>
+                                            </div>
+                                        @endif
+                                        @if($petition->latestForwarding->processedBy)
+                                            <div>
+                                                <span class="text-gray-600 font-semibold">VR Updated By:</span>
                                                 <span
-                                                    class="text-slate-900 font-bold mt-1 block">{{ $petition->compliance->action_number }}</span>
+                                                    class="text-amber-700 font-bold uppercase text-[11px] block mt-1">{{ $petition->latestForwarding->processedBy->name }}</span>
+                                            </div>
+                                        @endif
+                                        <div class="md:col-span-2">
+                                            <span class="text-gray-600 font-semibold">VR Recommendation:</span>
+                                            <span
+                                                class="text-gray-800 block mt-1">{{ \App\Models\Decision::getDecisionLabel($petition->latestForwarding->vr_remarks) ?? $petition->latestForwarding->vr_remarks }}</span>
+                                        </div>
+
+                                        @php
+                                            $vrFile = $petition->uploads->where('category', 'Verification Report')->last();
+                                        @endphp
+                                        @if($vrFile)
+                                            <div class="md:col-span-2 pt-2">
+                                                <span class="text-gray-600 font-semibold block mb-2">Attached VR Document:</span>
+                                                <a href="{{ route('petitions.download', $vrFile->hashid) }}" target="_blank"
+                                                    class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-amber-200 rounded-lg text-amber-800 hover:bg-amber-100 transition-colors shadow-sm">
+                                                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                                                    <span class="font-medium italic text-xs">{{ $vrFile->original_filename }}</span>
+                                                </a>
+                                            </div>
+                                        @endif
+
+                                        @if(!$petition->decision || auth()->user()->canAccess('access admin dashboard'))
+                                            <div class="md:col-span-2 pt-4 border-t border-amber-200/50">
+                                                <form
+                                                    action="{{ route('forwardings.pullbackVr', $petition->latestForwarding->petition_forwarding_id) }}"
+                                                    method="POST" class="inline pullback-form"
+                                                    data-message="Are you sure you want to pull back this VR Report?">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit"
+                                                        class="px-3 py-1.5 text-xs font-bold text-rose-600 bg-white border border-rose-100 rounded-lg hover:bg-rose-50 transition-all flex items-center gap-1.5 shadow-sm">
+                                                        <i data-lucide="undo-2" class="w-3.5 h-3.5"></i> Pull Back VR Report
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Unit VR Submission (Only if Forwarded) -->
+                            @if($petition->status === 'Forwarded' && Auth::user()->canAccess('update petitions'))
+                                <div class="bg-amber-50 border border-amber-100 rounded-xl p-6 mb-6">
+                                    <h4 class="font-bold text-amber-900 mb-4">Submit Verification Report (Unit Action)</h4>
+                                    <form
+                                        action="{{ route('forwardings.updateVr', $petition->latestForwarding->petition_forwarding_id) }}"
+                                        method="POST" enctype="multipart/form-data" class="space-y-4">
+                                        @csrf
+                                        @method('PUT')
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">VR Reference No</label>
+                                                <input type="text" name="vr_ref_no"
+                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900"
+                                                    required>
                                             </div>
                                             <div>
-                                                <span
-                                                    class="text-emerald-700/80 font-semibold block text-xs uppercase tracking-wider">Date</span>
-                                                <span
-                                                    class="text-slate-900 font-medium mt-1 block">{{ \Carbon\Carbon::parse($petition->compliance->action_date)->format('d M, Y') }}</span>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">VR Date</label>
+                                                <input type="date" placeholder="DD-MM-YYYY" name="vr_date"
+                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-slate-800 font-semibold"
+                                                    style="color: #1e40af !important;" required
+                                                    max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">VR Recommendation</label>
+                                            <div class="relative flex items-center">
+                                                <select name="vr_remarks"
+                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 appearance-none pr-10 py-2 text-sm text-gray-900"
+                                                    style="background-image: none !important;" required>
+                                                    <option value="">Select Recommendation...</option>
+                                                    <option value="VC">Vigilance Case (VC)</option>
+                                                    <option value="VE">Vigilance Enquiry (VE)</option>
+                                                    <option value="PE">Preliminary Enquiry (PE)</option>
+                                                    <option value="SC">Surprise Check (SC)</option>
+                                                    <option value="CV">Confidential Verification (CV)</option>
+                                                    <option value="IV">Internal Vigilance (IV)</option>
+                                                    <option value="ICell">Intelligence Cell (I Cell)</option>
+                                                    <option value="Closed">Closed</option>
+                                                    <option value="Sent to Govt">Sent to Govt</option>
+                                                    <option value="Sent to SPC">Sent to SPC</option>
+                                                </select>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none">
+                                                    <path d="m6 9 6 6 6-6" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="space-y-5">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Upload verification
+                                                    report</label>
+                                                <input type="file" name="vr_file" accept=".pdf,.jpg,.jpeg,.png"
+                                                    class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 transition-all">
                                             </div>
                                             <div>
-                                                <span
-                                                    class="text-emerald-700/80 font-semibold block text-xs uppercase tracking-wider">Unit</span>
-                                                <span
-                                                    class="text-slate-900 font-medium mt-1 block">{{ $petition->compliance->unit->unit_name ?? 'N/A' }}</span>
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 mb-1 mt-2 text-blue-700 font-bold tracking-wider text-[11px]">VR
+                                                    received in CPSP</label>
+                                                <input type="date" placeholder="DD-MM-YYYY" name="vr_received_at_cpsp_date"
+                                                    class="w-full rounded-lg border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-slate-800 font-semibold bg-blue-50/20"
+                                                    style="color: #1e40af !important;"
+                                                    max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
                                             </div>
-                                            @if($petition->compliance->remarks)
-                                                <div class="sm:col-span-3 pt-2">
+                                        </div>
+                                        <button type="submit"
+                                            class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-semibold shadow-sm">Submit
+                                            VR</button>
+                                    </form>
+                                </div>
+                            @endif
+
+                            <!-- CPSP Receive VR -->
+                            @if($petition->status === 'VR_Received' && $petition->latestForwarding && !$petition->latestForwarding->vr_received_at_cpsp_date && Auth::user()->canAccess('update petitions'))
+                                <div class="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
+                                    <h4 class="font-bold text-blue-900 mb-4">Acknowledge VR Receipt (CPSP Action)</h4>
+                                    <div class="mb-4 text-sm grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <span class="text-gray-600 font-semibold">VR Ref:</span>
+                                            <span
+                                                class="text-gray-900 block mt-1">{{ $petition->latestForwarding->vr_ref_no }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600 font-semibold">VR Date:</span>
+                                            <span class="text-gray-900 block mt-1">{{ $petition->latestForwarding->vr_date }}</span>
+                                        </div>
+                                    </div>
+                                    <form
+                                        action="{{ $petition->latestForwarding ? route('forwardings.receiveVr', $petition->latestForwarding->petition_forwarding_id) : '#' }}"
+                                        method="POST" class="space-y-4">
+                                        @csrf
+                                        @method('PATCH')
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Verification report received
+                                                in
+                                                CPSP date</label>
+                                            <input type="date" placeholder="DD-MM-YYYY" name="vr_received_at_cpsp_date"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm text-slate-800 font-semibold"
+                                                style="color: #1e40af !important;" value="{{ old('vr_received_at_cpsp_date') }}"
+                                                required
+                                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}">
+                                        </div>
+                                        <button type="submit"
+                                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-sm w-full sm:w-auto">Acknowledge
+                                            & Mark as Received</button>
+                                    </form>
+                                </div>
+                            @endif
+
+                            <!-- Final Decision -->
+                            @if($petition->status === 'VR_Received' && $petition->latestForwarding && $petition->latestForwarding->vr_received_at_cpsp_date && Auth::user()->canAccess('update petitions'))
+                                <div class="bg-rose-50 border border-rose-100 rounded-xl p-6 mb-6">
+                                    <h4 class="font-bold text-rose-900 mb-4">Final Decision</h4>
+                                    <form action="{{ route('decisions.store') }}" method="POST" enctype="multipart/form-data"
+                                        class="space-y-4"
+                                        onsubmit="if(document.getElementById('final_decision_select').value === 'Sent to Govt' && !document.getElementById('final_govt_rec_type').value) { document.getElementById('final-govt-rec-error').style.display = 'block'; return false; }">
+                                        @csrf
+                                        <input type="hidden" name="petition_id" value="{{ $petition->petition_id }}">
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Final Decision <span
+                                                    class="required-mark text-red-600 font-bold ml-1"
+                                                    style="color: #dc2626 !important;">*</span></label>
+                                            <div class="relative flex items-center">
+                                                <select name="final_decision" id="final_decision_select"
+                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 appearance-none pr-10 py-2 text-sm text-gray-900"
+                                                    style="background-image: none !important;" required onchange="
+                                                                                                                            document.getElementById('final-govt-rec-div').style.display = this.value === 'Sent to Govt' ? 'block' : 'none';
+                                                                                                                            if (this.value !== 'Sent to Govt') {
+                                                                                                                                document.getElementById('final_govt_rec_type').value = '';
+                                                                                                                                document.getElementById('final-govt-rec-error').style.display = 'none';
+                                                                                                                            }
+                                                                                                                            var showOrder = ['VC','VE','SC','CV','PE'].includes(this.value);
+                                                                                                                            document.getElementById('final-order-number-div').style.display = showOrder ? 'block' : 'none';
+                                                                                                                        ">
+                                                    <option value="">Select...</option>
+                                                    <option value="VC">Vigilance Case (VC)</option>
+                                                    <option value="VE">Vigilance Enquiry (VE)</option>
+                                                    <option value="PE">Preliminary Enquiry (PE)</option>
+                                                    <option value="SC">Surprise Check (SC)</option>
+                                                    <option value="CV">Confidential Verification (CV)</option>
+                                                    <option value="IV">Internal Vigilance (IV)</option>
+                                                    <option value="ICell">Intelligence Cell (I Cell)</option>
+                                                    <option value="Closed">Closed</option>
+                                                    <option value="Sent to Govt">Sent to Govt</option>
+                                                    <option value="Sent to SPC">Sent to SPC</option>
+                                                </select>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none">
+                                                    <path d="m6 9 6 6 6-6" />
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        <div id="final-govt-rec-div" style="display: none;">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Recommendation Type <span
+                                                    class="text-red-600">*</span></label>
+                                            <div class="relative flex items-center">
+                                                <select name="govt_recommendation_type" id="final_govt_rec_type"
+                                                    onchange="if(this.value) document.getElementById('final-govt-rec-error').style.display = 'none';"
+                                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 appearance-none pr-10 py-2 text-sm text-gray-900"
+                                                    style="background-image: none !important;">
+                                                    <option value="">Select Recommendation Type...</option>
+                                                    <option value="17 A Sanction">17 A Sanction</option>
+                                                    <option value="Report with Recommendations">Report with Recommendations</option>
+                                                    <option value="No Recommendations">No Recommendations</option>
+                                                </select>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                                    fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    class="w-4 h-4 text-gray-500 absolute right-3 pointer-events-none">
+                                                    <path d="m6 9 6 6 6-6" />
+                                                </svg>
+                                            </div>
+                                            <p id="final-govt-rec-error" class="text-xs font-semibold text-rose-600 mt-1"
+                                                style="display: none;">Recommendation Type is required.</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Decision Date <span
+                                                    class="required-mark text-red-600 font-bold ml-1"
+                                                    style="color: #dc2626 !important;">*</span></label>
+                                            <input type="date" name="decision_date" max="{{ date('Y-m-d') }}"
+                                                placeholder="DD-MM-YYYY"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm py-[9px] text-slate-800 font-semibold"
+                                                style="color: #1e40af !important;" required>
+                                        </div>
+
+                                        <div id="final-order-number-div" style="display: none;">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Directorate Order
+                                                Number</label>
+                                            <input type="text" name="directorate_order_number" placeholder="Enter Order Number"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm py-[9px] text-slate-800">
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Final Remarks</label>
+                                            <textarea name="final_remarks" rows="3"
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 text-sm text-gray-900"></textarea>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Upload Final Order
+                                                Document</label>
+                                            <input type="file" name="final_order_file" accept=".pdf,.jpg,.jpeg,.png"
+                                                class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100">
+                                        </div>
+
+                                        <button type="submit"
+                                            class="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 font-semibold shadow-sm">Submit
+                                            Final Decision</button>
+                                    </form>
+                                </div>
+                            @endif
+
+                            @if($petition->status === 'Closed' || $petition->status === 'Sent_to_Govt' || $petition->status === 'Sent_to_SPC' || $petition->status === 'Internal_Vigilance')
+                                @if($petition->decision)
+                                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-6 lg:col-span-2">
+                                        <h4 class="font-bold text-gray-800 mb-4 border-b border-slate-200 pb-2">Decision Details</h4>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <span class="text-gray-600 font-semibold">Final Decision:</span>
+                                                <span
+                                                    class="text-gray-900 block mt-1">{{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}</span>
+                                            </div>
+                                            @if($petition->decision->govt_recommendation_type)
+                                                <div>
+                                                    <span class="text-gray-600 font-semibold">Recommendation :</span>
                                                     <span
-                                                        class="text-emerald-700/80 font-semibold block text-xs uppercase tracking-wider mb-1">Remarks</span>
-                                                    <span class="text-slate-700 italic">{{ $petition->compliance->remarks }}</span>
+                                                        class="text-rose-900 font-bold block mt-1">{{ $petition->decision->govt_recommendation_type }}</span>
+                                                </div>
+                                            @endif
+                                            <div>
+                                                <span class="text-gray-600 font-semibold">Decided On:</span>
+                                                <span
+                                                    class="text-gray-900 block mt-1">{{ \Carbon\Carbon::parse($petition->decision->decision_date)->format('d M, Y') }}</span>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-600 font-semibold">Directorate Order Number:</span>
+                                                <span
+                                                    class="text-gray-900 block mt-1 font-mono text-xs">{{ $petition->decision->directorate_order_number ?? 'N/A' }}</span>
+                                            </div>
+                                            @if($petition->decision->processedBy)
+                                                <div>
+                                                    <span class="text-gray-600 font-semibold">Processed By:</span>
+                                                    <span
+                                                        class="text-rose-700 font-bold uppercase text-[11px] block mt-1">{{ $petition->decision->processedBy->name }}</span>
+                                                </div>
+                                            @endif
+                                            <div class="md:col-span-2">
+                                                <span class="text-gray-600 font-semibold">Final Remarks:</span>
+                                                <span
+                                                    class="text-gray-800 block mt-1">{{ $petition->decision->final_remarks ?? 'N/A' }}</span>
+                                            </div>
+
+                                            @php
+                                                $finalOrderFile = $petition->uploads->where('category', \App\Models\Upload::CATEGORY_FINAL_ORDER)->last();
+                                            @endphp
+                                            @if($finalOrderFile)
+                                                <div class="md:col-span-2 pt-2">
+                                                    <span class="text-gray-600 font-semibold block mb-2">Attached Final Order:</span>
+                                                    <a href="{{ route('petitions.download', $finalOrderFile->hashid) }}" target="_blank"
+                                                        class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-slate-200 rounded-lg text-gray-800 hover:bg-slate-50 transition-colors shadow-sm">
+                                                        <i data-lucide="file-check" class="w-4 h-4 text-emerald-600"></i>
+                                                        <span
+                                                            class="font-medium italic text-xs">{{ $finalOrderFile->original_filename }}</span>
+                                                    </a>
+                                                </div>
+                                            @endif
+
+                                            @if(auth()->user()->canAccess('access admin dashboard'))
+                                                <div class="md:col-span-2 pt-4 border-t border-slate-200/50">
+                                                    <form action="{{ route('decisions.pullback', $petition->decision->decision_id) }}"
+                                                        method="POST" class="inline pullback-form"
+                                                        data-message="Are you sure you want to pull back this Final Decision?">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit"
+                                                            class="px-3 py-1.5 text-xs font-bold text-rose-600 bg-white border border-rose-100 rounded-lg hover:bg-rose-50 transition-all flex items-center gap-1.5 shadow-sm">
+                                                            <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Pull Back Final Decision
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             @endif
                                         </div>
                                     </div>
+
+                                    @if($petition->compliance)
+                                        <div class="mt-4 bg-emerald-50/50 border border-emerald-100 rounded-xl p-5 lg:col-span-2">
+                                            <h4 class="font-bold text-emerald-900 mb-3 flex items-center gap-2">
+                                                <i data-lucide="check-square" class="w-4 h-4 text-emerald-600"></i> Compliance Details
+                                            </h4>
+                                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                                                <div>
+                                                    <span
+                                                        class="text-emerald-700/80 font-semibold block text-xs uppercase tracking-wider">Action
+                                                        Taken</span>
+                                                    <span
+                                                        class="text-slate-900 font-bold mt-1 block">{{ $petition->compliance->action_number }}</span>
+                                                </div>
+                                                <div>
+                                                    <span
+                                                        class="text-emerald-700/80 font-semibold block text-xs uppercase tracking-wider">Date</span>
+                                                    <span
+                                                        class="text-slate-900 font-medium mt-1 block">{{ \Carbon\Carbon::parse($petition->compliance->action_date)->format('d M, Y') }}</span>
+                                                </div>
+                                                <div>
+                                                    <span
+                                                        class="text-emerald-700/80 font-semibold block text-xs uppercase tracking-wider">Unit</span>
+                                                    <span
+                                                        class="text-slate-900 font-medium mt-1 block">{{ $petition->compliance->unit->unit_name ?? 'N/A' }}</span>
+                                                </div>
+                                                @if($petition->compliance->remarks)
+                                                    <div class="sm:col-span-3 pt-2">
+                                                        <span
+                                                            class="text-emerald-700/80 font-semibold block text-xs uppercase tracking-wider mb-1">Remarks</span>
+                                                        <span class="text-slate-700 italic">{{ $petition->compliance->remarks }}</span>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endif
                                 @endif
                             @endif
-                        @endif
-                    </div> <!-- End of workflow details grid -->
-                </div>
+                        </div> <!-- End of workflow details grid -->
+                    </div>
                 @else
-                <!-- Section 4: Workflow Details Restricted for Read-Only / Cross-Section Access -->
-                <div class="mt-8 border-t border-slate-200 pt-8">
-                    <div class="p-6 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3 text-slate-600">
-                        <i data-lucide="shield-alert" class="w-6 h-6 text-slate-400 shrink-0"></i>
-                        <div>
-                            <h4 class="font-bold text-slate-800 text-sm">Workflow Details Restricted</h4>
-                            <p class="text-xs text-slate-500 mt-0.5">Internal workflow processing, forwarding history, Verification Reports (VR), and decision records are confidential to the concerned processing section.</p>
+                    <!-- Section 4: Workflow Details Restricted for Read-Only / Cross-Section Access -->
+                    <div class="mt-8 border-t border-slate-200 pt-8">
+                        <div class="p-6 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-3 text-slate-600">
+                            <i data-lucide="shield-alert" class="w-6 h-6 text-slate-400 shrink-0"></i>
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm">Workflow Details Restricted</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">Internal workflow processing, forwarding history,
+                                    Verification Reports (VR), and decision records are confidential to the concerned processing
+                                    section.</p>
+                            </div>
                         </div>
                     </div>
-                </div>
                 @endif
 
             </div>
@@ -1147,7 +1150,9 @@
                                                 <i data-lucide="external-link" class="w-3 h-3"></i>
                                             </a>
                                             @if($petition->isCrossSectionLinked())
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Cross-Section Ref</span>
+                                                <span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Cross-Section
+                                                    Ref</span>
                                             @endif
                                         </div>
                                     </td>
@@ -1198,7 +1203,9 @@
                                                 <i data-lucide="external-link" class="w-3 h-3"></i>
                                             </a>
                                             @if($dup->isCrossSectionLinked())
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Cross-Section Ref</span>
+                                                <span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">Cross-Section
+                                                    Ref</span>
                                             @endif
                                         </div>
                                     </td>
@@ -1258,70 +1265,70 @@
                 class="bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-xl rounded-3xl overflow-visible flex flex-col relative">
 
                 <div x-data="{
-                        searchQuery: '',
-                        results: [],
-                        isOpen: false,
-                        selectedPetition: '',
-                        selectedRecord: null,
-                        isLoading: false,
-                        errorMessage: '',
-                        fetchResults() {
-                            const q = (this.searchQuery || '').trim();
-                            if (q.length < 1) {
-                                this.results = [];
-                                this.isOpen = false;
-                                return;
-                            }
+                                searchQuery: '',
+                                results: [],
+                                isOpen: false,
+                                selectedPetition: '',
+                                selectedRecord: null,
+                                isLoading: false,
+                                errorMessage: '',
+                                fetchResults() {
+                                    const q = (this.searchQuery || '').trim();
+                                    if (q.length < 1) {
+                                        this.results = [];
+                                        this.isOpen = false;
+                                        return;
+                                    }
 
-                            this.isLoading = true;
-                            this.errorMessage = '';
+                                    this.isLoading = true;
+                                    this.errorMessage = '';
 
-                            fetch(`{{ route('petitions.searchDuplicates') }}?q=${encodeURIComponent(q)}&exclude={{ $petition->hashid }}`)
-                                .then(response => {
-                                    if (!response.ok) throw new Error('Network error');
-                                    return response.json();
-                                })
-                                .then(data => {
-                                    this.results = data || [];
-                                    this.isOpen = true;
-                                })
-                                .catch(error => {
-                                    console.error('Error fetching duplicates:', error);
-                                    this.errorMessage = 'An error occurred while searching.';
+                                    fetch(`{{ route('petitions.searchDuplicates') }}?q=${encodeURIComponent(q)}&exclude={{ $petition->hashid }}`)
+                                        .then(response => {
+                                            if (!response.ok) throw new Error('Network error');
+                                            return response.json();
+                                        })
+                                        .then(data => {
+                                            this.results = data || [];
+                                            this.isOpen = true;
+                                        })
+                                        .catch(error => {
+                                            console.error('Error fetching duplicates:', error);
+                                            this.errorMessage = 'An error occurred while searching.';
+                                            this.results = [];
+                                            this.isOpen = true;
+                                        })
+                                        .finally(() => {
+                                            this.isLoading = false;
+                                        });
+                                },
+                                selectResult(result) {
+                                    this.selectedPetition = result.receipt_no;
+                                    this.selectedRecord = result;
+                                    this.searchQuery = result.receipt_no;
+                                    this.isOpen = false;
+                                },
+                                selectFirstExactOrTop() {
+                                    if (!this.results || this.results.length === 0) return;
+                                    const q = (this.searchQuery || '').trim().toLowerCase();
+                                    const exact = this.results.find(r => 
+                                        (r.receipt_no && r.receipt_no.toLowerCase() === q) || 
+                                        (r.file_no && r.file_no.toLowerCase() === q)
+                                    );
+                                    if (exact) {
+                                        this.selectResult(exact);
+                                    } else if (this.results.length === 1) {
+                                        this.selectResult(this.results[0]);
+                                    }
+                                },
+                                resetSearch() {
+                                    this.selectedPetition = '';
+                                    this.selectedRecord = null;
+                                    this.searchQuery = '';
                                     this.results = [];
-                                    this.isOpen = true;
-                                })
-                                .finally(() => {
-                                    this.isLoading = false;
-                                });
-                        },
-                        selectResult(result) {
-                            this.selectedPetition = result.receipt_no;
-                            this.selectedRecord = result;
-                            this.searchQuery = result.receipt_no;
-                            this.isOpen = false;
-                        },
-                        selectFirstExactOrTop() {
-                            if (!this.results || this.results.length === 0) return;
-                            const q = (this.searchQuery || '').trim().toLowerCase();
-                            const exact = this.results.find(r => 
-                                (r.receipt_no && r.receipt_no.toLowerCase() === q) || 
-                                (r.file_no && r.file_no.toLowerCase() === q)
-                            );
-                            if (exact) {
-                                this.selectResult(exact);
-                            } else if (this.results.length === 1) {
-                                this.selectResult(this.results[0]);
-                            }
-                        },
-                        resetSearch() {
-                            this.selectedPetition = '';
-                            this.selectedRecord = null;
-                            this.searchQuery = '';
-                            this.results = [];
-                            this.isOpen = false;
-                        }
-                    }" @click.away="isOpen = false" class="relative w-full text-left">
+                                    this.isOpen = false;
+                                }
+                            }" @click.away="isOpen = false" class="relative w-full text-left">
                     <form action="{{ route('petitions.linkDuplicate', $petition->hashid) }}" method="POST">
                         @csrf
 
@@ -1343,7 +1350,8 @@
                             <h3 class="relative z-10 text-2xl font-black text-white tracking-tight" id="modal-title">
                                 Link to Existing Petition
                             </h3>
-                            <p class="relative z-10 text-teal-100 text-xs sm:text-sm mt-1 font-medium">Search and select the original petition to merge.</p>
+                            <p class="relative z-10 text-teal-100 text-xs sm:text-sm mt-1 font-medium">Search and select the
+                                original petition to merge.</p>
 
                             <!-- Close Button -->
                             <button type="button" @click="showLinkModal = false; resetSearch()"
@@ -1374,9 +1382,7 @@
                                     <input type="text" x-model="searchQuery"
                                         @input.debounce.250ms="selectedPetition = ''; selectedRecord = null; fetchResults()"
                                         @focus="if(searchQuery.trim().length >= 1 && !selectedPetition) fetchResults()"
-                                        @keydown.enter.prevent="selectFirstExactOrTop()"
-                                        required
-                                        autocomplete="off"
+                                        @keydown.enter.prevent="selectFirstExactOrTop()" required autocomplete="off"
                                         class="pl-11 pr-10 focus:ring-4 focus:ring-teal-500/20 focus:border-teal-500 block w-full sm:text-base border-slate-300 rounded-xl p-3.5 transition-all text-slate-900 font-semibold petition-input bg-slate-50 hover:bg-white focus:bg-white shadow-sm"
                                         placeholder="Enter Petition No, File No, or Name...">
 
@@ -1394,41 +1400,56 @@
 
                                     <!-- Clear Button -->
                                     <button type="button" x-show="searchQuery || selectedPetition" @click="resetSearch()"
-                                        class="absolute right-4 top-3.5 text-slate-400 hover:text-rose-500 transition-colors bg-white rounded-full" style="display: none;">
+                                        class="absolute right-4 top-3.5 text-slate-400 hover:text-rose-500 transition-colors bg-white rounded-full"
+                                        style="display: none;">
                                         <i data-lucide="x-circle" class="w-5 h-5"></i>
                                     </button>
                                 </div>
 
                                 <!-- Selected Target Petition Confirmation Card -->
-                                <div x-show="selectedRecord" class="mt-3 p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-left shadow-sm" style="display: none;">
+                                <div x-show="selectedRecord"
+                                    class="mt-3 p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-left shadow-sm"
+                                    style="display: none;">
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="space-y-1">
                                             <div class="flex items-center gap-2 flex-wrap">
-                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                                                <span
+                                                    class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
                                                     <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                                                    Target Selected
+                                                    Selected
                                                 </span>
-                                                <span class="text-sm font-black text-slate-900" x-text="'Receipt: ' + (selectedRecord ? selectedRecord.receipt_no : '')"></span>
+                                                <span class="text-sm font-black text-slate-900"
+                                                    x-text="'Receipt: ' + (selectedRecord ? selectedRecord.receipt_no : '')"></span>
                                                 <template x-if="selectedRecord && selectedRecord.file_no">
-                                                    <span class="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md" x-text="'File: ' + selectedRecord.file_no"></span>
+                                                    <span
+                                                        class="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md"
+                                                        x-text="'File: ' + selectedRecord.file_no"></span>
                                                 </template>
                                             </div>
                                             <div class="text-xs text-slate-600 space-y-0.5 pt-0.5">
-                                                <p><strong class="text-slate-800">Complainant:</strong> <span x-text="selectedRecord ? selectedRecord.complainant : ''"></span></p>
-                                                <template x-if="selectedRecord && selectedRecord.accused && selectedRecord.accused !== 'N/A'">
-                                                    <p><strong class="text-slate-800">Accused:</strong> <span x-text="selectedRecord.accused"></span></p>
+                                                <p><strong class="text-slate-800">Complainant:</strong> <span
+                                                        x-text="selectedRecord ? selectedRecord.complainant : ''"></span>
+                                                </p>
+                                                <template
+                                                    x-if="selectedRecord && selectedRecord.accused && selectedRecord.accused !== 'N/A'">
+                                                    <p><strong class="text-slate-800">Accused:</strong> <span
+                                                            x-text="selectedRecord.accused"></span></p>
                                                 </template>
-                                                <div class="flex items-center gap-3 text-[11px] text-slate-500 pt-0.5 flex-wrap">
+                                                <div
+                                                    class="flex items-center gap-3 text-[11px] text-slate-500 pt-0.5 flex-wrap">
                                                     <template x-if="selectedRecord && selectedRecord.district">
-                                                        <span><strong>District:</strong> <span x-text="selectedRecord.district"></span></span>
+                                                        <span><strong>District:</strong> <span
+                                                                x-text="selectedRecord.district"></span></span>
                                                     </template>
                                                     <template x-if="selectedRecord && selectedRecord.seat_name">
-                                                        <span><strong>Seat:</strong> <span x-text="selectedRecord.seat_name"></span></span>
+                                                        <span><strong>Seat:</strong> <span
+                                                                x-text="selectedRecord.seat_name"></span></span>
                                                     </template>
                                                 </div>
                                             </div>
                                         </div>
-                                        <button type="button" @click="resetSearch()" class="px-2 py-1 text-xs font-bold text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition-colors shrink-0">
+                                        <button type="button" @click="resetSearch()"
+                                            class="px-2 py-1 text-xs font-bold text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition-colors shrink-0">
                                             Change
                                         </button>
                                     </div>
@@ -1459,11 +1480,13 @@
                                                                 class="text-sm font-black text-slate-900 group-hover/item:text-teal-900"
                                                                 x-text="result.receipt_no"></span>
                                                             <template x-if="result.file_no">
-                                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                                                <span
+                                                                    class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"
                                                                     x-text="'File: ' + result.file_no"></span>
                                                             </template>
                                                             <template x-if="result.is_duplicate">
-                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                                <span
+                                                                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                                                                     Duplicate
                                                                 </span>
                                                             </template>
@@ -1487,12 +1510,15 @@
                                                                     x-text="result.accused"></span>
                                                             </div>
                                                         </template>
-                                                        <div class="flex items-center gap-3 text-[11px] text-slate-500 mt-0.5 flex-wrap">
+                                                        <div
+                                                            class="flex items-center gap-3 text-[11px] text-slate-500 mt-0.5 flex-wrap">
                                                             <template x-if="result.district">
-                                                                <span><strong>District:</strong> <span x-text="result.district"></span></span>
+                                                                <span><strong>District:</strong> <span
+                                                                        x-text="result.district"></span></span>
                                                             </template>
                                                             <template x-if="result.seat_name">
-                                                                <span><strong>Seat:</strong> <span x-text="result.seat_name"></span></span>
+                                                                <span><strong>Seat:</strong> <span
+                                                                        x-text="result.seat_name"></span></span>
                                                             </template>
                                                         </div>
                                                     </div>
@@ -1504,7 +1530,8 @@
                                     <div x-show="results.length === 0 && !errorMessage"
                                         class="p-6 text-sm text-slate-500 text-center flex flex-col items-center gap-2">
                                         <i data-lucide="search-x" class="w-6 h-6 text-slate-300"></i>
-                                        No petitions found matching your search. Try Receipt No, File No, or Petitioner Name.
+                                        No petitions found matching your search. Try Receipt No, File No, or Petitioner
+                                        Name.
                                     </div>
 
                                     <div x-show="errorMessage"

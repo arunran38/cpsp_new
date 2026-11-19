@@ -745,7 +745,7 @@ class PetitionControllerTest extends TestCase
             'exists' => true,
             'seat_name' => 'CPSP 2',
             'user_name' => 'Anudev S',
-            'message' => '⚠️ This Receipt Number already exists and is currently assigned to CPSP 2 (User: Anudev S).',
+            'message' => 'This Receipt Number already exists in CPSP 2 (Anudev S).',
         ]);
 
         $response = $this->actingAs($this->user)->post(route('petitions.checkPetitionNo'), ['receipt_no' => 'NEW-999']);
@@ -1380,7 +1380,18 @@ class PetitionControllerTest extends TestCase
             'status' => Petition::STATUS_RECEIVED,
         ]);
 
-        // 2. Processed petition (received earlier, processed today)
+        // 2. Processed received petition
+        $processedReceived = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-PROCESSED-REC-99',
+            'date_of_petition_received' => $today,
+            'is_cpsp_processed' => true,
+            'processed_at' => now(),
+            'status' => Petition::STATUS_RECEIVED,
+        ]);
+
+        // 3. Processed petition (received earlier, processed today)
         $processedToday = Petition::factory()->create([
             'user_id' => $this->user->user_id,
             'seat_id' => $this->seat->seat_id,
@@ -1391,7 +1402,7 @@ class PetitionControllerTest extends TestCase
             'status' => Petition::STATUS_FORWARDED,
         ]);
 
-        // 3. Duplicate linked petition processed today
+        // 4. Duplicate linked petition processed today
         $duplicate = Petition::factory()->create([
             'user_id' => $this->user->user_id,
             'seat_id' => $this->seat->seat_id,
@@ -1418,10 +1429,12 @@ class PetitionControllerTest extends TestCase
         $exportResponse->assertStatus(200);
         $exportContent = $exportResponse->getContent();
 
-        // Primary petitions are in both table and export
-        $this->assertStringContainsString('RCPT-INWARD-PENDING-99', $tableContent);
+        // Processed petitions are in both table and export, inward unprocessed petitions are excluded
+        $this->assertStringNotContainsString('RCPT-INWARD-PENDING-99', $tableContent);
+        $this->assertStringNotContainsString('RCPT-INWARD-PENDING-99', $exportContent);
+        $this->assertStringContainsString('RCPT-PROCESSED-REC-99', $tableContent);
+        $this->assertStringContainsString('RCPT-PROCESSED-REC-99', $exportContent);
         $this->assertStringContainsString('RCPT-PROCESSED-TODAY-99', $tableContent);
-        $this->assertStringContainsString('RCPT-INWARD-PENDING-99', $exportContent);
         $this->assertStringContainsString('RCPT-PROCESSED-TODAY-99', $exportContent);
 
         // Duplicate row is excluded from standalone rows (displayed as badge on original)
@@ -1445,8 +1458,55 @@ class PetitionControllerTest extends TestCase
         $exportDupResponse->assertStatus(200);
         $exportDupContent = $exportDupResponse->getContent();
 
-        // All petitions including duplicate row are in both
+        // All processed petitions including duplicate row are in both, inward pending remains excluded
+        $this->assertStringNotContainsString('RCPT-INWARD-PENDING-99', $tableDupContent);
+        $this->assertStringNotContainsString('RCPT-INWARD-PENDING-99', $exportDupContent);
         $this->assertStringContainsString('RCPT-DUPLICATE-LINKED-99', $tableDupContent);
         $this->assertStringContainsString('RCPT-DUPLICATE-LINKED-99', $exportDupContent);
+    }
+
+    public function test_master_reports_strictly_excludes_unprocessed_inward_petitions(): void
+    {
+        $today = now()->format('Y-m-d');
+
+        // Unprocessed Inward petition
+        $inwardUnprocessed = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-RAW-INWARD-001',
+            'date_of_petition_received' => $today,
+            'is_cpsp_processed' => false,
+            'status' => Petition::STATUS_RECEIVED,
+        ]);
+
+        // Processed CPSP petition
+        $cpspProcessed = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-CPSP-PROCESSED-002',
+            'date_of_petition_received' => $today,
+            'is_cpsp_processed' => true,
+            'processed_at' => now(),
+            'status' => Petition::STATUS_RECEIVED,
+        ]);
+
+        // Reports View
+        $reportsResponse = $this->actingAs($this->user)->get(route('petitions.reports', [
+            'date_from' => $today,
+            'date_to' => $today,
+        ]));
+        $reportsResponse->assertStatus(200);
+        $reportsResponse->assertSee('RCPT-CPSP-PROCESSED-002');
+        $reportsResponse->assertDontSee('RCPT-RAW-INWARD-001');
+
+        // Export View
+        $exportResponse = $this->actingAs($this->user)->get(route('petitions.export', [
+            'date_from' => $today,
+            'date_to' => $today,
+        ]));
+        $exportResponse->assertStatus(200);
+        $exportContent = $exportResponse->getContent();
+        $this->assertStringContainsString('RCPT-CPSP-PROCESSED-002', $exportContent);
+        $this->assertStringNotContainsString('RCPT-RAW-INWARD-001', $exportContent);
     }
 }

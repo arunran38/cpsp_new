@@ -671,10 +671,8 @@ class Petition extends Model
         } 
         
         if ($status === self::STATUS_RECEIVED || $status === 'Processed') {
-            return $query->where(function ($q) {
-                $q->where('is_cpsp_processed', true)
-                  ->orWhere('status', self::STATUS_RECEIVED);
-            });
+            return $query->where('status', self::STATUS_RECEIVED)
+                         ->where('is_cpsp_processed', true);
         }
 
         if ($status === 'All_Final_Decisions') {
