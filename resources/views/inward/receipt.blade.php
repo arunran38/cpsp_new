@@ -716,7 +716,7 @@
                                                 d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24 11.72 11.72 0 003.68.59 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11.72 11.72 0 00.59 3.68 1 1 0 01-.24 1.02l-2.23 2.09z" />
                                         </svg>
                                     </span>
-                                    <span><strong>PHONE:</strong> 0471-2305393, 0471-2305033</span>
+                                    <span><strong>PHONE:</strong> 0471-2305393</span>
                                 </div>
                                 <span class="header-pill-divider">|</span>
                                 <div class="header-contact-item">
@@ -856,13 +856,6 @@
                 lucide.createIcons();
             }
             window.focus();
-        });
-
-        // Automatically trigger print dialog when opened
-        window.addEventListener('load', function () {
-            setTimeout(function () {
-                window.print();
-            }, 350);
         });
 
         // Use Esc key for exit
