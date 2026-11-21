@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Seat;
 use App\Models\SeatUser;
 use App\Models\Address;
+use App\Models\District;
 use App\Models\Upload;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -1310,6 +1311,7 @@ class PetitionControllerTest extends TestCase
             'Unit' => 'Unit',
             'Tapal' => 'Tapal',
             'iaps' => 'iAPS',
+            'Government' => 'Government',
             'others' => 'Others',
         ];
 
@@ -1346,23 +1348,100 @@ class PetitionControllerTest extends TestCase
             'processed_at' => now(),
         ]);
 
+        $govtPetition = Petition::factory()->create([
+            'user_id' => $this->user->user_id,
+            'seat_id' => $this->seat->seat_id,
+            'receipt_no' => 'RCPT-GOVT-MODE-001',
+            'mode_of_petition_received' => 'Government',
+            'is_cpsp_processed' => true,
+            'processed_at' => now(),
+        ]);
+
         // Filter Unit
         $resUnit = $this->actingAs($this->user)->get(route('petitions.reports', ['mode_of_petition' => 'Unit']));
         $resUnit->assertStatus(200);
         $resUnit->assertSee('RCPT-UNIT-MODE-001');
         $resUnit->assertDontSee('RCPT-TAPAL-MODE-001');
+        $resUnit->assertDontSee('RCPT-GOVT-MODE-001');
 
         // Filter Tapal
         $resTapal = $this->actingAs($this->user)->get(route('petitions.reports', ['mode_of_petition' => 'Tapal']));
         $resTapal->assertStatus(200);
         $resTapal->assertSee('RCPT-TAPAL-MODE-001');
         $resTapal->assertDontSee('RCPT-UNIT-MODE-001');
+        $resTapal->assertDontSee('RCPT-GOVT-MODE-001');
 
         // Filter iAPS
         $resIaps = $this->actingAs($this->user)->get(route('petitions.reports', ['mode_of_petition' => 'iaps']));
         $resIaps->assertStatus(200);
         $resIaps->assertSee('RCPT-IAPS-MODE-001');
         $resIaps->assertDontSee('RCPT-UNIT-MODE-001');
+        $resIaps->assertDontSee('RCPT-GOVT-MODE-001');
+
+        // Filter Government
+        $resGovt = $this->actingAs($this->user)->get(route('petitions.reports', ['mode_of_petition' => 'Government']));
+        $resGovt->assertStatus(200);
+        $resGovt->assertSee('RCPT-GOVT-MODE-001');
+        $resGovt->assertDontSee('RCPT-UNIT-MODE-001');
+        $resGovt->assertDontSee('RCPT-TAPAL-MODE-001');
+        $resGovt->assertDontSee('RCPT-IAPS-MODE-001');
+
+        // Export Excel with Government filter
+        $resExportGovt = $this->actingAs($this->user)->get(route('petitions.export', ['mode_of_petition' => 'Government']));
+        $resExportGovt->assertStatus(200);
+        $this->assertStringContainsString('RCPT-GOVT-MODE-001', $resExportGovt->getContent());
+        $this->assertStringNotContainsString('RCPT-UNIT-MODE-001', $resExportGovt->getContent());
+        $this->assertStringNotContainsString('RCPT-TAPAL-MODE-001', $resExportGovt->getContent());
+    }
+
+    public function test_petition_can_be_created_and_updated_with_government_mode(): void
+    {
+        $district = District::firstOrCreate(['district_name' => 'Thiruvananthapuram']);
+        $dept = \App\Models\DepartmentList::firstOrCreate(['department_name' => 'General Administration']);
+
+        $postData = [
+            'receipt_no' => 'RCPT-GOVT-CREATE-001',
+            'date_of_petition_received' => now()->format('Y-m-d'),
+            'concerned_district_id' => $district->district_id,
+            'nature_of_petition' => 'Bribery',
+            'mode_of_petition_received' => 'Government',
+            'description' => 'Test petition with government mode',
+            'complainants' => [
+                ['name' => 'Govt Complainant', 'phone' => '9876543210']
+            ],
+            'accused' => [
+                ['name' => 'Accused Officer', 'department_id' => $dept->id]
+            ],
+        ];
+
+        $res = $this->actingAs($this->user)->post(route('petitions.store'), $postData);
+        $res->assertSessionHasNoErrors();
+
+        $petition = Petition::where('receipt_no', 'RCPT-GOVT-CREATE-001')->first();
+        $this->assertNotNull($petition);
+        $this->assertEquals('Government', $petition->mode_of_petition_received);
+
+        // Verify show page displays Government
+        $showRes = $this->actingAs($this->user)->get(route('petitions.show', $petition));
+        $showRes->assertStatus(200);
+        $showRes->assertSee('Government');
+
+        // Update petition
+        $updateData = [
+            'concerned_district_id' => $district->district_id,
+            'nature_of_petition' => 'Misuse of authority',
+            'mode_of_petition_received' => 'Government',
+            'description' => 'Updated petition with government mode',
+            'accused' => [
+                ['name' => 'Accused Officer', 'department_id' => $dept->id]
+            ],
+        ];
+
+        $updateRes = $this->actingAs($this->user)->put(route('petitions.update', $petition), $updateData);
+        $updateRes->assertSessionHasNoErrors();
+
+        $petition->refresh();
+        $this->assertEquals('Government', $petition->mode_of_petition_received);
     }
 
     public function test_reports_table_and_excel_export_are_synchronized_with_date_and_statuses(): void

@@ -244,7 +244,7 @@ CREATE TABLE IF NOT EXISTS `petitions` (
   `seat_id` bigint unsigned DEFAULT NULL,
   `petition_no` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `date_of_petition_received` date NOT NULL,
-  `mode_of_petition_received` enum('Email','Whatsapp','Tollfree','Direct','Unit','Tapal','iaps','others') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `mode_of_petition_received` enum('Email','Whatsapp','Tollfree','Direct','Unit','Tapal','iaps','Government','others') COLLATE utf8mb4_unicode_ci NOT NULL,
   `mode_of_petition_received_others` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `nature_of_petition` enum('Bribery','Misuse of authority','Fraud / financial irregularities','Serious negligence','others') COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` text COLLATE utf8mb4_unicode_ci NOT NULL,

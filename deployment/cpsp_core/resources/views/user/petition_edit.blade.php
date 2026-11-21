@@ -116,7 +116,7 @@
                         <x-select label="Nature of Petition *" name="nature_of_petition" x-model="petitionDetails.nature" required :options="['' => 'Select Category', 'Bribery' => 'Bribery', 'Misuse of authority' => 'Misuse of authority', 'Fraud / financial irregularities' => 'Fraud / financial irregularities', 'Serious negligence' => 'Serious negligence', 'others' => 'Others']" />
                     </div>
                     <div class="lg:col-span-1">
-                        <x-select label="Mode of Petition *" name="mode_of_petition_received" x-model="petitionDetails.mode" required :options="['' => 'Select Origin', 'Email' => 'Email', 'Whatsapp' => 'Whatsapp', 'Tollfree' => 'Tollfree', 'Direct' => 'Direct', 'Unit' => 'Unit', 'Tapal' => 'Tapal', 'iaps' => 'iAPS', 'others' => 'Others']" />
+                        <x-select label="Mode of Petition *" name="mode_of_petition_received" x-model="petitionDetails.mode" required :options="['' => 'Select Origin', 'Email' => 'Email', 'Whatsapp' => 'Whatsapp', 'Tollfree' => 'Tollfree', 'Direct' => 'Direct', 'Unit' => 'Unit', 'Tapal' => 'Tapal', 'iaps' => 'iAPS', 'Government' => 'Government', 'others' => 'Others']" />
                     </div>
                 </div>
 

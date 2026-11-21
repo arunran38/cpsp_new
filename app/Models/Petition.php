@@ -39,6 +39,29 @@ class Petition extends Model
     public const STATUS_CLOSED_BY_GOVT = 'Closed_by_Govt';
     public const STATUS_DUPLICATE = 'Duplicate';
 
+    // Mode of Petition Constants
+    public const MODE_EMAIL = 'Email';
+    public const MODE_WHATSAPP = 'Whatsapp';
+    public const MODE_TOLLFREE = 'Tollfree';
+    public const MODE_DIRECT = 'Direct';
+    public const MODE_UNIT = 'Unit';
+    public const MODE_TAPAL = 'Tapal';
+    public const MODE_IAPS = 'iaps';
+    public const MODE_GOVERNMENT = 'Government';
+    public const MODE_OTHERS = 'others';
+
+    public const MODES = [
+        self::MODE_EMAIL => 'Email',
+        self::MODE_WHATSAPP => 'Whatsapp',
+        self::MODE_TOLLFREE => 'Tollfree',
+        self::MODE_DIRECT => 'Direct',
+        self::MODE_UNIT => 'Unit',
+        self::MODE_TAPAL => 'Tapal',
+        self::MODE_IAPS => 'iAPS',
+        self::MODE_GOVERNMENT => 'Government',
+        self::MODE_OTHERS => 'Others',
+    ];
+
     protected $primaryKey = 'petition_id';
 
     protected $fillable = [

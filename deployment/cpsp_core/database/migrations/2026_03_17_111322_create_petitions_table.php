@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('petition_id');
             $table->string('petition_no')->unique();
             $table->date('date_of_petition_received');
-            $table->enum('mode_of_petition_received', ['Email', 'Whatsapp', 'Tollfree', 'Direct', 'Unit', 'Tapal','iaps','others']);
+            $table->enum('mode_of_petition_received', ['Email', 'Whatsapp', 'Tollfree', 'Direct', 'Unit', 'Tapal','iaps','Government','others']);
             $table->string('mode_of_petition_received_others')->nullable();
             $table->enum('nature_of_petition', ['Bribery', 'Misuse of authority', 'Fraud / financial irregularities', 'Serious negligence','others']);
             $table->text('description');

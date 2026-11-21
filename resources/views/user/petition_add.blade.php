@@ -232,7 +232,7 @@
                             <x-select label="Mode of Petition *" name="mode_of_petition_received"
                                 x-model="petitionDetails.mode" required
                                 :selected="old('mode_of_petition_received')"
-                                :options="['' => 'Select Origin', 'Email' => 'Email', 'Whatsapp' => 'Whatsapp', 'Tollfree' => 'Tollfree', 'Direct' => 'Direct', 'Unit' => 'Unit', 'Tapal' => 'Tapal', 'iaps' => 'iAPS', 'others' => 'Others']" />
+                                :options="['' => 'Select Origin', 'Email' => 'Email', 'Whatsapp' => 'Whatsapp', 'Tollfree' => 'Tollfree', 'Direct' => 'Direct', 'Unit' => 'Unit', 'Tapal' => 'Tapal', 'iaps' => 'iAPS', 'Government' => 'Government', 'others' => 'Others']" />
                         </div>
                     </div>
 

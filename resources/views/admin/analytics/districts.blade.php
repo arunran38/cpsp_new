@@ -143,7 +143,7 @@
                                     class="w-full px-3 pr-8 h-11 bg-white border border-blue-200/80 rounded-xl focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-blue-300 appearance-none cursor-pointer"
                                     style="color: #1e40af !important;">
                                     <option value="">All Modes</option>
-                                    @foreach(['Email' => 'Email', 'Whatsapp' => 'Whatsapp', 'Tollfree' => 'Tollfree', 'Direct' => 'Direct', 'Unit' => 'Unit', 'Tapal' => 'Tapal', 'iaps' => 'iAPS', 'others' => 'Others'] as $val => $lbl)
+                                    @foreach(['Email' => 'Email', 'Whatsapp' => 'Whatsapp', 'Tollfree' => 'Tollfree', 'Direct' => 'Direct', 'Unit' => 'Unit', 'Tapal' => 'Tapal', 'iaps' => 'iAPS', 'Government' => 'Government', 'others' => 'Others'] as $val => $lbl)
                                         <option value="{{ $val }}" {{ ($filters['mode_of_petition'] ?? '') === $val ? 'selected' : '' }}>
                                             {{ $lbl }}
                                         </option>

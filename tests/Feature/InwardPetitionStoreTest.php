@@ -150,4 +150,58 @@ class InwardPetitionStoreTest extends TestCase
             'date_of_petition_received' => $today,
         ]);
     }
+
+    public function test_inward_petition_can_be_stored_with_government_mode(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $inwardRole = Role::firstOrCreate(['name' => 'inward', 'guard_name' => 'web']);
+        $cpspRole = Role::firstOrCreate(['name' => 'cpsp', 'guard_name' => 'web']);
+
+        $inwardSeat = Seat::factory()->create([
+            'seat_name' => 'Inward Section Desk',
+            'is_active' => true,
+        ]);
+        $inwardSeat->assignRole($inwardRole);
+
+        $targetSeat = Seat::factory()->create([
+            'seat_name' => 'CPSP General Desk',
+            'is_active' => true,
+        ]);
+        $targetSeat->assignRole($cpspRole);
+
+        $inwardUser = User::factory()->create(['name' => 'Inward Officer']);
+        $inwardUser->assignRole($inwardRole);
+        SeatUser::factory()->create([
+            'user_id' => $inwardUser->user_id,
+            'seat_id' => $inwardSeat->seat_id,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($inwardUser)
+            ->withSession(['current_seat_id' => $inwardSeat->seat_id])
+            ->post(route('petitions.store'), [
+                'receipt_no' => 'INW/2026/GOVT-001',
+                'date_of_petition_received' => now()->toDateString(),
+                'mode_of_petition_received' => 'Government',
+                'is_inward_entry' => '1',
+                'seat_id' => $targetSeat->seat_id,
+                'complainants' => [
+                    ['name' => 'Govt Inward Complainant', 'phone' => '9876543210'],
+                ],
+            ]);
+
+        $response->assertRedirect(route('inward.enter_petition'));
+        $this->assertDatabaseHas('petitions', [
+            'receipt_no' => 'INW/2026/GOVT-001',
+            'mode_of_petition_received' => 'Government',
+            'seat_id' => $targetSeat->seat_id,
+        ]);
+
+        // Verify inward view page has Government in dropdown
+        $viewResponse = $this->actingAs($inwardUser)
+            ->get(route('inward.enter_petition'));
+        $viewResponse->assertStatus(200);
+        $viewResponse->assertSee('<option value="Government"', false);
+    }
 }

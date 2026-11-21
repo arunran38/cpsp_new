@@ -133,7 +133,7 @@
                                 class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-medium text-slate-900 py-2 transition-all bg-white appearance-none pr-10"
                                 style="background-image: none !important;">
                                 <option value="" class="font-medium text-slate-800 bg-white py-1">All Modes</option>
-                                @foreach(['Direct', 'Email', 'Whatsapp', 'Tollfree', 'others'] as $mode)
+                                @foreach(['Direct', 'Email', 'Whatsapp', 'Tollfree', 'Unit', 'Tapal', 'iaps', 'Government', 'others'] as $mode)
                                     <option value="{{ $mode }}" {{ request('mode_of_petition') == $mode ? 'selected' : '' }}
                                         class="font-medium text-slate-800 bg-white py-1">{{ $mode }}</option>
                                 @endforeach
