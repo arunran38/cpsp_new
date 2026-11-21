@@ -22,6 +22,7 @@
                     <th class="px-6 py-4">Reason for Return</th>
                 @endif
                 <th class="px-6 py-4 text-center">Status</th>
+                <th class="px-6 py-4 text-center">Actions</th>
             </tr>
         </thead>
         <tbody class="divide-y divide-slate-200 text-sm">
@@ -187,11 +188,20 @@
                             </span>
                         @endif
                     </td>
+                    <td class="px-5 py-3.5 text-center whitespace-nowrap">
+                        <button type="button" 
+                                onclick="window.printInwardReceipt('{{ route('inward.receipt', $item->hashid) }}')"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200/80 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                                title="Print Receipt">
+                            <i data-lucide="printer" class="w-3.5 h-3.5 text-blue-600"></i>
+                            <span>Print Receipt</span>
+                        </button>
+                    </td>
                 </tr>
             @empty
                 <tr>
                     @php
-                        $colspan = 7;
+                        $colspan = 8;
                         if ($showEnteredBy) $colspan++;
                         if (($filter ?? request('filter')) === 'returned') $colspan++;
                     @endphp

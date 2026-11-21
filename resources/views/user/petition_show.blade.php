@@ -148,6 +148,12 @@
                 </div>
             </div>
             <div class="flex items-center gap-3">
+                <button type="button"
+                    onclick="window.open('{{ route('inward.receipt', $petition->hashid) }}', 'ReceiptWindow', 'width=920,height=800,scrollbars=yes')"
+                    class="px-4 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+                    title="Print Inward Receipt">
+                    <i data-lucide="printer" class="w-4 h-4 text-slate-600"></i> Print Receipt
+                </button>
                 @if(Auth::user()->can('update', $petition) && (Auth::user()->canAccess('access admin dashboard') || !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance'])))
                     @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
                         <a href="{{ route('petitions.edit', $petition->hashid) }}"

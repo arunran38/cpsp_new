@@ -81,6 +81,34 @@
 
                 <!-- Alert / Validation Feedback -->
 
+                @if(session('receipt_petition_hashid'))
+                    <!-- Receipt Printing Quick Banner -->
+                    <div class="rounded-2xl bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900 border border-emerald-500/50 p-4 sm:p-5 shadow-lg text-white">
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div class="flex items-center gap-3.5">
+                                <div class="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300 shrink-0">
+                                    <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold text-emerald-300 uppercase tracking-wider">Registration Successful</span>
+                                    </div>
+                                    <h3 class="text-base sm:text-lg font-bold text-white mt-0.5">
+                                        Receipt No: <span class="font-mono text-emerald-300 font-extrabold ml-1">{{ session('receipt_petition_no') }}</span>
+                                    </h3>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-end">
+                                <button type="button" 
+                                        onclick="window.printInwardReceipt('{{ route('inward.receipt', session('receipt_petition_hashid')) }}')"
+                                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-sm rounded-xl shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+                                    <i data-lucide="printer" class="w-4 h-4 text-slate-950"></i>
+                                    <span>Print Receipt</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
                 @if($errors->any())
                     <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 space-y-1">
@@ -842,6 +870,17 @@
         }
     </script>
     <script>
+        window.printInwardReceipt = function(url) {
+            const w = 920;
+            const h = 800;
+            const left = Math.max(0, (window.screen.width - w) / 2);
+            const top = Math.max(0, (window.screen.height - h) / 2);
+            const printWin = window.open(url, 'ReceiptWindow', `width=${w},height=${h},top=${top},left=${left},scrollbars=yes,status=no,toolbar=no,menubar=no,location=no`);
+            if (printWin) {
+                printWin.focus();
+            }
+        };
+
         function syncFilterLinks(isFormVisible) {
             const pills = document.querySelectorAll('#inward-filter-nav [data-filter-key]');
             pills.forEach(pill => {
@@ -1231,4 +1270,88 @@
             </div>
         </div>
     </div>
+
+    @if(session('receipt_petition_hashid'))
+        <!-- Quick Print Receipt Modal (Option 2: Prompt on Successful Inward Registration) -->
+        <div x-data="{
+                open: true,
+                receiptUrl: '{{ route('inward.receipt', session('receipt_petition_hashid')) }}',
+                printReceipt() {
+                    this.open = false;
+                    window.printInwardReceipt(this.receiptUrl);
+                }
+            }"
+            x-init="if (window.lucide) { $nextTick(() => lucide.createIcons()); }"
+            x-cloak
+            x-show="open"
+            @keydown.window.escape="open = false"
+            @keydown.window.enter="if (open) { $event.preventDefault(); printReceipt(); }"
+            class="relative z-[150]"
+            aria-labelledby="quick-print-modal-title"
+            role="dialog"
+            aria-modal="true">
+
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+                x-show="open"
+                x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="ease-in duration-200"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"></div>
+
+            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                    <div x-show="open"
+                        x-transition:enter="ease-out duration-300"
+                        x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                        x-transition:leave="ease-in duration-200"
+                        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                        x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        @click.away="open = false"
+                        class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-[0_25px_70px_-15px_rgba(0,0,0,0.3)] transition-all sm:my-8 sm:w-full sm:max-w-md border border-slate-100">
+
+                        <div class="p-6 text-center space-y-4">
+                            <!-- Success Checkmark Icon -->
+                            <div class="mx-auto w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shadow-inner">
+                                <i data-lucide="check-circle-2" class="w-9 h-9"></i>
+                            </div>
+
+                            <!-- Title & Info -->
+                            <div>
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                                    Registration Successful
+                                </span>
+                                <h3 class="text-xl font-extrabold text-slate-900 mt-2" id="quick-print-modal-title">
+                                    Print Inward Receipt?
+                                </h3>
+                                <p class="text-sm text-slate-600 mt-1">
+                                    Receipt No: <strong class="font-mono text-emerald-700 font-bold text-base">{{ session('receipt_petition_no') }}</strong>
+                                </p>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex flex-col-reverse sm:flex-row items-center justify-center gap-2.5 pt-2">
+                                <button type="button"
+                                    @click="open = false"
+                                    class="w-full sm:w-1/2 px-5 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-slate-800 transition-all cursor-pointer">
+                                    Skip
+                                </button>
+                                <button type="button"
+                                    @click="printReceipt()"
+                                    autofocus
+                                    class="w-full sm:w-1/2 px-5 py-2.5 text-sm font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl shadow-lg shadow-emerald-400/30 transition-all flex items-center justify-center gap-2 cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0">
+                                    <i data-lucide="printer" class="w-4 h-4 text-slate-950"></i>
+                                    <span>Print Receipt</span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 @endsection

@@ -340,6 +340,29 @@ class PetitionController extends Controller
     }
 
     /**
+     * Display printable receipt for an inward petition (A5 / Half-A4 format).
+     */
+    public function inwardReceipt(Request $request, string $id): View
+    {
+        $realId = HashidService::decode($id) ?? $id;
+        $petition = Petition::with(['addresses.district', 'originalPetition.addresses.district'])->findOrFail($realId);
+
+        $user = Auth::user();
+        $canAccess = $user->canAccess('view inward registration') ||
+            $user->canAccess('create inward petitions') ||
+            $user->canAccess('view petitions') ||
+            $user->canAccess('view own petitions') ||
+            $user->canAccess('view all petitions') ||
+            $user->canAccess('access admin dashboard');
+
+        if (!$canAccess) {
+            $this->authorize('view', $petition);
+        }
+
+        return view('inward.receipt', compact('petition'));
+    }
+
+    /**
      * Display Inward Statistics / Seat-wise Data Sheet page.
      */
     public function inwardStatistics(Request $request): View|StreamedResponse|\Symfony\Component\HttpFoundation\BinaryFileResponse
@@ -794,7 +817,10 @@ class PetitionController extends Controller
             $user = Auth::user();
             $isInwardUser = $user && ($user->hasRole(['inward', 'Inward']) || str_contains(strtolower($user->currentSeatUser()?->seat?->seat_name ?? ''), 'inward'));
             if ($request->boolean('is_inward_entry') || ($request->filled('seat_id') && $isInwardUser)) {
-                return redirect()->route('inward.enter_petition')->with('success', "Inward Petition (Receipt No: {$petition->receipt_no}) registered and transferred successfully.");
+                return redirect()->route('inward.enter_petition')
+                    ->with('success', "Inward Petition (Receipt No: {$petition->receipt_no}) registered and transferred successfully.")
+                    ->with('receipt_petition_hashid', $petition->hashid)
+                    ->with('receipt_petition_no', $petition->receipt_no);
             }
 
             return redirect()->route('petitions.index', ['tab' => 'all'])->with('success', 'Petition submitted successfully.');
