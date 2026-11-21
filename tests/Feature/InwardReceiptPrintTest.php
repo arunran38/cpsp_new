@@ -95,6 +95,37 @@ class InwardReceiptPrintTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_user_without_print_inward_receipt_permission_cannot_view_receipt(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        // CPSP role typically does not have 'print inward receipt'
+        $cpspRole = Role::findByName('CPSP', 'web');
+        $cpspSeat = Seat::factory()->create(['seat_name' => 'CPSP Desk', 'is_active' => true]);
+        $cpspSeat->assignRole($cpspRole);
+
+        $user = User::factory()->create(['name' => 'CPSP Officer']);
+        $user->assignRole($cpspRole);
+        SeatUser::factory()->create([
+            'user_id' => $user->user_id,
+            'seat_id' => $cpspSeat->seat_id,
+            'is_active' => true,
+        ]);
+
+        $petition = Petition::factory()->create([
+            'receipt_no' => 'INW/2026/REC-NO-PRINT',
+            'date_of_petition_received' => '2026-11-21',
+            'user_id' => $user->user_id,
+            'seat_id' => $cpspSeat->seat_id,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->withSession(['current_seat_id' => $cpspSeat->seat_id])
+            ->get(route('inward.receipt', $petition->hashid));
+
+        $response->assertForbidden();
+    }
+
     public function test_successful_inward_store_redirects_with_receipt_hashid_in_session(): void
     {
         $this->seed(RolesAndPermissionsSeeder::class);

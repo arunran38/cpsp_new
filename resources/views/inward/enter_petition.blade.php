@@ -98,14 +98,16 @@
                                     </h3>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-end">
-                                <button type="button" 
-                                        onclick="window.printInwardReceipt('{{ route('inward.receipt', session('receipt_petition_hashid')) }}')"
-                                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-sm rounded-xl shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
-                                    <i data-lucide="printer" class="w-4 h-4 text-slate-950"></i>
-                                    <span>Print Receipt</span>
-                                </button>
-                            </div>
+                            @if($currentUser && $currentUser->canAccess('print inward receipt'))
+                                <div class="flex items-center gap-3 shrink-0 w-full sm:w-auto justify-end">
+                                    <button type="button" 
+                                            onclick="window.printInwardReceipt('{{ route('inward.receipt', session('receipt_petition_hashid')) }}')"
+                                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-sm rounded-xl shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+                                        <i data-lucide="printer" class="w-4 h-4 text-slate-950"></i>
+                                        <span>Print Receipt</span>
+                                    </button>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @endif
@@ -1271,7 +1273,7 @@
         </div>
     </div>
 
-    @if(session('receipt_petition_hashid'))
+    @if(session('receipt_petition_hashid') && $currentUser && $currentUser->canAccess('print inward receipt'))
         <!-- Quick Print Receipt Modal (Option 2: Prompt on Successful Inward Registration) -->
         <div x-data="{
                 open: true,

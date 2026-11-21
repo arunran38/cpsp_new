@@ -189,13 +189,17 @@
                         @endif
                     </td>
                     <td class="px-5 py-3.5 text-center whitespace-nowrap">
-                        <button type="button" 
-                                onclick="window.printInwardReceipt('{{ route('inward.receipt', $item->hashid) }}')"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200/80 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
-                                title="Print Receipt">
-                            <i data-lucide="printer" class="w-3.5 h-3.5 text-blue-600"></i>
-                            <span>Print Receipt</span>
-                        </button>
+                        @if(Auth::user()->canAccess('print inward receipt'))
+                            <button type="button" 
+                                    onclick="window.printInwardReceipt('{{ route('inward.receipt', $item->hashid) }}')"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200/80 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                                    title="Print Receipt">
+                                <i data-lucide="printer" class="w-3.5 h-3.5 text-blue-600"></i>
+                                <span>Print Receipt</span>
+                            </button>
+                        @else
+                            <span class="text-xs text-slate-400 font-medium">—</span>
+                        @endif
                     </td>
                 </tr>
             @empty

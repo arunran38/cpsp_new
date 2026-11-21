@@ -348,15 +348,11 @@ class PetitionController extends Controller
         $petition = Petition::with(['addresses.district', 'originalPetition.addresses.district'])->findOrFail($realId);
 
         $user = Auth::user();
-        $canAccess = $user->canAccess('view inward registration') ||
-            $user->canAccess('create inward petitions') ||
-            $user->canAccess('view petitions') ||
-            $user->canAccess('view own petitions') ||
-            $user->canAccess('view all petitions') ||
+        $canPrint = $user->canAccess('print inward receipt') ||
             $user->canAccess('access admin dashboard');
 
-        if (!$canAccess) {
-            $this->authorize('view', $petition);
+        if (!$canPrint) {
+            abort(403, 'Unauthorized to print inward receipt.');
         }
 
         return view('inward.receipt', compact('petition'));

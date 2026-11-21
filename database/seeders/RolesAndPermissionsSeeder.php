@@ -131,6 +131,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'reassign inward petitions',
             'view file transfer',
             'filter transfer',
+            'print inward receipt',
 
             // Petition Operations (Granular PBAC)
             'forward petitions',
@@ -247,6 +248,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'export t-section petitions',
                 'filter petition origin in statistics',
                 'filter transfer',
+                'print inward receipt',
                 'forward petitions',
                 'forward t-section petitions',
                 'link petitions',
@@ -330,6 +332,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'export petitions',
                 'export statistics',
                 'filter transfer',
+                'print inward receipt',
                 'reassign inward petitions',
                 'view file transfer',
                 'view inward registration',
@@ -396,6 +399,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'delete recycle bin',
                 'export petitions',
                 'export statistics',
+                'print inward receipt',
                 'restore recycle bin',
                 'view all inward statistics',
                 'view all petitions',
