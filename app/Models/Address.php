@@ -32,6 +32,80 @@ class Address extends Model
     }
 
     /**
+     * Convert person name to Title Case consistently across the application
+     * while properly handling initials, hyphens, apostrophes, and special characters.
+     */
+    public static function formatPersonName(?string $name, ?string $personType = null): ?string
+    {
+        if ($name === null) {
+            return null;
+        }
+
+        $trimmed = trim($name);
+        if ($trimmed === '') {
+            return '';
+        }
+
+        // Handle known special placeholders
+        $lower = strtolower($trimmed);
+        if ($lower === 'unknown' || $lower === 'anonymous / unknown' || $lower === 'anonymous/unknown') {
+            return $personType === 'Accused' ? 'Unknown Suspect' : 'Anonymous / Unknown';
+        }
+        if ($lower === 'unknown suspect') {
+            return 'Unknown Suspect';
+        }
+        if (in_array($lower, ['not provided', 'not_provided', 'n/a', 'none', 'null', 'nil', '-'], true)) {
+            return $trimmed;
+        }
+
+        // Convert to Title Case using UTF-8 multibyte conversion
+        $title = mb_convert_case($trimmed, MB_CASE_TITLE, 'UTF-8');
+
+        // Handle letters following dots (e.g. A.k. -> A.K., A.k.p. -> A.K.P., Dr.john -> Dr.John)
+        $title = preg_replace_callback('/(?<=\.)[a-z]/u', function ($m) {
+            return mb_strtoupper($m[0], 'UTF-8');
+        }, $title);
+
+        // Handle letters following apostrophes (e.g. O'brien -> O'Brien, D'souza -> D'Souza)
+        $title = preg_replace_callback("/(?<=\b[OD]')([a-z])/u", function ($m) {
+            return mb_strtoupper($m[1], 'UTF-8');
+        }, $title);
+
+        // Handle letters following hyphens (e.g. Mary-jane -> Mary-Jane)
+        $title = preg_replace_callback('/(?<=-)[a-z]/u', function ($m) {
+            return mb_strtoupper($m[0], 'UTF-8');
+        }, $title);
+
+        // Handle letters following opening parentheses e.g. (director) -> (Director)
+        $title = preg_replace_callback('/(?<=\()[a-z]/u', function ($m) {
+            return mb_strtoupper($m[0], 'UTF-8');
+        }, $title);
+
+        // Handle letters following slash e.g. Firm/project -> Firm/Project, M/s -> M/S
+        $title = preg_replace_callback('/(?<=\/)[a-z]/u', function ($m) {
+            return mb_strtoupper($m[0], 'UTF-8');
+        }, $title);
+
+        return $title;
+    }
+
+    /**
+     * Dynamically format person_name in Title Case for display while preserving raw DB value.
+     */
+    public function getPersonNameAttribute($value): ?string
+    {
+        return self::formatPersonName($value, $this->attributes['person_type'] ?? null);
+    }
+
+    /**
+     * Dynamically format contact_person in Title Case for display while preserving raw DB value.
+     */
+    public function getContactPersonAttribute($value): ?string
+    {
+        return self::formatPersonName($value);
+    }
+
+    /**
      * Get the clean, unified formatted address with proper commas and spacing.
      * e.g., "Software Division, Malappuram - 695033"
      */

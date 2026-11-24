@@ -62,9 +62,10 @@ class InwardReceiptPrintTest extends TestCase
         $response->assertSee('Suresh Kumar');
         $response->assertSee('VIGILANCE &amp; ANTI-CORRUPTION BUREAU', false);
         $response->assertSee('Government of Kerala');
-        $response->assertSee('Cut along this line');
+        $response->assertSee('cut-line');
 
         // Strictly excluded contents
+        $response->assertDontSee('Cut along this line');
         $response->assertDontSee('Mode of Receipt');
         $response->assertDontSee('Nature of Petition');
     }
@@ -164,20 +165,23 @@ class InwardReceiptPrintTest extends TestCase
         $response->assertSessionHas('receipt_petition_hashid');
         $response->assertSessionHas('receipt_petition_no', 'INW/2026/RECEIPT-TEST');
 
-        // Follow redirect to inward.enter_petition and assert Quick Print Modal is rendered
+        $petition = Petition::where('receipt_no', 'INW/2026/RECEIPT-TEST')->first();
+        $this->assertNotNull($petition);
+
+        // Follow redirect to inward.enter_petition and assert Direct Auto-Print and banner is rendered
         $followResponse = $this->actingAs($inwardUser)
             ->withSession([
                 'current_seat_id' => $inwardSeat->seat_id,
-                'receipt_petition_hashid' => session('receipt_petition_hashid'),
+                'receipt_petition_hashid' => $petition->hashid,
                 'receipt_petition_no' => 'INW/2026/RECEIPT-TEST',
             ])
             ->get(route('inward.enter_petition'));
 
         $followResponse->assertStatus(200);
-        $followResponse->assertSee('Print Inward Receipt?');
+        $followResponse->assertSee('Registration Successful');
         $followResponse->assertSee('INW/2026/RECEIPT-TEST');
         $followResponse->assertSee('Print Receipt');
-        $followResponse->assertSee('Skip');
+        $followResponse->assertSee('window.printInwardReceipt');
     }
 
     public function test_view_inward_petitions_table_renders_actions_column_and_print_receipt_button(): void

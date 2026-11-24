@@ -189,17 +189,49 @@
                         @endif
                     </td>
                     <td class="px-5 py-3.5 text-center whitespace-nowrap">
-                        @if(Auth::user()->canAccess('print inward receipt'))
-                            <button type="button" 
-                                    onclick="window.printInwardReceipt('{{ route('inward.receipt', $item->hashid) }}')"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200/80 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
-                                    title="Print Receipt">
-                                <i data-lucide="printer" class="w-3.5 h-3.5 text-blue-600"></i>
-                                <span>Print Receipt</span>
-                            </button>
-                        @else
-                            <span class="text-xs text-slate-400 font-medium">—</span>
-                        @endif
+                        <div class="inline-flex items-center gap-1.5">
+                            @php
+                                $canEditInward = !$item->is_cpsp_processed 
+                                    && !$item->linked_petition_id 
+                                    && $item->status !== 'Duplicate'
+                                    && !in_array($item->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance'])
+                                    && (Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('view inward registration') || Auth::user()->canAccess('access admin dashboard') || Auth::user()->hasRole(['inward', 'Inward']));
+                            @endphp
+
+                            @if($canEditInward)
+                                <button type="button" 
+                                        @click="$dispatch('open-edit-inward-modal', {
+                                            hashid: '{{ $item->hashid }}',
+                                            receipt_no: {{ json_encode($item->receipt_no) }},
+                                            date_of_petition_received: '{{ \Carbon\Carbon::parse($item->date_of_petition_received)->format('Y-m-d') }}',
+                                            mode: {{ json_encode($item->mode_of_petition_received) }},
+                                            unit_id: '{{ $item->unit_id ?? '' }}',
+                                            date_at_unit: '{{ $item->date_of_petition_received_at_unit ? \Carbon\Carbon::parse($item->date_of_petition_received_at_unit)->format('Y-m-d') : '' }}',
+                                            mode_others: {{ json_encode($item->mode_of_petition_received_others ?? '') }},
+                                            complainant_name: {{ json_encode($complainant?->person_name ?? '') }},
+                                            seat_id: '{{ $item->seat_id ?? '' }}'
+                                        })"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-900 border border-amber-200/80 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                                        title="Edit Inward Registration">
+                                    <i data-lucide="edit-3" class="w-3.5 h-3.5 text-amber-600"></i>
+                                    <span>Edit</span>
+                                </button>
+                            @endif
+
+                            @if(Auth::user()->canAccess('print inward receipt'))
+                                <button type="button" 
+                                        onclick="window.printInwardReceipt('{{ route('inward.receipt', $item->hashid) }}')"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200/80 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                                        title="Print Receipt">
+                                    <i data-lucide="printer" class="w-3.5 h-3.5 text-blue-600"></i>
+                                    <span>Print Receipt</span>
+                                </button>
+                            @endif
+
+                            @if(!$canEditInward && !Auth::user()->canAccess('print inward receipt'))
+                                <span class="text-xs text-slate-400 font-medium">—</span>
+                            @endif
+                        </div>
                     </td>
                 </tr>
             @empty

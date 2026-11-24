@@ -133,7 +133,7 @@
             height: 126mm;
             border: 2.5px solid #003366;
             border-radius: 18px;
-            padding: 6mm 8mm 5mm 8mm;
+            padding: 5.5mm 8mm 6.5mm 8mm;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -200,22 +200,26 @@
             text-align: center;
         }
 
-        .dept-title-malayalam {
-            font-size: 22.5px;
-            font-weight: 900;
+        .dept-title-english {
+            font-size: 16px;
+            font-weight: 800;
             color: #002b5b;
-            line-height: 1.15;
-            letter-spacing: -0.01em;
+            letter-spacing: 0.025em;
+            text-transform: uppercase;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            white-space: nowrap;
+            line-height: 1.25;
         }
 
-        .dept-title-english {
-            font-size: 10.5px;
-            font-weight: 800;
+        .dept-title-malayalam {
+            font-size: 13.5px;
+            font-weight: 700;
             color: #003366;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            margin-top: 2.5px;
-            font-family: 'Inter', sans-serif;
+            line-height: 1.3;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            margin-top: 2px;
+            font-family: 'Noto Sans Malayalam', sans-serif;
         }
 
         /* Header Contact Pill */
@@ -399,7 +403,7 @@
         }
 
         .statement-highlight.complainant-font {
-            text-transform: uppercase;
+            text-transform: uppercase !important;
             letter-spacing: 0.02em;
         }
 
@@ -466,6 +470,7 @@
             position: relative;
             z-index: 2;
             margin-top: 2mm;
+            margin-bottom: 3.5mm;
             display: flex;
             justify-content: center;
         }
@@ -559,29 +564,11 @@
 
         .cut-line {
             width: 100%;
-            border-bottom: 1.5px dashed #94a3b8;
+            border-bottom: 1.5px dotted #94a3b8;
             position: absolute;
             top: 50%;
             left: 0;
             z-index: 1;
-        }
-
-        .cut-badge {
-            position: relative;
-            z-index: 2;
-            background: #ffffff;
-            padding: 0 12px;
-            font-size: 10px;
-            font-weight: 700;
-            color: #64748b;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .cut-badge svg {
-            width: 12px;
-            height: 12px;
         }
 
         /* PRINT STYLES */
@@ -636,8 +623,12 @@
             .official-card {
                 width: 100% !important;
                 height: 126mm !important;
-                padding: 6mm 8mm 5mm 8mm !important;
+                padding: 5.5mm 8mm 6.5mm 8mm !important;
                 box-sizing: border-box !important;
+                margin-bottom: 3.5mm !important;
+            }
+
+            .footer-bar-container {
                 margin-bottom: 3.5mm !important;
             }
 
@@ -651,9 +642,23 @@
                 filter: none !important;
             }
 
+            .dept-title-english {
+                font-size: 16px !important;
+                white-space: nowrap !important;
+            }
+
+            .dept-title-malayalam {
+                font-size: 13.5px !important;
+                white-space: nowrap !important;
+            }
+
             .header-contact-pill {
                 white-space: nowrap !important;
                 flex-wrap: nowrap !important;
+            }
+
+            .statement-highlight.complainant-font {
+                text-transform: uppercase !important;
             }
         }
     </style>
@@ -705,9 +710,9 @@
                                 alt="Government of Kerala - Vigilance &amp; Anti-Corruption Bureau Emblem">
                         </div>
                         <div class="header-content">
-                            <div class="dept-title-malayalam">അഴിമതി നിരോധന ബ്യൂറോ ഡയറക്ടറേറ്റ്</div>
-                            <div class="dept-title-english">VIGILANCE &amp; ANTI-CORRUPTION BUREAU DIRECTORATE,
-                                THIRUVANANTHAPURAM</div>
+                            <div class="dept-title-english">VIGILANCE &amp; ANTI-CORRUPTION BUREAU DIRECTORATE</div>
+                            <div class="dept-title-malayalam">അഴിമതി നിരോധന ബ്യൂറോ ഡയറക്ടറേറ്റ്, തിരുവനന്തപുരം</div>
+
                             <div class="header-contact-pill">
                                 <div class="header-contact-item">
                                     <span class="icon-circle-blue">
@@ -829,17 +834,6 @@
                 <!-- CUTTING LINE (Separation Line) -->
                 <div class="cut-line-wrapper">
                     <div class="cut-line"></div>
-                    <div class="cut-badge">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="6" cy="6" r="3"></circle>
-                            <circle cx="6" cy="18" r="3"></circle>
-                            <line x1="20" y1="4" x2="8.12" y2="15.88"></line>
-                            <line x1="14.47" y1="14.48" x2="20" y2="20"></line>
-                            <line x1="8.12" y1="8.12" x2="12" y2="12"></line>
-                        </svg>
-                        <span>Cut along this line</span>
-                    </div>
                 </div>
 
             </div>

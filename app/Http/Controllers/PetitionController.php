@@ -6,6 +6,7 @@ use App\Models\Petition;
 use App\Models\Upload;
 use App\Models\Seat;
 use App\Models\User;
+use App\Models\Address;
 use App\Models\PetitionDraft;
 use App\Models\District;
 use App\Models\DesignationList;
@@ -22,6 +23,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\InwardStatisticsExport;
@@ -337,6 +340,118 @@ class PetitionController extends Controller
         $petition->delete();
 
         return back()->with('success', "Petition (Receipt No: {$receiptNo}) has been deleted successfully.");
+    }
+
+    /**
+     * Update an inward petition registration before it is processed by CPSP / T-Section.
+     */
+    public function updateInward(Request $request, string $id): RedirectResponse
+    {
+        $user = Auth::user();
+        abort_unless(
+            $user->canAccess('create inward petitions') || 
+            $user->canAccess('view inward registration') || 
+            $user->canAccess('access admin dashboard') ||
+            $user->hasRole(['inward', 'Inward']),
+            403, 
+            'Unauthorized to edit inward petitions.'
+        );
+
+        $realId = HashidService::decode($id) ?? $id;
+        $petition = Petition::findOrFail($realId);
+
+        // Security / Business rule: Cannot edit if already processed by CPSP or T-Section
+        if ($petition->is_cpsp_processed) {
+            return back()->with('error', 'Cannot edit a petition that has already been processed by CPSP / T-Section.');
+        }
+
+        // Security / Business rule: Cannot edit finalized or linked duplicate petition
+        if (in_array($petition->status, [
+            Petition::STATUS_CLOSED,
+            Petition::STATUS_SENT_TO_GOVT,
+            Petition::STATUS_SENT_TO_SPC,
+            Petition::STATUS_INTERNAL_VIGILANCE,
+            Petition::STATUS_DUPLICATE
+        ]) || $petition->linked_petition_id) {
+            return back()->with('error', 'Cannot edit a finalized or linked duplicate petition.');
+        }
+
+        $eligibleSeatIds = Seat::eligibleForInward()->pluck('seat_id')->toArray();
+
+        $validated = $request->validate([
+            'receipt_no' => [
+                'required', 
+                'string', 
+                'max:255', 
+                Rule::unique('petitions', 'receipt_no')->ignore($petition->petition_id, 'petition_id')
+            ],
+            'date_of_petition_received' => 'required|date|before_or_equal:today',
+            'mode_of_petition_received' => 'required|string',
+            'unit_id' => 'nullable|required_if:mode_of_petition_received,Unit,unit|exists:units,unit_id',
+            'date_of_petition_received_at_unit' => 'nullable|required_if:mode_of_petition_received,Unit,unit|date|before_or_equal:today',
+            'mode_others' => 'nullable|required_if:mode_of_petition_received,others,Others|string|max:255',
+            'complainant_name' => 'required|string|max:255',
+            'seat_id' => ['required', 'exists:seats,seat_id', Rule::in($eligibleSeatIds)],
+        ]);
+
+        DB::transaction(function () use ($petition, $validated, $user) {
+            $currentSeat = $user->currentSeatUser();
+            $unitId = (strtolower($validated['mode_of_petition_received']) === 'unit') ? ($validated['unit_id'] ?? null) : null;
+            $unitDate = (strtolower($validated['mode_of_petition_received']) === 'unit') ? ($validated['date_of_petition_received_at_unit'] ?? null) : null;
+            $modeOthers = (strtolower($validated['mode_of_petition_received']) === 'others') ? ($validated['mode_others'] ?? null) : null;
+
+            $seatChanged = ((int)$petition->seat_id !== (int)$validated['seat_id']);
+
+            $petition->update([
+                'receipt_no' => trim($validated['receipt_no']),
+                'date_of_petition_received' => $validated['date_of_petition_received'],
+                'mode_of_petition_received' => $validated['mode_of_petition_received'],
+                'unit_id' => $unitId,
+                'date_of_petition_received_at_unit' => $unitDate,
+                'mode_of_petition_received_others' => $modeOthers,
+                'seat_id' => $validated['seat_id'],
+                'updated_by_user_id' => $user->user_id ?? $user->id,
+                'updated_by_seat_id' => $currentSeat?->seat_id,
+                'cpsp_opened_at' => $seatChanged ? null : $petition->cpsp_opened_at,
+                'cpsp_opened_by_user_id' => $seatChanged ? null : $petition->cpsp_opened_by_user_id,
+                'cpsp_opened_by_seat_id' => $seatChanged ? null : $petition->cpsp_opened_by_seat_id,
+                'is_returned_to_inward' => false,
+            ]);
+
+            // Update Complainant Address record
+            $complainant = Address::where('petition_id', $petition->petition_id)
+                ->where('person_type', 'Complainant')
+                ->first();
+
+            if ($complainant) {
+                $complainant->update([
+                    'person_name' => trim($validated['complainant_name']),
+                ]);
+            } else {
+                Address::create([
+                    'petition_id' => $petition->petition_id,
+                    'person_type' => 'Complainant',
+                    'person_name' => trim($validated['complainant_name']),
+                    'entity_type' => 'Person',
+                ]);
+            }
+
+            if ($seatChanged) {
+                try {
+                    \App\Services\NotificationService::notifyPetitionTransferred($petition, $validated['seat_id'], $user);
+                } catch (\Throwable $e) {}
+            }
+        });
+
+        $redirect = redirect()->route('inward.enter_petition')
+            ->with('success', "Inward Petition (Receipt No: {$validated['receipt_no']}) updated successfully.");
+
+        if ($request->boolean('print_receipt')) {
+            $redirect->with('receipt_petition_hashid', $petition->hashid)
+                ->with('receipt_petition_no', $validated['receipt_no']);
+        }
+
+        return $redirect;
     }
 
     /**
@@ -813,10 +928,19 @@ class PetitionController extends Controller
             $user = Auth::user();
             $isInwardUser = $user && ($user->hasRole(['inward', 'Inward']) || str_contains(strtolower($user->currentSeatUser()?->seat?->seat_name ?? ''), 'inward'));
             if ($request->boolean('is_inward_entry') || ($request->filled('seat_id') && $isInwardUser)) {
-                return redirect()->route('inward.enter_petition')
-                    ->with('success', "Inward Petition (Receipt No: {$petition->receipt_no}) registered and transferred successfully.")
-                    ->with('receipt_petition_hashid', $petition->hashid)
-                    ->with('receipt_petition_no', $petition->receipt_no);
+                $shouldPrint = $request->has('print_receipt')
+                    ? $request->boolean('print_receipt')
+                    : (strtolower($request->input('mode_of_petition_received', '')) === 'direct');
+
+                $redirect = redirect()->route('inward.enter_petition')
+                    ->with('success', "Inward Petition (Receipt No: {$petition->receipt_no}) registered and transferred successfully.");
+
+                if ($shouldPrint) {
+                    $redirect->with('receipt_petition_hashid', $petition->hashid)
+                        ->with('receipt_petition_no', $petition->receipt_no);
+                }
+
+                return $redirect;
             }
 
             return redirect()->route('petitions.index', ['tab' => 'all'])->with('success', 'Petition submitted successfully.');
@@ -1744,10 +1868,12 @@ class PetitionController extends Controller
             }
             return $addr->person_name;
         })
-            ->map(function ($addresses, $groupKey) {
+            ->map(function ($addresses, $groupKey) use ($type) {
                 $first = $addresses->first();
                 $rawName = $first->person_name;
                 $displayName = in_array($rawName, ['Unknown', 'Unknown Suspect', 'Anonymous / Unknown']) ? '' : (string) $rawName;
+                $hasPermanent = $addresses->contains('address_type', 'Permanent');
+
                 return [
                     'id' => rand(1000, 9999),
                     'name' => $displayName,
@@ -1756,12 +1882,20 @@ class PetitionController extends Controller
                     'designation_id' => (string) ($first->designation_id ?? ''),
                     'department_id' => (string) ($first->department_id ?? ''),
                     'pen_number' => (string) ($first->pen_number ?? ''),
-                    'addresses' => $addresses->map(fn($addr) => [
-                        'address_type' => (string) $addr->address_type,
-                        'address' => (string) ($addr->full_address === 'Not provided' ? '' : $addr->full_address),
-                        'district_id' => (string) $addr->district_id,
-                        'pincode' => (string) $addr->pincode,
-                    ])->values()->all()
+                    'addresses' => $addresses->map(function ($addr) use ($type, $hasPermanent, $addresses) {
+                        $addressType = (string) $addr->address_type;
+                        // Default complainant address to Permanent if it's the sole address or has no address details
+                        if ($type === 'Complainant' && $addressType === 'Temporary' && (!$hasPermanent || $addr->full_address === 'Not provided' || $addresses->count() === 1)) {
+                            $addressType = 'Permanent';
+                        }
+
+                        return [
+                            'address_type' => $addressType,
+                            'address' => (string) ($addr->full_address === 'Not provided' ? '' : $addr->full_address),
+                            'district_id' => (string) $addr->district_id,
+                            'pincode' => (string) $addr->pincode,
+                        ];
+                    })->values()->all()
                 ];
             })->values()->all();
     }

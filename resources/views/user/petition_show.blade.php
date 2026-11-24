@@ -197,6 +197,12 @@
                         <i data-lucide="rotate-ccw" class="w-4 h-4 text-rose-600"></i> Re-transfer to CPSP
                     </a>
                 @endif
+                @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $isInwardUser && !$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Duplicate']))
+                    <a href="{{ route('inward.enter_petition', ['search' => $petition->receipt_no, 'hide_form' => 1]) . '#view-inward-petitions' }}"
+                        class="px-4 py-2.5 text-sm font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-all shadow-sm flex items-center gap-2">
+                        <i data-lucide="edit-3" class="w-4 h-4 text-amber-600"></i> Edit in Inward
+                    </a>
+                @endif
                 <a href="{{ url()->previous() }}"
                     class="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to List
@@ -327,11 +333,13 @@
                         <div class="space-y-4">
                             @php
                                 $displayAddresses = $petition->displayAddresses();
+                                // Fix 2: Group by lowercase-trimmed person_name so that
+                                // "Abhijith" and "ABHIJITH" are treated as the same person card.
                                 $complainants = $displayAddresses->where('person_type', 'Complainant')->groupBy(function ($addr) {
-                                    if (in_array($addr->person_name, ['Unknown', 'Anonymous / Unknown', 'Unknown Suspect'])) {
+                                    if (in_array(mb_strtolower(trim($addr->person_name)), ['unknown', 'anonymous / unknown', 'unknown suspect'])) {
                                         return $addr->person_name . '_' . ($addr->phone ?? '') . '_' . ($addr->email ?? '');
                                     }
-                                    return $addr->person_name;
+                                    return mb_strtolower(trim($addr->person_name));
                                 });
                             @endphp
 
@@ -380,10 +388,10 @@
                         <div class="space-y-4">
                             @php
                                 $accused = $displayAddresses->where('person_type', 'Accused')->groupBy(function ($addr) {
-                                    if (in_array($addr->person_name, ['Unknown', 'Unknown Suspect', 'Anonymous / Unknown'])) {
+                                    if (in_array(mb_strtolower(trim($addr->person_name)), ['unknown', 'unknown suspect', 'anonymous / unknown'])) {
                                         return $addr->person_name . '_' . ($addr->department_id ?? '') . '_' . ($addr->designation_id ?? '') . '_' . ($addr->phone ?? '') . '_' . ($addr->pen_number ?? '') . '_' . ($addr->entity_type ?? '');
                                     }
-                                    return $addr->person_name;
+                                    return mb_strtolower(trim($addr->person_name));
                                 });
                             @endphp
 

@@ -158,16 +158,18 @@ class Petition extends Model
     /**
      * Return this petition's addresses and, for linked duplicates, its original's
      * addresses without repeating identical records copied by older link flows.
+     *
+     * Fix 3: If this is a linked duplicate, show ONLY the original petition's
+     * addresses — prevents double-entry when complainant is re-entered on the duplicate.
      */
     public function displayAddresses(): EloquentCollection
     {
-        $addresses = $this->uniqueOwnAddresses();
-
+        // Fix 3: Linked duplicates always display the original petition's addresses only.
         if ($this->linked_petition_id && $this->originalPetition) {
-            $addresses = $this->originalPetition->uniqueOwnAddresses()->concat($addresses);
+            return $this->originalPetition->uniqueOwnAddresses();
         }
 
-        return $this->uniqueAddressRecords($addresses);
+        return $this->uniqueOwnAddresses();
     }
 
     public function uniqueOwnAddresses(): EloquentCollection
@@ -195,10 +197,18 @@ class Petition extends Model
             'pincode',
         ];
 
-        return $addresses->unique(function (Address $address) use ($identityFields): string {
+        // Fix 1: Normalize string fields (person_name, contact_person) to lowercase
+        // before comparison so "ABHIJITH" and "Abhijith" are treated as the same person.
+        $caseInsensitiveFields = ['person_name', 'contact_person'];
+
+        return $addresses->unique(function (Address $address) use ($identityFields, $caseInsensitiveFields): string {
             $identity = [];
             foreach ($identityFields as $field) {
-                $identity[] = $address->getAttribute($field);
+                $value = $address->getAttribute($field);
+                if (in_array($field, $caseInsensitiveFields, true) && is_string($value)) {
+                    $value = mb_strtolower(trim($value));
+                }
+                $identity[] = $value;
             }
 
             return json_encode($identity, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';

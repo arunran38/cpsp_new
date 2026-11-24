@@ -1025,6 +1025,18 @@
             const oldComplainants = @json(old('complainants'));
             const oldAccused = @json(old('accused'));
 
+            let initialComplainants = oldComplainants || (initialDraft?.complainants && initialDraft.complainants.length > 0 ? initialDraft.complainants : originalComplainants);
+            if (Array.isArray(initialComplainants)) {
+                initialComplainants.forEach(c => {
+                    if (Array.isArray(c.addresses)) {
+                        const hasPermanent = c.addresses.some(a => a.address_type === 'Permanent');
+                        if (!hasPermanent && c.addresses.length === 1 && c.addresses[0].address_type === 'Temporary') {
+                            c.addresses[0].address_type = 'Permanent';
+                        }
+                    }
+                });
+            }
+
             return {
                 draftType: 'update',
                 draftPetitionId: {{ $petition->petition_id }},
@@ -1058,7 +1070,7 @@
                     description: {!! json_encode(old('description')) !!} || (initialDraft?.petitionDetails?.description ?? originalPetitionDetails.description),
                     proposed_action: {!! json_encode(old('proposed_action')) !!} || (initialDraft?.petitionDetails?.proposed_action ?? originalPetitionDetails.proposed_action)
                 },
-                complainants: oldComplainants || (initialDraft?.complainants && initialDraft.complainants.length > 0 ? initialDraft.complainants : originalComplainants),
+                complainants: initialComplainants,
                 accused: oldAccused || (initialDraft?.accused && initialDraft.accused.length > 0 ? initialDraft.accused : originalAccused),
                 deleted_uploads: [],
 
