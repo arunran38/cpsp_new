@@ -255,14 +255,11 @@
                                         <label for="date_of_petition_received_at_unit"
                                             class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
                                             <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
-                                            Date of Petition Received at Unit <span
-                                                class="required-mark text-red-600 font-bold ml-1"
-                                                style="color: #dc2626 !important;">*</span>
+                                            Date of Petition Received at Unit
                                         </label>
                                         <input type="date" name="date_of_petition_received_at_unit"
                                             id="date_of_petition_received_at_unit" x-model="dateOfPetitionReceivedAtUnit"
                                             value="{{ old('date_of_petition_received_at_unit') }}"
-                                            x-bind:required="modeOfPetition && modeOfPetition.toLowerCase() === 'unit'"
                                             max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                             class="block w-full px-4 py-2.5 text-sm bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
                                         @error('date_of_petition_received_at_unit')
@@ -1374,6 +1371,7 @@
                 modeOfPetition: '',
                 unitId: '',
                 dateAtUnit: '',
+                dateAtUnitError: '',
                 modeOthers: '',
                 complainantName: '',
                 selectedSeatId: '',
@@ -1434,6 +1432,7 @@
                 modeOfPetition = ($event.detail.mode || '');
                 unitId = $event.detail.unit_id || '';
                 dateAtUnit = $event.detail.date_at_unit || '';
+                dateAtUnitError = '';
                 modeOthers = $event.detail.mode_others || '';
                 complainantName = $event.detail.complainant_name || '';
                 selectedSeatId = $event.detail.seat_id || '';
@@ -1522,6 +1521,7 @@
                                         Mode of Receipt <span class="text-red-500">*</span>
                                     </label>
                                     <select name="mode_of_petition_received" x-model="modeOfPetition" required
+                                        @change="dateAtUnitError = ''; $refs.dateAtUnit.setCustomValidity('')"
                                         class="block w-full px-3.5 py-2.5 text-sm font-semibold bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
                                         <option value="">Select Mode</option>
                                         <option value="Tapal">Tapal</option>
@@ -1555,12 +1555,19 @@
                                     </div>
                                     <div class="space-y-1.5">
                                         <label class="block text-xs font-bold text-indigo-900 uppercase tracking-wider">
-                                            Date Received at Unit <span class="text-red-500">*</span>
+                                            Date Received at Unit
+                                            <span x-show="modeOfPetition && modeOfPetition.toLowerCase() === 'unit'"
+                                                class="text-red-500">*</span>
                                         </label>
                                         <input type="date" name="date_of_petition_received_at_unit" x-model="dateAtUnit"
+                                            x-ref="dateAtUnit"
                                             :required="modeOfPetition && modeOfPetition.toLowerCase() === 'unit'"
+                                            @invalid="dateAtUnitError = 'Date of Petition Received at Unit is required when Mode of Petition is Unit.'; $event.target.setCustomValidity(dateAtUnitError)"
+                                            @input="dateAtUnitError = ''; $event.target.setCustomValidity('')"
                                             max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                             class="block w-full px-3.5 py-2 text-sm bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                                        <p x-show="dateAtUnitError" x-text="dateAtUnitError"
+                                            class="text-xs font-semibold text-rose-600"></p>
                                     </div>
                                 </div>
 

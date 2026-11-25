@@ -52,4 +52,28 @@ class UpdatePetitionRequestTest extends TestCase
         $this->assertTrue($validator->fails());
         $this->assertTrue($validator->errors()->has('receipt_no'));
     }
+
+    public function test_it_requires_the_unit_received_date_only_when_mode_is_unit(): void
+    {
+        $petition = Petition::factory()->create();
+        $route = Mockery::mock();
+        $route->shouldReceive('parameter')
+            ->with('petition', null)
+            ->andReturn($petition->hashid);
+
+        $request = new UpdatePetitionRequest();
+        $request->setRouteResolver(fn () => $route);
+        $request->replace(['mode_of_petition_received' => 'Unit']);
+
+        $unitValidator = Validator::make([], [
+            'date_of_petition_received_at_unit' => $request->rules()['date_of_petition_received_at_unit'],
+        ]);
+        $this->assertTrue($unitValidator->fails());
+
+        $request->replace(['mode_of_petition_received' => 'Direct']);
+        $otherModeValidator = Validator::make([], [
+            'date_of_petition_received_at_unit' => $request->rules()['date_of_petition_received_at_unit'],
+        ]);
+        $this->assertFalse($otherModeValidator->fails());
+    }
 }

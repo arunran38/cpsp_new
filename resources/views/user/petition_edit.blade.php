@@ -306,7 +306,9 @@
                             <label for="date_of_petition_received_at_unit"
                                 class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
                                 <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
-                                Date of Petition Received at Unit <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
+                                Date of Petition Received at Unit
+                                <span x-show="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
+                                    class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
                             </label>
                             <input type="date" name="date_of_petition_received_at_unit"
                                 id="date_of_petition_received_at_unit"
@@ -1517,7 +1519,7 @@
                                 isValid = false;
                             }
                             if (!this.petitionDetails.date_of_petition_received_at_unit || String(this.petitionDetails.date_of_petition_received_at_unit).trim() === '') {
-                                this.formErrors['date_of_petition_received_at_unit'] = 'This field is required.';
+                                this.formErrors['date_of_petition_received_at_unit'] = 'Date of Petition Received at Unit is required when Mode of Petition is Unit.';
                                 isValid = false;
                             }
                         } else {

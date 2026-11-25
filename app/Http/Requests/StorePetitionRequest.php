@@ -139,7 +139,7 @@ class StorePetitionRequest extends FormRequest
                 'nullable',
                 'date',
                 'before_or_equal:today',
-                Rule::requiredIf(fn() => strtolower((string)$this->input('mode_of_petition_received')) === 'unit'),
+                Rule::requiredIf(fn() => !$isInward && strtolower((string)$this->input('mode_of_petition_received')) === 'unit'),
             ],
             'mode_others' => 'nullable|string',
             'linked_petition_id' => 'nullable|exists:petitions,petition_id',
