@@ -12,6 +12,7 @@ use App\Models\District;
 use App\Models\DesignationList;
 use App\Models\DepartmentList;
 use App\Models\Unit;
+use App\Models\AuditLog;
 use App\Http\Requests\StorePetitionRequest;
 use App\Http\Requests\UpdatePetitionRequest;
 use App\Services\PetitionService;
@@ -308,15 +309,19 @@ class PetitionController extends Controller
     }
 
     /**
-     * Remove a returned inward petition from records (Soft delete).
+     * Permanently remove a returned inward petition and its associated files/records.
      */
     public function destroyInward(Request $request, $id): RedirectResponse
     {
         $user = Auth::user();
         abort_unless($user->canAccess('delete inward petitions') || $user->canAccess('access admin dashboard'), 403, 'Unauthorized to delete inward petitions.');
 
+        $request->validate([
+            'deletion_reason' => 'required|string|min:3|max:1000',
+        ]);
+
         $realId = HashidService::decode($id) ?? $id;
-        $petition = Petition::findOrFail($realId);
+        $petition = Petition::with(['uploads', 'addresses', 'forwardings', 'decision', 'compliance', 'duplicates'])->findOrFail($realId);
 
         // Security validation: Only petitions returned from seats can be deleted
         if (!$petition->is_returned_to_inward) {
@@ -331,15 +336,55 @@ class PetitionController extends Controller
             Petition::STATUS_CLOSED,
             Petition::STATUS_SENT_TO_GOVT,
             Petition::STATUS_SENT_TO_SPC,
-            Petition::STATUS_INTERNAL_VIGILANCE
+            Petition::STATUS_INTERNAL_VIGILANCE,
+            Petition::STATUS_DUPLICATE,
         ])) {
             return back()->with('error', 'Cannot delete a finalized petition.');
         }
 
-        $receiptNo = $petition->receipt_no;
-        $petition->delete();
+        if ($petition->forwardings->isNotEmpty() || $petition->decision !== null || $petition->compliance !== null) {
+            return back()->with('error', 'Cannot delete a petition with existing forwarding, decision, or processing history.');
+        }
 
-        return back()->with('success', "Petition (Receipt No: {$receiptNo}) has been deleted successfully.");
+        if ($petition->linked_petition_id !== null || $petition->duplicates->isNotEmpty()) {
+            return back()->with('error', 'Cannot delete a petition that has linked duplicates.');
+        }
+
+        $receiptNo = $petition->receipt_no ?? ('ID ' . $petition->petition_id);
+        $deletionReason = $request->input('deletion_reason');
+
+        DB::transaction(function () use ($petition, $receiptNo, $deletionReason, $user) {
+            // 1. Audit log before deletion
+            $complainant = $petition->addresses->firstWhere('person_type', 'Complainant')?->person_name;
+            AuditLog::record(
+                action: 'PERMANENT_DELETE',
+                module: 'Inward',
+                description: "Inward petition #{$receiptNo} permanently deleted. Reason: {$deletionReason}",
+                properties: [
+                    'petition_id' => $petition->petition_id,
+                    'receipt_no' => $receiptNo,
+                    'complainant' => $complainant,
+                    'seat_id' => $petition->seat_id,
+                    'return_reason' => $petition->return_reason,
+                    'deletion_reason' => $deletionReason,
+                    'deleted_by_user_id' => $user->user_id,
+                    'deleted_by_name' => $user->name,
+                ],
+                user: $user
+            );
+
+            // 2. Delete physical storage files
+            foreach ($petition->uploads as $upload) {
+                if ($upload->file_path && Storage::disk('public')->exists($upload->file_path)) {
+                    Storage::disk('public')->delete($upload->file_path);
+                }
+            }
+
+            // 3. Force delete petition (cascades to addresses and uploads)
+            $petition->forceDelete();
+        });
+
+        return back()->with('success', "Petition (Receipt No: {$receiptNo}) has been permanently deleted successfully.");
     }
 
     /**

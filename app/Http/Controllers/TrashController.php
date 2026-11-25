@@ -270,8 +270,11 @@ class TrashController extends Controller
                 
                 $petition->forceDelete();
                 return redirect()->route('admin.trash.index')->with('success', 'Petition #'.$receiptNo.' permanently deleted.');
-            } catch (\Exception $e) {
-                return redirect()->route('admin.trash.index')->with('error', 'Failed to permanently delete petition.');
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to permanently delete petition #{$realId}: " . $e->getMessage(), [
+                    'exception' => $e
+                ]);
+                return redirect()->route('admin.trash.index')->with('error', 'Failed to permanently delete petition: ' . $e->getMessage());
             }
         });
     }

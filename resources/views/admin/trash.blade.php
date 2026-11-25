@@ -29,7 +29,7 @@
                         </span>
                     </div>
                     <p class="text-slate-300 font-medium max-w-2xl text-xs sm:text-sm mt-0.5">
-                        Inspect soft-deleted petitions, restore active records, or permanently purge files.
+                        Inspect soft-deleted petitions, restore active records, or permanently delete files.
                     </p>
                 </div>
             </div>
@@ -335,14 +335,14 @@
                                     @if(Auth::user()->canAccess('delete recycle bin'))
                                         <form action="{{ route('admin.trash.forceDelete', $petition->petition_id) }}"
                                               method="POST" 
-                                              data-confirm="CRITICAL: This will PERMANENTLY purge petition {{ $petition->receipt_no ?? ('ID ' . $petition->petition_id) }} and delete all attached physical documents. This action CANNOT be reversed. Do you wish to proceed?">
+                                              data-confirm="CRITICAL: This will PERMANENTLY delete petition {{ $petition->receipt_no ?? ('ID ' . $petition->petition_id) }} and delete all attached physical documents. This action CANNOT be reversed. Do you wish to proceed?">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
                                                     class="px-2.5 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-colors flex items-center gap-1.5"
-                                                    title="Permanently Purge Petition">
+                                                    title="Permanently Delete Petition">
                                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                                <span class="hidden sm:inline">Purge</span>
+                                                <span class="hidden sm:inline">Delete</span>
                                             </button>
                                         </form>
                                     @endif
@@ -627,13 +627,13 @@
                     <!-- Force Delete Trigger -->
                     <template x-if="selectedItem.can_delete">
                         <form :action="selectedItem.force_delete_url" method="POST"
-                              :data-confirm="'CRITICAL: Permanently purge ' + selectedItem.receipt_no + ' and its files? This cannot be undone.'">
+                              :data-confirm="'CRITICAL: Permanently delete ' + selectedItem.receipt_no + ' and its files? This cannot be undone.'">
                             @csrf
                             <input type="hidden" name="_method" value="DELETE">
                             <button type="submit" 
                                     class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors flex items-center gap-1.5 shadow-xs">
                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                Permanently Purge
+                                Permanently Delete
                             </button>
                         </form>
                     </template>

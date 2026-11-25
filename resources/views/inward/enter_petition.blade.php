@@ -1250,8 +1250,8 @@
         </div>
 
         <!-- Delete Returned Petition Confirmation Modal -->
-        <div x-data="{ open: false, petitionId: null, receiptNo: '', returnReason: '' }"
-            @open-delete-modal.window="open = true; petitionId = $event.detail.id; receiptNo = $event.detail.receipt; returnReason = $event.detail.reason || ''; $nextTick(() => { if (window.lucide) { lucide.createIcons(); } });"
+        <div x-data="{ open: false, petitionId: null, receiptNo: '', returnReason: '', deletionReason: '' }"
+            @open-delete-modal.window="open = true; petitionId = $event.detail.id; receiptNo = $event.detail.receipt; returnReason = $event.detail.reason || ''; deletionReason = ''; $nextTick(() => { if (window.lucide) { lucide.createIcons(); } });"
             class="relative z-[100]" aria-labelledby="delete-modal-title" role="dialog" aria-modal="true" x-cloak
             x-show="open">
             <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" x-show="open"
@@ -1283,7 +1283,7 @@
                                     </div>
                                     <div>
                                         <h3 class="text-xl font-bold text-slate-900 tracking-tight" id="delete-modal-title">
-                                            Delete Petition
+                                            Permanent Delete
                                         </h3>
                                         <p class="text-[13px] text-slate-500 font-medium mt-0.5">
                                             Receipt No: <strong x-text="receiptNo"
@@ -1312,12 +1312,24 @@
                                     </div>
                                 </div>
 
-                                <div class="rounded-xl bg-amber-50/80 border border-amber-200 p-3.5 flex items-start gap-3">
-                                    <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5"></i>
-                                    <p class="text-xs text-amber-900 leading-relaxed font-medium">
-                                        This petition does not belong to the integrated sections. Deleting it will remove it
-                                        from active Inward lists and move it to the <strong>Recycle Bin</strong>.
+                                <!-- Permanent Deletion Warning -->
+                                <div class="rounded-xl bg-rose-50 border border-rose-200 p-3.5 flex items-start gap-3">
+                                    <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5"></i>
+                                    <p class="text-xs text-rose-900 leading-relaxed font-medium">
+                                        <strong>Caution:</strong> This petition will be <strong>permanently deleted</strong>. Attached files and records will be purged immediately without moving to the Recycle Bin.
                                     </p>
+                                </div>
+
+                                <!-- Mandatory Reason for Deletion -->
+                                <div class="space-y-1.5">
+                                    <label for="deletion_reason" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                        Deletion Reason <span class="text-rose-500">*</span>
+                                    </label>
+                                    <textarea name="deletion_reason" id="deletion_reason" rows="3" required
+                                        x-model="deletionReason"
+                                        placeholder="Enter the reason for deleting this petition (e.g., Wrong department, Entered in error)..."
+                                        class="w-full text-sm rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 p-3 outline-none resize-none transition-all placeholder:text-slate-400 font-medium"></textarea>
+                                    <p class="text-[11px] text-slate-400 font-medium">This reason and action will be recorded in the audit log.</p>
                                 </div>
                             </div>
 
@@ -1328,9 +1340,10 @@
                                     Cancel
                                 </button>
                                 <button type="submit"
-                                    class="w-full sm:w-auto px-7 py-2.5 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-lg shadow-rose-600/20 transition-all flex items-center justify-center gap-2 focus:ring-4 focus:ring-rose-500/20 outline-none hover:-translate-y-0.5 active:translate-y-0">
+                                    :disabled="!deletionReason.trim()"
+                                    class="w-full sm:w-auto px-7 py-2.5 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-lg shadow-rose-600/20 transition-all flex items-center justify-center gap-2 focus:ring-4 focus:ring-rose-500/20 outline-none hover:-translate-y-0.5 active:translate-y-0">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                    <span>Confirm Delete</span>
+                                    <span>Permanently Delete</span>
                                 </button>
                             </div>
                         </form>

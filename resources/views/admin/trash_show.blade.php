@@ -26,12 +26,12 @@
 
             @if(Auth::user()->canAccess('delete recycle bin'))
                 <form action="{{ route('admin.trash.forceDelete', $petition->petition_id) }}" method="POST"
-                      data-confirm="CRITICAL: Permanently purge {{ $petition->receipt_no ?? ('ID ' . $petition->petition_id) }} and its files? This cannot be undone.">
+                      data-confirm="CRITICAL: Permanently delete {{ $petition->receipt_no ?? ('ID ' . $petition->petition_id) }} and its files? This cannot be undone.">
                     @csrf
                     @method('DELETE')
                     <button type="submit" 
                             class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors flex items-center gap-1.5 shadow-xs">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i> Permanently Purge
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Permanently Delete
                     </button>
                 </form>
             @endif

@@ -302,11 +302,12 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         el.dataset.swalConfirmed = 'true';
-                        const form = el.closest('form');
-                        if (form && el.type === 'submit') {
-                            const origOnclick = el.onclick;
-                            el.onclick = null;
-                            if (el.name) {
+                        const form = el.tagName === 'FORM' ? el : el.closest('form');
+                        if (form) {
+                            form.dataset.swalConfirmed = 'true';
+                            const origOnsubmit = form.onsubmit;
+                            form.onsubmit = null;
+                            if (el.type === 'submit' && el.name) {
                                 const input = document.createElement('input');
                                 input.type = 'hidden';
                                 input.name = el.name;
@@ -314,7 +315,7 @@
                                 form.appendChild(input);
                             }
                             form.submit();
-                            setTimeout(() => { el.onclick = origOnclick; }, 100);
+                            setTimeout(() => { form.onsubmit = origOnsubmit; }, 100);
                         } else if (el.tagName.toLowerCase() === 'a' && el.href) {
                             window.location.href = el.href;
                         } else {

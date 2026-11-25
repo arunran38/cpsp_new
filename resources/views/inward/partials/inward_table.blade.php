@@ -124,32 +124,9 @@
                     @endif
                     <td class="px-5 py-3.5 text-center whitespace-nowrap">
                         @if($item->is_returned_to_inward)
-                            <div class="inline-flex items-center justify-center gap-2">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider shrink-0">
-                                    Returned
-                                </span>
-                                <button type="button" @click="$dispatch('open-reassign-modal', { 
-                                        id: '{{ $item->hashid }}', 
-                                        receipt: {{ json_encode($item->receipt_no) }},
-                                        reason: {{ json_encode($item->return_reason ?? '') }},
-                                        by: {{ json_encode($item->returnedByUser?->name ?? '') }},
-                                        at: {{ json_encode($item->returned_at ? \Carbon\Carbon::parse($item->returned_at)->format('d M, Y h:i A') : '') }},
-                                        seat: {{ json_encode($item->seat?->seat_name ?? '') }}
-                                    })"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 hover:text-amber-800 hover:bg-amber-100 rounded-lg transition-colors shadow-sm text-[10px] font-bold border border-amber-200 uppercase tracking-wider shrink-0" title="Re-transfer to another seat">
-                                    <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
-                                    <span>Re-transfer</span>
-                                </button>
-                                <button type="button" @click="$dispatch('open-delete-modal', { 
-                                        id: '{{ $item->hashid }}', 
-                                        receipt: {{ json_encode($item->receipt_no) }},
-                                        reason: {{ json_encode($item->return_reason ?? '') }}
-                                    })"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-50 text-rose-600 hover:text-rose-700 hover:bg-rose-100 rounded-lg transition-colors shadow-sm text-[10px] font-bold border border-rose-200 uppercase tracking-wider shrink-0" title="Delete this returned petition">
-                                    <i data-lucide="trash-2" class="w-3 h-3 text-rose-500"></i>
-                                    <span>Delete</span>
-                                </button>
-                            </div>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300 uppercase tracking-wider">
+                                Returned
+                            </span>
                         @elseif($item->linked_petition_id || $item->status === 'Duplicate')
                             <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                 Linked Duplicate
@@ -189,7 +166,7 @@
                         @endif
                     </td>
                     <td class="px-5 py-3.5 text-center whitespace-nowrap">
-                        <div class="inline-flex items-center gap-1.5">
+                        <div class="inline-flex items-center gap-1.5 justify-center flex-nowrap">
                             @php
                                 $canEditInward = !$item->is_cpsp_processed 
                                     && !$item->linked_petition_id 
@@ -198,6 +175,25 @@
                                     && (Auth::user()->canAccess('create inward petitions') || Auth::user()->canAccess('view inward registration') || Auth::user()->canAccess('access admin dashboard') || Auth::user()->hasRole(['inward', 'Inward']));
                             @endphp
 
+                            {{-- 1. Re-transfer (for returned petitions) --}}
+                            @if($item->is_returned_to_inward)
+                                <button type="button" @click="$dispatch('open-reassign-modal', { 
+                                        id: '{{ $item->hashid }}', 
+                                        receipt: {{ json_encode($item->receipt_no) }},
+                                        reason: {{ json_encode($item->return_reason ?? '') }},
+                                        by: {{ json_encode($item->returnedByUser?->name ?? '') }},
+                                        at: {{ json_encode($item->returned_at ? \Carbon\Carbon::parse($item->returned_at)->format('d M, Y h:i A') : '') }},
+                                        seat: {{ json_encode($item->seat?->seat_name ?? '') }}
+                                    })"
+                                    class="inline-flex items-center justify-center w-8 h-8 bg-amber-50 text-amber-700 hover:text-amber-800 hover:bg-amber-100 rounded-lg transition-colors shadow-sm border border-amber-200 cursor-pointer" 
+                                    title="Re-transfer to another seat"
+                                    aria-label="Re-transfer to another seat">
+                                    <i data-lucide="rotate-ccw" class="w-4 h-4 text-amber-600"></i>
+                                    <span class="sr-only">Re-transfer</span>
+                                </button>
+                            @endif
+
+                            {{-- 2. Edit (immediately after Re-transfer) --}}
                             @if($canEditInward)
                                 <button type="button" 
                                         @click="$dispatch('open-edit-inward-modal', {
@@ -211,24 +207,42 @@
                                             complainant_name: {{ json_encode($complainant?->person_name ?? '') }},
                                             seat_id: '{{ $item->seat_id ?? '' }}'
                                         })"
-                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-900 border border-amber-200/80 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
-                                        title="Edit Inward Registration">
-                                    <i data-lucide="edit-3" class="w-3.5 h-3.5 text-amber-600"></i>
-                                    <span>Edit</span>
+                                        class="inline-flex items-center justify-center w-8 h-8 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-900 border border-amber-200/80 rounded-lg transition-all shadow-sm cursor-pointer"
+                                        title="Edit Inward Registration"
+                                        aria-label="Edit Inward Registration">
+                                    <i data-lucide="edit-3" class="w-4 h-4 text-amber-600"></i>
+                                    <span class="sr-only">Edit Inward Registration</span>
                                 </button>
                             @endif
 
+                            {{-- 3. Print Receipt --}}
                             @if(Auth::user()->canAccess('print inward receipt'))
                                 <button type="button" 
                                         onclick="window.printInwardReceipt('{{ route('inward.receipt', $item->hashid) }}')"
-                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200/80 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
-                                        title="Print Receipt">
-                                    <i data-lucide="printer" class="w-3.5 h-3.5 text-blue-600"></i>
-                                    <span>Print Receipt</span>
+                                        class="inline-flex items-center justify-center w-8 h-8 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-900 border border-blue-200/80 rounded-lg transition-all shadow-sm cursor-pointer"
+                                        title="Print Receipt"
+                                        aria-label="Print Receipt">
+                                    <i data-lucide="printer" class="w-4 h-4 text-blue-600"></i>
+                                    <span class="sr-only">Print Receipt</span>
                                 </button>
                             @endif
 
-                            @if(!$canEditInward && !Auth::user()->canAccess('print inward receipt'))
+                            {{-- 4. Delete (for returned petitions) --}}
+                            @if($item->is_returned_to_inward && (Auth::user()->canAccess('delete inward petitions') || Auth::user()->canAccess('access admin dashboard')))
+                                <button type="button" @click="$dispatch('open-delete-modal', { 
+                                        id: '{{ $item->hashid }}', 
+                                        receipt: {{ json_encode($item->receipt_no) }},
+                                        reason: {{ json_encode($item->return_reason ?? '') }}
+                                    })"
+                                    class="inline-flex items-center justify-center w-8 h-8 bg-rose-50 text-rose-600 hover:text-rose-700 hover:bg-rose-100 rounded-lg transition-colors shadow-sm border border-rose-200 cursor-pointer" 
+                                    title="Delete this returned petition"
+                                    aria-label="Delete this returned petition">
+                                    <i data-lucide="trash-2" class="w-4 h-4 text-rose-500"></i>
+                                    <span class="sr-only">Delete</span>
+                                </button>
+                            @endif
+
+                            @if(!$item->is_returned_to_inward && !$canEditInward && !Auth::user()->canAccess('print inward receipt'))
                                 <span class="text-xs text-slate-400 font-medium">—</span>
                             @endif
                         </div>

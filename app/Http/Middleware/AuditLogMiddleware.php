@@ -20,6 +20,22 @@ class AuditLogMiddleware
             $request->session()->put('login_time', now()->timestamp);
         }
 
+        // Pre-resolve petition info before it gets deleted or modified
+        try {
+            $route = $request->route();
+            $id = $route ? ($route->parameter('id') ?? $route->parameter('petition') ?? '') : '';
+            if ($id) {
+                $realId = \App\Services\HashidService::decode($id) ?? (is_numeric($id) ? (int)$id : null);
+                if ($realId) {
+                    $petition = \App\Models\Petition::withTrashed()->select('petition_id', 'receipt_no')->find($realId);
+                    if ($petition) {
+                        $request->attributes->set('_audit_petition_id', $petition->petition_id);
+                        $request->attributes->set('_audit_receipt_no', $petition->receipt_no);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {}
+
         return $next($request);
     }
 
@@ -266,12 +282,8 @@ elseif (str_contains($routeName, '.show')) {
     $id = $route ? ($route->parameter('id') ?? $route->parameter('petition') ?? $route->parameter('user') ?? '') : '';
     
     if ($module === 'Petitions' && $id) {
-        // Hash ID ഡീകോഡ് ചെയ്ത് പെറ്റീഷന്റെ രസീത് നമ്പർ കണ്ടെത്തുന്നു
-        $realId = \App\Services\HashidService::decode($id) ?? $id;
-        $petition = \App\Models\Petition::select('receipt_no')->find($realId);
-        $petitionNumber = $petition?->receipt_no ?? $id;
-        
-        $description = "Viewed Petition [Receipt No: {$petitionNumber}]";
+        $ident = $this->resolvePetitionIdentifier($request, $id);
+        $description = "Viewed Petition" . ($ident ?: " (#{$id})");
     } else {
         $description = "Viewed {$module} details" . ($id ? " (#{$id})" : '');
     }
@@ -297,16 +309,19 @@ elseif (str_contains($routeName, '.show')) {
             } elseif (str_contains($routeName, 'returnToInward')) {
                 $action = 'UPDATE';
                 $id = $route ? ($route->parameter('id') ?? '') : '';
-                $description = "Returned Petition #{$id} to Inward section";
+                $ident = $this->resolvePetitionIdentifier($request, $id);
+                $description = "Returned Petition{$ident} to Inward section";
             } elseif (str_contains($routeName, 'linkDuplicate')) {
                 $action = 'UPDATE';
                 $id = $route ? ($route->parameter('id') ?? '') : '';
-                $parentId = $request->input('linked_petition_id') ?? '';
-                $description = "Linked Petition #{$id} as duplicate" . ($parentId ? " of #{$parentId}" : '');
+                $ident = $this->resolvePetitionIdentifier($request, $id);
+                $parentId = $request->input('linked_petition_id') ?? $request->input('original_receipt_no') ?? '';
+                $description = "Linked Petition{$ident} as duplicate" . ($parentId ? " of #{$parentId}" : '');
             } elseif (str_contains($routeName, 'unlinkDuplicate')) {
                 $action = 'UPDATE';
                 $id = $route ? ($route->parameter('id') ?? '') : '';
-                $description = "Unlinked duplicate Petition #{$id}";
+                $ident = $this->resolvePetitionIdentifier($request, $id);
+                $description = "Unlinked duplicate Petition{$ident}";
             } else {
                 // User CRUD Create (ADD)
                 $action = 'CREATE';
@@ -384,9 +399,11 @@ elseif (str_contains($routeName, '.show')) {
                     $status = $request->input('status');
                     $description = "Updated User account status to '{$status}'";
                 } elseif (!empty($fieldNames) && $fieldNames !== 'None') {
-                    $description = "Updated {$module} record{$idStr} - Fields modified: {$fieldNames}";
+                    $ident = ($module === 'Petitions') ? $this->resolvePetitionIdentifier($request, $id) : $idStr;
+                    $description = "Updated {$module} record{$ident} - Fields modified: {$fieldNames}";
                 } else {
-                    $description = "Updated record in {$module}{$idStr}";
+                    $ident = ($module === 'Petitions') ? $this->resolvePetitionIdentifier($request, $id) : $idStr;
+                    $description = "Updated record in {$module}{$ident}";
                 }
 
                 $properties = $inputs;
@@ -394,19 +411,47 @@ elseif (str_contains($routeName, '.show')) {
         } elseif ($method === 'DELETE') {
             $action = 'DELETE';
             $id = $route ? ($route->parameter('id') ?? $route->parameter('petition') ?? $route->parameter('user') ?? '') : '';
-            $idStr = $id ? " #{$id}" : "";
+            $ident = ($module === 'Petitions') ? $this->resolvePetitionIdentifier($request, $id) : ($id ? " #{$id}" : "");
 
             if (str_contains($routeName, 'pullback')) {
-                $description = "Pulled back record in {$module}{$idStr}";
+                $description = "Pulled back record in {$module}{$ident}";
             } elseif (str_contains($routeName, 'force')) {
-                $description = "Permanently deleted record from {$module}{$idStr}";
+                $description = "Permanently deleted record from {$module}{$ident}";
             } else {
-                $description = "Deleted record from {$module}{$idStr}";
+                $description = "Deleted record from {$module}{$ident}";
             }
             $properties = $this->sanitizeInputs($request->all());
         }
 
         return [$action, $description, $properties];
+    }
+
+    /**
+     * Resolve a readable petition identifier (Receipt No or numeric ID) from hash/parameter.
+     */
+    protected function resolvePetitionIdentifier(Request $request, ?string $id): string
+    {
+        $receipt = $request->attributes->get('_audit_receipt_no');
+        $realId = $request->attributes->get('_audit_petition_id');
+
+        if (!$receipt && $id) {
+            $decoded = \App\Services\HashidService::decode($id) ?? (is_numeric($id) ? (int)$id : null);
+            if ($decoded) {
+                $realId = $decoded;
+                $petition = \App\Models\Petition::withTrashed()->select('receipt_no')->find($decoded);
+                $receipt = $petition?->receipt_no;
+            }
+        }
+
+        if ($receipt) {
+            return " [Receipt No: {$receipt}]";
+        } elseif ($realId) {
+            return " #{$realId}";
+        } elseif ($id) {
+            return " #{$id}";
+        }
+
+        return "";
     }
 
     /**

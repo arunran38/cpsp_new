@@ -2,11 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Models\Address;
+use App\Models\AuditLog;
+use App\Models\PetitionForwarding;
 use App\Models\Petition;
 use App\Models\Seat;
 use App\Models\SeatUser;
+use App\Models\Upload;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -48,8 +54,10 @@ class InwardPetitionDeleteTest extends TestCase
         $this->withSession(['current_seat_id' => $this->inwardSeat->seat_id]);
     }
 
-    public function test_inward_user_can_delete_returned_petition(): void
+    public function test_inward_user_can_permanently_delete_returned_petition(): void
     {
+        Storage::fake('public');
+
         $petition = Petition::factory()->create([
             'user_id' => $this->inwardUser->user_id,
             'seat_id' => $this->cpspSeat->seat_id,
@@ -58,11 +66,71 @@ class InwardPetitionDeleteTest extends TestCase
             'is_cpsp_processed' => false,
         ]);
 
+        $address = Address::factory()->create([
+            'petition_id' => $petition->petition_id,
+            'person_type' => 'Complainant',
+            'person_name' => 'Ramesh Kumar',
+        ]);
+
+        $file = UploadedFile::fake()->create('document.pdf', 100);
+        $path = $file->store('petitions/evidence', 'public');
+
+        $upload = Upload::factory()->create([
+            'petition_id' => $petition->petition_id,
+            'file_path' => $path,
+            'original_filename' => 'document.pdf',
+            'uploaded_by' => $this->inwardUser->user_id,
+        ]);
+
+        $this->assertTrue(Storage::disk('public')->exists($path));
+
         $response = $this->actingAs($this->inwardUser)
-            ->delete(route('inward.petitions.destroy', $petition->hashid));
+            ->delete(route('inward.petitions.destroy', $petition->hashid), [
+                'deletion_reason' => 'Registered by mistake, does not belong to Vigilance',
+            ]);
 
         $response->assertSessionHas('success');
-        $this->assertSoftDeleted('petitions', [
+
+        // Verify permanent deletion from database
+        $this->assertDatabaseMissing('petitions', [
+            'petition_id' => $petition->petition_id,
+        ]);
+        $this->assertDatabaseMissing('addresses', [
+            'address_id' => $address->address_id,
+        ]);
+        $this->assertDatabaseMissing('uploads', [
+            'upload_id' => $upload->upload_id,
+        ]);
+
+        // Verify physical file was purged from storage
+        $this->assertFalse(Storage::disk('public')->exists($path));
+
+        // Verify AuditLog recorded
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'PERMANENT_DELETE',
+            'module' => 'Inward',
+            'user_id' => $this->inwardUser->user_id,
+        ]);
+    }
+
+    public function test_deletion_reason_is_required_for_permanent_deletion(): void
+    {
+        $petition = Petition::factory()->create([
+            'user_id' => $this->inwardUser->user_id,
+            'seat_id' => $this->cpspSeat->seat_id,
+            'is_returned_to_inward' => true,
+            'return_reason' => 'Wrong section',
+            'is_cpsp_processed' => false,
+        ]);
+
+        $response = $this->actingAs($this->inwardUser)
+            ->delete(route('inward.petitions.destroy', $petition->hashid), [
+                'deletion_reason' => '',
+            ]);
+
+        $response->assertSessionHasErrors('deletion_reason');
+
+        $this->assertDatabaseHas('petitions', [
             'petition_id' => $petition->petition_id,
         ]);
     }
@@ -77,10 +145,12 @@ class InwardPetitionDeleteTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->inwardUser)
-            ->delete(route('inward.petitions.destroy', $petition->hashid));
+            ->delete(route('inward.petitions.destroy', $petition->hashid), [
+                'deletion_reason' => 'Testing deletion attempt',
+            ]);
 
         $response->assertSessionHas('error', 'Only petitions returned from seats can be deleted.');
-        $this->assertNotSoftDeleted('petitions', [
+        $this->assertDatabaseHas('petitions', [
             'petition_id' => $petition->petition_id,
         ]);
     }
@@ -96,10 +166,37 @@ class InwardPetitionDeleteTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->inwardUser)
-            ->delete(route('inward.petitions.destroy', $petition->hashid));
+            ->delete(route('inward.petitions.destroy', $petition->hashid), [
+                'deletion_reason' => 'Testing deletion attempt',
+            ]);
 
         $response->assertSessionHas('error', 'Cannot delete a petition that has already been processed by CPSP.');
-        $this->assertNotSoftDeleted('petitions', [
+        $this->assertDatabaseHas('petitions', [
+            'petition_id' => $petition->petition_id,
+        ]);
+    }
+
+    public function test_inward_user_cannot_delete_petition_with_forwardings(): void
+    {
+        $petition = Petition::factory()->create([
+            'user_id' => $this->inwardUser->user_id,
+            'seat_id' => $this->cpspSeat->seat_id,
+            'is_returned_to_inward' => true,
+            'return_reason' => 'Has forward history',
+            'is_cpsp_processed' => false,
+        ]);
+
+        PetitionForwarding::factory()->create([
+            'petition_id' => $petition->petition_id,
+        ]);
+
+        $response = $this->actingAs($this->inwardUser)
+            ->delete(route('inward.petitions.destroy', $petition->hashid), [
+                'deletion_reason' => 'Testing deletion with forwardings',
+            ]);
+
+        $response->assertSessionHas('error', 'Cannot delete a petition with existing forwarding, decision, or processing history.');
+        $this->assertDatabaseHas('petitions', [
             'petition_id' => $petition->petition_id,
         ]);
     }
@@ -125,12 +222,13 @@ class InwardPetitionDeleteTest extends TestCase
 
         $response = $this->actingAs($regularUser)
             ->withSession(['current_seat_id' => $regularSeat->seat_id])
-            ->delete(route('inward.petitions.destroy', $petition->hashid));
+            ->delete(route('inward.petitions.destroy', $petition->hashid), [
+                'deletion_reason' => 'Unauthorized deletion attempt',
+            ]);
 
         $response->assertStatus(403);
-        $this->assertNotSoftDeleted('petitions', [
+        $this->assertDatabaseHas('petitions', [
             'petition_id' => $petition->petition_id,
         ]);
     }
 }
-
