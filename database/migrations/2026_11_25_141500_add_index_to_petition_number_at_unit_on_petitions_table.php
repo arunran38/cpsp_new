@@ -1,0 +1,30 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('petitions', function (Blueprint $table) {
+            if (Schema::hasColumn('petitions', 'petition_number_at_unit')) {
+                $table->index('petition_number_at_unit', 'petitions_petition_number_at_unit_index');
+            }
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('petitions', function (Blueprint $table) {
+            $table->dropIndex('petitions_petition_number_at_unit_index');
+        });
+    }
+};

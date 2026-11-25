@@ -312,6 +312,7 @@ class DuplicateDetectionService
             ->where(function ($q) use ($rawQuery) {
                 $q->where('receipt_no', 'LIKE', "%{$rawQuery}%")
                   ->orWhere('file_no', 'LIKE', "%{$rawQuery}%")
+                  ->orWhere('petition_number_at_unit', 'LIKE', "%{$rawQuery}%")
                   ->orWhere('nature_of_petition', 'LIKE', "%{$rawQuery}%")
                   ->orWhere('description', 'LIKE', "%{$rawQuery}%")
                   ->orWhereHas('addresses', function ($q2) use ($rawQuery) {
@@ -336,26 +337,31 @@ class DuplicateDetectionService
         // Prioritize relevance:
         // 1. Exact receipt_no match
         // 2. Exact file_no match
-        // 3. Receipt_no starts with query
-        // 4. File_no starts with query
-        // 5. Receipt_no contains query
-        // 6. File_no contains query
-        // 7. Recent petitions first
+        // 3. Exact petition_number_at_unit match
+        // 4-6. Starts with query (receipt_no, file_no, petition_number_at_unit)
+        // 7-9. Contains query (receipt_no, file_no, petition_number_at_unit)
+        // 10. Recent petitions first
         $petitions->orderByRaw("
             CASE 
                 WHEN receipt_no = ? THEN 1
                 WHEN COALESCE(file_no, '') = ? THEN 2
-                WHEN receipt_no LIKE ? THEN 3
-                WHEN COALESCE(file_no, '') LIKE ? THEN 4
-                WHEN receipt_no LIKE ? THEN 5
-                WHEN COALESCE(file_no, '') LIKE ? THEN 6
-                ELSE 7
+                WHEN COALESCE(petition_number_at_unit, '') = ? THEN 3
+                WHEN receipt_no LIKE ? THEN 4
+                WHEN COALESCE(file_no, '') LIKE ? THEN 5
+                WHEN COALESCE(petition_number_at_unit, '') LIKE ? THEN 6
+                WHEN receipt_no LIKE ? THEN 7
+                WHEN COALESCE(file_no, '') LIKE ? THEN 8
+                WHEN COALESCE(petition_number_at_unit, '') LIKE ? THEN 9
+                ELSE 10
             END, date_of_petition_received DESC, petition_id DESC
         ", [
             $rawQuery,
             $rawQuery,
+            $rawQuery,
             $rawQuery . '%',
             $rawQuery . '%',
+            $rawQuery . '%',
+            '%' . $rawQuery . '%',
             '%' . $rawQuery . '%',
             '%' . $rawQuery . '%',
         ]);
@@ -382,13 +388,16 @@ class DuplicateDetectionService
 
             $fileNo = $petition->file_no ?: null;
             $fileLabel = $fileNo ? " [File: {$fileNo}]" : "";
+            $unitPetitionNo = $petition->petition_number_at_unit ?: null;
+            $unitLabel = $unitPetitionNo ? " [Unit No: {$unitPetitionNo}]" : "";
             $districtName = $petition->concernedDistrict?->district_name ?? ($complainant?->district?->district_name ?? null);
 
             return [
                 'id' => $petition->receipt_no,
-                'text' => "{$petition->receipt_no}{$fileLabel} - {$petition->nature_of_petition} ({$complainantName}){$seatUserLabel}{$tag}",
+                'text' => "{$petition->receipt_no}{$fileLabel}{$unitLabel} - {$petition->nature_of_petition} ({$complainantName}){$seatUserLabel}{$tag}",
                 'receipt_no' => $petition->receipt_no,
                 'file_no' => $fileNo,
+                'petition_number_at_unit' => $unitPetitionNo,
                 'date' => $petition->date_of_petition_received ? date('d-m-Y', strtotime($petition->date_of_petition_received)) : 'N/A',
                 'complainant' => $complainantName,
                 'accused' => $accusedName,

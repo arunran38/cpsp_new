@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ValidatesDateRange;
 use App\Models\Seat;
 use App\Models\SeatUser;
 use App\Models\Unit;
@@ -18,6 +19,7 @@ use Spatie\Permission\Models\Role;
 
 class SeatController extends Controller
 {
+    use ValidatesDateRange;
     /**
      * Display a listing of seats.
      */
@@ -138,7 +140,9 @@ class SeatController extends Controller
         $user = auth()->user();
         abort_unless($user->canAccess('view seat diagnostics'), 403, 'Unauthorized access to seat statistics.');
 
-        $this->validateDateRange($request);
+        $this->validateDateRange($request, 'date_from', 'date_to', [
+            'section' => 'nullable|string|in:all,cpsp,t_section',
+        ]);
 
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
@@ -183,7 +187,9 @@ class SeatController extends Controller
         $user = auth()->user();
         abort_unless($user->canAccess('view seat diagnostics') && $user->canAccess('export statistics'), 403, 'Unauthorized to export seat statistics.');
 
-        $this->validateDateRange($request);
+        $this->validateDateRange($request, 'date_from', 'date_to', [
+            'section' => 'nullable|string|in:all,cpsp,t_section',
+        ]);
 
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
@@ -299,15 +305,6 @@ class SeatController extends Controller
               ->whereDoesntHave('roles', fn($r) => $r->whereIn('name', ['SS CPSP', 'ss cpsp', 'Superintendent', 'superintendent', 'Inward', 'inward']));
 
         return $query;
-    }
-
-    private function validateDateRange(Request $request): void
-    {
-        $request->validate([
-            'date_from' => 'nullable|date|before_or_equal:today',
-            'date_to' => 'nullable|date|before_or_equal:today|after_or_equal:date_from',
-            'section' => 'nullable|string|in:all,cpsp,t_section',
-        ]);
     }
 
     /**

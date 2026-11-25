@@ -62,6 +62,9 @@
                             @if($item->unit)
                                 <span class="block text-[11px] text-indigo-600 font-semibold mt-1">{{ $item->unit->unit_name }}</span>
                             @endif
+                            @if($item->petition_number_at_unit)
+                                <span class="block text-[10px] text-slate-600 font-medium">No: {{ $item->petition_number_at_unit }}</span>
+                            @endif
                             @if($item->date_of_petition_received_at_unit)
                                 <span class="block text-[10px] text-slate-500 font-medium">Recd: {{ \Carbon\Carbon::parse($item->date_of_petition_received_at_unit)->format('d/m/Y') }}</span>
                             @endif
@@ -202,9 +205,11 @@
                                             date_of_petition_received: '{{ \Carbon\Carbon::parse($item->date_of_petition_received)->format('Y-m-d') }}',
                                             mode: {{ json_encode($item->mode_of_petition_received) }},
                                             unit_id: '{{ $item->unit_id ?? '' }}',
+                                            petition_number_at_unit: {{ json_encode($item->petition_number_at_unit ?? '') }},
                                             date_at_unit: '{{ $item->date_of_petition_received_at_unit ? \Carbon\Carbon::parse($item->date_of_petition_received_at_unit)->format('Y-m-d') : '' }}',
                                             mode_others: {{ json_encode($item->mode_of_petition_received_others ?? '') }},
                                             complainant_name: {{ json_encode($complainant?->person_name ?? '') }},
+                                            complainant_phone: {{ json_encode($complainant?->phone ?? '') }},
                                             seat_id: '{{ $item->seat_id ?? '' }}'
                                         })"
                                         class="inline-flex items-center justify-center w-8 h-8 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-900 border border-amber-200/80 rounded-lg transition-all shadow-sm cursor-pointer"

@@ -244,6 +244,7 @@
                             </div>
                         </div>
                     </div>
+                    <p id="dateRangeError" class="mt-2 text-xs font-semibold text-rose-600 hidden" aria-live="polite"></p>
                 </form>
             </div>
         </div>

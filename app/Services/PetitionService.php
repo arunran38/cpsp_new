@@ -36,9 +36,12 @@ class PetitionService
             $description = $data['description'] ?? '';
 
             $unitId = null;
+            $petitionNumberAtUnit = null;
             $unitReceivedDate = null;
             if (!empty($data['mode_of_petition_received']) && strtolower($data['mode_of_petition_received']) === 'unit') {
                 $unitId = $data['unit_id'] ?? null;
+                $rawUnitNo = trim((string) ($data['petition_number_at_unit'] ?? ''));
+                $petitionNumberAtUnit = $rawUnitNo !== '' ? $rawUnitNo : null;
                 $unitReceivedDate = $data['date_of_petition_received_at_unit'] ?? null;
             }
 
@@ -74,6 +77,7 @@ class PetitionService
             $petition = Petition::create([
                 'receipt_no' => $data['receipt_no'],
                 'date_of_petition_received' => $data['date_of_petition_received'],
+                'petition_number_at_unit' => $petitionNumberAtUnit,
                 'date_of_petition_received_at_unit' => $unitReceivedDate,
                 'nature_of_petition' => $natureOfPetition,
                 'mode_of_petition_received' => $data['mode_of_petition_received'],
@@ -143,9 +147,12 @@ class PetitionService
             $currentSeatId = $currentSeat?->seat_id;
 
             $unitId = null;
+            $petitionNumberAtUnit = null;
             $unitReceivedDate = null;
             if (!empty($data['mode_of_petition_received']) && strtolower($data['mode_of_petition_received']) === 'unit') {
                 $unitId = $data['unit_id'] ?? null;
+                $rawUnitNo = trim((string) ($data['petition_number_at_unit'] ?? ''));
+                $petitionNumberAtUnit = $rawUnitNo !== '' ? $rawUnitNo : null;
                 $unitReceivedDate = $data['date_of_petition_received_at_unit'] ?? null;
             }
 
@@ -154,6 +161,7 @@ class PetitionService
                 'date_of_petition_received' => $petition->date_of_petition_received,
                 'unit_id' => $unitId,
                 'concerned_district_id' => $data['concerned_district_id'] ?? null,
+                'petition_number_at_unit' => $petitionNumberAtUnit,
                 'date_of_petition_received_at_unit' => $unitReceivedDate,
                 'nature_of_petition' => $data['nature_of_petition'],
                 'mode_of_petition_received' => $data['mode_of_petition_received'],
@@ -223,7 +231,8 @@ class PetitionService
             }
 
             $personName = $person['name'];
-            $phone = $person['phone'] ?? null;
+            $rawPhone = trim((string) ($person['phone'] ?? ''));
+            $phone = $rawPhone !== '' ? $rawPhone : null;
             $email = $person['email'] ?? null;
             $entityType = $person['entity_type'] ?? 'Person';
             $designationId = $person['designation_id'] ?? null;

@@ -256,29 +256,32 @@
                             <p class="text-xs text-slate-500 mt-0.5">Processed Petitions Across Active Seats</p>
                         </div>
 
-                        <form action="{{ route('admin.dashboard') }}" method="GET" class="flex flex-wrap items-center gap-2">
-                            <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                                <input type="date" id="from_date" name="from_date" value="{{ $fromDate }}" placeholder="DD-MM-YYYY"
-                                    max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                    class="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer"
-                                    style="color: #1e40af !important;">
-                                <span class="text-slate-300 text-[10px] font-black mx-1">—</span>
-                                <input type="date" id="to_date" name="to_date" value="{{ $toDate }}" placeholder="DD-MM-YYYY"
-                                    max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                    class="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer"
-                                    style="color: #1e40af !important;">
-                            </div>
-                            <button type="submit"
-                                class="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
-                                <i data-lucide="filter" class="w-4 h-4"></i>
-                            </button>
-                            @if(request()->has('from_date') || request()->has('to_date'))
-                                <a href="{{ route('admin.dashboard') }}"
-                                    class="p-2 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all">
-                                    <i data-lucide="x" class="w-4 h-4"></i>
-                                </a>
-                            @endif
-                        </form>
+                        <div data-date-container class="flex flex-col items-end">
+                            <form action="{{ route('admin.dashboard') }}" method="GET" class="flex flex-wrap items-center gap-2">
+                                <div class="flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                                    <input type="date" id="from_date" name="from_date" value="{{ $fromDate }}" placeholder="DD-MM-YYYY"
+                                        max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                        class="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer"
+                                        style="color: #1e40af !important;">
+                                    <span class="text-slate-300 text-[10px] font-black mx-1">—</span>
+                                    <input type="date" id="to_date" name="to_date" value="{{ $toDate }}" placeholder="DD-MM-YYYY"
+                                        max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                        class="bg-transparent border-none text-[10px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer"
+                                        style="color: #1e40af !important;">
+                                </div>
+                                <button type="submit"
+                                    class="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+                                    <i data-lucide="filter" class="w-4 h-4"></i>
+                                </button>
+                                @if(request()->has('from_date') || request()->has('to_date'))
+                                    <a href="{{ route('admin.dashboard') }}"
+                                        class="p-2 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </a>
+                                @endif
+                            </form>
+                            <p class="date-range-error text-[11px] font-semibold text-rose-600 mt-1 hidden" aria-live="polite"></p>
+                        </div>
                     </div>
                     <div class="relative flex-grow w-full z-10 min-h-[350px]">
                         <canvas id="seatPetitionChart"></canvas>

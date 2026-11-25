@@ -4,17 +4,17 @@
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-blue-50/50 border-b border-blue-100 text-xs font-bold text-blue-600 uppercase tracking-wider">
-                    <th class="px-6 py-4 text-center w-12">#</th>
-                    <th class="px-6 py-4 font-bold">Receipt No & Date</th>
-                    <th class="px-6 py-4 font-bold">Complainant</th>
-                    <th class="px-6 py-4 font-bold">Mode of Receipt</th>
-                    <th class="px-6 py-4 font-bold">Concerned Seat</th>
-                    <th class="px-6 py-4 font-bold">Transferred On</th>
+                    <th class="px-3 py-4 text-center w-10">#</th>
+                    <th class="px-4 py-4 font-bold">Receipt No & Date</th>
+                    <th class="px-4 py-4 font-bold">Complainant</th>
+                    <th class="px-4 py-4 font-bold min-w-[185px] w-[18%]">Mode of Receipt</th>
+                    <th class="px-4 py-4 font-bold">Concerned Seat</th>
+                    <th class="px-4 py-4 font-bold">Transferred On</th>
                     @if(Auth::user()->canAccess('access admin dashboard'))
-                        <th class="px-6 py-4 font-bold">Entered By (Inward)</th>
+                        <th class="px-4 py-4 font-bold">Entered By (Inward)</th>
                     @endif
-                    <th class="px-6 py-4 font-bold text-center">Status</th>
-                    <th class="px-6 py-4 font-bold text-center">Actions</th>
+                    <th class="px-3 py-4 font-bold text-center">Status</th>
+                    <th class="px-3 py-4 font-bold text-center">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 text-sm">
@@ -27,10 +27,10 @@
                         $regDate = $petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d') : ($petition->created_at ? $petition->created_at->format('Y-m-d') : '');
                     @endphp
                     <tr class="hover:bg-blue-50/30 transition-colors">
-                        <td class="px-6 py-4 text-center font-bold text-blue-600 text-sm">
+                        <td class="px-3 py-4 text-center font-bold text-blue-600 text-sm">
                             {{ ($petitions->currentPage() - 1) * $petitions->perPage() + $loop->iteration }}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-4 py-4">
                             <div class="flex flex-col">
                                 <div class="flex items-center gap-1.5 flex-wrap">
                                     <span class="font-bold text-blue-800">{{ $petition->receipt_no }}</span>
@@ -71,7 +71,7 @@
                                 </span>
                             </div>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-4 py-4">
                             @if($complainants->count() > 0)
                                 @foreach($complainants as $complainant)
                                     <span class="block font-bold text-blue-700 {{ !$loop->first ? 'mt-1 text-sm' : '' }}">{{ $complainant->person_name }}</span>
@@ -83,20 +83,23 @@
                                 <span class="text-slate-400 italic">N/A</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-4 py-4 min-w-[185px]">
                             <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-100/80 text-blue-700 border border-blue-200/50">
                                 {{ $targetPetition->mode_of_petition_received }}
                             </span>
                             @if(strtolower($targetPetition->mode_of_petition_received) === 'unit')
                                 @if($targetPetition->unit)
-                                    <span class="block text-[11px] text-indigo-600 font-semibold mt-1">{{ $targetPetition->unit->unit_name }}</span>
+                                    <span class="block text-[11px] text-indigo-600 font-semibold mt-1 leading-snug">{{ $targetPetition->unit->unit_name }}</span>
+                                @endif
+                                @if($targetPetition->petition_number_at_unit)
+                                    <span class="block text-[10px] text-slate-600 font-medium whitespace-nowrap">No: {{ $targetPetition->petition_number_at_unit }}</span>
                                 @endif
                                 @if($targetPetition->date_of_petition_received_at_unit)
-                                    <span class="block text-[10px] text-slate-500 font-medium">Recd: {{ \Carbon\Carbon::parse($targetPetition->date_of_petition_received_at_unit)->format('d/m/Y') }}</span>
+                                    <span class="block text-[10px] text-slate-500 font-medium whitespace-nowrap">Recd: {{ \Carbon\Carbon::parse($targetPetition->date_of_petition_received_at_unit)->format('d/m/Y') }}</span>
                                 @endif
                             @endif
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-4 py-4">
                             @if($petition->seat)
                                 <span class="font-bold text-blue-700 block">{{ $petition->seat->seat_name }}</span>
                                 <span class="text-[11px] font-medium text-blue-500 block">
@@ -106,11 +109,11 @@
                                 <span class="text-blue-400 italic">Not Assigned</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 font-medium text-blue-600 whitespace-nowrap text-xs">
+                        <td class="px-4 py-4 font-medium text-blue-600 whitespace-nowrap text-xs">
                             {{ $petition->created_at?->format('d M, Y') }}
                         </td>
                         @if(Auth::user()->canAccess('access admin dashboard'))
-                            <td class="px-6 py-4">
+                            <td class="px-4 py-4">
                                 <div class="flex flex-col">
                                     <span class="font-bold text-blue-700">{{ $petition->user?->name ?? 'Unknown' }}</span>
                                     @if($petition->user?->seatUsers?->isNotEmpty())
@@ -119,7 +122,7 @@
                                 </div>
                             </td>
                         @endif
-                        <td class="px-6 py-4 text-center">
+                        <td class="px-3 py-4 text-center">
                             @if($petition->is_returned_to_inward)
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                     Returned
@@ -139,8 +142,8 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-center">
-                            <div class="flex items-center justify-center gap-3">
+                        <td class="px-3 py-4 text-center">
+                            <div class="flex items-center justify-center gap-2">
                                 @php
                                     $canModifyPetition = Auth::user()->can('update', $petition);
                                 @endphp
@@ -206,18 +209,18 @@
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
-                    <th class="px-6 py-4 font-bold w-12 text-center">#</th>
-                    <th class="px-6 py-4 font-bold">Receipt No & File No</th>
-                    <th class="px-6 py-4 font-bold">Petitioner Name</th>
-                    <th class="px-6 py-4 font-bold">Suspect Name <br> Nature of petition</th>
-                    <th class="px-6 py-4 font-bold">Mode of Receipt</th>
-                    <th class="px-6 py-4 font-bold">Brief of the Petition</th>
-                    <th class="px-6 py-4 font-bold text-center">Status</th>
-                    <th class="px-6 py-4 font-bold text-center">Processing</th>
+                    <th class="px-3 py-4 font-bold w-10 text-center">#</th>
+                    <th class="px-4 py-4 font-bold min-w-[145px] w-[13%]">Receipt No & File No</th>
+                    <th class="px-4 py-4 font-bold min-w-[105px] w-[10%]">Petitioner Name</th>
+                    <th class="px-4 py-4 font-bold min-w-[135px] max-w-[180px] w-[12%]">Suspect Name <br> Nature of petition</th>
+                    <th class="px-4 py-4 font-bold min-w-[190px] w-[16%]">Mode of Receipt</th>
+                    <th class="px-4 py-4 font-bold min-w-[230px] w-[22%]">Brief of the Petition</th>
+                    <th class="px-3 py-4 font-bold text-center min-w-[120px] w-[10%]">Status</th>
+                    <th class="px-3 py-4 font-bold text-center min-w-[95px] w-[8%]">Processing</th>
                     @if(auth()->user()->canAccess('access admin dashboard'))
-                        <th class="px-6 py-4 font-bold text-center w-32">Seat & User</th>
+                        <th class="px-3 py-4 font-bold text-center min-w-[95px] w-[8%]">Seat & User</th>
                     @endif
-                    <th class="px-6 py-4 font-bold text-center">Actions</th>
+                    <th class="px-3 py-4 font-bold text-center w-24">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 text-sm">
@@ -226,10 +229,10 @@
                         $regDate = $petition->date_of_petition_received ? \Carbon\Carbon::parse($petition->date_of_petition_received)->format('Y-m-d') : ($petition->created_at ? $petition->created_at->format('Y-m-d') : '');
                     @endphp
                     <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-6 py-4 text-center text-sm font-semibold text-slate-500">
+                        <td class="px-3 py-4 text-center text-sm font-semibold text-slate-500">
                             {{ ($petitions->currentPage() - 1) * $petitions->perPage() + $loop->iteration }}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-4 py-4">
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <span class="font-bold text-slate-800">{{ $petition->receipt_no }}</span>
                                 @if($petition->isTSection())
@@ -270,7 +273,7 @@
                                 <span class="block text-[11px] text-teal-600 font-medium mt-0.5" title="Processed Date">Proc: {{ \Carbon\Carbon::parse($petition->processed_at)->format('d M, Y') }}</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-slate-600">
+                        <td class="px-4 py-4 text-slate-600">
                             @php
                                 $targetPetition = $petition->originalPetition ?? $petition;
                                 $displayAddresses = $petition->displayAddresses();
@@ -285,7 +288,7 @@
                                 <span class="text-slate-400 italic">N/A</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 max-w-xs text-slate-700">
+                        <td class="px-4 py-4 max-w-[180px] text-slate-700">
                             @php
                                 $accused = $displayAddresses->where('person_type', 'Accused')->unique('person_name');
                             @endphp
@@ -297,35 +300,38 @@
                             @else
                                 <span class="text-slate-400 italic">N/A</span>
                             @endif
-                            <span class="block text-xs text-indigo-500 mt-2 truncate w-full"
+                            <span class="block text-xs text-indigo-500 mt-1.5 truncate w-full"
                                 title="{{ $targetPetition->nature_of_petition }}">{{ $targetPetition->nature_of_petition }}</span>
 
                         </td>
-                        <td class="px-6 py-4 text-slate-600">
+                        <td class="px-4 py-4 min-w-[190px] text-slate-600">
                             <span
                                 class="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700">
                                 {{ $targetPetition->mode_of_petition_received }}
                             </span>
                             @if(strtolower($targetPetition->mode_of_petition_received) === 'unit')
                                 @if($targetPetition->unit)
-                                    <span class="block text-[11px] text-indigo-600 font-semibold mt-1">{{ $targetPetition->unit->unit_name }}</span>
+                                    <span class="block text-[11px] text-indigo-600 font-semibold mt-1 leading-snug">{{ $targetPetition->unit->unit_name }}</span>
+                                @endif
+                                @if($targetPetition->petition_number_at_unit)
+                                    <span class="block text-[10px] text-slate-600 font-medium whitespace-nowrap">No: {{ $targetPetition->petition_number_at_unit }}</span>
                                 @endif
                                 @if($targetPetition->date_of_petition_received_at_unit)
-                                    <span class="block text-[10px] text-slate-500 font-medium">Recd: {{ \Carbon\Carbon::parse($targetPetition->date_of_petition_received_at_unit)->format('d/m/Y') }}</span>
+                                    <span class="block text-[10px] text-slate-500 font-medium whitespace-nowrap">Recd: {{ \Carbon\Carbon::parse($targetPetition->date_of_petition_received_at_unit)->format('d/m/Y') }}</span>
                                 @endif
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-slate-600">
+                        <td class="px-4 py-4 min-w-[230px] text-slate-600">
                             @php
                                 $cleanDesc = trim(str_ireplace(['Inward petition entry', 'Inward petition'], '', $targetPetition->description ?? ''));
                             @endphp
-                            <span
-                                class="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700 max-w-[150px] truncate"
+                            <div
+                                class="inline-block max-w-full px-2.5 py-1.5 rounded-md text-[11px] font-medium bg-slate-100 text-slate-700"
                                 title="{{ $cleanDesc ?: '-' }}">
-                                {{ $cleanDesc ?: '-' }}
-                            </span>
+                                <span class="line-clamp-2 leading-relaxed break-words">{{ $cleanDesc ?: '-' }}</span>
+                            </div>
                         </td>
-                        <td class="px-6 py-4 text-center">
+                        <td class="px-3 py-4 text-center">
                             @php
                                 $wf = $petition->workflow_status;
                                 $isDuplicatePetition = (bool) $petition->linked_petition_id || $petition->status === \App\Models\Petition::STATUS_DUPLICATE;
@@ -349,7 +355,7 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-center">
+                        <td class="px-3 py-4 text-center">
                             <div class="flex flex-col items-center justify-center gap-2">
                                 @if(!$canViewWf)
                                     <span class="text-[11px] text-slate-400 font-semibold italic flex items-center gap-1">
@@ -418,7 +424,7 @@
                             </div>
                          </td>
                         @if(auth()->user()->canAccess('access admin dashboard'))
-                        <td class="px-6 py-4 text-center">
+                        <td class="px-3 py-4 text-center">
                             <div class="flex flex-col items-center gap-1">
                                 <span class="font-bold text-slate-800 text-xs">{{ $petition->processedBySeat->seat_name ?? $petition->seat->seat_name ?? 'N/A' }}</span>
                                 <span class="text-[10px] text-slate-500">{{ $petition->processedByUser->name ?? $petition->user->name ?? 'N/A' }}</span>
@@ -428,8 +434,8 @@
                             </div>
                         </td>
                         @endif
-                        <td class="px-6 py-4 text-center">
-                            <div class="flex items-center justify-center gap-3">
+                        <td class="px-3 py-4 text-center whitespace-nowrap">
+                            <div class="flex items-center justify-center gap-2">
                                 @if(!$canViewWf)
                                     <a href="{{ route('petitions.show', $petition->hashid) }}"
                                         class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"

@@ -189,20 +189,20 @@
                             <i data-lucide="search" class="w-4 h-4 absolute left-3 text-slate-400"></i>
                             <input type="text" name="search" value="{{ request('search') }}"
                                 class="w-full pl-9 pr-3 py-[9px] rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black"
-                                placeholder="Petition No, Petitioner, Accused, Firm/Project, Phone, or PEN...">
+                                placeholder="Receipt No, File No, Unit Petition No, Petitioner, Accused, Phone, or PEN...">
                         </div>
                     </div>
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Date From</label>
                         <input type="date" id="date_from" placeholder="DD-MM-YYYY" name="date_from"
-                            value="{{ request('date_from') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
+                            value="{{ request('date_from') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                             style="color: #1e40af !important;">
                     </div>
                     <div class="flex-1 min-w-[150px]">
                         <label class="block text-xs font-medium text-slate-700 mb-1">Date To</label>
                         <input type="date" id="date_to" placeholder="DD-MM-YYYY" name="date_to"
-                            value="{{ request('date_to') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
+                            value="{{ request('date_to') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                             class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold"
                             style="color: #1e40af !important;">
                         <p id="dateRangeError" class="mt-1 text-xs text-rose-600 hidden" aria-live="polite"></p>
@@ -621,35 +621,10 @@
             let timer = null;
             let abortController = null;
 
-            const dateFromInput = document.getElementById('date_from');
-            const dateToInput = document.getElementById('date_to');
-            const dateRangeError = document.getElementById('dateRangeError');
-
             const validateDateRange = () => {
-                if (!dateFromInput || !dateToInput || !dateRangeError) {
-                    return true;
+                if (window.validateDateRange) {
+                    return window.validateDateRange(searchForm);
                 }
-
-                const dateFrom = dateFromInput.value;
-                const dateTo = dateToInput.value;
-
-                if (!dateFrom) {
-                    dateToInput.removeAttribute('min');
-                    dateRangeError.textContent = '';
-                    dateRangeError.classList.add('hidden');
-                    return true;
-                }
-
-                dateToInput.setAttribute('min', dateFrom);
-
-                if (dateTo && dateTo < dateFrom) {
-                    dateRangeError.textContent = 'Date To must be greater than Date From.';
-                    dateRangeError.classList.remove('hidden');
-                    return false;
-                }
-
-                dateRangeError.textContent = '';
-                dateRangeError.classList.add('hidden');
                 return true;
             };
 
@@ -678,7 +653,12 @@
                     },
                     signal: abortController.signal
                 })
-                    .then(response => response.text())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Request failed with status ' + response.status);
+                        }
+                        return response.text();
+                    })
                     .then(html => {
                         const currentTable = document.getElementById('tableContainer');
                         if (currentTable) {
@@ -698,10 +678,10 @@
                     });
             };
 
-            // Attach keyup event with debounce for text inputs
+            // Attach input event with debounce for real-time search (supports typing, paste, and clear)
             const textInputs = searchForm.querySelectorAll('input[type="text"]');
             textInputs.forEach(input => {
-                input.addEventListener('keyup', (e) => {
+                input.addEventListener('input', (e) => {
                     clearTimeout(timer);
                     timer = setTimeout(performSearch, 500);
                 });
@@ -716,14 +696,6 @@
                     }
                 });
             });
-
-            if (dateFromInput) {
-                dateFromInput.addEventListener('change', validateDateRange);
-            }
-
-            if (dateToInput) {
-                dateToInput.addEventListener('change', validateDateRange);
-            }
 
             // Prevent default form submission via enter key
             searchForm.addEventListener('submit', (e) => {

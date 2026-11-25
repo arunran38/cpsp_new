@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ValidatesDateRange;
 use App\Models\Compliance;
 use App\Models\Decision;
 use App\Models\Petition;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 
 class ComplianceController extends Controller
 {
+    use ValidatesDateRange;
     /**
      * Display a listing of pending compliances.
      */
@@ -46,7 +48,9 @@ class ComplianceController extends Controller
             $pendingQuery->where(function($q) use ($search) {
                 $q->where('directorate_order_number', 'like', "%{$search}%")
                   ->orWhereHas('petition', function($pq) use ($search) {
-                      $pq->where('file_no', 'like', "%{$search}%");
+                      $pq->where('file_no', 'like', "%{$search}%")
+                         ->orWhere('receipt_no', 'like', "%{$search}%")
+                         ->orWhere('petition_number_at_unit', 'like', "%{$search}%");
                   });
             });
         }
@@ -70,7 +74,9 @@ class ComplianceController extends Controller
             $compliedQuery->where(function($q) use ($search) {
                 $q->where('directorate_order_number', 'like', "%{$search}%")
                   ->orWhereHas('petition', function($pq) use ($search) {
-                      $pq->where('file_no', 'like', "%{$search}%");
+                      $pq->where('file_no', 'like', "%{$search}%")
+                         ->orWhere('receipt_no', 'like', "%{$search}%")
+                         ->orWhere('petition_number_at_unit', 'like', "%{$search}%");
                   });
             });
         }
@@ -317,13 +323,5 @@ class ComplianceController extends Controller
             DB::rollBack();
             return back()->with('error', SafeExceptionHandler::handle($e, 'Failed to update compliance details.'))->withInput();
         }
-    }
-
-    private function validateDateRange(Request $request): void
-    {
-        $request->validate([
-            'date_from' => 'nullable|date|before_or_equal:today',
-            'date_to' => 'nullable|date|before_or_equal:today|after_or_equal:date_from',
-        ]);
     }
 }

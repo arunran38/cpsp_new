@@ -146,45 +146,49 @@
                 <div class="hidden lg:block w-px h-8 bg-slate-200 shrink-0 ml-auto"></div>
 
                 <!-- Date Filter & Search Form -->
-                <form x-ref="filterForm" x-data="{ fromDate: '{{ $dateFrom ?? '' }}', toDate: '{{ $dateTo ?? '' }}', today: '{{ date('Y-m-d') }}' }" 
-                      action="{{ route('compliances.index') }}" method="GET" class="flex flex-wrap items-center gap-2 shrink-0 ml-auto lg:ml-0">
-                    
-                    <input type="hidden" name="tab" :value="activeTab">
-                    <input type="hidden" name="filter_decision" :value="filterDecision">
-                    
-                    <!-- Search Input -->
-                    <div class="relative">
-                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                        <input type="text" name="search" value="{{ $search ?? '' }}" placeholder="File / Order No..." 
-                               class="w-40 sm:w-48 text-sm border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 pl-9 pr-3 shadow-sm text-slate-700 font-medium bg-white">
-                    </div>
+                <div data-date-container class="flex flex-col items-end shrink-0 ml-auto lg:ml-0">
+                    <form x-ref="filterForm" x-data="{ fromDate: '{{ $dateFrom ?? '' }}', toDate: '{{ $dateTo ?? '' }}', today: '{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}' }"
+                          data-date-error-id="complianceDateRangeError"
+                          action="{{ route('compliances.index') }}" method="GET" class="flex flex-wrap items-center gap-2">
+                        
+                        <input type="hidden" name="tab" :value="activeTab">
+                        <input type="hidden" name="filter_decision" :value="filterDecision">
+                        
+                        <!-- Search Input -->
+                        <div class="relative">
+                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                            <input type="text" name="search" value="{{ $search ?? '' }}" placeholder="Receipt / File / Unit / Order No..." 
+                                   class="w-40 sm:w-48 text-sm border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 pl-9 pr-3 shadow-sm text-slate-700 font-medium bg-white">
+                        </div>
 
-                    <input type="date" id="date_from" name="date_from" x-model="fromDate" :max="today" @change="if(toDate && fromDate > toDate) toDate = fromDate" 
-                           class="w-32 sm:w-36 text-sm border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 shadow-sm text-indigo-900 font-medium bg-white">
-                    <span class="text-indigo-400 text-sm font-medium px-1">to</span>
-                    <input type="date" id="date_to" name="date_to" x-model="toDate" :min="fromDate" :max="today" 
-                           class="w-32 sm:w-36 text-sm border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 shadow-sm text-indigo-900 font-medium bg-white">
-                    
-                    <!-- Unit Filter (Only for Complied) -->
-                    <select name="unit_id" x-show="activeTab === 'complied'" x-cloak
-                            class="w-40 sm:w-48 text-sm border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 shadow-sm text-slate-700 font-medium bg-white">
-                        <option value="">All Units</option>
-                        @foreach($filterUnits as $unit)
-                            <option value="{{ $unit->unit_id }}" {{ (isset($unitId) && $unitId == $unit->unit_id) ? 'selected' : '' }}>
-                                {{ $unit->unit_name }}
-                            </option>
-                        @endforeach
-                    </select>
+                        <input type="date" id="date_from" name="date_from" x-model="fromDate" :max="today"
+                               class="w-32 sm:w-36 text-sm border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 shadow-sm text-indigo-900 font-medium bg-white">
+                        <span class="text-indigo-400 text-sm font-medium px-1">to</span>
+                        <input type="date" id="date_to" name="date_to" x-model="toDate" :max="today"
+                               class="w-32 sm:w-36 text-sm border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 shadow-sm text-indigo-900 font-medium bg-white">
+                        
+                        <!-- Unit Filter (Only for Complied) -->
+                        <select name="unit_id" x-show="activeTab === 'complied'" x-cloak
+                                class="w-40 sm:w-48 text-sm border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-2 shadow-sm text-slate-700 font-medium bg-white">
+                            <option value="">All Units</option>
+                            @foreach($filterUnits as $unit)
+                                <option value="{{ $unit->unit_id }}" {{ (isset($unitId) && $unitId == $unit->unit_id) ? 'selected' : '' }}>
+                                    {{ $unit->unit_name }}
+                                </option>
+                            @endforeach
+                        </select>
 
-                    <button type="submit" class="px-4 py-2 bg-emerald-50 text-emerald-700 font-semibold rounded-xl hover:bg-emerald-100 transition-colors border border-emerald-200 text-sm flex items-center gap-1.5 shadow-sm">
-                        <i data-lucide="filter" class="w-4 h-4"></i> Apply
-                    </button>
-                    @if(request('date_from') || request('date_to') || request('search') || request('unit_id'))
-                        <a href="{{ route('compliances.index') }}" class="px-3 py-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-sm font-semibold border border-transparent">
-                            <i data-lucide="x" class="w-4 h-4"></i>
-                        </a>
-                    @endif
-                </form>
+                        <button type="submit" class="px-4 py-2 bg-emerald-50 text-emerald-700 font-semibold rounded-xl hover:bg-emerald-100 transition-colors border border-emerald-200 text-sm flex items-center gap-1.5 shadow-sm">
+                            <i data-lucide="filter" class="w-4 h-4"></i> Apply
+                        </button>
+                        @if(request('date_from') || request('date_to') || request('search') || request('unit_id'))
+                            <a href="{{ route('compliances.index') }}" class="px-3 py-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-sm font-semibold border border-transparent">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </a>
+                        @endif
+                    </form>
+                    <p id="complianceDateRangeError" class="text-xs font-semibold text-rose-600 mt-1 hidden" aria-live="polite"></p>
+                </div>
 
                 <div class="hidden lg:block w-px h-8 bg-slate-200 shrink-0"></div>
 

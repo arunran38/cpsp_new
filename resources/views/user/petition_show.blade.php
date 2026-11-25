@@ -15,198 +15,220 @@
         x-data="{ showLinkModal: false, showReturnModal: false, returnPetitionId: {{ $petition->petition_id }}, returnReceiptNo: '{{ $petition->receipt_no }}' }">
         <!-- Page Header -->
         <div
-            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between bg-white px-8 py-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-1 bg-indigo-600"></div>
+            class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/60 shadow-xl px-6 py-6 sm:px-8">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-teal-400 to-emerald-400"></div>
+            <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3 pointer-events-none">
+                <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
+            </div>
+            <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 pointer-events-none">
+                <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
+            </div>
 
-            <div class="flex items-center gap-4">
-                <div
-                    class="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center text-teal-600 border border-teal-100 shadow-sm">
-                    <i data-lucide="scroll-text" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-gray-900">Petition Details:
-                        {{ $petition->receipt_no }}
-                    </h1>
-                    @if($isCpspReadOnlyForTSection)
-                        <div
-                            class="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-md text-amber-800 text-xs font-semibold">
-                            <i data-lucide="eye" class="w-4 h-4 text-amber-600"></i>
-                            <span>CPSP Reference (Read-Only Mode)</span>
-                        </div>
-                    @endif
-                    <p class="text-sm font-medium text-gray-600 mt-0.5 flex flex-wrap items-center gap-2">
-                        <span>Submitted on
-                            {{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}</span>
-                        @if(strtolower($petition->mode_of_petition_received) === 'unit' && $petition->date_of_petition_received_at_unit)
-                            <span class="inline-block w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
-                            <span>Received at Unit: <span
-                                    class="font-bold text-slate-800">{{ \Carbon\Carbon::parse($petition->date_of_petition_received_at_unit)->format('d M, Y') }}</span></span>
-                        @endif
-                        @if(strtolower($petition->mode_of_petition_received) === 'unit' && $petition->unit)
-                            <span class="inline-block w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
-                            <span>Unit: <span class="font-bold text-indigo-700">{{ $petition->unit->unit_name }}</span></span>
-                        @endif
-                        @if($petition->concernedDistrict)
-                            <span class="inline-block w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
-                            <span>District: <span
-                                    class="font-bold text-rose-700">{{ $petition->concernedDistrict->district_name }}</span></span>
-                        @endif
-                        @if($petition->user)
-                            <span class="inline-block w-1 h-1 rounded-full bg-slate-300 hidden sm:inline-block"></span>
-                            <span>Created By: <span class="font-bold text-slate-800">{{ $petition->user->name }}</span></span>
-                        @endif
-                    </p>
-                    @if($petition->file_no)
-                        <div
-                            class="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-md">
-                            <i data-lucide="folder-open" class="w-4 h-4 text-amber-600"></i>
-                            <span class="text-sm font-bold text-amber-800">File No: {{ $petition->file_no }}</span>
-                            @if($petition->file_created_date)
-                                <span class="text-xs text-amber-600 font-medium ml-2 border-l border-amber-200 pl-2">Created on
-                                    {{ \Carbon\Carbon::parse($petition->file_created_date)->format('d M, Y') }}</span>
+            <div class="relative z-10 flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+                <div class="flex items-start gap-4 min-w-0">
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500/20 to-indigo-500/20 border border-teal-400/30 text-teal-300 shadow-lg flex items-center justify-center shrink-0 mt-0.5">
+                        <i data-lucide="scroll-text" class="w-6 h-6"></i>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white">
+                                Petition Details: <span class="text-teal-300 font-mono">{{ $petition->receipt_no }}</span>
+                            </h1>
+                            @if($isCpspReadOnlyForTSection)
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/15 border border-amber-400/30 rounded-lg text-amber-200 text-xs font-semibold">
+                                    <i data-lucide="eye" class="w-3.5 h-3.5 text-amber-300"></i>
+                                    <span>CPSP Reference (Read-Only)</span>
+                                </span>
                             @endif
                         </div>
-                    @endif
 
-                    @if($petition->isFromInward())
-                        <div class="mt-2.5 flex flex-wrap items-center gap-2">
-                            {{-- Updated / Processed by CPSP Seat Badge --}}
-                            @if($petition->is_returned_to_inward)
-                                <div
-                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-rose-50 border-rose-200 text-rose-800">
-                                    <i data-lucide="corner-up-left" class="w-4 h-4 text-rose-600"></i>
-                                    <span>Status: Returned to Inward</span>
-                                </div>
-                            @elseif($petition->processed_at || $petition->updated_by_user_id)
-                                <div
-                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-emerald-50 border-emerald-200 text-emerald-800">
-                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
-                                    <span>
-                                        Updated by : <strong
-                                            class="font-bold">{{ $petition->processedBySeat->seat_name ?? $petition->updatedBySeat->seat_name ?? $petition->seat->seat_name ?? 'CPSP Seat' }}</strong>
-                                        ({{ $petition->processedByUser->name ?? $petition->updatedByUser->name ?? 'User' }}) on
-                                        {{ ($petition->processed_at ?? $petition->updated_at)->format('d-m-Y h:i A') }}
-                                    </span>
-                                </div>
-                            @elseif($petition->is_cpsp_processed)
-                                <div
-                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-emerald-50 border-emerald-200 text-emerald-800">
-                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
-                                    <span>Status: Updated by CPSP</span>
-                                </div>
-                            @else
-                                <div
-                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-amber-50 border-amber-200 text-amber-800">
-                                    <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i>
-                                    <span>Status: Transferred to {{ $petition->seat->seat_name ?? 'CPSP Seat' }} (Pending
-                                        Updation)</span>
-                                </div>
+                        <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300 font-medium">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span>Submitted: <strong class="text-white font-semibold">{{ \Carbon\Carbon::parse($petition->date_of_petition_received)->format('d M, Y') }}</strong></span>
+                            </span>
+                            @if(strtolower($petition->mode_of_petition_received) === 'unit' && $petition->date_of_petition_received_at_unit)
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300 font-medium">
+                                    <i data-lucide="calendar-check" class="w-3.5 h-3.5 text-indigo-300"></i>
+                                    <span>Unit Date: <strong class="text-white font-semibold">{{ \Carbon\Carbon::parse($petition->date_of_petition_received_at_unit)->format('d M, Y') }}</strong></span>
+                                </span>
                             @endif
-
-                            {{-- Last Edited Badge (if updated after initial processing by different user/seat) --}}
-                            @if($petition->updatedByUser && $petition->processed_by_user_id && ($petition->updated_by_user_id !== $petition->processed_by_user_id || ($petition->updated_by_seat_id && $petition->updated_by_seat_id !== $petition->processed_by_seat_id)))
-                                <div
-                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-sky-50 border-sky-200 text-sky-800">
-                                    <i data-lucide="file-edit" class="w-4 h-4 text-sky-600"></i>
-                                    <span>
-                                        Last Edited: <strong
-                                            class="font-bold">{{ $petition->updatedBySeat->seat_name ?? 'Seat' }}</strong>
-                                        ({{ $petition->updatedByUser->name ?? 'User' }}) on
-                                        {{ $petition->updated_at->format('d-m-Y h:i A') }}
-                                    </span>
-                                </div>
+                            @if(strtolower($petition->mode_of_petition_received) === 'unit' && $petition->unit)
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-500/10 border border-teal-400/20 text-teal-200 font-medium">
+                                    <i data-lucide="building-2" class="w-3.5 h-3.5 text-teal-300"></i>
+                                    <span>Unit: <strong class="text-white font-semibold">{{ $petition->unit->unit_name }}</strong></span>
+                                </span>
+                            @endif
+                            @if(strtolower($petition->mode_of_petition_received) === 'unit' && $petition->petition_number_at_unit)
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300 font-medium">
+                                    <i data-lucide="hash" class="w-3.5 h-3.5 text-cyan-300"></i>
+                                    <span>Unit Petition No: <strong class="text-white font-semibold">{{ $petition->petition_number_at_unit }}</strong></span>
+                                </span>
+                            @endif
+                            @if($petition->concernedDistrict)
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-400/20 text-rose-200 font-medium">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-rose-300"></i>
+                                    <span>District: <strong class="text-white font-semibold">{{ $petition->concernedDistrict->district_name }}</strong></span>
+                                </span>
+                            @endif
+                            @if($petition->user)
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300 font-medium">
+                                    <i data-lucide="user" class="w-3.5 h-3.5 text-indigo-300"></i>
+                                    <span>Created By: <strong class="text-white font-semibold">{{ $petition->user->name }}</strong></span>
+                                </span>
                             @endif
                         </div>
-                    @else
-                        @if($petition->processed_at || $petition->updatedByUser)
+
+                        @if($petition->file_no)
+                            <div class="mt-2.5">
+                                <div
+                                    class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-500/15 border border-amber-400/30 rounded-xl">
+                                    <i data-lucide="folder-open" class="w-4 h-4 text-amber-300"></i>
+                                    <span class="text-xs font-bold text-amber-200">File No: {{ $petition->file_no }}</span>
+                                    @if($petition->file_created_date)
+                                        <span class="text-xs text-amber-300/90 font-medium ml-1 border-l border-amber-400/30 pl-2">Created on
+                                            {{ \Carbon\Carbon::parse($petition->file_created_date)->format('d M, Y') }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($petition->isFromInward())
                             <div class="mt-2.5 flex flex-wrap items-center gap-2">
-                                <div
-                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-emerald-50 border-emerald-200 text-emerald-800">
-                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
-                                    <span>
-                                        Updated by: <strong
-                                            class="font-bold">{{ $petition->processedBySeat->seat_name ?? $petition->updatedBySeat->seat_name ?? $petition->seat->seat_name ?? 'Seat' }}</strong>
-                                        ({{ $petition->processedByUser->name ?? $petition->updatedByUser->name ?? 'User' }}) on
-                                        {{ ($petition->processed_at ?? $petition->updated_at)->format('d-m-Y h:i A') }}
-                                    </span>
-                                </div>
+                                {{-- Updated / Processed by CPSP Seat Badge --}}
+                                @if($petition->is_returned_to_inward)
+                                    <div
+                                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-rose-500/15 border-rose-400/30 text-rose-200">
+                                        <i data-lucide="corner-up-left" class="w-4 h-4 text-rose-300"></i>
+                                        <span>Status: Returned to Inward</span>
+                                    </div>
+                                @elseif($petition->processed_at || $petition->updated_by_user_id)
+                                    <div
+                                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-emerald-500/15 border-emerald-400/30 text-emerald-200">
+                                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-300"></i>
+                                        <span>
+                                            Updated by : <strong
+                                                class="font-bold text-white">{{ $petition->processedBySeat->seat_name ?? $petition->updatedBySeat->seat_name ?? $petition->seat->seat_name ?? 'CPSP Seat' }}</strong>
+                                            ({{ $petition->processedByUser->name ?? $petition->updatedByUser->name ?? 'User' }}) on
+                                            {{ ($petition->processed_at ?? $petition->updated_at)->format('d-m-Y h:i A') }}
+                                        </span>
+                                    </div>
+                                @elseif($petition->is_cpsp_processed)
+                                    <div
+                                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-emerald-500/15 border-emerald-400/30 text-emerald-200">
+                                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-300"></i>
+                                        <span>Status: Updated by CPSP</span>
+                                    </div>
+                                @else
+                                    <div
+                                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-amber-500/15 border-amber-400/30 text-amber-200">
+                                        <i data-lucide="clock" class="w-4 h-4 text-amber-300"></i>
+                                        <span>Status: Transferred to {{ $petition->seat->seat_name ?? 'CPSP Seat' }} (Pending Updation)</span>
+                                    </div>
+                                @endif
+
+                                {{-- Last Edited Badge (if updated after initial processing by different user/seat) --}}
                                 @if($petition->updatedByUser && $petition->processed_by_user_id && ($petition->updated_by_user_id !== $petition->processed_by_user_id || ($petition->updated_by_seat_id && $petition->updated_by_seat_id !== $petition->processed_by_seat_id)))
                                     <div
-                                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-sky-50 border-sky-200 text-sky-800">
-                                        <i data-lucide="file-edit" class="w-4 h-4 text-sky-600"></i>
+                                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-sky-500/15 border-sky-400/30 text-sky-200">
+                                        <i data-lucide="file-edit" class="w-4 h-4 text-sky-300"></i>
                                         <span>
                                             Last Edited: <strong
-                                                class="font-bold">{{ $petition->updatedBySeat->seat_name ?? 'Seat' }}</strong>
+                                                class="font-bold text-white">{{ $petition->updatedBySeat->seat_name ?? 'Seat' }}</strong>
                                             ({{ $petition->updatedByUser->name ?? 'User' }}) on
                                             {{ $petition->updated_at->format('d-m-Y h:i A') }}
                                         </span>
                                     </div>
                                 @endif
                             </div>
+                        @else
+                            @if($petition->processed_at || $petition->updatedByUser)
+                                <div class="mt-2.5 flex flex-wrap items-center gap-2">
+                                    <div
+                                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-emerald-500/15 border-emerald-400/30 text-emerald-200">
+                                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-300"></i>
+                                        <span>
+                                            Updated by: <strong
+                                                class="font-bold text-white">{{ $petition->processedBySeat->seat_name ?? $petition->updatedBySeat->seat_name ?? $petition->seat->seat_name ?? 'Seat' }}</strong>
+                                            ({{ $petition->processedByUser->name ?? $petition->updatedByUser->name ?? 'User' }}) on
+                                            {{ ($petition->processed_at ?? $petition->updated_at)->format('d-m-Y h:i A') }}
+                                        </span>
+                                    </div>
+                                    @if($petition->updatedByUser && $petition->processed_by_user_id && ($petition->updated_by_user_id !== $petition->processed_by_user_id || ($petition->updated_by_seat_id && $petition->updated_by_seat_id !== $petition->processed_by_seat_id)))
+                                        <div
+                                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold bg-sky-500/15 border-sky-400/30 text-sky-200">
+                                            <i data-lucide="file-edit" class="w-4 h-4 text-sky-300"></i>
+                                            <span>
+                                                Last Edited: <strong
+                                                    class="font-bold text-white">{{ $petition->updatedBySeat->seat_name ?? 'Seat' }}</strong>
+                                                ({{ $petition->updatedByUser->name ?? 'User' }}) on
+                                                {{ $petition->updated_at->format('d-m-Y h:i A') }}
+                                            </span>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+                        @endif
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+                    @if(Auth::user()->can('update', $petition) && (Auth::user()->canAccess('access admin dashboard') || !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance'])))
+                        @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
+                            <a href="{{ route('petitions.edit', $petition->hashid) }}"
+                                class="px-4 py-2.5 text-sm font-bold text-slate-950 bg-gradient-to-r from-teal-400 to-emerald-400 hover:from-teal-300 hover:to-emerald-300 rounded-xl transition-all shadow-lg shadow-teal-500/20 flex items-center gap-2 whitespace-nowrap">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i> Add Further Details
+                            </a>
+                        @else
+                            <a href="{{ route('petitions.edit', $petition->hashid) }}"
+                                class="px-4 py-2.5 text-sm font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl transition-all shadow-sm flex items-center gap-2 whitespace-nowrap">
+                                <i data-lucide="edit" class="w-4 h-4 text-slate-200"></i> Edit Details
+                            </a>
+                        @endif
+                        @if((Auth::user()->canAccess('link petitions') || Auth::user()->canLinkRelatedPetitions()) && !$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Duplicate']))
+                            <button type="button" @click="showLinkModal = true"
+                                class="px-4 py-2.5 text-sm font-semibold text-indigo-200 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-400/30 rounded-xl transition-all shadow-sm flex items-center gap-2 whitespace-nowrap cursor-pointer">
+                                <i data-lucide="link" class="w-4 h-4 text-indigo-300"></i> Link Petition
+                            </button>
+                        @endif
+                        @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
+                            <button type="button"
+                                onclick="window.openReturnModal('{{ $petition->hashid }}', '{{ addslashes($petition->receipt_no) }}')"
+                                @click="showReturnModal = true; returnPetitionId = '{{ $petition->hashid }}'; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: '{{ $petition->hashid }}', receipt: '{{ addslashes($petition->receipt_no) }}' })"
+                                class="px-4 py-2.5 text-sm font-semibold text-rose-200 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 rounded-xl transition-all shadow-sm flex items-center gap-2 whitespace-nowrap cursor-pointer">
+                                <i data-lucide="corner-up-left" class="w-4 h-4 text-rose-300"></i> Return to Inward
+                            </button>
+                        @endif
+                        @if($petition->linked_petition_id && (Auth::user()->canAccess('link petitions') || Auth::user()->canLinkRelatedPetitions()))
+                            <form action="{{ route('petitions.unlinkDuplicate', $petition->hashid) }}" method="POST"
+                                class="inline unlink-form" data-message="Are you sure you want to unlink this petition?">
+                                @csrf
+                                <button type="submit"
+                                    class="px-4 py-2.5 text-sm font-semibold text-rose-200 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 rounded-xl transition-all shadow-sm flex items-center gap-2 whitespace-nowrap cursor-pointer">
+                                    <i data-lucide="unlink" class="w-4 h-4 text-rose-300"></i> Unlink Petition
+                                </button>
+                            </form>
                         @endif
                     @endif
+                    @if($petition->is_returned_to_inward && $isInwardUser)
+                        <a href="{{ route('inward.enter_petition', ['filter' => 'returned', 'hide_form' => 1]) . '#view-inward-petitions' }}"
+                            class="px-4 py-2.5 text-sm font-semibold text-rose-200 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/30 rounded-xl transition-all shadow-sm flex items-center gap-2 whitespace-nowrap">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4 text-rose-300"></i> Re-transfer to CPSP
+                        </a>
+                    @endif
+                    @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $isInwardUser && !$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Duplicate']))
+                        <a href="{{ route('inward.enter_petition', ['search' => $petition->receipt_no, 'hide_form' => 1]) . '#view-inward-petitions' }}"
+                            class="px-4 py-2.5 text-sm font-semibold text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/30 rounded-xl transition-all shadow-sm flex items-center gap-2 whitespace-nowrap">
+                            <i data-lucide="edit-3" class="w-4 h-4 text-amber-300"></i> Edit in Inward
+                        </a>
+                    @endif
+                    <a href="{{ url()->previous() }}"
+                        class="px-4 py-2.5 text-sm font-bold text-slate-950 bg-teal-400 hover:bg-teal-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400/50 shadow-lg shadow-teal-500/20 flex items-center gap-2 transition-all whitespace-nowrap">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to List
+                    </a>
                 </div>
-            </div>
-            <div class="flex items-center gap-3">
-                <button type="button"
-                    onclick="window.open('{{ route('inward.receipt', $petition->hashid) }}', 'ReceiptWindow', 'width=920,height=800,scrollbars=yes')"
-                    class="px-4 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2 cursor-pointer"
-                    title="Print Inward Receipt">
-                    <i data-lucide="printer" class="w-4 h-4 text-slate-600"></i> Print Receipt
-                </button>
-                @if(Auth::user()->can('update', $petition) && (Auth::user()->canAccess('access admin dashboard') || !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance'])))
-                    @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward)
-                        <a href="{{ route('petitions.edit', $petition->hashid) }}"
-                            class="px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 rounded-lg transition-all shadow-md shadow-teal-500/20 flex items-center gap-2">
-                            <i data-lucide="edit-3" class="w-4 h-4"></i> Add Further Details
-                        </a>
-                    @else
-                        <a href="{{ route('petitions.edit', $petition->hashid) }}"
-                            class="px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all shadow-sm flex items-center gap-2">
-                            <i data-lucide="edit" class="w-4 h-4"></i> Edit Details
-                        </a>
-                    @endif
-                    @if((Auth::user()->canAccess('link petitions') || Auth::user()->canLinkRelatedPetitions()) && !$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Duplicate']))
-                        <button type="button" @click="showLinkModal = true"
-                            class="px-4 py-2.5 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-all shadow-sm flex items-center gap-2">
-                            <i data-lucide="link" class="w-4 h-4"></i> Link Petition
-                        </button>
-                    @endif
-                    @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $petition->isFromInward())
-                        <button type="button"
-                            onclick="window.openReturnModal('{{ $petition->hashid }}', '{{ addslashes($petition->receipt_no) }}')"
-                            @click="showReturnModal = true; returnPetitionId = '{{ $petition->hashid }}'; returnReceiptNo = '{{ addslashes($petition->receipt_no) }}'; $dispatch('open-return-modal', { id: '{{ $petition->hashid }}', receipt: '{{ addslashes($petition->receipt_no) }}' })"
-                            class="px-4 py-2.5 text-sm font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-all shadow-sm flex items-center gap-2 cursor-pointer">
-                            <i data-lucide="corner-up-left" class="w-4 h-4 text-rose-600"></i> Return to Inward
-                        </button>
-                    @endif
-                    @if($petition->linked_petition_id && (Auth::user()->canAccess('link petitions') || Auth::user()->canLinkRelatedPetitions()))
-                        <form action="{{ route('petitions.unlinkDuplicate', $petition->hashid) }}" method="POST"
-                            class="inline unlink-form" data-message="Are you sure you want to unlink this petition?">
-                            @csrf
-                            <button type="submit"
-                                class="px-4 py-2.5 text-sm font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-all shadow-sm flex items-center gap-2">
-                                <i data-lucide="unlink" class="w-4 h-4"></i> Unlink Petition
-                            </button>
-                        </form>
-                    @endif
-                @endif
-                @if($petition->is_returned_to_inward && $isInwardUser)
-                    <a href="{{ route('inward.enter_petition', ['filter' => 'returned', 'hide_form' => 1]) . '#view-inward-petitions' }}"
-                        class="px-4 py-2.5 text-sm font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition-all shadow-sm flex items-center gap-2">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4 text-rose-600"></i> Re-transfer to CPSP
-                    </a>
-                @endif
-                @if(!$petition->is_cpsp_processed && !$petition->is_returned_to_inward && $isInwardUser && !$petition->linked_petition_id && !in_array($petition->status, ['Closed', 'Sent_to_Govt', 'Sent_to_SPC', 'Internal_Vigilance', 'Duplicate']))
-                    <a href="{{ route('inward.enter_petition', ['search' => $petition->receipt_no, 'hide_form' => 1]) . '#view-inward-petitions' }}"
-                        class="px-4 py-2.5 text-sm font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-all shadow-sm flex items-center gap-2">
-                        <i data-lucide="edit-3" class="w-4 h-4 text-amber-600"></i> Edit in Inward
-                    </a>
-                @endif
-                <a href="{{ url()->previous() }}"
-                    class="px-4 py-2.5 text-sm font-semibold text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 shadow-sm flex items-center gap-2 transition-all">
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to List
-                </a>
             </div>
         </div>
 
@@ -245,80 +267,170 @@
             <div class="p-8 space-y-10">
                 <!-- Section 1: Petition Variables -->
                 <div>
-                    <h3
-                        class="text-base font-bold text-gray-900 border-b-2 border-slate-200 pb-2 mb-5 flex items-center gap-2 w-max">
-                        <i data-lucide="info" class="w-5 h-5 text-indigo-600"></i> General Information
-                    </h3>
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-4 mb-6">
+                        <div class="flex items-center gap-3">
+                            <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-teal-500 text-white shadow-md shadow-indigo-500/20 flex items-center justify-center shrink-0">
+                                <i data-lucide="info" class="w-5 h-5"></i>
+                            </span>
+                            <div>
+                                <h3 class="text-base font-extrabold text-slate-900 tracking-tight">General Information</h3>
+                                <p class="text-xs font-medium text-slate-500">Core classification, district &amp; receipt details</p>
+                            </div>
+                        </div>
+                    </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div>
-                            <span
-                                class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1">Status</span>
-                            @php
-                                $wf = $petition->workflow_status;
-                            @endphp
-                            <span
-                                class="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold uppercase tracking-widest {{ $wf['pill_class'] }}">
-                                @if($petition->decision && $canViewWorkflow)
-                                    Final : {{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}
-                                @else
-                                    {{ $wf['label'] }}
-                                @endif
-                            </span>
+                    @php
+                        $wf = $petition->workflow_status;
+                        $isUnitMode = strtolower((string) $petition->mode_of_petition_received) === 'unit';
+                        $modeDisplay = $petition->mode_of_petition_received === 'others'
+                            ? 'Others (' . $petition->mode_of_petition_received_others . ')'
+                            : $petition->mode_of_petition_received;
+                    @endphp
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 {{ $petition->concernedDistrict ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} gap-4">
+                        <!-- Status -->
+                        <div class="group relative overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/70 via-white to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                            <div class="flex items-start gap-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 border border-emerald-200/70 flex items-center justify-center shrink-0">
+                                    <i data-lucide="activity" class="w-5 h-5"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <span class="block text-[10px] font-extrabold text-emerald-700 uppercase tracking-[0.14em] mb-1.5">Status</span>
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider shadow-sm {{ $wf['pill_class'] }}">
+                                        @if($petition->decision && $canViewWorkflow)
+                                            Final : {{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}
+                                        @else
+                                            {{ $wf['label'] }}
+                                        @endif
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div><span class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Nature
-                                of Petition</span> <span
-                                class="font-semibold text-gray-900">{{ $petition->nature_of_petition }}</span></div>
+
+                        <!-- Nature of Petition -->
+                        <div class="group relative overflow-hidden rounded-2xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/70 via-white to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                            <div class="flex items-start gap-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 border border-indigo-200/70 flex items-center justify-center shrink-0">
+                                    <i data-lucide="tag" class="w-5 h-5"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <span class="block text-[10px] font-extrabold text-indigo-700 uppercase tracking-[0.14em] mb-1">Nature of Petition</span>
+                                    <span class="block text-sm font-bold text-slate-900 leading-snug break-words">{{ $petition->nature_of_petition }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Concerned District -->
                         @if($petition->concernedDistrict)
-                            <div>
-                                <span
-                                    class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Concerned
-                                    District</span>
-                                <span class="font-semibold text-gray-900 flex items-center gap-1.5">
-                                    <i data-lucide="map-pin" class="w-4 h-4 text-rose-500 shrink-0"></i>
-                                    <span>{{ $petition->concernedDistrict->district_name }}{{ $petition->concernedDistrict->district_code ? ' (' . $petition->concernedDistrict->district_code . ')' : '' }}</span>
-                                </span>
+                            <div class="group relative overflow-hidden rounded-2xl border border-rose-200/80 bg-gradient-to-br from-rose-50/70 via-white to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                                <div class="flex items-start gap-3.5">
+                                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 border border-rose-200/70 flex items-center justify-center shrink-0">
+                                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <span class="block text-[10px] font-extrabold text-rose-600 uppercase tracking-[0.14em] mb-1">Concerned District</span>
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            <span class="text-sm font-bold text-slate-900 leading-snug">{{ $petition->concernedDistrict->district_name }}</span>
+                                            @if($petition->concernedDistrict->district_code)
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-100 text-rose-700 border border-rose-200/70">
+                                                    ({{ $petition->concernedDistrict->district_code }})
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         @endif
-                        <div>
-                            <span class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Mode
-                                Received</span>
-                            <span class="font-semibold text-gray-900">
-                                {{ $petition->mode_of_petition_received === 'others'
-        ? 'Others (' . $petition->mode_of_petition_received_others . ')'
-        : $petition->mode_of_petition_received }}
+
+                        <!-- Mode Received -->
+                        <div class="group relative overflow-hidden rounded-2xl border border-sky-200/80 bg-gradient-to-br from-sky-50/70 via-white to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                            <div class="flex items-start gap-3.5">
+                                <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 border border-sky-200/70 flex items-center justify-center shrink-0">
+                                    <i data-lucide="inbox" class="w-5 h-5"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <span class="block text-[10px] font-extrabold text-sky-700 uppercase tracking-[0.14em] mb-1">Mode Received</span>
+                                    <span class="block text-sm font-bold text-slate-900 leading-snug break-words">{{ $modeDisplay }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if($isUnitMode)
+                        <div class="mt-5 rounded-2xl border border-teal-200/80 bg-gradient-to-br from-teal-50/70 via-white to-cyan-50/40 p-5 shadow-sm">
+                            <div class="flex items-center justify-between gap-2 mb-3.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                                    <span class="text-[11px] font-extrabold text-teal-800 uppercase tracking-[0.16em]">Unit Receipt Details</span>
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-100 text-teal-800 border border-teal-200">
+                                    Unit Mode
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- Concerned Unit Name -->
+                                <div class="bg-white rounded-xl border border-teal-100 p-4 shadow-sm transition-all duration-200 hover:border-teal-300 hover:shadow-md flex items-start gap-3">
+                                    <div class="w-9 h-9 rounded-lg bg-teal-50 text-teal-600 border border-teal-200/70 flex items-center justify-center shrink-0">
+                                        <i data-lucide="building-2" class="w-4 h-4"></i>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Concerned Unit Name</span>
+                                        <span class="block text-sm font-bold text-slate-900 leading-snug break-words">
+                                            {{ $petition->unit ? $petition->unit->unit_name . ($petition->unit->unit_code ? ' (' . $petition->unit->unit_code . ')' : '') : 'N/A' }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Petition Number at Unit -->
+                                <div class="bg-white rounded-xl border border-teal-100 p-4 shadow-sm transition-all duration-200 hover:border-teal-300 hover:shadow-md flex items-start gap-3">
+                                    <div class="w-9 h-9 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-200/70 flex items-center justify-center shrink-0">
+                                        <i data-lucide="hash" class="w-4 h-4"></i>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Petition Number at Unit</span>
+                                        @if($petition->petition_number_at_unit)
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-100 text-slate-900 border border-slate-200">
+                                                {{ $petition->petition_number_at_unit }}
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-400 border border-slate-200/70 italic">
+                                                N/A
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <!-- Date of Petition Received at Unit -->
+                                <div class="bg-white rounded-xl border border-teal-100 p-4 shadow-sm transition-all duration-200 hover:border-teal-300 hover:shadow-md flex items-start gap-3">
+                                    <div class="w-9 h-9 rounded-lg bg-teal-50 text-teal-600 border border-teal-200/70 flex items-center justify-center shrink-0">
+                                        <i data-lucide="calendar" class="w-4 h-4"></i>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Date of Petition Received at Unit</span>
+                                        <span class="block text-sm font-bold {{ $petition->date_of_petition_received_at_unit ? 'text-slate-900' : 'text-slate-400 italic' }}">
+                                            {{ $petition->date_of_petition_received_at_unit ? \Carbon\Carbon::parse($petition->date_of_petition_received_at_unit)->format('d M, Y') : 'N/A' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    <div class="mt-5 rounded-2xl border border-slate-200 border-l-4 border-l-indigo-500 bg-gradient-to-b from-slate-50/90 to-white p-5 sm:p-6 shadow-sm">
+                        <span class="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-2.5 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0">
+                                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
                             </span>
-                        </div>
-                        @if(strtolower($petition->mode_of_petition_received) === 'unit')
-                            <div>
-                                <span
-                                    class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Concerned
-                                    Unit Name</span>
-                                <span class="font-semibold text-gray-900 flex items-center gap-1.5">
-                                    <i data-lucide="building-2" class="w-4 h-4 text-indigo-600 shrink-0"></i>
-                                    <span>{{ $petition->unit ? $petition->unit->unit_name . ($petition->unit->unit_code ? ' (' . $petition->unit->unit_code . ')' : '') : 'N/A' }}</span>
-                                </span>
-                            </div>
-                            <div>
-                                <span class="block text-[11px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Date of
-                                    Petition Received at Unit</span>
-                                <span class="font-semibold text-gray-900 flex items-center gap-1.5">
-                                    <i data-lucide="calendar" class="w-4 h-4 text-indigo-600 shrink-0"></i>
-                                    <span>{{ $petition->date_of_petition_received_at_unit ? \Carbon\Carbon::parse($petition->date_of_petition_received_at_unit)->format('d M, Y') : 'N/A' }}</span>
-                                </span>
-                            </div>
-                        @endif
-                        <div class="lg:col-span-4 bg-slate-50/80 p-5 rounded-xl border border-slate-200 mt-2">
-                            <span class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Detailed
-                                Description</span>
-                            <p class="text-base sm:text-[16.5px] font-normal text-slate-800 leading-relaxed sm:leading-loose whitespace-pre-line tracking-normal"
-                                style="text-align: justify;">
-                                @php
-                                    $showDesc = trim(str_ireplace(['Inward petition entry', 'Inward petition'], '', $petition->description ?? ''));
-                                @endphp
-                                {{ $showDesc ?: 'No description provided.' }}
-                            </p>
-                        </div>
+                            <span>Detailed Description</span>
+                        </span>
+                        <p class="text-base sm:text-[16.5px] font-normal text-slate-800 leading-relaxed sm:leading-loose whitespace-pre-line tracking-normal"
+                            style="text-align: justify;">
+                            @php
+                                $showDesc = trim(str_ireplace(['Inward petition entry', 'Inward petition'], '', $petition->description ?? ''));
+                            @endphp
+                            {{ $showDesc ?: 'No description provided.' }}
+                        </p>
                     </div>
                 </div>
 
@@ -1498,6 +1610,11 @@
                                                                     class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"
                                                                     x-text="'File: ' + result.file_no"></span>
                                                             </template>
+                                                            <template x-if="result.petition_number_at_unit">
+                                                                <span
+                                                                    class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-teal-50 text-teal-700 border border-teal-200"
+                                                                    x-text="'Unit No: ' + result.petition_number_at_unit"></span>
+                                                            </template>
                                                             <template x-if="result.is_duplicate">
                                                                 <span
                                                                     class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
@@ -1544,7 +1661,7 @@
                                     <div x-show="results.length === 0 && !errorMessage"
                                         class="p-6 text-sm text-slate-500 text-center flex flex-col items-center gap-2">
                                         <i data-lucide="search-x" class="w-6 h-6 text-slate-300"></i>
-                                        No petitions found matching your search. Try Receipt No, File No, or Petitioner
+                                        No petitions found matching your search. Try Receipt No, File No, Unit Petition No, or Petitioner
                                         Name.
                                     </div>
 

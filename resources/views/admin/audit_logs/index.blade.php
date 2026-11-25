@@ -120,15 +120,18 @@
                 <!-- From Date -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">From Date</label>
-                    <input type="date" name="from_date" value="{{ $filters['from_date'] ?? '' }}" 
+                    <input type="date" id="from_date" name="from_date" value="{{ $filters['from_date'] ?? '' }}"
+                           max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                            class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500">
                 </div>
 
                 <!-- To Date -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">To Date</label>
-                    <input type="date" name="to_date" value="{{ $filters['to_date'] ?? '' }}" 
+                    <input type="date" id="to_date" name="to_date" value="{{ $filters['to_date'] ?? '' }}"
+                           max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                            class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500">
+                    <p id="dateRangeError" class="mt-1 text-xs font-semibold text-rose-600 hidden" aria-live="polite"></p>
                 </div>
             </div>
 

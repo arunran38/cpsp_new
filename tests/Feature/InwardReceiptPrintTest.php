@@ -216,4 +216,109 @@ class InwardReceiptPrintTest extends TestCase
         $response->assertSee('Print Receipt');
         $response->assertSee(route('inward.receipt', $petition->hashid));
     }
+
+    public function test_petition_show_does_not_render_print_receipt_button_and_only_admin_super_admin_inward_can_access_receipt(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $inwardRole = Role::findByName('Inward', 'web');
+        $cpspRole = Role::findByName('CPSP', 'web');
+        $tSectionRole = Role::findByName('T Section', 'web');
+        $complianceRole = Role::findByName('Petition Compliances', 'web');
+        $cpspAdminRole = Role::firstOrCreate(['name' => 'CPSP Admin', 'guard_name' => 'web']);
+        $adminRole = Role::findByName('admin', 'web');
+        $superAdminRole = Role::findByName('super admin', 'web');
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $inwardSeat = Seat::factory()->create(['seat_name' => 'Inward Desk', 'is_active' => true]);
+        $inwardSeat->assignRole($inwardRole);
+
+        $cpspSeat = Seat::factory()->create(['seat_name' => 'CPSP 1', 'is_active' => true]);
+        $cpspSeat->assignRole($cpspRole);
+
+        $tSectionSeat = Seat::factory()->create(['seat_name' => 'T Section Desk', 'is_active' => true]);
+        $tSectionSeat->assignRole($tSectionRole);
+
+        $inwardUser = User::factory()->create(['name' => 'Inward User']);
+        $inwardUser->assignRole($inwardRole);
+        SeatUser::factory()->create(['user_id' => $inwardUser->user_id, 'seat_id' => $inwardSeat->seat_id, 'is_active' => true]);
+
+        $cpspUser = User::factory()->create(['name' => 'CPSP User']);
+        $cpspUser->assignRole($cpspRole);
+        SeatUser::factory()->create(['user_id' => $cpspUser->user_id, 'seat_id' => $cpspSeat->seat_id, 'is_active' => true]);
+
+        $tSectionUser = User::factory()->create(['name' => 'T Section User']);
+        $tSectionUser->assignRole($tSectionRole);
+        SeatUser::factory()->create(['user_id' => $tSectionUser->user_id, 'seat_id' => $tSectionSeat->seat_id, 'is_active' => true]);
+
+        $complianceUser = User::factory()->create(['name' => 'Compliance User']);
+        $complianceUser->assignRole($complianceRole);
+
+        $cpspAdminUser = User::factory()->create(['name' => 'CPSP Admin User']);
+        $cpspAdminUser->assignRole($cpspAdminRole);
+
+        $adminUser = User::factory()->create(['name' => 'Admin User']);
+        $adminUser->assignRole($adminRole);
+
+        $superAdminUser = User::factory()->create(['name' => 'Super Admin User']);
+        $superAdminUser->assignRole($superAdminRole);
+
+        $petition = Petition::factory()->create([
+            'receipt_no' => 'INW/2026/SHOW-TEST',
+            'date_of_petition_received' => '2026-11-21',
+            'user_id' => $inwardUser->user_id,
+            'seat_id' => $cpspSeat->seat_id,
+            'created_by_seat_id' => $inwardSeat->seat_id,
+        ]);
+
+        // Petition Details (petition_show) must NOT show Print Receipt button for anyone (CPSP, T-Section, Admin, or Inward)
+        foreach ([
+            [$cpspUser, $cpspSeat->seat_id],
+            [$tSectionUser, $tSectionSeat->seat_id],
+            [$adminUser, null],
+            [$inwardUser, $inwardSeat->seat_id],
+        ] as [$viewer, $seatId]) {
+            $req = $this->actingAs($viewer);
+            if ($seatId) {
+                $req->withSession(['current_seat_id' => $seatId]);
+            }
+            $showResponse = $req->get(route('petitions.show', $petition->hashid));
+            $showResponse->assertOk();
+            $showResponse->assertDontSee('Print Receipt');
+            $showResponse->assertDontSee(route('inward.receipt', $petition->hashid));
+        }
+
+        // Direct receipt route: allowed for Inward, Admin, Super Admin
+        $this->actingAs($inwardUser)
+            ->withSession(['current_seat_id' => $inwardSeat->seat_id])
+            ->get(route('inward.receipt', $petition->hashid))
+            ->assertOk();
+
+        $this->actingAs($adminUser)
+            ->get(route('inward.receipt', $petition->hashid))
+            ->assertOk();
+
+        $this->actingAs($superAdminUser)
+            ->get(route('inward.receipt', $petition->hashid))
+            ->assertOk();
+
+        // Direct receipt route: forbidden for CPSP, T Section, Petition Compliances, CPSP Admin
+        $this->actingAs($cpspUser)
+            ->withSession(['current_seat_id' => $cpspSeat->seat_id])
+            ->get(route('inward.receipt', $petition->hashid))
+            ->assertForbidden();
+
+        $this->actingAs($tSectionUser)
+            ->withSession(['current_seat_id' => $tSectionSeat->seat_id])
+            ->get(route('inward.receipt', $petition->hashid))
+            ->assertForbidden();
+
+        $this->actingAs($complianceUser)
+            ->get(route('inward.receipt', $petition->hashid))
+            ->assertForbidden();
+
+        $this->actingAs($cpspAdminUser)
+            ->get(route('inward.receipt', $petition->hashid))
+            ->assertForbidden();
+    }
 }

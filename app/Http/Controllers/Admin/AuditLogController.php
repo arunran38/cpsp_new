@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Exports\AuditLogsExport;
+use App\Http\Controllers\Concerns\ValidatesDateRange;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -14,12 +15,16 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AuditLogController extends Controller
 {
+    use ValidatesDateRange;
+
     /**
      * Display a listing of the audit logs.
      */
     public function index(Request $request)
     {
         abort_unless(Auth::user()->canAccess('view log'), 403, 'Unauthorized access to Audit Logs.');
+
+        $this->validateDateRange($request, 'from_date', 'to_date');
 
         $filters = $request->only([
             'search',
@@ -96,6 +101,8 @@ class AuditLogController extends Controller
     public function export(Request $request): BinaryFileResponse
     {
         abort_unless(Auth::user()->canAccess('view log'), 403, 'Unauthorized access to Audit Logs.');
+
+        $this->validateDateRange($request, 'from_date', 'to_date');
 
         $filters = $request->only([
             'search',

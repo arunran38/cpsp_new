@@ -39,4 +39,23 @@ class StorePetitionRequestTest extends TestCase
 
         $this->assertTrue($validator->fails());
     }
+
+    public function test_petition_number_at_unit_is_optional_and_enforces_max_30_chars(): void
+    {
+        $request = new StorePetitionRequest();
+        $request->replace([
+            'mode_of_petition_received' => 'Unit',
+        ]);
+
+        $rules = ['petition_number_at_unit' => $request->rules()['petition_number_at_unit']];
+
+        $emptyValidator = Validator::make(['petition_number_at_unit' => null], $rules);
+        $this->assertFalse($emptyValidator->fails());
+
+        $validValidator = Validator::make(['petition_number_at_unit' => str_repeat('A', 30)], $rules);
+        $this->assertFalse($validValidator->fails());
+
+        $tooLongValidator = Validator::make(['petition_number_at_unit' => str_repeat('A', 31)], $rules);
+        $this->assertTrue($tooLongValidator->fails());
+    }
 }

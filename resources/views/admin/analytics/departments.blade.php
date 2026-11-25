@@ -105,7 +105,7 @@
                             </label>
                             <div class="relative w-full">
                                 <input type="date" id="date_from" placeholder="DD-MM-YYYY" name="date_from"
-                                    value="{{ request('date_from') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
+                                    value="{{ request('date_from') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                     class="w-full px-3 h-11 bg-white rounded-xl border border-blue-200/80 shadow-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 text-xs sm:text-sm font-semibold text-slate-700 transition-all hover:border-blue-300"
                                     style="color: #1e40af !important;">
                             </div>
@@ -119,7 +119,7 @@
                             </label>
                             <div class="relative w-full">
                                 <input type="date" id="date_to" placeholder="DD-MM-YYYY" name="date_to"
-                                    value="{{ request('date_to') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}"
+                                    value="{{ request('date_to') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                                     class="w-full px-3 h-11 bg-white rounded-xl border border-blue-200/80 shadow-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 text-xs sm:text-sm font-semibold text-slate-700 transition-all hover:border-blue-300"
                                     style="color: #1e40af !important;">
                             </div>
@@ -168,27 +168,9 @@
             let abortController = null;
 
             const validateDateRange = () => {
-                if (!dateFromInput || !dateToInput) return true;
-                const dateFrom = dateFromInput.value;
-                const dateTo = dateToInput.value;
-
-                if (!dateFrom) {
-                    dateToInput.removeAttribute('min');
-                    dateRangeError.textContent = '';
-                    dateRangeError.classList.add('hidden');
-                    return true;
+                if (window.validateDateRange) {
+                    return window.validateDateRange(searchForm);
                 }
-
-                dateToInput.setAttribute('min', dateFrom);
-
-                if (dateTo && dateTo < dateFrom) {
-                    dateRangeError.textContent = 'Date To must be greater than Date From.';
-                    dateRangeError.classList.remove('hidden');
-                    return false;
-                }
-
-                dateRangeError.textContent = '';
-                dateRangeError.classList.add('hidden');
                 return true;
             };
 
@@ -232,7 +214,10 @@
                     },
                     signal: abortController.signal
                 })
-                    .then(response => response.text())
+                    .then(response => {
+                        if (!response.ok) throw new Error('Request failed with status ' + response.status);
+                        return response.text();
+                    })
                     .then(html => {
                         const currentTable = document.getElementById('tableContainer');
                         if (currentTable) {
@@ -265,9 +250,6 @@
                     }
                 });
             });
-
-            if (dateFromInput) dateFromInput.addEventListener('change', validateDateRange);
-            if (dateToInput) dateToInput.addEventListener('change', validateDateRange);
 
             searchForm.addEventListener('submit', (e) => {
                 e.preventDefault();

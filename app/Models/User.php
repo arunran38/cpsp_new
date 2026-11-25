@@ -160,6 +160,7 @@ class User extends Authenticatable
             'view district analysis chart',
             'export district analysis',
             'filter district in master reports',
+            'print inward receipt',
         ], \App\Services\TSectionPermissionRegistry::all());
 
         $isStrict = false;

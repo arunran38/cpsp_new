@@ -2,16 +2,56 @@
 <script>
 (function() {
     const TODAY_STR = '{{ now()->timezone(config("app.timezone", "Asia/Kolkata"))->format("Y-m-d") }}';
+    const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+    const PAIR_DEFINITIONS = [
+        { from: 'date_from', to: 'date_to' },
+        { from: 'from_date', to: 'to_date' },
+        { from: 'start_date', to: 'end_date' },
+        { from: 'district_from_date', to: 'district_to_date' }
+    ];
+    const ERROR_INPUT_CLASSES = ['border-rose-500', 'ring-1', 'ring-rose-500/30', 'focus:border-rose-500', 'focus:ring-rose-500/20'];
+    const pairRegistry = new WeakMap();
 
-    function getErrorContainer(input, customErrorId) {
-        if (customErrorId) {
-            const el = document.getElementById(customErrorId);
+    function getFieldLabel(input, fallback) {
+        if (!input) return fallback || 'Date';
+        if (input.dataset.dateLabel) return input.dataset.dateLabel;
+        const name = ((input.getAttribute('name') || input.id || '')).toLowerCase();
+        if (name.includes('district_from')) return 'District From Date';
+        if (name.includes('district_to')) return 'District To Date';
+        if (name.includes('start')) return 'Start Date';
+        if (name.includes('end')) return 'End Date';
+        if (name.includes('from')) return 'From Date';
+        if (name.includes('to')) return 'To Date';
+        return fallback || 'Date';
+    }
+
+    function allowFuture(input) {
+        return input.hasAttribute('data-allow-future') || input.getAttribute('data-allow-future') === 'true';
+    }
+
+    function isValidDateString(value) {
+        if (!value || !DATE_REGEX.test(value)) return false;
+        const [y, m, d] = value.split('-').map(Number);
+        const dt = new Date(Date.UTC(y, m - 1, d));
+        return dt.getUTCFullYear() === y && (dt.getUTCMonth() + 1) === m && dt.getUTCDate() === d;
+    }
+
+    function getErrorContainer(input) {
+        if (!input) return null;
+
+        const form = input.closest('form');
+        const container = input.closest('[data-date-container]') || form;
+
+        if (input.dataset.dateErrorId) {
+            const el = document.getElementById(input.dataset.dateErrorId);
             if (el) return el;
         }
-
-        const form = input.closest('form') || input.closest('[data-date-container]') || input.parentElement;
-        if (form) {
-            const rangeError = form.querySelector('#dateRangeError, .dateRangeError, .date-range-error');
+        if (form && form.dataset.dateErrorId) {
+            const el = document.getElementById(form.dataset.dateErrorId);
+            if (el) return el;
+        }
+        if (container) {
+            const rangeError = container.querySelector('#dateRangeError, .dateRangeError, .date-range-error');
             if (rangeError) return rangeError;
         }
 
@@ -20,7 +60,7 @@
         if (!errorEl && input.parentNode) {
             errorEl = document.createElement('p');
             errorEl.id = errorId;
-            errorEl.className = 'date-validation-error text-xs font-semibold text-rose-600 mt-1';
+            errorEl.className = 'date-validation-error text-xs font-semibold text-rose-600 mt-1 hidden';
             errorEl.setAttribute('aria-live', 'polite');
             if (input.nextSibling) {
                 input.parentNode.insertBefore(errorEl, input.nextSibling);
@@ -31,25 +71,139 @@
         return errorEl;
     }
 
-    function showDateError(input, message) {
-        input.classList.add('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-500/20');
-        input.classList.remove('border-slate-200', 'border-slate-300', 'focus:border-indigo-500');
-        const errorEl = getErrorContainer(input);
-        if (errorEl) {
-            errorEl.textContent = message;
-            errorEl.classList.remove('hidden');
-            errorEl.style.display = 'block';
+    function markInputInvalid(input, isInvalid) {
+        if (!input) return;
+        if (isInvalid) {
+            input.classList.add(...ERROR_INPUT_CLASSES);
+            input.setAttribute('aria-invalid', 'true');
+        } else {
+            input.classList.remove(...ERROR_INPUT_CLASSES);
+            input.removeAttribute('aria-invalid');
         }
     }
 
-    function clearDateError(input) {
-        input.classList.remove('border-rose-500', 'focus:border-rose-500', 'focus:ring-rose-500/20');
-        const errorEl = getErrorContainer(input);
-        if (errorEl) {
+    function setErrorMessage(errorEl, message) {
+        if (!errorEl) return;
+        if (message) {
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+            errorEl.style.display = 'block';
+        } else {
             errorEl.textContent = '';
             errorEl.classList.add('hidden');
             errorEl.style.display = 'none';
         }
+    }
+
+    function syncToMin(fromInput, toInput) {
+        const fromVal = fromInput.value;
+        if (fromVal && isValidDateString(fromVal) && (allowFuture(fromInput) || fromVal <= TODAY_STR)) {
+            toInput.setAttribute('min', fromVal);
+        } else {
+            toInput.removeAttribute('min');
+        }
+    }
+
+    function validatePair(fromInput, toInput, options = {}) {
+        if (!fromInput || !toInput) return true;
+        const { clearConflictingTo = false, preserveNotice = false, checkBadInput = true } = options;
+
+        if (!allowFuture(fromInput)) {
+            fromInput.setAttribute('max', TODAY_STR);
+        }
+        if (!allowFuture(toInput)) {
+            toInput.setAttribute('max', TODAY_STR);
+        }
+
+        const state = pairRegistry.get(fromInput) || { notice: '' };
+        pairRegistry.set(fromInput, state);
+        pairRegistry.set(toInput, state);
+
+        if (!preserveNotice) {
+            state.notice = '';
+        }
+
+        const fromVal = fromInput.value;
+        const toVal = toInput.value;
+        const fromLabel = getFieldLabel(fromInput, 'From Date');
+        const toLabel = getFieldLabel(toInput, 'To Date');
+
+        let fromError = '';
+        let toError = '';
+
+        // 1. Validate From Date (manual invalid date or future date)
+        if (checkBadInput && fromInput.validity && fromInput.validity.badInput) {
+            fromError = `Please enter a valid ${fromLabel}.`;
+        } else if (fromVal && !isValidDateString(fromVal)) {
+            fromError = `Please enter a valid ${fromLabel}.`;
+        } else if (!allowFuture(fromInput) && fromVal && fromVal > TODAY_STR) {
+            fromError = `${fromLabel} cannot be a future date.`;
+        }
+
+        // Keep To Date min synchronized with valid From Date (never lock From Date max to To Date)
+        syncToMin(fromInput, toInput);
+
+        // 2. Validate To Date (manual invalid date, future date, or earlier than From Date)
+        if (checkBadInput && toInput.validity && toInput.validity.badInput) {
+            toError = `Please enter a valid ${toLabel}.`;
+        } else if (toVal && !isValidDateString(toVal)) {
+            toError = `Please enter a valid ${toLabel}.`;
+        } else if (!allowFuture(toInput) && toVal && toVal > TODAY_STR) {
+            toError = `${toLabel} cannot be a future date.`;
+        } else if (!fromError && fromVal && toVal && toVal < fromVal) {
+            if (clearConflictingTo) {
+                state.isSyncing = true;
+                try {
+                    toInput.value = '';
+                    try {
+                        toInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    } catch (err) {}
+                } finally {
+                    state.isSyncing = false;
+                }
+                state.notice = `${toLabel} was cleared because it cannot be earlier than ${fromLabel}.`;
+            } else {
+                toError = `${toLabel} must be equal to or later than ${fromLabel}.`;
+            }
+        }
+
+        markInputInvalid(fromInput, Boolean(fromError));
+        markInputInvalid(toInput, Boolean(toError));
+
+        const fromErrEl = getErrorContainer(fromInput);
+        const toErrEl = getErrorContainer(toInput);
+        const displayMsg = fromError || toError || state.notice || '';
+
+        if (fromErrEl && toErrEl && fromErrEl === toErrEl) {
+            setErrorMessage(fromErrEl, displayMsg);
+        } else {
+            setErrorMessage(fromErrEl, fromError);
+            setErrorMessage(toErrEl, toError || state.notice || '');
+        }
+
+        return !fromError && !toError;
+    }
+
+    function validateSingleInput(input, checkBadInput = true) {
+        if (!input) return true;
+        if (!allowFuture(input)) {
+            input.setAttribute('max', TODAY_STR);
+        }
+
+        const label = getFieldLabel(input, 'Date');
+        let error = '';
+
+        if (checkBadInput && input.validity && input.validity.badInput) {
+            error = `Please enter a valid ${label}.`;
+        } else if (input.value && !isValidDateString(input.value)) {
+            error = `Please enter a valid ${label}.`;
+        } else if (!allowFuture(input) && input.value && input.value > TODAY_STR) {
+            error = `${label} cannot be a future date.`;
+        }
+
+        markInputInvalid(input, Boolean(error));
+        setErrorMessage(getErrorContainer(input), error);
+        return !error;
     }
 
     function setupDateRangePair(fromInput, toInput) {
@@ -59,262 +213,177 @@
         fromInput.dataset.dateRangeInit = 'true';
         toInput.dataset.dateRangeInit = 'true';
 
-        const allowFutureFrom = fromInput.hasAttribute('data-allow-future') || fromInput.getAttribute('data-allow-future') === 'true';
-        const allowFutureTo = toInput.hasAttribute('data-allow-future') || toInput.getAttribute('data-allow-future') === 'true';
+        const state = { isSyncing: false, notice: '', fromInput, toInput };
+        pairRegistry.set(fromInput, state);
+        pairRegistry.set(toInput, state);
 
-        // 1. Enforce max to today if future dates are not allowed
-        if (!allowFutureFrom && !fromInput.getAttribute('max')) {
+        if (!allowFuture(fromInput)) {
             fromInput.setAttribute('max', TODAY_STR);
         }
-        if (!allowFutureTo && !toInput.getAttribute('max')) {
+        if (!allowFuture(toInput)) {
             toInput.setAttribute('max', TODAY_STR);
         }
 
-        // 2. Initial synchronization of min/max attributes
-        const syncMinMax = () => {
-            const fromVal = fromInput.value;
-            const toVal = toInput.value;
+        syncToMin(fromInput, toInput);
+        if (fromInput.value || toInput.value) {
+            validatePair(fromInput, toInput, { clearConflictingTo: false });
+        }
 
-            if (fromVal) {
-                toInput.min = fromVal;
-            } else {
-                toInput.removeAttribute('min');
-            }
-
-            if (toVal) {
-                if (!allowFutureFrom) {
-                    fromInput.max = toVal < TODAY_STR ? toVal : TODAY_STR;
-                } else {
-                    fromInput.max = toVal;
-                }
-            } else if (!allowFutureFrom) {
-                fromInput.max = TODAY_STR;
-            } else {
-                fromInput.removeAttribute('max');
-            }
+        const handleFromEvent = (isChange, checkBadInput) => {
+            if (state.isSyncing) return;
+            validatePair(fromInput, toInput, { clearConflictingTo: isChange, checkBadInput });
         };
 
-        syncMinMax();
-
-        let isSyncing = false;
-
-        // 3. From Input Event Listener
-        const handleFromChange = (e) => {
-            if (isSyncing) return;
-            isSyncing = true;
-            try {
-                const fromVal = fromInput.value;
-                const toVal = toInput.value;
-
-                // Restrict future date
-                if (!allowFutureFrom && fromVal && fromVal > TODAY_STR) {
-                    showDateError(fromInput, 'Date cannot be in the future.');
-                    fromInput.value = TODAY_STR;
-                    try {
-                        fromInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    } catch (err) {}
-                    syncMinMax();
-                    return;
-                }
-
-                clearDateError(fromInput);
-
-                // Range conflict handling
-                if (fromVal && toVal && toVal < fromVal) {
-                    toInput.value = '';
-                    try {
-                        toInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    } catch (err) {}
-                    showDateError(toInput, 'Date To cannot be earlier than Date From.');
-                } else {
-                    clearDateError(toInput);
-                }
-
-                syncMinMax();
-            } finally {
-                isSyncing = false;
-            }
+        const handleToEvent = (checkBadInput) => {
+            if (state.isSyncing) return;
+            validatePair(fromInput, toInput, { clearConflictingTo: false, checkBadInput });
         };
 
-        // 4. To Input Event Listener
-        const handleToChange = (e) => {
-            if (isSyncing) return;
-            isSyncing = true;
-            try {
-                const fromVal = fromInput.value;
-                const toVal = toInput.value;
+        // Capture phase ensures validation and min/max sync run before page change handlers
+        fromInput.addEventListener('change', () => handleFromEvent(true, true), true);
+        fromInput.addEventListener('input', () => handleFromEvent(false, false), true);
+        fromInput.addEventListener('blur', () => handleFromEvent(false, true), true);
 
-                // Restrict future date
-                if (!allowFutureTo && toVal && toVal > TODAY_STR) {
-                    showDateError(toInput, 'Date cannot be in the future.');
-                    toInput.value = TODAY_STR;
-                    try {
-                        toInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    } catch (err) {}
-                    syncMinMax();
-                    return;
-                }
-
-                clearDateError(toInput);
-
-                // Range conflict handling
-                if (fromVal && toVal && fromVal > toVal) {
-                    fromInput.value = '';
-                    try {
-                        fromInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    } catch (err) {}
-                    showDateError(fromInput, 'Date From cannot be later than Date To.');
-                } else {
-                    clearDateError(fromInput);
-                }
-
-                syncMinMax();
-            } finally {
-                isSyncing = false;
-            }
-        };
-
-        fromInput.addEventListener('change', handleFromChange);
-        fromInput.addEventListener('input', handleFromChange);
-        toInput.addEventListener('change', handleToChange);
-        toInput.addEventListener('input', handleToChange);
+        toInput.addEventListener('change', () => handleToEvent(true), true);
+        toInput.addEventListener('input', () => handleToEvent(false), true);
+        toInput.addEventListener('blur', () => handleToEvent(true), true);
     }
 
     function setupSingleDateInput(input) {
         if (!input || input.dataset.singleDateInit === 'true') return;
         input.dataset.singleDateInit = 'true';
 
-        const allowFuture = input.hasAttribute('data-allow-future') || input.getAttribute('data-allow-future') === 'true';
-
-        if (!allowFuture && !input.getAttribute('max')) {
+        if (!allowFuture(input)) {
             input.setAttribute('max', TODAY_STR);
         }
 
-        const handleInput = () => {
-            if (!allowFuture && input.value && input.value > TODAY_STR) {
-                showDateError(input, 'Date cannot be in the future.');
-                input.value = TODAY_STR;
-                try {
-                    input.dispatchEvent(new Event('input', { bubbles: true }));
-                } catch (err) {}
-            } else {
-                clearDateError(input);
-            }
-        };
+        input.addEventListener('change', () => validateSingleInput(input, true), true);
+        input.addEventListener('input', () => validateSingleInput(input, false), true);
+        input.addEventListener('blur', () => validateSingleInput(input, true), true);
+    }
 
-        input.addEventListener('change', handleInput);
-        input.addEventListener('input', handleInput);
+    function findPairsInContainer(container) {
+        const pairs = [];
+        const pairedInputs = new Set();
+
+        PAIR_DEFINITIONS.forEach(def => {
+            const fromInput = container.querySelector(`input[name="${def.from}"], input#${def.from}`);
+            const toInput = container.querySelector(`input[name="${def.to}"], input#${def.to}`);
+            if (fromInput && toInput && !pairedInputs.has(fromInput) && !pairedInputs.has(toInput)) {
+                pairs.push([fromInput, toInput]);
+                pairedInputs.add(fromInput);
+                pairedInputs.add(toInput);
+            }
+        });
+
+        const customFrom = container.querySelector('input[data-date-from], input[data-range="from"]');
+        const customTo = container.querySelector('input[data-date-to], input[data-range="to"]');
+        if (customFrom && customTo && !pairedInputs.has(customFrom) && !pairedInputs.has(customTo)) {
+            pairs.push([customFrom, customTo]);
+            pairedInputs.add(customFrom);
+            pairedInputs.add(customTo);
+        }
+
+        return { pairs, pairedInputs };
     }
 
     function scanAndInit(root = document) {
-        // Pairs to find within forms or containers
-        const pairDefinitions = [
-            { from: 'date_from', to: 'date_to' },
-            { from: 'from_date', to: 'to_date' },
-            { from: 'start_date', to: 'end_date' }
-        ];
+        if (!root || !root.querySelectorAll) return;
 
-        const forms = root.querySelectorAll ? Array.from(root.querySelectorAll('form, [data-date-container]')) : [];
+        const containers = Array.from(root.querySelectorAll('form, [data-date-container]'));
         const processedInputs = new Set();
 
-        forms.forEach(form => {
-            pairDefinitions.forEach(pair => {
-                const fromInput = form.querySelector(`input[name="${pair.from}"], input#${pair.from}`);
-                const toInput = form.querySelector(`input[name="${pair.to}"], input#${pair.to}`);
-
-                if (fromInput && toInput) {
+        containers.forEach(container => {
+            const { pairs } = findPairsInContainer(container);
+            pairs.forEach(([fromInput, toInput]) => {
+                if (!processedInputs.has(fromInput) && !processedInputs.has(toInput)) {
                     setupDateRangePair(fromInput, toInput);
                     processedInputs.add(fromInput);
                     processedInputs.add(toInput);
                 }
             });
-
-            // Check custom data attributes
-            const customFrom = form.querySelector('input[data-date-from], [data-range="from"]');
-            const customTo = form.querySelector('input[data-date-to], [data-range="to"]');
-            if (customFrom && customTo) {
-                setupDateRangePair(customFrom, customTo);
-                processedInputs.add(customFrom);
-                processedInputs.add(customTo);
-            }
         });
 
-        // Global fallback for pairs across custom wrappers
-        if (root.querySelectorAll) {
-            pairDefinitions.forEach(pair => {
-                const allFrom = Array.from(root.querySelectorAll(`input[name="${pair.from}"], input#${pair.from}`));
-                const allTo = Array.from(root.querySelectorAll(`input[name="${pair.to}"], input#${pair.to}`));
+        // Fallback across arbitrary wrappers
+        PAIR_DEFINITIONS.forEach(def => {
+            const allFrom = Array.from(root.querySelectorAll(`input[name="${def.from}"], input#${def.from}`));
+            const allTo = Array.from(root.querySelectorAll(`input[name="${def.to}"], input#${def.to}`));
 
-                allFrom.forEach((fromEl, idx) => {
-                    if (!processedInputs.has(fromEl)) {
-                        const toEl = allTo[idx];
-                        if (toEl && !processedInputs.has(toEl)) {
-                            setupDateRangePair(fromEl, toEl);
-                            processedInputs.add(fromEl);
-                            processedInputs.add(toEl);
-                        }
-                    }
-                });
+            allFrom.forEach((fromEl, idx) => {
+                const toEl = allTo[idx];
+                if (toEl && !processedInputs.has(fromEl) && !processedInputs.has(toEl)) {
+                    setupDateRangePair(fromEl, toEl);
+                    processedInputs.add(fromEl);
+                    processedInputs.add(toEl);
+                }
             });
-        }
+        });
 
-        // Initialize all remaining standalone date inputs
-        const allDateInputs = root.querySelectorAll ? root.querySelectorAll('input[type="date"]') : [];
+        const allDateInputs = root.querySelectorAll('input[type="date"]');
         allDateInputs.forEach(input => {
-            if (!processedInputs.has(input)) {
+            if (!processedInputs.has(input) && !pairRegistry.has(input)) {
                 setupSingleDateInput(input);
             }
         });
     }
 
-    // Guard on form submit
+    function validateDateRangeContainer(container = document) {
+        const target = container || document;
+        if (!target || !target.querySelectorAll) return true;
+
+        scanAndInit(target);
+
+        let isValid = true;
+        let firstInvalid = null;
+        const { pairs, pairedInputs } = findPairsInContainer(target);
+
+        pairs.forEach(([fromInput, toInput]) => {
+            if (!validatePair(fromInput, toInput, { clearConflictingTo: false, preserveNotice: true })) {
+                isValid = false;
+                if (!firstInvalid) {
+                    firstInvalid = fromInput.getAttribute('aria-invalid') === 'true' ? fromInput : toInput;
+                }
+            }
+        });
+
+        const allDateInputs = target.querySelectorAll('input[type="date"]');
+        allDateInputs.forEach(input => {
+            if (!pairedInputs.has(input) && !pairRegistry.has(input)) {
+                if (!validateSingleInput(input)) {
+                    isValid = false;
+                    if (!firstInvalid) firstInvalid = input;
+                }
+            }
+        });
+
+        if (!isValid && firstInvalid && typeof firstInvalid.focus === 'function') {
+            firstInvalid.focus();
+        }
+
+        return isValid;
+    }
+
+    // Guard on every form submit (runs in capture phase before any form submit handlers)
     document.addEventListener('submit', function(e) {
         const form = e.target;
         if (!form || !form.querySelectorAll) return;
 
-        const dateInputs = form.querySelectorAll('input[type="date"]');
-        let hasError = false;
-
-        dateInputs.forEach(input => {
-            const allowFuture = input.hasAttribute('data-allow-future') || input.getAttribute('data-allow-future') === 'true';
-            if (!allowFuture && input.value && input.value > TODAY_STR) {
-                showDateError(input, 'Date cannot be in the future.');
-                hasError = true;
-                input.focus();
-            }
-        });
-
-        const pairDefinitions = [
-            { from: 'date_from', to: 'date_to' },
-            { from: 'from_date', to: 'to_date' },
-            { from: 'start_date', to: 'end_date' }
-        ];
-
-        pairDefinitions.forEach(pair => {
-            const from = form.querySelector(`input[name="${pair.from}"], input#${pair.from}`);
-            const to = form.querySelector(`input[name="${pair.to}"], input#${pair.to}`);
-            if (from && to && from.value && to.value && from.value > to.value) {
-                showDateError(to, 'Date To cannot be earlier than Date From.');
-                hasError = true;
-                to.focus();
-            }
-        });
-
-        if (hasError) {
+        if (!validateDateRangeContainer(form)) {
             e.preventDefault();
             e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
             return false;
         }
     }, true);
 
-    // Initial run on DOM ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => scanAndInit(document));
     } else {
         scanAndInit(document);
     }
 
-    // Auto-scan on dynamic DOM additions (e.g. modals, live search updates)
     if (window.MutationObserver) {
         let mutationTimer = null;
         const observer = new MutationObserver(() => {
@@ -332,9 +401,9 @@
         }
     }
 
-    // Expose utility globally
     window.initDateRangePicker = setupDateRangePair;
     window.initGlobalDatePickers = scanAndInit;
+    window.validateDateRange = validateDateRangeContainer;
     window.TODAY_DATE_STR = TODAY_STR;
 })();
 </script>

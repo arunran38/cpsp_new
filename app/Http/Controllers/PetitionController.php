@@ -13,6 +13,7 @@ use App\Models\DesignationList;
 use App\Models\DepartmentList;
 use App\Models\Unit;
 use App\Models\AuditLog;
+use App\Http\Controllers\Concerns\ValidatesDateRange;
 use App\Http\Requests\StorePetitionRequest;
 use App\Http\Requests\UpdatePetitionRequest;
 use App\Services\PetitionService;
@@ -41,6 +42,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class PetitionController extends Controller
 {
     use AuthorizesRequests;
+    use ValidatesDateRange;
 
     protected $petitionService;
 
@@ -102,10 +104,8 @@ class PetitionController extends Controller
             abort(403, 'Unauthorized. Inward registration access required.');
         }
 
-        $filters = $request->validate([
+        $filters = $this->validateDateRange($request, 'date_from', 'date_to', [
             'filter' => 'nullable|in:all,transferred,returned',
-            'date_from' => 'nullable|date|before_or_equal:today',
-            'date_to' => 'nullable|date|before_or_equal:today|after_or_equal:date_from',
             'seat_id' => 'nullable|exists:seats,seat_id',
         ]);
         $filter = $filters['filter'] ?? 'all';
@@ -122,7 +122,7 @@ class PetitionController extends Controller
 
         $seats = $this->getInwardEligibleSeats($user, $currentSeat, $isSeatLocked);
         $inwardSeats = Seat::where('seat_name', 'like', '%Inward%')->where('is_active', true)->get();
-        $units = Unit::orderBy('unit_name')->get();
+        $units = Unit::orderBy('unit_id')->get();
         $districts = District::orderBy('district_id')->get();
         $designations = DesignationList::orderBy('designation_name')->get();
         $departments = DepartmentList::orderBy('department_name')->get();
@@ -178,9 +178,7 @@ class PetitionController extends Controller
             abort(403, 'Unauthorized. Inward registration and export permissions required.');
         }
 
-        $filters = $request->validate([
-            'date_from' => 'nullable|date|before_or_equal:today',
-            'date_to' => 'nullable|date|before_or_equal:today|after_or_equal:date_from',
+        $filters = $this->validateDateRange($request, 'date_from', 'date_to', [
             'seat_id' => 'nullable|exists:seats,seat_id',
         ]);
 
@@ -433,16 +431,25 @@ class PetitionController extends Controller
             'date_of_petition_received' => 'required|date|before_or_equal:today',
             'mode_of_petition_received' => 'required|string',
             'unit_id' => 'nullable|required_if:mode_of_petition_received,Unit,unit|exists:units,unit_id',
+            'petition_number_at_unit' => 'nullable|string|max:30',
             'date_of_petition_received_at_unit' => 'nullable|required_if:mode_of_petition_received,Unit,unit|date|before_or_equal:today',
             'mode_others' => 'nullable|required_if:mode_of_petition_received,others,Others|string|max:255',
             'complainant_name' => 'required|string|max:255',
+            'complainant_phone' => ['nullable', 'string', 'regex:/^\d{10}$/'],
             'seat_id' => ['required', 'exists:seats,seat_id', Rule::in($eligibleSeatIds)],
+        ], [
+            'complainant_phone.regex' => 'Complainant phone number must be a valid 10-digit mobile number.',
         ]);
 
-        DB::transaction(function () use ($petition, $validated, $user) {
+        $hasComplainantPhoneInput = $request->exists('complainant_phone');
+
+        DB::transaction(function () use ($petition, $validated, $user, $hasComplainantPhoneInput) {
             $currentSeat = $user->currentSeatUser();
-            $unitId = (strtolower($validated['mode_of_petition_received']) === 'unit') ? ($validated['unit_id'] ?? null) : null;
-            $unitDate = (strtolower($validated['mode_of_petition_received']) === 'unit') ? ($validated['date_of_petition_received_at_unit'] ?? null) : null;
+            $isUnitMode = strtolower($validated['mode_of_petition_received']) === 'unit';
+            $unitId = $isUnitMode ? ($validated['unit_id'] ?? null) : null;
+            $rawUnitNo = trim((string) ($validated['petition_number_at_unit'] ?? ''));
+            $petitionNumberAtUnit = ($isUnitMode && $rawUnitNo !== '') ? $rawUnitNo : null;
+            $unitDate = $isUnitMode ? ($validated['date_of_petition_received_at_unit'] ?? null) : null;
             $modeOthers = (strtolower($validated['mode_of_petition_received']) === 'others') ? ($validated['mode_others'] ?? null) : null;
 
             $seatChanged = ((int)$petition->seat_id !== (int)$validated['seat_id']);
@@ -452,6 +459,7 @@ class PetitionController extends Controller
                 'date_of_petition_received' => $validated['date_of_petition_received'],
                 'mode_of_petition_received' => $validated['mode_of_petition_received'],
                 'unit_id' => $unitId,
+                'petition_number_at_unit' => $petitionNumberAtUnit,
                 'date_of_petition_received_at_unit' => $unitDate,
                 'mode_of_petition_received_others' => $modeOthers,
                 'seat_id' => $validated['seat_id'],
@@ -468,15 +476,23 @@ class PetitionController extends Controller
                 ->where('person_type', 'Complainant')
                 ->first();
 
+            $phoneVal = trim((string) ($validated['complainant_phone'] ?? ''));
+            $normalizedPhone = $phoneVal !== '' ? $phoneVal : null;
+
             if ($complainant) {
-                $complainant->update([
+                $updateData = [
                     'person_name' => trim($validated['complainant_name']),
-                ]);
+                ];
+                if ($hasComplainantPhoneInput) {
+                    $updateData['phone'] = $normalizedPhone;
+                }
+                $complainant->update($updateData);
             } else {
                 Address::create([
                     'petition_id' => $petition->petition_id,
                     'person_type' => 'Complainant',
                     'person_name' => trim($validated['complainant_name']),
+                    'phone' => $hasComplainantPhoneInput ? $normalizedPhone : null,
                     'entity_type' => 'Person',
                 ]);
             }
@@ -507,9 +523,21 @@ class PetitionController extends Controller
         $realId = HashidService::decode($id) ?? $id;
         $petition = Petition::with(['addresses.district', 'originalPetition.addresses.district'])->findOrFail($realId);
 
+        $this->authorize('view', $petition);
+
         $user = Auth::user();
-        $canPrint = $user->canAccess('print inward receipt') ||
-            $user->canAccess('access admin dashboard');
+        $currentSeat = $user->currentSeatUser()?->seat;
+
+        $isSuperOrAdmin = $user->hasRole(['developer', 'Developer', 'super admin', 'Super Admin', 'admin', 'Admin']) ||
+            ($currentSeat && $currentSeat->hasRole(['developer', 'Developer', 'super admin', 'Super Admin', 'admin', 'Admin']));
+
+        $isInwardUser = $user->hasRole(['inward', 'Inward']) ||
+            ($currentSeat && (
+                $currentSeat->hasRole(['inward', 'Inward']) ||
+                str_contains(strtolower($currentSeat->seat_name), 'inward')
+            ));
+
+        $canPrint = ($isSuperOrAdmin || $isInwardUser) && $user->canAccess('print inward receipt');
 
         if (!$canPrint) {
             abort(403, 'Unauthorized to print inward receipt.');
@@ -653,6 +681,7 @@ class PetitionController extends Controller
         }
 
         // Date filters
+        $this->validateDateRange($request, 'date_from', 'date_to');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
@@ -1790,10 +1819,7 @@ class PetitionController extends Controller
      */
     private function getPetitionsQuery(Request $request, bool $isReports = false, bool $includeDuplicates = false)
     {
-        $request->validate([
-            'date_from' => 'nullable|date|before_or_equal:today',
-            'date_to' => 'nullable|date|before_or_equal:today|after_or_equal:date_from',
-        ]);
+        $this->validateDateRange($request, 'date_from', 'date_to');
 
         $user = Auth::user();
         $query = Petition::with(['addresses.district', 'addresses.department', 'addresses.designation', 'latestForwarding.toUnit', 'latestForwarding.processedBy', 'decision.processedBy', 'user.seatUsers.seat', 'seat.activeAssignment.user', 'unit', 'originalPetition.addresses.district', 'originalPetition.addresses.department', 'originalPetition.addresses.designation', 'returnedByUser', 'processedByUser', 'processedBySeat', 'updatedByUser', 'updatedBySeat', 'duplicates']);
@@ -1827,13 +1853,16 @@ class PetitionController extends Controller
               ->filterDates($request->date_from, $request->date_to, $request->status, $tab);
 
         // Hide duplicate (linked) petitions unless explicitly requested via include_duplicates, or explicitly searched
-        if (!$shouldIncludeDuplicates && !$request->filled('receipt_no') && !$request->filled('search')) {
+        if (!$shouldIncludeDuplicates && !$request->filled('receipt_no') && !$request->filled('petition_number_at_unit') && !$request->filled('search')) {
             $query->whereNull('linked_petition_id');
         }
 
         // Additional field filters
         if ($request->filled('receipt_no')) {
             $query->where('receipt_no', 'like', '%' . $request->receipt_no . '%');
+        }
+        if ($request->filled('petition_number_at_unit')) {
+            $query->where('petition_number_at_unit', 'like', '%' . trim((string) $request->petition_number_at_unit) . '%');
         }
         if ($request->filled('nature_of_petition')) {
             $query->where('nature_of_petition', 'like', '%' . $request->nature_of_petition . '%');
@@ -1981,6 +2010,7 @@ class PetitionController extends Controller
             $transfersQuery->where(function ($q) use ($search) {
                 $q->where('receipt_no', 'like', "%{$search}%")
                   ->orWhere('file_no', 'like', "%{$search}%")
+                  ->orWhere('petition_number_at_unit', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
                   ->orWhereHas('seat', function ($sq) use ($search) {
                       $sq->where('seat_name', 'like', "%{$search}%");

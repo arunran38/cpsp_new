@@ -76,4 +76,28 @@ class UpdatePetitionRequestTest extends TestCase
         ]);
         $this->assertFalse($otherModeValidator->fails());
     }
+
+    public function test_petition_number_at_unit_is_optional_and_enforces_max_30_chars(): void
+    {
+        $petition = Petition::factory()->create();
+        $route = Mockery::mock();
+        $route->shouldReceive('parameter')
+            ->with('petition', null)
+            ->andReturn($petition->hashid);
+
+        $request = new UpdatePetitionRequest();
+        $request->setRouteResolver(fn () => $route);
+        $request->replace(['mode_of_petition_received' => 'Unit']);
+
+        $rules = ['petition_number_at_unit' => $request->rules()['petition_number_at_unit']];
+
+        $emptyValidator = Validator::make(['petition_number_at_unit' => ''], $rules);
+        $this->assertFalse($emptyValidator->fails());
+
+        $validValidator = Validator::make(['petition_number_at_unit' => 'UNIT-2026-001/CPSP'], $rules);
+        $this->assertFalse($validValidator->fails());
+
+        $tooLongValidator = Validator::make(['petition_number_at_unit' => str_repeat('X', 31)], $rules);
+        $this->assertTrue($tooLongValidator->fails());
+    }
 }

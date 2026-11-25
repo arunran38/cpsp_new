@@ -272,7 +272,7 @@
                         x-transition:enter="transition ease-out duration-300"
                         x-transition:enter-start="opacity-0 -translate-y-2"
                         x-transition:enter-end="opacity-100 translate-y-0" style="display: none;"
-                        class="bg-indigo-50/60 p-5 rounded-xl border border-indigo-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        class="bg-indigo-50/60 p-5 rounded-xl border border-indigo-100 grid grid-cols-1 md:grid-cols-3 gap-6">
 
                         <!-- Concerned Unit Name -->
                         <div class="space-y-1.5">
@@ -297,6 +297,24 @@
                                 <p class="text-xs font-semibold text-rose-500 mt-1" x-text="formErrors['unit_id']"></p>
                             </template>
                             @error('unit_id')
+                                <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Petition Number at Unit (Optional) -->
+                        <div class="space-y-1.5">
+                            <label for="petition_number_at_unit"
+                                class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
+                                <i data-lucide="hash" class="w-4 h-4 text-indigo-600"></i>
+                                Petition Number at Unit
+                            </label>
+                            <input type="text" name="petition_number_at_unit"
+                                id="petition_number_at_unit"
+                                x-model="petitionDetails.petition_number_at_unit"
+                                maxlength="30"
+                                placeholder="Enter unit petition number..."
+                                class="block w-full px-4 py-2.5 text-sm bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                            @error('petition_number_at_unit')
                                 <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
                             @enderror
                         </div>
@@ -992,6 +1010,7 @@
                 mode: {!! json_encode($petition->mode_of_petition_received ?? '') !!},
                 mode_others: {!! json_encode($petition->mode_of_petition_received_others ?? '') !!},
                 unit_id: {!! json_encode($petition->unit_id ? (string) $petition->unit_id : '') !!},
+                petition_number_at_unit: {!! json_encode($petition->petition_number_at_unit ?? '', JSON_UNESCAPED_SLASHES) !!},
                 date_of_petition_received_at_unit: {!! json_encode($petition->date_of_petition_received_at_unit ? $petition->date_of_petition_received_at_unit->format('Y-m-d') : '') !!},
                 description: {!! json_encode($petition->description ?? '') !!},
                 proposed_action: {!! json_encode($petition->proposed_action ?? '') !!}
@@ -1068,6 +1087,7 @@
                     mode: {!! json_encode(old('mode_of_petition_received')) !!} || (initialDraft?.petitionDetails?.mode ?? originalPetitionDetails.mode),
                     mode_others: {!! json_encode(old('mode_others')) !!} || (initialDraft?.petitionDetails?.mode_others ?? originalPetitionDetails.mode_others),
                     unit_id: {!! json_encode(old('unit_id')) !!} || (initialDraft?.petitionDetails?.unit_id ?? originalPetitionDetails.unit_id),
+                    petition_number_at_unit: {!! json_encode(old('petition_number_at_unit')) !!} || (initialDraft?.petitionDetails?.petition_number_at_unit ?? originalPetitionDetails.petition_number_at_unit),
                     date_of_petition_received_at_unit: {!! json_encode(old('date_of_petition_received_at_unit')) !!} || (initialDraft?.petitionDetails?.date_of_petition_received_at_unit ?? originalPetitionDetails.date_of_petition_received_at_unit),
                     description: {!! json_encode(old('description')) !!} || (initialDraft?.petitionDetails?.description ?? originalPetitionDetails.description),
                     proposed_action: {!! json_encode(old('proposed_action')) !!} || (initialDraft?.petitionDetails?.proposed_action ?? originalPetitionDetails.proposed_action)

@@ -22,16 +22,16 @@
                     <label class="block text-xs font-medium text-slate-700 mb-1">Search Petitions</label>
                     <div class="relative flex items-center">
                         <i data-lucide="search" class="w-4 h-4 absolute left-3 text-slate-400"></i>
-                        <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-9 pr-3 py-[9px] rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black" placeholder="Receipt No, Petitioner Name, or Accused Name...">
+                        <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-9 pr-3 py-[9px] rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-black" placeholder="Receipt No, File No, Unit Petition No, Petitioner Name, or Accused Name...">
                     </div>
                 </div>
                 <div class="flex-1 min-w-[150px]">
                     <label class="block text-xs font-medium text-slate-700 mb-1">Date From</label>
-                    <input type="date" id="date_from" placeholder="DD-MM-YYYY" name="date_from" value="{{ request('date_from') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold" style="color: #1e40af !important;">
+                    <input type="date" id="date_from" placeholder="DD-MM-YYYY" name="date_from" value="{{ request('date_from') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold" style="color: #1e40af !important;">
                 </div>
                 <div class="flex-1 min-w-[150px]">
                     <label class="block text-xs font-medium text-slate-700 mb-1">Date To</label>
-                    <input type="date" id="date_to" placeholder="DD-MM-YYYY" name="date_to" value="{{ request('date_to') }}" max="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold" style="color: #1e40af !important;">
+                    <input type="date" id="date_to" placeholder="DD-MM-YYYY" name="date_to" value="{{ request('date_to') }}" max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}" class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm py-[9px] text-slate-800 font-semibold" style="color: #1e40af !important;">
                     <p id="dateRangeError" class="mt-1 text-xs text-rose-600 hidden" aria-live="polite"></p>
                 </div>
                 <div class="flex-none">
@@ -153,6 +153,9 @@
         let abortController = null;
 
         const performSearch = () => {
+            if (window.validateDateRange && !window.validateDateRange(searchForm)) {
+                return;
+            }
             const formData = new FormData(searchForm);
             const searchParams = new URLSearchParams(formData);
             const url = `${searchForm.action}?${searchParams.toString()}`;
@@ -171,7 +174,10 @@
                 },
                 signal: abortController.signal
             })
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) throw new Error('Request failed with status ' + response.status);
+                return response.text();
+            })
             .then(html => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
@@ -200,7 +206,7 @@
 
         const textInputs = searchForm.querySelectorAll('input[type="text"]');
         textInputs.forEach(input => {
-            input.addEventListener('keyup', (e) => {
+            input.addEventListener('input', (e) => {
                 clearTimeout(timer);
                 timer = setTimeout(performSearch, 500);
             });

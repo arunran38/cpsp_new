@@ -565,28 +565,31 @@
                             </div>
 
                             <!-- Date Filter Form -->
-                            <form action="{{ route('dashboard') }}" method="GET"
-                                class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                                <input type="date" id="from_date" name="from_date" value="{{ $fromDate }}"
-                                    max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                    class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
-                                <span class="text-slate-300 text-xs">—</span>
-                                <input type="date" id="to_date" name="to_date" value="{{ $toDate }}"
-                                    max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                    class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
-                                <button type="submit"
-                                    class="p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all"
-                                    title="Filter Range">
-                                    <i data-lucide="filter" class="w-3.5 h-3.5"></i>
-                                </button>
-                                @if(request()->has('from_date') || request()->has('to_date'))
-                                    <a href="{{ route('dashboard') }}"
-                                        class="p-1.5 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-lg transition-all"
-                                        title="Reset">
-                                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                                    </a>
-                                @endif
-                            </form>
+                            <div data-date-container class="flex flex-col items-end">
+                                <form action="{{ route('dashboard') }}" method="GET"
+                                    class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                                    <input type="date" id="from_date" name="from_date" value="{{ $fromDate }}"
+                                        max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                        class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
+                                    <span class="text-slate-300 text-xs">—</span>
+                                    <input type="date" id="to_date" name="to_date" value="{{ $toDate }}"
+                                        max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                        class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
+                                    <button type="submit"
+                                        class="p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all"
+                                        title="Filter Range">
+                                        <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    @if(request()->has('from_date') || request()->has('to_date'))
+                                        <a href="{{ route('dashboard') }}"
+                                            class="p-1.5 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-lg transition-all"
+                                            title="Reset">
+                                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                        </a>
+                                    @endif
+                                </form>
+                                <p class="date-range-error text-[11px] font-semibold text-rose-600 mt-1 hidden" aria-live="polite"></p>
+                            </div>
                         </div>
 
                         <div class="relative w-full h-[320px]">
@@ -629,28 +632,31 @@
                                 </h2>
                                 <p class="text-xs text-slate-500 mt-0.5">Daily submissions for the selected period</p>
                             </div>
-                            <form action="{{ url()->current() }}" method="GET"
-                                class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                                <input type="date" id="start_date" name="start_date" value="{{ $startDate->format('Y-m-d') }}"
-                                    max="{{ now()->format('Y-m-d') }}"
-                                    class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
-                                <span class="text-slate-300 text-xs">—</span>
-                                <input type="date" id="end_date" name="end_date" value="{{ $endDate->format('Y-m-d') }}"
-                                    max="{{ now()->format('Y-m-d') }}"
-                                    class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
-                                <button type="submit"
-                                    class="p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all flex items-center justify-center cursor-pointer shadow-sm"
-                                    title="Filter Range">
-                                    <i data-lucide="filter" class="w-3.5 h-3.5"></i>
-                                </button>
-                                @if(request()->filled('start_date') || request()->filled('end_date'))
-                                    <a href="{{ request()->fullUrlWithQuery(['start_date' => null, 'end_date' => null]) }}"
-                                        class="p-1.5 bg-slate-200 hover:bg-rose-100 text-slate-600 hover:text-rose-600 rounded-lg transition-all flex items-center justify-center cursor-pointer shadow-sm"
-                                        title="Clear Filter">
-                                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                                    </a>
-                                @endif
-                            </form>
+                            <div data-date-container class="flex flex-col items-end">
+                                <form action="{{ url()->current() }}" method="GET"
+                                    class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                                    <input type="date" id="start_date" name="start_date" value="{{ $startDate->format('Y-m-d') }}"
+                                        max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                        class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
+                                    <span class="text-slate-300 text-xs">—</span>
+                                    <input type="date" id="end_date" name="end_date" value="{{ $endDate->format('Y-m-d') }}"
+                                        max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                        class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
+                                    <button type="submit"
+                                        class="p-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all flex items-center justify-center cursor-pointer shadow-sm"
+                                        title="Filter Range">
+                                        <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    @if(request()->filled('start_date') || request()->filled('end_date'))
+                                        <a href="{{ request()->fullUrlWithQuery(['start_date' => null, 'end_date' => null]) }}"
+                                            class="p-1.5 bg-slate-200 hover:bg-rose-100 text-slate-600 hover:text-rose-600 rounded-lg transition-all flex items-center justify-center cursor-pointer shadow-sm"
+                                            title="Clear Filter">
+                                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                        </a>
+                                    @endif
+                                </form>
+                                <p class="date-range-error text-[11px] font-semibold text-rose-600 mt-1 hidden" aria-live="polite"></p>
+                            </div>
                         </div>
                         <div class="relative h-[320px]">
                             <canvas id="petitionTrendsChart"></canvas>
@@ -688,28 +694,31 @@
                     </div>
 
                     <!-- Date Range Filter Form -->
-                    <form action="{{ url()->current() }}" method="GET"
-                        class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
-                        <input type="date" id="district_from_date" name="district_from_date" value="{{ $districtFromDate }}"
-                            max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                            class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
-                        <span class="text-slate-300 text-xs">—</span>
-                        <input type="date" id="district_to_date" name="district_to_date" value="{{ $districtToDate }}"
-                            max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                            class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
-                        <button type="submit"
-                            class="p-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-all shadow-sm cursor-pointer"
-                            title="Filter District Range">
-                            <i data-lucide="filter" class="w-3.5 h-3.5"></i>
-                        </button>
-                        @if(request()->filled('district_from_date') || request()->filled('district_to_date'))
-                            <a href="{{ request()->fullUrlWithQuery(['district_from_date' => null, 'district_to_date' => null]) }}"
-                                class="p-1.5 bg-slate-200 hover:bg-rose-100 text-slate-600 hover:text-rose-600 rounded-lg transition-all shadow-sm cursor-pointer"
-                                title="Clear Filter">
-                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                            </a>
-                        @endif
-                    </form>
+                    <div data-date-container class="flex flex-col items-end">
+                        <form action="{{ url()->current() }}" method="GET"
+                            class="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                            <input type="date" id="district_from_date" name="district_from_date" value="{{ $districtFromDate }}"
+                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
+                            <span class="text-slate-300 text-xs">—</span>
+                            <input type="date" id="district_to_date" name="district_to_date" value="{{ $districtToDate }}"
+                                max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
+                                class="bg-transparent border-none text-[11px] font-bold text-slate-800 focus:ring-0 py-1 cursor-pointer">
+                            <button type="submit"
+                                class="p-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-all shadow-sm cursor-pointer"
+                                title="Filter District Range">
+                                <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                            </button>
+                            @if(request()->filled('district_from_date') || request()->filled('district_to_date'))
+                                <a href="{{ request()->fullUrlWithQuery(['district_from_date' => null, 'district_to_date' => null]) }}"
+                                    class="p-1.5 bg-slate-200 hover:bg-rose-100 text-slate-600 hover:text-rose-600 rounded-lg transition-all shadow-sm cursor-pointer"
+                                    title="Clear Filter">
+                                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                </a>
+                            @endif
+                        </form>
+                        <p class="date-range-error text-[11px] font-semibold text-rose-600 mt-1 hidden" aria-live="polite"></p>
+                    </div>
                 </div>
 
                 <div class="relative w-full h-[320px]">

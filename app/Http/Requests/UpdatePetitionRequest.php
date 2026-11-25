@@ -120,6 +120,7 @@ class UpdatePetitionRequest extends FormRequest
                 'exists:units,unit_id',
                 Rule::requiredIf(fn() => strtolower((string)$this->input('mode_of_petition_received')) === 'unit'),
             ],
+            'petition_number_at_unit' => 'nullable|string|max:30',
             'date_of_petition_received_at_unit' => [
                 'nullable',
                 'date',
@@ -131,7 +132,7 @@ class UpdatePetitionRequest extends FormRequest
             'mode_others' => 'nullable|string',
             'complainants' => 'nullable|array',
             'complainants.*.name' => 'nullable|string|max:255',
-            'complainants.*.phone' => 'nullable|string',
+            'complainants.*.phone' => ['nullable', 'string', 'regex:/^\d{10}$/'],
             'complainants.*.email' => 'nullable|email',
             'complainants.*.addresses' => 'nullable|array',
             'accused' => 'required|array|min:1',
@@ -172,6 +173,7 @@ class UpdatePetitionRequest extends FormRequest
             'nature_of_petition' => 'nature of petition',
             'mode_of_petition_received' => 'mode of petition',
             'unit_id' => 'concerned unit',
+            'petition_number_at_unit' => 'petition number at unit',
             'date_of_petition_received_at_unit' => 'date of petition received at unit',
             'description' => 'description',
             'complainants' => 'complainants',
@@ -204,6 +206,7 @@ class UpdatePetitionRequest extends FormRequest
             'unit_id.required' => 'The concerned unit field is required when mode of receipt is Unit.',
             'date_of_petition_received_at_unit.required' => 'The date of petition received at unit field is required when mode of receipt is Unit.',
             'date_of_petition_received_at_unit.before_or_equal' => 'Date of petition received at unit cannot be in the future.',
+            'complainants.*.phone.regex' => 'Complainant phone number must be a valid 10-digit mobile number.',
         ];
     }
 }

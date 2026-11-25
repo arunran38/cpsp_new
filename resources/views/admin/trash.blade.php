@@ -62,7 +62,7 @@
                             <i data-lucide="search" class="w-4 h-4"></i>
                         </div>
                         <input type="text" name="search" value="{{ $search ?? '' }}"
-                               placeholder="Receipt No, File No, Petitioner, Accused..."
+                               placeholder="Receipt No, File No, Unit Petition No, Petitioner, Accused..."
                                class="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all text-slate-800 placeholder-slate-400">
                     </div>
                 </div>
@@ -87,14 +87,16 @@
                 <!-- Date From -->
                 <div class="w-full sm:w-36">
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Deleted From</label>
-                    <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}" max="{{ now()->format('Y-m-d') }}"
+                    <input type="date" id="date_from" name="date_from" value="{{ $dateFrom ?? '' }}"
+                           max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                            class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all text-slate-800">
                 </div>
 
                 <!-- Date To -->
                 <div class="w-full sm:w-36">
                     <label class="block text-xs font-semibold text-slate-600 mb-1">Deleted To</label>
-                    <input type="date" name="date_to" value="{{ $dateTo ?? '' }}" max="{{ now()->format('Y-m-d') }}"
+                    <input type="date" id="date_to" name="date_to" value="{{ $dateTo ?? '' }}"
+                           max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
                            class="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-800 transition-all text-slate-800">
                 </div>
 
@@ -118,6 +120,7 @@
                         </a>
                     @endif
                 </div>
+                <p id="dateRangeError" class="w-full text-xs font-semibold text-rose-600 mt-1 hidden" aria-live="polite"></p>
             </form>
         </div>
 

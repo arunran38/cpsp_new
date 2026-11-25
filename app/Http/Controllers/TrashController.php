@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ValidatesDateRange;
 use App\Models\Petition;
 use App\Models\Upload;
 use App\Services\HashidService;
@@ -18,6 +19,7 @@ use Carbon\Carbon;
 class TrashController extends Controller
 {
     use AuthorizesRequests;
+    use ValidatesDateRange;
 
     /**
      * Display a listing of trashed petitions.
@@ -27,6 +29,8 @@ class TrashController extends Controller
         if (!Auth::user()->canAccess('view recycle bin')) {
             abort(403, 'Unauthorized access to recycle bin.');
         }
+
+        $this->validateDateRange($request, 'date_from', 'date_to');
 
         $search = trim((string) $request->input('search'));
         $nature = $request->input('nature');
@@ -46,11 +50,12 @@ class TrashController extends Controller
                 'uploads' => fn($q) => $q->withTrashed(),
             ]);
 
-        // Search across receipt_no, file_no, description, complainant name, or phone
+        // Search across receipt_no, file_no, petition_number_at_unit, description, complainant name, or phone
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('receipt_no', 'like', "%{$search}%")
                   ->orWhere('file_no', 'like', "%{$search}%")
+                  ->orWhere('petition_number_at_unit', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
                   ->orWhereHas('addresses', function ($aq) use ($search) {
                       $aq->withTrashed()

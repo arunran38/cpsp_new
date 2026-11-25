@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ValidatesDateRange;
 use App\Models\Department;
 use App\Models\Seat;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ use RealRashid\SweetAlert\Facades\Alert;
 
 class DepartmentController extends Controller
 {
+    use ValidatesDateRange;
     public function index(Request $request)
     {
         abort_unless(auth()->user()->canAccess('view departments'), 403, 'Unauthorized. Permission view departments required.');
@@ -55,6 +57,8 @@ class DepartmentController extends Controller
             403,
             'Unauthorized access to Department-wise Report.'
         );
+
+        $this->validateDateRange($request, 'date_from', 'date_to');
 
         $search = $request->input('search');
         $date_from = $request->input('date_from');
@@ -216,6 +220,8 @@ class DepartmentController extends Controller
             403,
             'Unauthorized to export department analysis.'
         );
+
+        $this->validateDateRange($request, 'date_from', 'date_to');
 
         $search = $request->input('search');
         $date_from = $request->input('date_from');

@@ -81,6 +81,7 @@ class Petition extends Model
         'created_by_seat_id',
         'unit_id',
         'concerned_district_id',
+        'petition_number_at_unit',
         'date_of_petition_received_at_unit',
         'linked_petition_id',
         'is_cpsp_processed',
@@ -747,12 +748,18 @@ class Petition extends Model
         if (empty($search)) return $query;
 
         return $query->where(function ($q) use ($search, $searchType) {
-            // Search receipt_no or file_no if searchType is empty/all or explicitly receipt_no/petition_no
+            if (in_array($searchType, ['unit_petition_no', 'petition_number_at_unit'])) {
+                $q->where('petition_number_at_unit', 'like', "%{$search}%");
+                return;
+            }
+
+            // Search receipt_no, file_no, or petition_number_at_unit if searchType is empty/all or explicitly petition/receipt/file no
             $matchPetitionNo = empty($searchType) || in_array($searchType, ['petition_no', 'receipt_no', 'file_no']);
             if ($matchPetitionNo) {
                 $q->where(function ($qNo) use ($search) {
                     $qNo->where('receipt_no', 'like', "%{$search}%")
-                        ->orWhere('file_no', 'like', "%{$search}%");
+                        ->orWhere('file_no', 'like', "%{$search}%")
+                        ->orWhere('petition_number_at_unit', 'like', "%{$search}%");
                 });
             }
 

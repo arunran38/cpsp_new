@@ -31,7 +31,7 @@
         </div>
 
         <!-- Filter Form -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+        <div data-date-container class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
             <form action="{{ route('compliances.reports') }}" method="GET" class="flex flex-col sm:flex-row items-end gap-4">
                 <div class="w-full sm:w-1/3">
                     <label class="block text-sm font-medium text-slate-700 mb-1">From Date</label>
@@ -64,6 +64,7 @@
                     @endif
                 </div>
             </form>
+            <p id="dateRangeError" class="mt-2 text-xs font-semibold text-rose-600 hidden" aria-live="polite"></p>
         </div>
 
         <!-- Statistics Table -->

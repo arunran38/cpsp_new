@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Exports\DistrictAnalysisExport;
+use App\Http\Controllers\Concerns\ValidatesDateRange;
 use App\Http\Controllers\Controller;
 use App\Models\District;
 use App\Models\Petition;
@@ -14,6 +15,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class DistrictAnalysisController extends Controller
 {
+    use ValidatesDateRange;
     /**
      * Display the District-wise Statistical Report and Chart.
      */
@@ -85,11 +87,15 @@ class DistrictAnalysisController extends Controller
      */
     private function resolveFilters(Request $request): array
     {
+        $this->validateDateRange($request, 'date_from', 'date_to', [
+            'date_preset' => 'nullable|in:today,this_week,this_month,this_year,all_time',
+        ]);
+
         $datePreset = $request->input('date_preset');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
-        $today = Carbon::today();
+        $today = Carbon::today(config('app.timezone', 'Asia/Kolkata'));
 
         if ($datePreset === 'today') {
             $dateFrom = $today->format('Y-m-d');

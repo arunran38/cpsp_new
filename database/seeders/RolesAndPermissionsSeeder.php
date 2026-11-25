@@ -399,7 +399,6 @@ class RolesAndPermissionsSeeder extends Seeder
                 'delete recycle bin',
                 'export petitions',
                 'export statistics',
-                'print inward receipt',
                 'restore recycle bin',
                 'view all inward statistics',
                 'view all petitions',

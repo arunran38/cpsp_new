@@ -10,17 +10,19 @@
     @endphp
     <div class="space-y-6" x-data="petitionForm()">
         <!-- Premium Header Section -->
-        <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2">
+        <div
+            class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1e293b] to-[#0f172a] border border-slate-700/50 shadow-lg mb-6 mt-2">
             <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
                 <div class="w-72 h-72 bg-indigo-500/20 rounded-full blur-[60px]"></div>
             </div>
             <div class="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3">
                 <div class="w-72 h-72 bg-teal-500/20 rounded-full blur-[60px]"></div>
             </div>
-            
+
             <div class="relative px-6 py-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
                 <div class="flex items-center gap-4 z-10">
-                    <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-400/20 text-teal-400 shadow-inner shrink-0">
+                    <div
+                        class="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-400/20 text-teal-400 shadow-inner shrink-0">
                         <i data-lucide="scroll-text" class="w-6 h-6"></i>
                     </div>
                     <div class="text-center sm:text-left">
@@ -35,11 +37,15 @@
 
                 <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 z-10">
                     <!-- Auto-save status -->
-                    <div x-show="isSavingDraft" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-400/30 text-amber-300 text-xs font-semibold backdrop-blur-sm shadow-sm" style="display: none;">
+                    <div x-show="isSavingDraft"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-400/30 text-amber-300 text-xs font-semibold backdrop-blur-sm shadow-sm"
+                        style="display: none;">
                         <i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i>
                         <span>Saving draft...</span>
                     </div>
-                    <div x-show="!isSavingDraft && lastSavedText" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-semibold backdrop-blur-sm shadow-sm" style="display: none;">
+                    <div x-show="!isSavingDraft && lastSavedText"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 text-xs font-semibold backdrop-blur-sm shadow-sm"
+                        style="display: none;">
                         <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400"></i>
                         <span x-text="'Draft saved ' + lastSavedText"></span>
                     </div>
@@ -57,14 +63,17 @@
 
         <!-- Draft Restored Banner -->
         <div x-show="hasRestoredDraft && !dismissedRestoredBanner" x-transition
-            class="bg-indigo-950/80 border border-indigo-500/40 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-indigo-100 backdrop-blur-md mb-6" style="display: none;">
+            class="bg-indigo-950/80 border border-indigo-500/40 rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-indigo-100 backdrop-blur-md mb-6"
+            style="display: none;">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-300 shrink-0">
                     <i data-lucide="history" class="w-5 h-5"></i>
                 </div>
                 <div>
                     <p class="text-sm font-bold text-white">Draft Restored</p>
-                    <p class="text-xs text-indigo-200" x-text="'Your previously entered data' + (lastSavedText ? ' from ' + lastSavedText : '') + ' has been automatically restored. You can continue editing or reset.'"></p>
+                    <p class="text-xs text-indigo-200"
+                        x-text="'Your previously entered data' + (lastSavedText ? ' from ' + lastSavedText : '') + ' has been automatically restored. You can continue editing or reset.'">
+                    </p>
                 </div>
             </div>
             <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -111,7 +120,8 @@
                 </div>
             </div>
         @endif
-        <div class="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl mb-6 py-4 px-6 sm:py-6 sm:px-10">
+        <div
+            class="relative overflow-hidden rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl mb-6 py-4 px-6 sm:py-6 sm:px-10">
             <div class="absolute top-0 right-0 -translate-y-12 translate-x-1/3">
                 <div class="w-96 h-96 bg-blue-600/20 rounded-full blur-[80px]"></div>
             </div>
@@ -121,7 +131,8 @@
 
             <div class="relative max-w-3xl mx-auto px-4 md:px-0 z-10">
                 <!-- Background Line -->
-                <div class="absolute top-5 left-[12.5%] right-[12.5%] h-1 bg-slate-700 -translate-y-1/2 z-0 rounded-full"></div>
+                <div class="absolute top-5 left-[12.5%] right-[12.5%] h-1 bg-slate-700 -translate-y-1/2 z-0 rounded-full">
+                </div>
                 <!-- Progress Line -->
                 <div class="absolute top-5 left-[12.5%] h-1 bg-gradient-to-r from-teal-400 to-teal-500 -translate-y-1/2 transition-all duration-700 ease-out z-0 rounded-full shadow-[0_0_10px_rgba(45,212,191,0.5)]"
                     :style="`width: ${(step - 1) * 25}%`"></div>
@@ -135,8 +146,10 @@
                             <span x-show="step > 1"><i data-lucide="check" class="w-5 h-5"></i></span>
                             <span x-show="step <= 1">1</span>
                         </div>
-                        <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
-                            :class="step === 1 ? 'text-teal-300' : (step > 1 ? 'text-teal-400' : 'text-slate-300')">Petition Details</span>
+                        <span
+                            class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
+                            :class="step === 1 ? 'text-teal-300' : (step > 1 ? 'text-teal-400' : 'text-slate-300')">Petition
+                            Details</span>
                     </button>
 
                     <!-- Step 2 -->
@@ -148,7 +161,8 @@
                             <span x-show="step > 2"><i data-lucide="check" class="w-5 h-5"></i></span>
                             <span x-show="step <= 2">2</span>
                         </div>
-                        <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
+                        <span
+                            class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
                             :class="step === 2 ? 'text-teal-300' : (step > 2 ? 'text-teal-400' : 'text-slate-300')">Complainant</span>
                     </button>
 
@@ -161,7 +175,8 @@
                             <span x-show="step > 3"><i data-lucide="check" class="w-5 h-5"></i></span>
                             <span x-show="step <= 3">3</span>
                         </div>
-                        <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
+                        <span
+                            class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
                             :class="step === 3 ? 'text-teal-300' : (step > 3 ? 'text-teal-400' : 'text-slate-300')">Suspect</span>
                     </button>
 
@@ -173,7 +188,8 @@
                             :class="step === 4 ? 'bg-teal-400 text-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.8)] scale-110' : 'bg-blue-600 text-blue-100 shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:bg-blue-500'">
                             <span>4</span>
                         </div>
-                        <span class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
+                        <span
+                            class="text-[11px] uppercase tracking-wider font-extrabold whitespace-nowrap transition-all duration-300 relative z-20"
                             :class="step === 4 ? 'text-teal-300' : 'text-slate-300'">Complete</span>
                     </button>
                 </div>
@@ -183,7 +199,8 @@
         <!-- Form Sections (Minimalist Cards) -->
         <form method="POST" action="{{ route('petitions.store') }}" enctype="multipart/form-data"
             class="bg-white rounded-2xl shadow-sm border border-slate-200" id="petitionFormElement" novalidate
-            @submit="handleSubmit($event)" @focusout="validateField($event)" @input="clearError($event)" @change="clearError($event)">
+            @submit="handleSubmit($event)" @focusout="validateField($event)" @input="clearError($event)"
+            @change="clearError($event)">
             @csrf
             <input type="hidden" name="step" :value="step">
 
@@ -216,22 +233,19 @@
                         <div>
                             <x-select label="Concerned District *" name="concerned_district_id"
                                 x-model="petitionDetails.concerned_district_id" required
-                                :selected="old('concerned_district_id')"
-                                :options="['' => 'Select Concerned District'] + $districts->pluck('display_name', 'district_id')->toArray()" />
+                                :selected="old('concerned_district_id')" :options="['' => 'Select Concerned District'] + $districts->pluck('display_name', 'district_id')->toArray()" />
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <x-select label="Nature of Petition *" name="nature_of_petition"
-                                x-model="petitionDetails.nature" required
-                                :selected="old('nature_of_petition')"
+                                x-model="petitionDetails.nature" required :selected="old('nature_of_petition')"
                                 :options="['' => 'Select Category', 'Amassment of Wealth' => 'Amassment of Wealth', 'Bribery' => 'Bribery', 'Misuse of authority' => 'Misuse of authority', 'Fraud / financial irregularities' => 'Fraud / financial irregularities', 'Serious negligence' => 'Serious negligence', 'others' => 'Others']" />
                         </div>
                         <div>
                             <x-select label="Mode of Petition *" name="mode_of_petition_received"
-                                x-model="petitionDetails.mode" required
-                                :selected="old('mode_of_petition_received')"
+                                x-model="petitionDetails.mode" required :selected="old('mode_of_petition_received')"
                                 :options="['' => 'Select Origin', 'Email' => 'Email', 'Whatsapp' => 'Whatsapp', 'Tollfree' => 'Tollfree', 'Direct' => 'Direct', 'Unit' => 'Unit', 'Tapal' => 'Tapal', 'iaps' => 'iAPS', 'Government' => 'Government', 'others' => 'Others']" />
                         </div>
                     </div>
@@ -249,16 +263,16 @@
                     <div x-show="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
                         x-transition:enter="transition ease-out duration-300"
                         x-transition:enter-start="opacity-0 -translate-y-2"
-                        x-transition:enter-end="opacity-100 translate-y-0"
-                        style="display: none;"
-                        class="bg-indigo-50/60 p-5 rounded-xl border border-indigo-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        x-transition:enter-end="opacity-100 translate-y-0" style="display: none;"
+                        class="bg-indigo-50/60 p-5 rounded-xl border border-indigo-100 grid grid-cols-1 md:grid-cols-3 gap-6">
 
                         <!-- Concerned Unit Name -->
                         <div class="space-y-1.5">
                             <label for="unit_id"
                                 class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
                                 <i data-lucide="building-2" class="w-4 h-4 text-indigo-600"></i>
-                                Concerned Unit Name <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
+                                Concerned Unit Name <span class="required-mark text-red-600 font-bold ml-1"
+                                    style="color: #dc2626 !important;">*</span>
                             </label>
                             <select name="unit_id" id="unit_id" x-model="petitionDetails.unit_id"
                                 x-bind:required="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
@@ -280,6 +294,23 @@
                             @enderror
                         </div>
 
+                        <!-- Petition Number at Unit (Optional) -->
+                        <div class="space-y-1.5">
+                            <label for="petition_number_at_unit"
+                                class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
+                                <i data-lucide="hash" class="w-4 h-4 text-indigo-600"></i>
+                                Petition Number at Unit
+                            </label>
+                            <input type="text" name="petition_number_at_unit" id="petition_number_at_unit"
+                                x-model="petitionDetails.petition_number_at_unit"
+                                value="{{ old('petition_number_at_unit') }}" maxlength="30"
+                                placeholder="Enter Petition Reference Number at Unit"
+                                class="block w-full px-4 py-2.5 text-sm bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
+                            @error('petition_number_at_unit')
+                                <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <!-- Date of Petition Received at Unit -->
                         <div class="space-y-1.5">
                             <label for="date_of_petition_received_at_unit"
@@ -287,18 +318,20 @@
                                 <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
                                 Date of Petition Received at Unit
                                 <span x-show="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
-                                    class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
+                                    class="required-mark text-red-600 font-bold ml-1"
+                                    style="color: #dc2626 !important;">*</span>
                             </label>
                             <input type="date" name="date_of_petition_received_at_unit"
-                                id="date_of_petition_received_at_unit" x-model="petitionDetails.date_of_petition_received_at_unit"
+                                id="date_of_petition_received_at_unit"
+                                x-model="petitionDetails.date_of_petition_received_at_unit"
                                 value="{{ old('date_of_petition_received_at_unit') }}"
                                 x-bind:required="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
                                 max="{{ now()->timezone(config('app.timezone', 'Asia/Kolkata'))->format('Y-m-d') }}"
-                                @input="clearError($event)"
-                                @blur="validateField($event)"
+                                @input="clearError($event)" @blur="validateField($event)"
                                 class="block w-full px-4 py-2.5 text-sm bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
                             <template x-if="formErrors['date_of_petition_received_at_unit']">
-                                <p class="text-xs font-semibold text-rose-500 mt-1" x-text="formErrors['date_of_petition_received_at_unit']"></p>
+                                <p class="text-xs font-semibold text-rose-500 mt-1"
+                                    x-text="formErrors['date_of_petition_received_at_unit']"></p>
                             </template>
                             @error('date_of_petition_received_at_unit')
                                 <p class="text-xs font-semibold text-rose-500 mt-1">{{ $message }}</p>
@@ -355,8 +388,9 @@
                                 <!-- Fields -->
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                                     <div>
-                                        <x-input label="Full Name" name="comp_name" x-bind:name="`complainants[${index}][name]`"
-                                            x-model="comp.name" placeholder="Full Name" />
+                                        <x-input label="Full Name" name="comp_name"
+                                            x-bind:name="`complainants[${index}][name]`" x-model="comp.name"
+                                            placeholder="Full Name" />
                                     </div>
                                     <div>
                                         <x-input label="Phone Number (Optional)" name="comp_phone"
@@ -409,16 +443,15 @@
                                                         placeholder="House/Building Name, Locality" />
                                                 </div>
                                                 <div class="min-w-0 md:col-span-4 xl:col-span-3">
-                                                        <x-select label="District"
-                                                            x-bind:name="`complainants[${index}][addresses][${addrIndex}][district_id]`"
-                                                            x-model="addr.district_id" placeholder="Select District"
-                                                            class="min-w-0 pr-10 text-left"
-                                                            :options="($addressDistricts ?? $districts->reject->isStatewide())->pluck('display_name', 'district_id')->toArray()" />
+                                                    <x-select label="District"
+                                                        x-bind:name="`complainants[${index}][addresses][${addrIndex}][district_id]`"
+                                                        x-model="addr.district_id" placeholder="Select District"
+                                                        class="min-w-0 pr-10 text-left" :options="($addressDistricts ?? $districts->reject->isStatewide())->pluck('display_name', 'district_id')->toArray()" />
                                                 </div>
                                                 <div class="min-w-0 md:col-span-2 xl:col-span-2">
-                                                        <x-input label="Pincode" name="comp_pincode"
-                                                            x-bind:name="`complainants[${index}][addresses][${addrIndex}][pincode]`"
-                                                            x-model="addr.pincode" placeholder="Code" />
+                                                    <x-input label="Pincode" name="comp_pincode"
+                                                        x-bind:name="`complainants[${index}][addresses][${addrIndex}][pincode]`"
+                                                        x-model="addr.pincode" placeholder="Code" />
                                                 </div>
                                             </div>
                                         </div>
@@ -463,27 +496,27 @@
 
         <!-- Duplicate Detection Banner -->
         @if(Auth::user()->canAccess('view duplicate warnings'))
-        <div x-show="duplicates.length > 0 && !linkedPetitionId" x-cloak
-            class="mb-6 p-4 border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
-            style="background-color: #fffbeb; border-color: #fde68a;" x-transition>
-            <div class="flex items-start gap-3">
-                <div class="mt-0.5" style="color: #d97706;">
-                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+            <div x-show="duplicates.length > 0 && !linkedPetitionId" x-cloak
+                class="mb-6 p-4 border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm"
+                style="background-color: #fffbeb; border-color: #fde68a;" x-transition>
+                <div class="flex items-start gap-3">
+                    <div class="mt-0.5" style="color: #d97706;">
+                        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold" style="color: #92400e;">Potential Duplicates Detected!</h4>
+                        <p class="text-xs mt-1" style="color: #b45309;">We found <span x-text="duplicates.length"
+                                class="font-bold"></span>
+                            existing petition(s) that look similar to the details you entered.</p>
+                    </div>
                 </div>
-                <div>
-                    <h4 class="text-sm font-bold" style="color: #92400e;">Potential Duplicates Detected!</h4>
-                    <p class="text-xs mt-1" style="color: #b45309;">We found <span x-text="duplicates.length"
-                            class="font-bold"></span>
-                        existing petition(s) that look similar to the details you entered.</p>
-                </div>
+                @if(Auth::user()->canAccess('link petitions'))
+                    <button type="button" @click="showDuplicateModal = true" style="background-color: #f59e0b; color: white;"
+                        class="whitespace-nowrap text-xs font-bold px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
+                        View & Link Duplicates
+                    </button>
+                @endif
             </div>
-            @if(Auth::user()->canAccess('link petitions'))
-            <button type="button" @click="showDuplicateModal = true" style="background-color: #f59e0b; color: white;"
-                class="whitespace-nowrap text-xs font-bold px-4 py-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
-                View & Link Duplicates
-            </button>
-            @endif
-        </div>
         @endif
 
         <input type="hidden" name="linked_petition_id" :value="linkedPetitionId">
@@ -533,7 +566,8 @@
                         </div>
 
                         <div class="flex items-center gap-2">
-                            <button type="button" @click="clearAccused(index)" x-show="accused.length === 1 && (acc.name || acc.department_id || acc.phone || acc.pen_number)"
+                            <button type="button" @click="clearAccused(index)"
+                                x-show="accused.length === 1 && (acc.name || acc.department_id || acc.phone || acc.pen_number)"
                                 class="text-amber-800 hover:text-amber-900 text-xs font-bold flex items-center gap-1 bg-amber-50 hover:bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-lg transition-colors">
                                 <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Clear Suspect Details
                             </button>
@@ -579,11 +613,10 @@
                                         placeholder="Select Designation" />
                                 </div>
                                 <div>
-                                    <x-searchable-select 
-                                        label="Department <span class='required-mark text-red-600 font-bold ml-1' style='color: #dc2626 !important;'>*</span>" 
-                                        x-bind:name="`accused[${index}][department_id]`"
-                                        x-model="acc.department_id" 
-                                        :options="$departments->pluck('department_name', 'id')->toArray()" 
+                                    <x-searchable-select
+                                        label="Department <span class='required-mark text-red-600 font-bold ml-1' style='color: #dc2626 !important;'>*</span>"
+                                        x-bind:name="`accused[${index}][department_id]`" x-model="acc.department_id"
+                                        :options="$departments->pluck('department_name', 'id')->toArray()"
                                         placeholder="Select Department" />
                                 </div>
                             </div>
@@ -630,16 +663,15 @@
                                                     x-model="addr.address" placeholder="House/Building Name, Locality" />
                                             </div>
                                             <div class="min-w-0 md:col-span-4 xl:col-span-3">
-                                                    <x-select label="District"
-                                                        x-bind:name="`accused[${index}][addresses][${addrIndex}][district_id]`"
-                                                        x-model="addr.district_id" placeholder="Select District"
-                                                        class="min-w-0 pr-10 text-left"
-                                                        :options="($addressDistricts ?? $districts->reject->isStatewide())->pluck('display_name', 'district_id')->toArray()" />
+                                                <x-select label="District"
+                                                    x-bind:name="`accused[${index}][addresses][${addrIndex}][district_id]`"
+                                                    x-model="addr.district_id" placeholder="Select District"
+                                                    class="min-w-0 pr-10 text-left" :options="($addressDistricts ?? $districts->reject->isStatewide())->pluck('display_name', 'district_id')->toArray()" />
                                             </div>
                                             <div class="min-w-0 md:col-span-2 xl:col-span-2">
-                                                    <x-input label="Pincode" name="acc_pincode"
-                                                        x-bind:name="`accused[${index}][addresses][${addrIndex}][pincode]`"
-                                                        x-model="addr.pincode" placeholder="Code" />
+                                                <x-input label="Pincode" name="acc_pincode"
+                                                    x-bind:name="`accused[${index}][addresses][${addrIndex}][pincode]`"
+                                                    x-model="addr.pincode" placeholder="Code" />
                                             </div>
                                         </div>
                                     </div>
@@ -658,7 +690,8 @@
                 </div>
             </template>
 
-            <div class="pt-2 text-center" x-show="accused[accused.length - 1].department_id || (accused[accused.length - 1].name && accused[accused.length - 1].name.trim() !== '')">
+            <div class="pt-2 text-center"
+                x-show="accused[accused.length - 1].department_id || (accused[accused.length - 1].name && accused[accused.length - 1].name.trim() !== '')">
                 <button type="button" @click="addAccused()"
                     class="px-6 py-3 border-2 border-dashed border-slate-300 text-sm font-bold text-slate-700 bg-slate-50 rounded-xl hover:bg-slate-100 hover:border-slate-400 hover:text-slate-900 transition-all flex items-center justify-center gap-2 w-full">
                     <i data-lucide="user-plus" class="w-5 h-5"></i> Register Another Suspect
@@ -783,7 +816,8 @@
                                     class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                                     <i data-lucide="map-pin" class="w-3.5 h-3.5 text-rose-500"></i> District
                                 </p>
-                                <p class="text-base font-semibold text-slate-900" x-text="districtNames[petitionDetails.concerned_district_id] || '-'">
+                                <p class="text-base font-semibold text-slate-900"
+                                    x-text="districtNames[petitionDetails.concerned_district_id] || '-'">
                                 </p>
                             </div>
                             <div class="p-5">
@@ -816,6 +850,16 @@
                                     </p>
                                     <p class="text-base font-semibold text-slate-900"
                                         x-text="unitNames[petitionDetails.unit_id] || '-'"></p>
+                                </div>
+                            </template>
+                            <template x-if="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'">
+                                <div class="p-5 border-t sm:border-t-0 sm:border-l border-slate-100">
+                                    <p
+                                        class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                                        <i data-lucide="hash" class="w-3.5 h-3.5"></i> Petition Number at Unit
+                                    </p>
+                                    <p class="text-base font-semibold text-slate-900"
+                                        x-text="petitionDetails.petition_number_at_unit || '-'"></p>
                                 </div>
                             </template>
                             <template x-if="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'">
@@ -889,7 +933,8 @@
                                                 <i data-lucide="map-pin" class="w-3 h-3 text-blue-500"></i> Localities
                                             </p>
                                             <template x-for="(addr, aIdx) in comp.addresses" :key="aIdx">
-                                                <div x-show="addr.address || addr.district_id" class="flex items-center gap-3 text-sm">
+                                                <div x-show="addr.address || addr.district_id"
+                                                    class="flex items-center gap-3 text-sm">
                                                     <span
                                                         class="inline-flex items-center justify-center bg-blue-100 text-blue-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wider w-20 text-center shrink-0 leading-normal"
                                                         x-text="addr.address_type"></span>
@@ -924,7 +969,8 @@
                                             <div
                                                 class="w-8 h-8 bg-rose-100 text-rose-600 rounded-full flex justify-center items-center text-xs font-bold ring-2 ring-white">
                                                 R</div>
-                                            <h5 class="font-bold text-slate-800 text-base" x-text="acc.name || 'Unknown Suspect'"></h5>
+                                            <h5 class="font-bold text-slate-800 text-base"
+                                                x-text="acc.name || 'Unknown Suspect'"></h5>
                                         </div>
                                         <span
                                             class="text-[10px] bg-white text-rose-600 border border-rose-200 px-2 py-1 rounded-md font-bold uppercase tracking-wider"
@@ -947,7 +993,8 @@
                                                 <i data-lucide="map-pin" class="w-3 h-3 text-rose-500"></i> Localities
                                             </p>
                                             <template x-for="(addr, aIdx) in acc.addresses" :key="aIdx">
-                                                <div x-show="addr.address || addr.district_id" class="flex items-center gap-3 text-sm">
+                                                <div x-show="addr.address || addr.district_id"
+                                                    class="flex items-center gap-3 text-sm">
                                                     <span
                                                         class="inline-flex items-center justify-center bg-rose-100 text-rose-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded tracking-wider w-20 text-center shrink-0 leading-normal"
                                                         x-text="addr.address_type"></span>
@@ -1002,147 +1049,182 @@
         </div>
     </div>
     @if(Auth::user()->canAccess('view duplicate warnings'))
-    <!-- Duplicate Detection Modal (Redesigned) -->
-    <div x-show="showDuplicateModal" x-cloak
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-        <div class="bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh]"
-            @click.stop x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-95 translate-y-4">
-            
-            <!-- Premium Header -->
-            <div class="relative overflow-hidden bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 px-8 py-6">
-                <!-- Background decorative elements -->
-                <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 blur-2xl rounded-full pointer-events-none"></div>
-                <div class="absolute bottom-0 left-10 w-32 h-32 bg-indigo-400/20 blur-2xl rounded-full pointer-events-none"></div>
-                
-                <div class="relative z-10 flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="p-3 bg-white/10 rounded-2xl shadow-inner border border-white/10 backdrop-blur-sm text-indigo-100">
-                            <i data-lucide="copy" class="w-6 h-6"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-white tracking-tight">Potential Duplicates Found</h3>
-                            <p class="text-indigo-100 text-sm mt-0.5">We found matches based on your recent inputs. Review and link if needed.</p>
-                        </div>
-                    </div>
-                    <button type="button" @click="showDuplicateModal = false"
-                        class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/20">
-                        <i data-lucide="x" class="w-6 h-6"></i>
-                    </button>
-                </div>
-            </div>
+        <!-- Duplicate Detection Modal (Redesigned) -->
+        <div x-show="showDuplicateModal" x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md"
+            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            <div class="bg-white/95 backdrop-blur-xl border border-white/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] w-full max-w-4xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh]"
+                @click.stop x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                x-transition:leave-end="opacity-0 scale-95 translate-y-4">
 
-            <!-- Content Area -->
-            <div class="p-6 sm:p-8 overflow-y-auto custom-scrollbar bg-slate-50/50" style="max-height: calc(90vh - 100px);">
-                
-                <div class="grid grid-cols-1 gap-6">
-                    <template x-for="dup in duplicates" :key="dup.petition_id">
-                        <div class="group relative bg-white rounded-2xl border border-slate-200 p-6 flex flex-col xl:flex-row gap-6 items-start xl:items-center justify-between shadow-sm hover:shadow-xl hover:border-indigo-300 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-                            <!-- Subtle highlight strip on hover -->
-                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            
-                            <div class="flex-1 w-full space-y-5">
-                                <!-- Top Row: Badges -->
-                                <div class="flex flex-wrap items-center gap-3">
-                                    <div class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm">
-                                        <i data-lucide="hash" class="w-4 h-4"></i>
-                                        <span class="text-sm font-bold tracking-wide" x-text="dup.receipt_no"></span>
-                                    </div>
-                                    <template x-if="dup.file_no">
-                                        <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm">
-                                            <i data-lucide="folder-open" class="w-4 h-4 text-blue-500"></i>
-                                            <span class="text-sm font-semibold" x-text="dup.file_no"></span>
-                                        </div>
-                                    </template>
-                                    <div class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-                                        <i data-lucide="calendar-days" class="w-4 h-4 text-slate-500"></i>
-                                        <span class="text-sm font-semibold" x-text="dup.date"></span>
-                                    </div>
-                                    <div class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100 shadow-sm">
-                                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Status</span>
-                                        <span class="text-sm font-bold" x-text="dup.status"></span>
-                                    </div>
-                                    <template x-if="dup.decision">
-                                        <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-100 shadow-sm">
-                                            <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Decision</span>
-                                            <span class="text-sm font-bold" x-text="dup.decision"></span>
-                                        </div>
-                                    </template>
-                                    <template x-if="dup.seat_name">
-                                        <div class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm" title="Assigned / Processed Seat">
-                                            <i data-lucide="building-2" class="w-4 h-4 text-slate-500"></i>
-                                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Seat</span>
-                                            <span class="text-sm font-bold" x-text="dup.seat_name"></span>
-                                        </div>
-                                    </template>
-                                    <template x-if="dup.match_reason_en">
-                                        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold shadow-sm"
-                                            :class="dup.badge_color || 'bg-purple-50 text-purple-700 border-purple-200'">
-                                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                                            <span x-text="dup.match_reason_en"></span>
-                                        </div>
-                                    </template>
+                <!-- Premium Header -->
+                <div class="relative overflow-hidden bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 px-8 py-6">
+                    <!-- Background decorative elements -->
+                    <div
+                        class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 blur-2xl rounded-full pointer-events-none">
+                    </div>
+                    <div class="absolute bottom-0 left-10 w-32 h-32 bg-indigo-400/20 blur-2xl rounded-full pointer-events-none">
+                    </div>
+
+                    <div class="relative z-10 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="p-3 bg-white/10 rounded-2xl shadow-inner border border-white/10 backdrop-blur-sm text-indigo-100">
+                                <i data-lucide="copy" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white tracking-tight">Potential Duplicates Found</h3>
+                                <p class="text-indigo-100 text-sm mt-0.5">We found matches based on your recent inputs. Review
+                                    and link if needed.</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="showDuplicateModal = false"
+                            class="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/20">
+                            <i data-lucide="x" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div class="p-6 sm:p-8 overflow-y-auto custom-scrollbar bg-slate-50/50" style="max-height: calc(90vh - 100px);">
+
+                    <div class="grid grid-cols-1 gap-6">
+                        <template x-for="dup in duplicates" :key="dup.petition_id">
+                            <div
+                                class="group relative bg-white rounded-2xl border border-slate-200 p-6 flex flex-col xl:flex-row gap-6 items-start xl:items-center justify-between shadow-sm hover:shadow-xl hover:border-indigo-300 hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                                <!-- Subtle highlight strip on hover -->
+                                <div
+                                    class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                 </div>
 
-                                <!-- Middle Row: Complainant, Suspect, Seat & User Details -->
-                                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    <div class="flex items-start gap-3">
-                                        <div class="mt-1 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 border border-blue-200">
-                                            <i data-lucide="user" class="w-4 h-4"></i>
+                                <div class="flex-1 w-full space-y-5">
+                                    <!-- Top Row: Badges -->
+                                    <div class="flex flex-wrap items-center gap-3">
+                                        <div
+                                            class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100 shadow-sm">
+                                            <i data-lucide="hash" class="w-4 h-4"></i>
+                                            <span class="text-sm font-bold tracking-wide" x-text="dup.receipt_no"></span>
                                         </div>
-                                        <div>
-                                            <p class="text-[11px] font-bold text-blue-500 uppercase tracking-widest">Complainant</p>
-                                            <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.complainant"></p>
+                                        <template x-if="dup.file_no">
+                                            <div
+                                                class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm">
+                                                <i data-lucide="folder-open" class="w-4 h-4 text-blue-500"></i>
+                                                <span class="text-sm font-semibold" x-text="dup.file_no"></span>
+                                            </div>
+                                        </template>
+                                        <div
+                                            class="inline-flex items-center gap-2 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                                            <i data-lucide="calendar-days" class="w-4 h-4 text-slate-500"></i>
+                                            <span class="text-sm font-semibold" x-text="dup.date"></span>
                                         </div>
+                                        <div
+                                            class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-100 shadow-sm">
+                                            <span
+                                                class="text-xs font-bold uppercase tracking-wider text-emerald-600">Status</span>
+                                            <span class="text-sm font-bold" x-text="dup.status"></span>
+                                        </div>
+                                        <template x-if="dup.decision">
+                                            <div
+                                                class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-100 shadow-sm">
+                                                <span
+                                                    class="text-xs font-bold uppercase tracking-wider text-amber-600">Decision</span>
+                                                <span class="text-sm font-bold" x-text="dup.decision"></span>
+                                            </div>
+                                        </template>
+                                        <template x-if="dup.seat_name">
+                                            <div class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm"
+                                                title="Assigned / Processed Seat">
+                                                <i data-lucide="building-2" class="w-4 h-4 text-slate-500"></i>
+                                                <span
+                                                    class="text-xs font-bold uppercase tracking-wider text-slate-500">Seat</span>
+                                                <span class="text-sm font-bold" x-text="dup.seat_name"></span>
+                                            </div>
+                                        </template>
+                                        <template x-if="dup.match_reason_en">
+                                            <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold shadow-sm"
+                                                :class="dup.badge_color || 'bg-purple-50 text-purple-700 border-purple-200'">
+                                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                                                <span x-text="dup.match_reason_en"></span>
+                                            </div>
+                                        </template>
                                     </div>
-                                    <div class="flex items-start gap-3">
-                                        <div class="mt-1 w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0 border border-rose-200">
-                                            <i data-lucide="user-x" class="w-4 h-4"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-[11px] font-bold text-rose-500 uppercase tracking-widest">Suspect</p>
-                                            <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.accused"></p>
-                                        </div>
-                                    </div>
-                                    <template x-if="dup.seat_name || dup.user_name">
+
+                                    <!-- Middle Row: Complainant, Suspect, Seat & User Details -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div class="flex items-start gap-3">
-                                            <div class="mt-1 w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 border border-indigo-200">
-                                                <i data-lucide="shield-check" class="w-4 h-4"></i>
+                                            <div
+                                                class="mt-1 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 border border-blue-200">
+                                                <i data-lucide="user" class="w-4 h-4"></i>
                                             </div>
                                             <div>
-                                                <p class="text-[11px] font-bold text-indigo-500 uppercase tracking-widest">Seat & User</p>
-                                                <p class="text-sm font-bold text-slate-800 mt-0.5">
-                                                    <span x-text="dup.seat_name || 'N/A'"></span>
-                                                    <template x-if="dup.user_name">
-                                                        <span class="text-xs font-semibold text-slate-500 block sm:inline sm:ml-1" x-text="'(' + dup.user_name + ')'"></span>
-                                                    </template>
-                                                </p>
+                                                <p class="text-[11px] font-bold text-blue-500 uppercase tracking-widest">
+                                                    Complainant</p>
+                                                <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.complainant"></p>
                                             </div>
                                         </div>
-                                    </template>
+                                        <div class="flex items-start gap-3">
+                                            <div
+                                                class="mt-1 w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 shrink-0 border border-rose-200">
+                                                <i data-lucide="user-x" class="w-4 h-4"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-[11px] font-bold text-rose-500 uppercase tracking-widest">Suspect
+                                                </p>
+                                                <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.accused"></p>
+                                            </div>
+                                        </div>
+                                        <template x-if="dup.seat_name || dup.user_name">
+                                            <div class="flex items-start gap-3">
+                                                <div
+                                                    class="mt-1 w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 border border-indigo-200">
+                                                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="text-[11px] font-bold text-indigo-500 uppercase tracking-widest">
+                                                        Seat & User</p>
+                                                    <p class="text-sm font-bold text-slate-800 mt-0.5">
+                                                        <span x-text="dup.seat_name || 'N/A'"></span>
+                                                        <template x-if="dup.user_name">
+                                                            <span
+                                                                class="text-xs font-semibold text-slate-500 block sm:inline sm:ml-1"
+                                                                x-text="'(' + dup.user_name + ')'"></span>
+                                                        </template>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Bottom Row: Description Preview -->
+                                    <div
+                                        class="bg-gradient-to-r from-slate-50 to-white p-4 rounded-xl border border-slate-100 shadow-inner group-hover:bg-slate-50 transition-colors">
+                                        <p class="text-sm text-slate-600 italic leading-relaxed line-clamp-2">"<span
+                                                x-text="dup.description"></span>"</p>
+                                    </div>
                                 </div>
 
-                                <!-- Bottom Row: Description Preview -->
-                                <div class="bg-gradient-to-r from-slate-50 to-white p-4 rounded-xl border border-slate-100 shadow-inner group-hover:bg-slate-50 transition-colors">
-                                    <p class="text-sm text-slate-600 italic leading-relaxed line-clamp-2">"<span x-text="dup.description"></span>"</p>
-                                </div>
+                                <!-- Action Button -->
+                                @if(Auth::user()->canAccess('link petitions'))
+                                    <div class="w-full xl:w-auto shrink-0 flex items-center">
+                                        <button type="button" @click="linkPetition(dup.petition_id, dup.receipt_no)"
+                                            class="w-full xl:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-teal-600 active:scale-95 transition-all flex justify-center items-center gap-2 group-hover:animate-pulse focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
+                                            <i data-lucide="link" class="w-4 h-4 transition-transform group-hover:rotate-12"></i>
+                                            Link & Merge
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
-                            
-                            <!-- Action Button -->
-                            @if(Auth::user()->canAccess('link petitions'))
-                            <div class="w-full xl:w-auto shrink-0 flex items-center">
-                                <button type="button" @click="linkPetition(dup.petition_id, dup.receipt_no)"
-                                    class="w-full xl:w-auto px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg hover:from-emerald-600 hover:to-teal-600 active:scale-95 transition-all flex justify-center items-center gap-2 group-hover:animate-pulse focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
-                                    <i data-lucide="link" class="w-4 h-4 transition-transform group-hover:rotate-12"></i> 
-                                    Link & Merge
-                                </button>
-                            </div>
-                            @endif
-                        </div>
-                    </template>
+                        </template>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     @endif
     </form>
     </div>
@@ -1171,7 +1253,7 @@
                             isRestored = true;
                         }
                     }
-                } catch(e) {}
+                } catch (e) { }
             }
 
             const validNatures = ['Amassment of Wealth', 'Bribery', 'Misuse of authority', 'Fraud / financial irregularities', 'Serious negligence', 'others'];
@@ -1201,7 +1283,7 @@
                     receipt_no: '{{ old('receipt_no') }}' || (initialDraft?.petitionDetails?.receipt_no || ''),
                     date: '{{ old('date_of_petition_received') }}' || (initialDraft?.petitionDetails?.date || ''),
                     concerned_district_id: '{{ old('concerned_district_id') }}' || (initialDraft?.petitionDetails?.concerned_district_id || ''),
-                    nature: (function() {
+                    nature: (function () {
                         const oldNature = '{{ old('nature_of_petition') }}';
                         if (oldNature && oldNature !== 'General Inward' && validNatures.includes(oldNature)) return oldNature;
                         const draftNature = initialDraft?.petitionDetails?.nature;
@@ -1211,6 +1293,7 @@
                     mode: '{{ old('mode_of_petition_received') }}' || (initialDraft?.petitionDetails?.mode || ''),
                     mode_others: '{{ old('mode_others') }}' || (initialDraft?.petitionDetails?.mode_others || ''),
                     unit_id: '{{ old('unit_id') }}' || (initialDraft?.petitionDetails?.unit_id || ''),
+                    petition_number_at_unit: '{{ old('petition_number_at_unit') }}' || (initialDraft?.petitionDetails?.petition_number_at_unit || ''),
                     date_of_petition_received_at_unit: '{{ old('date_of_petition_received_at_unit') }}' || (initialDraft?.petitionDetails?.date_of_petition_received_at_unit || ''),
                     description: `{!! addslashes(old('description')) !!}` || (initialDraft?.petitionDetails?.description || ''),
                     proposed_action: `{!! addslashes(old('proposed_action')) !!}` || (initialDraft?.petitionDetails?.proposed_action || '')
@@ -1235,12 +1318,12 @@
                 saveDraft() {
                     const pd = this.petitionDetails;
                     const hasData = (pd.receipt_no && pd.receipt_no.trim()) ||
-                                    (pd.concerned_district_id && String(pd.concerned_district_id).trim()) ||
-                                    (pd.nature && pd.nature.trim()) ||
-                                    (pd.description && pd.description.trim()) ||
-                                    this.step > 1 ||
-                                    (this.complainants.length > 0 && this.complainants[0].name && this.complainants[0].name.trim()) ||
-                                    (this.accused.length > 0 && ((this.accused[0].name && this.accused[0].name.trim()) || this.accused[0].department_id));
+                        (pd.concerned_district_id && String(pd.concerned_district_id).trim()) ||
+                        (pd.nature && pd.nature.trim()) ||
+                        (pd.description && pd.description.trim()) ||
+                        this.step > 1 ||
+                        (this.complainants.length > 0 && this.complainants[0].name && this.complainants[0].name.trim()) ||
+                        (this.accused.length > 0 && ((this.accused[0].name && this.accused[0].name.trim()) || this.accused[0].department_id));
 
                     if (!hasData) return;
 
@@ -1262,7 +1345,7 @@
                             form_data: payload.form_data,
                             timestamp: new Date().toISOString()
                         }));
-                    } catch(e) {}
+                    } catch (e) { }
 
                     fetch('{{ route('petitions.draft.save') }}', {
                         method: 'POST',
@@ -1273,19 +1356,19 @@
                         },
                         body: JSON.stringify(payload)
                     })
-                    .then(res => res.json())
-                    .then(data => {
-                        this.isSavingDraft = false;
-                        if (data.success) {
-                            this.lastSavedText = data.saved_at || 'just now';
-                            this.$nextTick(() => {
-                                if (typeof lucide !== 'undefined') lucide.createIcons();
-                            });
-                        }
-                    })
-                    .catch(() => {
-                        this.isSavingDraft = false;
-                    });
+                        .then(res => res.json())
+                        .then(data => {
+                            this.isSavingDraft = false;
+                            if (data.success) {
+                                this.lastSavedText = data.saved_at || 'just now';
+                                this.$nextTick(() => {
+                                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                                });
+                            }
+                        })
+                        .catch(() => {
+                            this.isSavingDraft = false;
+                        });
                 },
 
                 confirmClearDraft() {
@@ -1313,7 +1396,7 @@
                 clearDraft() {
                     try {
                         localStorage.removeItem(this.localStorageKey);
-                    } catch(e) {}
+                    } catch (e) { }
 
                     fetch('{{ route('petitions.draft.clear') }}', {
                         method: 'DELETE',
@@ -1327,20 +1410,20 @@
                             petition_id: this.draftPetitionId
                         })
                     })
-                    .finally(() => {
-                        this.resetFormState();
-                        if (window.showToast) {
-                            window.showToast('success', 'Form draft cleared successfully.');
-                        } else if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                title: 'Reset Complete',
-                                text: 'The form has been reset to initial state.',
-                                icon: 'success',
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
-                        }
-                    });
+                        .finally(() => {
+                            this.resetFormState();
+                            if (window.showToast) {
+                                window.showToast('success', 'Form draft cleared successfully.');
+                            } else if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    title: 'Reset Complete',
+                                    text: 'The form has been reset to initial state.',
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+                            }
+                        });
                 },
 
                 resetFormState() {
@@ -1353,6 +1436,7 @@
                         mode: '',
                         mode_others: '',
                         unit_id: '',
+                        petition_number_at_unit: '',
                         date_of_petition_received_at_unit: '',
                         description: '',
                         proposed_action: ''
@@ -1539,7 +1623,7 @@
 
                     try {
                         localStorage.removeItem(this.localStorageKey);
-                    } catch(e) {}
+                    } catch (e) { }
 
                     return true;
                 },

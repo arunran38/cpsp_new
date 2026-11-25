@@ -135,6 +135,19 @@ class AuditDiffService
             ];
         }
 
+        // 7b. Petition Number at Unit
+        $newUnitNo = $modeIsUnit ? $this->normalizeString($newData['petition_number_at_unit'] ?? null) : '';
+        $oldUnitNo = $this->normalizeString($petition->petition_number_at_unit);
+        if ($oldUnitNo !== $newUnitNo) {
+            $diffs[] = [
+                'field'     => 'Petition Number at Unit',
+                'field_ml'  => 'യൂണിറ്റിലെ പെറ്റീഷൻ നമ്പർ',
+                'field_key' => 'petition_number_at_unit',
+                'old'       => $oldUnitNo ?: '[None]',
+                'new'       => $newUnitNo ?: '[None]',
+            ];
+        }
+
         // 8. Date Received at Unit
         $newUnitDate = $modeIsUnit ? ($newData['date_of_petition_received_at_unit'] ?? null) : null;
         $oldUnitDate = $petition->date_of_petition_received_at_unit ? Carbon::parse($petition->date_of_petition_received_at_unit)->format('d-m-Y') : '';

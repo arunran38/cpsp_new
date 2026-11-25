@@ -82,6 +82,7 @@
                                 <select name="search_type"
                                     class="w-full rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm font-semibold text-slate-700 py-2 transition-all bg-white appearance-none pr-8">
                                     <option value="" class="font-medium text-slate-800 bg-white py-1">All Petitions</option>
+                                    <option value="unit_petition_no" {{ request('search_type') == 'unit_petition_no' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Unit Petition No</option>
                                     <option value="complainant" {{ request('search_type') == 'complainant' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Complainant</option>
                                     <option value="suspect" {{ request('search_type') == 'suspect' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Suspect (Accused)</option>
                                     <option value="firm" {{ request('search_type') == 'firm' ? 'selected' : '' }} class="font-medium text-slate-800 bg-white py-1">Firm / Project</option>
@@ -92,7 +93,7 @@
                                 <i data-lucide="search" class="w-4 h-4 absolute left-3 text-blue-600"></i>
                                 <input type="text" name="search" value="{{ request('search') }}"
                                     class="w-full pl-9 pr-3 py-2 rounded-xl border-slate-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500/10 text-sm transition-all bg-white text-black font-semibold"
-                                    placeholder="Receipt No, File No, Petitioner, Accused, Firm/Project, Phone, or PEN..."
+                                    placeholder="Receipt No, File No, Unit Petition No, Petitioner, Accused, Phone, or PEN..."
                                     style="color: #000000 !important;">
                             </div>
                         </div>
@@ -861,6 +862,9 @@
             let abortController = null;
 
             const performSearch = () => {
+                if (window.validateDateRange && !window.validateDateRange(searchForm)) {
+                    return;
+                }
                 syncFiltersToExport();
 
                 const formData = new FormData(searchForm);
@@ -881,7 +885,10 @@
                     },
                     signal: abortController.signal
                 })
-                    .then(response => response.text())
+                    .then(response => {
+                        if (!response.ok) throw new Error('Request failed with status ' + response.status);
+                        return response.text();
+                    })
                     .then(html => {
                         // Replace table container content directly with the returned partial
                         const currentTable = document.getElementById('tableContainer');
@@ -903,7 +910,7 @@
 
             // Debounce text inputs
             searchForm.querySelectorAll('input[type="text"]').forEach(input => {
-                input.addEventListener('keyup', () => {
+                input.addEventListener('input', () => {
                     syncFiltersToExport();
                     clearTimeout(timer);
                     timer = setTimeout(performSearch, 500);
