@@ -63,7 +63,7 @@
                             @endif
                             @if(strtolower($petition->mode_of_petition_received) === 'unit' && $petition->petition_number_at_unit)
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300 font-medium">
-                                    <i data-lucide="hash" class="w-3.5 h-3.5 text-cyan-300"></i>
+                                    <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-cyan-300"></i>
                                     <span>Unit Petition No: <strong class="text-white font-semibold">{{ $petition->petition_number_at_unit }}</strong></span>
                                 </span>
                             @endif
@@ -267,16 +267,13 @@
             <div class="p-8 space-y-10">
                 <!-- Section 1: Petition Variables -->
                 <div>
-                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-4 mb-6">
-                        <div class="flex items-center gap-3">
-                            <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-teal-500 text-white shadow-md shadow-indigo-500/20 flex items-center justify-center shrink-0">
-                                <i data-lucide="info" class="w-5 h-5"></i>
+                    <div class="flex items-center justify-between border-b border-slate-200/80 pb-3 mb-5">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                                <i data-lucide="info" class="w-4 h-4"></i>
                             </span>
-                            <div>
-                                <h3 class="text-base font-extrabold text-slate-900 tracking-tight">General Information</h3>
-                                <p class="text-xs font-medium text-slate-500">Core classification, district &amp; receipt details</p>
-                            </div>
-                        </div>
+                            <span>General Information</span>
+                        </h3>
                     </div>
 
                     @php
@@ -287,141 +284,110 @@
                             : $petition->mode_of_petition_received;
                     @endphp
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 {{ $petition->concernedDistrict ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} gap-4">
+                    <!-- Primary Metadata Strip -->
+                    <div class="rounded-xl border border-slate-200/90 bg-slate-50/50 grid grid-cols-1 sm:grid-cols-2 {{ $petition->concernedDistrict ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }} divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80">
                         <!-- Status -->
-                        <div class="group relative overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/70 via-white to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                            <div class="flex items-start gap-3.5">
-                                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 border border-emerald-200/70 flex items-center justify-center shrink-0">
-                                    <i data-lucide="activity" class="w-5 h-5"></i>
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <span class="block text-[10px] font-extrabold text-emerald-700 uppercase tracking-[0.14em] mb-1.5">Status</span>
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider shadow-sm {{ $wf['pill_class'] }}">
-                                        @if($petition->decision && $canViewWorkflow)
-                                            Final : {{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}
-                                        @else
-                                            {{ $wf['label'] }}
-                                        @endif
-                                    </span>
-                                </div>
-                            </div>
+                        <div class="px-5 py-4">
+                            <span class="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                <i data-lucide="activity" class="w-3.5 h-3.5 text-emerald-500"></i>
+                                <span>Status</span>
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider {{ $wf['pill_class'] }}">
+                                @if($petition->decision && $canViewWorkflow)
+                                    Final : {{ \App\Models\Decision::getDecisionLabel($petition->decision->final_decision) }}
+                                @else
+                                    {{ $wf['label'] }}
+                                @endif
+                            </span>
                         </div>
 
                         <!-- Nature of Petition -->
-                        <div class="group relative overflow-hidden rounded-2xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/70 via-white to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                            <div class="flex items-start gap-3.5">
-                                <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 border border-indigo-200/70 flex items-center justify-center shrink-0">
-                                    <i data-lucide="tag" class="w-5 h-5"></i>
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <span class="block text-[10px] font-extrabold text-indigo-700 uppercase tracking-[0.14em] mb-1">Nature of Petition</span>
-                                    <span class="block text-sm font-bold text-slate-900 leading-snug break-words">{{ $petition->nature_of_petition }}</span>
-                                </div>
-                            </div>
+                        <div class="px-5 py-4">
+                            <span class="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                <i data-lucide="tag" class="w-3.5 h-3.5 text-indigo-500"></i>
+                                <span>Nature of Petition</span>
+                            </span>
+                            <span class="block text-sm font-bold text-slate-900 leading-snug break-words">
+                                {{ $petition->nature_of_petition }}
+                            </span>
                         </div>
 
                         <!-- Concerned District -->
                         @if($petition->concernedDistrict)
-                            <div class="group relative overflow-hidden rounded-2xl border border-rose-200/80 bg-gradient-to-br from-rose-50/70 via-white to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                                <div class="flex items-start gap-3.5">
-                                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 border border-rose-200/70 flex items-center justify-center shrink-0">
-                                        <i data-lucide="map-pin" class="w-5 h-5"></i>
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <span class="block text-[10px] font-extrabold text-rose-600 uppercase tracking-[0.14em] mb-1">Concerned District</span>
-                                        <div class="flex flex-wrap items-center gap-1.5">
-                                            <span class="text-sm font-bold text-slate-900 leading-snug">{{ $petition->concernedDistrict->district_name }}</span>
-                                            @if($petition->concernedDistrict->district_code)
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-100 text-rose-700 border border-rose-200/70">
-                                                    ({{ $petition->concernedDistrict->district_code }})
-                                                </span>
-                                            @endif
-                                        </div>
-                                    </div>
+                            <div class="px-5 py-4">
+                                <span class="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-rose-500"></i>
+                                    <span>Concerned District</span>
+                                </span>
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <span class="text-sm font-bold text-slate-900 leading-snug">{{ $petition->concernedDistrict->district_name }}</span>
+                                    @if($petition->concernedDistrict->district_code)
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-rose-50 text-rose-600 border border-rose-200/70">
+                                            ({{ $petition->concernedDistrict->district_code }})
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
                         @endif
 
                         <!-- Mode Received -->
-                        <div class="group relative overflow-hidden rounded-2xl border border-sky-200/80 bg-gradient-to-br from-sky-50/70 via-white to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                            <div class="flex items-start gap-3.5">
-                                <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 border border-sky-200/70 flex items-center justify-center shrink-0">
-                                    <i data-lucide="inbox" class="w-5 h-5"></i>
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <span class="block text-[10px] font-extrabold text-sky-700 uppercase tracking-[0.14em] mb-1">Mode Received</span>
-                                    <span class="block text-sm font-bold text-slate-900 leading-snug break-words">{{ $modeDisplay }}</span>
-                                </div>
-                            </div>
+                        <div class="px-5 py-4">
+                            <span class="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                <i data-lucide="inbox" class="w-3.5 h-3.5 text-sky-500"></i>
+                                <span>Mode Received</span>
+                            </span>
+                            <span class="block text-sm font-bold text-slate-900 leading-snug break-words">
+                                {{ $modeDisplay }}
+                            </span>
                         </div>
                     </div>
 
                     @if($isUnitMode)
-                        <div class="mt-5 rounded-2xl border border-teal-200/80 bg-gradient-to-br from-teal-50/70 via-white to-cyan-50/40 p-5 shadow-sm">
-                            <div class="flex items-center justify-between gap-2 mb-3.5">
-                                <div class="flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full bg-teal-500"></span>
-                                    <span class="text-[11px] font-extrabold text-teal-800 uppercase tracking-[0.16em]">Unit Receipt Details</span>
-                                </div>
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-100 text-teal-800 border border-teal-200">
-                                    Unit Mode
+                        <!-- Unit Referral Strip -->
+                        <div class="mt-3.5 rounded-xl border border-teal-200/80 bg-teal-50/35 grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-teal-200/70">
+                            <!-- Concerned Unit Name -->
+                            <div class="px-5 py-4">
+                                <span class="flex items-center gap-1.5 text-[11px] font-bold text-teal-700/90 uppercase tracking-wider mb-1.5">
+                                    <i data-lucide="building-2" class="w-3.5 h-3.5 text-teal-600"></i>
+                                    <span>Concerned Unit Name</span>
+                                </span>
+                                <span class="block text-sm font-bold text-slate-900 leading-snug break-words">
+                                    {{ $petition->unit ? $petition->unit->unit_name . ($petition->unit->unit_code ? ' (' . $petition->unit->unit_code . ')' : '') : 'N/A' }}
                                 </span>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <!-- Concerned Unit Name -->
-                                <div class="bg-white rounded-xl border border-teal-100 p-4 shadow-sm transition-all duration-200 hover:border-teal-300 hover:shadow-md flex items-start gap-3">
-                                    <div class="w-9 h-9 rounded-lg bg-teal-50 text-teal-600 border border-teal-200/70 flex items-center justify-center shrink-0">
-                                        <i data-lucide="building-2" class="w-4 h-4"></i>
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Concerned Unit Name</span>
-                                        <span class="block text-sm font-bold text-slate-900 leading-snug break-words">
-                                            {{ $petition->unit ? $petition->unit->unit_name . ($petition->unit->unit_code ? ' (' . $petition->unit->unit_code . ')' : '') : 'N/A' }}
-                                        </span>
-                                    </div>
-                                </div>
+                            <!-- Petition Number at Unit -->
+                            <div class="px-5 py-4">
+                                <span class="flex items-center gap-1.5 text-[11px] font-bold text-teal-700/90 uppercase tracking-wider mb-1.5">
+                                    <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-teal-600"></i>
+                                    <span>Petition Number at Unit</span>
+                                </span>
+                                @if($petition->petition_number_at_unit)
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-white text-slate-900 border border-teal-200/80 shadow-sm">
+                                        {{ $petition->petition_number_at_unit }}
+                                    </span>
+                                @else
+                                    <span class="text-sm font-semibold text-slate-400 italic">N/A</span>
+                                @endif
+                            </div>
 
-                                <!-- Petition Number at Unit -->
-                                <div class="bg-white rounded-xl border border-teal-100 p-4 shadow-sm transition-all duration-200 hover:border-teal-300 hover:shadow-md flex items-start gap-3">
-                                    <div class="w-9 h-9 rounded-lg bg-cyan-50 text-cyan-600 border border-cyan-200/70 flex items-center justify-center shrink-0">
-                                        <i data-lucide="hash" class="w-4 h-4"></i>
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Petition Number at Unit</span>
-                                        @if($petition->petition_number_at_unit)
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-100 text-slate-900 border border-slate-200">
-                                                {{ $petition->petition_number_at_unit }}
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-50 text-slate-400 border border-slate-200/70 italic">
-                                                N/A
-                                            </span>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <!-- Date of Petition Received at Unit -->
-                                <div class="bg-white rounded-xl border border-teal-100 p-4 shadow-sm transition-all duration-200 hover:border-teal-300 hover:shadow-md flex items-start gap-3">
-                                    <div class="w-9 h-9 rounded-lg bg-teal-50 text-teal-600 border border-teal-200/70 flex items-center justify-center shrink-0">
-                                        <i data-lucide="calendar" class="w-4 h-4"></i>
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Date of Petition Received at Unit</span>
-                                        <span class="block text-sm font-bold {{ $petition->date_of_petition_received_at_unit ? 'text-slate-900' : 'text-slate-400 italic' }}">
-                                            {{ $petition->date_of_petition_received_at_unit ? \Carbon\Carbon::parse($petition->date_of_petition_received_at_unit)->format('d M, Y') : 'N/A' }}
-                                        </span>
-                                    </div>
-                                </div>
+                            <!-- Date of Petition Received at Unit -->
+                            <div class="px-5 py-4">
+                                <span class="flex items-center gap-1.5 text-[11px] font-bold text-teal-700/90 uppercase tracking-wider mb-1.5">
+                                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-teal-600"></i>
+                                    <span>Date of Petition Received at Unit</span>
+                                </span>
+                                <span class="block text-sm font-bold {{ $petition->date_of_petition_received_at_unit ? 'text-slate-900' : 'text-slate-400 italic' }}">
+                                    {{ $petition->date_of_petition_received_at_unit ? \Carbon\Carbon::parse($petition->date_of_petition_received_at_unit)->format('d M, Y') : 'N/A' }}
+                                </span>
                             </div>
                         </div>
                     @endif
 
-                    <div class="mt-5 rounded-2xl border border-slate-200 border-l-4 border-l-indigo-500 bg-gradient-to-b from-slate-50/90 to-white p-5 sm:p-6 shadow-sm">
-                        <span class="text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-2.5 flex items-center gap-2">
-                            <span class="w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0">
-                                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
-                            </span>
+                    <!-- Detailed Description -->
+                    <div class="mt-4 rounded-xl border border-slate-200/90 border-l-4 border-l-indigo-500 bg-white p-5">
+                        <span class="flex items-center gap-2 text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                            <i data-lucide="file-text" class="w-3.5 h-3.5 text-indigo-500"></i>
                             <span>Detailed Description</span>
                         </span>
                         <p class="text-base sm:text-[16.5px] font-normal text-slate-800 leading-relaxed sm:leading-loose whitespace-pre-line tracking-normal"

@@ -255,7 +255,7 @@
                                     <div class="space-y-1.5">
                                         <label for="petition_number_at_unit"
                                             class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
-                                            <i data-lucide="hash" class="w-4 h-4 text-indigo-600"></i>
+                                            <i data-lucide="clipboard-list" class="w-4 h-4 text-indigo-600"></i>
                                             Petition Number at Unit
                                         </label>
                                         <input type="text" name="petition_number_at_unit" id="petition_number_at_unit"

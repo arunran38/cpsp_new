@@ -298,7 +298,7 @@
                         <div class="space-y-1.5">
                             <label for="petition_number_at_unit"
                                 class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
-                                <i data-lucide="hash" class="w-4 h-4 text-indigo-600"></i>
+                                <i data-lucide="clipboard-list" class="w-4 h-4 text-indigo-600"></i>
                                 Petition Number at Unit
                             </label>
                             <input type="text" name="petition_number_at_unit" id="petition_number_at_unit"
@@ -856,7 +856,7 @@
                                 <div class="p-5 border-t sm:border-t-0 sm:border-l border-slate-100">
                                     <p
                                         class="text-[11px] font-bold text-slate-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                                        <i data-lucide="hash" class="w-3.5 h-3.5"></i> Petition Number at Unit
+                                        <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i> Petition Number at Unit
                                     </p>
                                     <p class="text-base font-semibold text-slate-900"
                                         x-text="petitionDetails.petition_number_at_unit || '-'"></p>

@@ -331,6 +331,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'delete inward petitions',
                 'export petitions',
                 'export statistics',
+                'access T-section',
                 'filter transfer',
                 'print inward receipt',
                 'reassign inward petitions',

@@ -238,8 +238,7 @@
                         <div>
                             <x-select label="Concerned District *" name="concerned_district_id"
                                 x-model="petitionDetails.concerned_district_id" required
-                                :selected="old('concerned_district_id', $petition->concerned_district_id)"
-                                :options="['' => 'Select Concerned District'] + $districts->pluck('display_name', 'district_id')->toArray()" />
+                                :selected="old('concerned_district_id', $petition->concerned_district_id)" :options="['' => 'Select Concerned District'] + $districts->pluck('display_name', 'district_id')->toArray()" />
                         </div>
                     </div>
 
@@ -279,7 +278,8 @@
                             <label for="unit_id"
                                 class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
                                 <i data-lucide="building-2" class="w-4 h-4 text-indigo-600"></i>
-                                Concerned Unit Name <span class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
+                                Concerned Unit Name <span class="required-mark text-red-600 font-bold ml-1"
+                                    style="color: #dc2626 !important;">*</span>
                             </label>
                             <select name="unit_id" id="unit_id" x-model="petitionDetails.unit_id"
                                 x-bind:required="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
@@ -305,13 +305,11 @@
                         <div class="space-y-1.5">
                             <label for="petition_number_at_unit"
                                 class="block text-sm font-semibold text-indigo-900 flex items-center gap-1.5">
-                                <i data-lucide="hash" class="w-4 h-4 text-indigo-600"></i>
+                                <i data-lucide="clipboard-list" class="w-4 h-4 text-indigo-600"></i>
                                 Petition Number at Unit
                             </label>
-                            <input type="text" name="petition_number_at_unit"
-                                id="petition_number_at_unit"
-                                x-model="petitionDetails.petition_number_at_unit"
-                                maxlength="30"
+                            <input type="text" name="petition_number_at_unit" id="petition_number_at_unit"
+                                x-model="petitionDetails.petition_number_at_unit" maxlength="30"
                                 placeholder="Enter unit petition number..."
                                 class="block w-full px-4 py-2.5 text-sm bg-white border border-indigo-200 rounded-xl text-slate-900 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-600 outline-none transition-all">
                             @error('petition_number_at_unit')
@@ -326,7 +324,8 @@
                                 <i data-lucide="calendar" class="w-4 h-4 text-indigo-600"></i>
                                 Date of Petition Received at Unit
                                 <span x-show="petitionDetails.mode && petitionDetails.mode.toLowerCase() === 'unit'"
-                                    class="required-mark text-red-600 font-bold ml-1" style="color: #dc2626 !important;">*</span>
+                                    class="required-mark text-red-600 font-bold ml-1"
+                                    style="color: #dc2626 !important;">*</span>
                             </label>
                             <input type="date" name="date_of_petition_received_at_unit"
                                 id="date_of_petition_received_at_unit"
@@ -502,18 +501,17 @@
                                                             placeholder="House No, Street, Locality" />
                                                     </div>
                                                     <div class="min-w-0 md:col-span-4 xl:col-span-3">
-                                                            <x-select label="District"
-                                                                x-bind:name="`complainants[${index}][addresses][${addrIndex}][district_id]`"
-                                                                x-model="addr.district_id" x-bind:required="step === 2"
-                                                                placeholder="Select District"
-                                                                class="min-w-0 pr-10 text-left"
-                                                                :options="($addressDistricts ?? $districts->reject->isStatewide())->pluck('display_name', 'district_id')->toArray()" />
+                                                        <x-select label="District"
+                                                            x-bind:name="`complainants[${index}][addresses][${addrIndex}][district_id]`"
+                                                            x-model="addr.district_id" x-bind:required="step === 2"
+                                                            placeholder="Select District" class="min-w-0 pr-10 text-left"
+                                                            :options="($addressDistricts ?? $districts->reject->isStatewide())->pluck('display_name', 'district_id')->toArray()" />
                                                     </div>
                                                     <div class="min-w-0 md:col-span-2 xl:col-span-2">
-                                                            <x-input label="Pincode" name="comp_pincode"
-                                                                x-bind:name="`complainants[${index}][addresses][${addrIndex}][pincode]`"
-                                                                x-model="addr.pincode" x-bind:required="step === 2"
-                                                                placeholder="Code" />
+                                                        <x-input label="Pincode" name="comp_pincode"
+                                                            x-bind:name="`complainants[${index}][addresses][${addrIndex}][pincode]`"
+                                                            x-model="addr.pincode" x-bind:required="step === 2"
+                                                            placeholder="Code" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -646,8 +644,9 @@
                                                 @input="onAccusedNameChange(index)" placeholder="Firm / Project Name" />
                                         </div>
                                         <div>
-                                            <x-input label="Phone Number" name="acc_phone" x-bind:name="`accused[${index}][phone]`"
-                                                x-model="acc.phone" placeholder="Mobile Number" />
+                                            <x-input label="Phone Number" name="acc_phone"
+                                                x-bind:name="`accused[${index}][phone]`" x-model="acc.phone"
+                                                placeholder="Mobile Number" />
                                         </div>
                                         <div x-show="acc.entity_type === 'Person'">
                                             <x-input label="PEN Number" name="acc_pen_number"
@@ -667,7 +666,8 @@
                                                 placeholder="Select Designation" />
                                         </div>
                                         <div>
-                                            <x-searchable-select label="Department <span class='required-mark text-red-600 font-bold ml-1' style='color: #dc2626 !important;'>*</span>"
+                                            <x-searchable-select
+                                                label="Department <span class='required-mark text-red-600 font-bold ml-1' style='color: #dc2626 !important;'>*</span>"
                                                 x-bind:name="`accused[${index}][department_id]`" x-model="acc.department_id"
                                                 :options="$departments->pluck('department_name', 'id')->toArray()"
                                                 placeholder="Select Department" />
@@ -731,18 +731,17 @@
                                                             placeholder="House No, Name, Locality" />
                                                     </div>
                                                     <div class="min-w-0 md:col-span-4 xl:col-span-3">
-                                                            <x-select label="District"
-                                                                x-bind:name="`accused[${index}][addresses][${addrIndex}][district_id]`"
-                                                                x-model="addr.district_id" x-bind:required="step === 3"
-                                                                placeholder="Select District"
-                                                                class="min-w-0 pr-10 text-left"
-                                                                :options="($addressDistricts ?? $districts->reject->isStatewide())->pluck('display_name', 'district_id')->toArray()" />
+                                                        <x-select label="District"
+                                                            x-bind:name="`accused[${index}][addresses][${addrIndex}][district_id]`"
+                                                            x-model="addr.district_id" x-bind:required="step === 3"
+                                                            placeholder="Select District" class="min-w-0 pr-10 text-left"
+                                                            :options="($addressDistricts ?? $districts->reject->isStatewide())->pluck('display_name', 'district_id')->toArray()" />
                                                     </div>
                                                     <div class="min-w-0 md:col-span-2 xl:col-span-2">
-                                                            <x-input label="Pincode"
-                                                                x-bind:name="`accused[${index}][addresses][${addrIndex}][pincode]`"
-                                                                x-model="addr.pincode" x-bind:required="step === 3"
-                                                                placeholder="Code" />
+                                                        <x-input label="Pincode"
+                                                            x-bind:name="`accused[${index}][addresses][${addrIndex}][pincode]`"
+                                                            x-model="addr.pincode" x-bind:required="step === 3"
+                                                            placeholder="Code" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -900,9 +899,11 @@
                                                 </div>
                                             </template>
                                             <template x-if="dup.seat_name">
-                                                <div class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm" title="Assigned / Processed Seat">
+                                                <div class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm"
+                                                    title="Assigned / Processed Seat">
                                                     <i data-lucide="building-2" class="w-4 h-4 text-slate-500"></i>
-                                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Seat</span>
+                                                    <span
+                                                        class="text-xs font-bold uppercase tracking-wider text-slate-500">Seat</span>
                                                     <span class="text-sm font-bold" x-text="dup.seat_name"></span>
                                                 </div>
                                             </template>
@@ -925,7 +926,7 @@
                                                 <div>
                                                     <p
                                                         class="text-[11px] font-bold text-blue-500 uppercase tracking-widest">
-                                                         Complainant</p>
+                                                        Complainant</p>
                                                     <p class="text-sm font-bold text-slate-800 mt-0.5"
                                                         x-text="dup.complainant"></p>
                                                 </div>
@@ -938,7 +939,7 @@
                                                 <div>
                                                     <p
                                                         class="text-[11px] font-bold text-rose-500 uppercase tracking-widest">
-                                                         Suspect
+                                                        Suspect
                                                     </p>
                                                     <p class="text-sm font-bold text-slate-800 mt-0.5" x-text="dup.accused">
                                                     </p>
@@ -958,7 +959,9 @@
                                                         <p class="text-sm font-bold text-slate-800 mt-0.5">
                                                             <span x-text="dup.seat_name || 'N/A'"></span>
                                                             <template x-if="dup.user_name">
-                                                                <span class="text-xs font-semibold text-slate-500 block sm:inline sm:ml-1" x-text="'(' + dup.user_name + ')'"></span>
+                                                                <span
+                                                                    class="text-xs font-semibold text-slate-500 block sm:inline sm:ml-1"
+                                                                    x-text="'(' + dup.user_name + ')'"></span>
                                                             </template>
                                                         </p>
                                                     </div>
@@ -1755,7 +1758,7 @@
                             }
                             return;
                         }
-                    if (fieldName === 'nature_of_petition') {
+                        if (fieldName === 'nature_of_petition') {
                             if (fieldValue && fieldValue !== 'General Inward' && validNatures.includes(fieldValue)) {
                                 delete this.formErrors[fieldName];
                                 this.formErrors = { ...this.formErrors };
